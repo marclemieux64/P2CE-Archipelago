@@ -1,0 +1,336 @@
+//=============================================================================
+// 1. PAGE & MAIN CONTAINERS
+//=============================================================================
+
+.archipelago__page {
+    width: 100%;
+    height: 100%;
+    padding: 5px;
+}
+
+.main_box {
+    width: 100%;
+    height: fill-parent-flow(1.0);
+    flow-children: down;
+    padding: 0px;
+    background-color: #00000088;
+    border: 1px solid #ffffff11;
+    border-radius: 8px;
+    overflow: clip;
+}
+
+.columns_wrapper {
+    width: 100%;
+    height: fill-parent-flow(1.0);
+    flow-children: right;
+    padding: 24px 24px 0px 24px;
+}
+
+//=============================================================================
+// 2. LEFT SIDE: NAVIGATION & SCROLLBAR
+//=============================================================================
+
+.left_list_container {
+    width: fill-parent-flow(1.0);
+    height: 100%;
+    overflow: clip scroll;
+
+    VerticalScrollBar {
+        width: 10px;
+        margin-right: 15px;
+        margin-top: 4px;
+        margin-bottom: 4px;
+        border-radius: 10px;
+        background-color: transparent;
+
+        &.ScrollThumb,
+        .ScrollThumb {
+            min-height: 30px;
+            border-radius: 10px;
+            background-color: #ec6726;
+            opacity: 1.0;
+        }
+    }
+}
+
+.left_list_inner {
+    width: 100%;
+    height: fit-children;
+    flow-children: down;
+}
+
+//=============================================================================
+// 3. CHAPTER ENTRIES
+//=============================================================================
+
+.chapter_entry {
+    width: 90%;
+    min-height: 60px;
+    flow-children: down;
+    background-color: #1a1a1a;
+    padding: 8px 15px;
+    margin-bottom: 5px;
+    height: fit-children;
+    border: 1px solid #ffffff11;
+    border-radius: 4px;
+    transition-property: background-color, border, transform, box-shadow;
+    transition-duration: 0.15s;
+
+    &:not(.chapter_entry--active):hover,
+    .InputController &:not(.chapter_entry--active):focus {
+        border: 1px solid #ec6726; // Brand Orange
+        transform: translateX(8px);
+        box-shadow: fill #ec672611 -4px 0px 12px 0px;
+    }
+
+    &--active {
+        background-color: #ffffff22;
+        border: 1px solid #ec6726;
+    }
+}
+
+.ChapterTitle {
+    font-family: "Lexend Deca", Bold;
+    font-size: 24px;
+    color: #ffffff;
+}
+
+.ChapterSubtitle {
+    font-size: 16px;
+    color: #ffffff66;
+    font-family: "Lexend Deca", Bold;
+}
+
+//=============================================================================
+// 4. MAP BUTTONS & LOCK ICONS
+//=============================================================================
+
+.map_list {
+    flow-children: down;
+    margin-left: 20px;
+    width: 100%;
+    margin-bottom: 10px;
+    height: fit-children;
+
+    &.hide {
+        visibility: collapse;
+    }
+}
+
+.map_button {
+    width: 84%;
+    min-height: 50px;
+    height: fit-children;
+    margin-top: 5px;
+    background-color: #000000aa; // Darker grey as requested
+    border: 1px solid #ffffff11;
+    border-radius: 4px;
+    flow-children: right;
+    padding: 0px 15px;
+    transition-property: background-color, border, transform;
+    transition-duration: 0.1s;
+    overflow: noclip; // Prevent children from being culled during transitions
+
+    &:not(.map_button--deactivated):hover,
+    .InputController &:not(.map_button--deactivated):focus {
+        border: 1px solid #ec6726;
+        transform: translateX(5px);
+        box-shadow: fill #ec672622 0px 0px 12px 0px;
+    }
+
+    &--deactivated {
+        background-color: #0d0d0d; // Solid near-black for locked
+        opacity: 1.0;
+    }
+
+    // Default 'unlocked' state background
+    &:not(.map_button--deactivated) {
+        background-color: #1a1a1a; // Solid dark grey for unlocked
+    }
+}
+
+.map-title-container {
+    flow-children: down;
+    width: fill-parent-flow(1.0);
+    vertical-align: center;
+}
+
+.MapPrimaryName {
+    font-family: "Lexend Deca", Bold;
+    font-size: 26px;
+    color: #eeeeee;
+
+    .map_button--deactivated & {
+        color: #ffffff08; // Faded/darker text for locked maps
+    }
+}
+
+.MapLockIcon {
+    width: 28px;
+    height: 28px;
+    vertical-align: center;
+    horizontal-align: right;
+    margin-right: 15px;
+    overflow: noclip;
+    texture-sampling: normal;
+
+    &.icon--locked {
+        wash-color: white; // Keep TGA red
+    }
+
+    &.icon--unlocked {
+        wash-color: white; // Keep TGA green
+    }
+}
+
+//=============================================================================
+// 5. RIGHT SIDE: PREVIEW & FOOTER
+//=============================================================================
+
+.right_preview {
+    width: fill-parent-flow(3.0);
+    height: 100%;
+    overflow: clip;
+    flow-children: down;
+}
+
+.preview_image {
+    width: fill-parent-flow(1.0);
+    height: fill-parent-flow(1.0);
+    border-radius: 4px;
+    background-color: #000;
+    border: 1px solid #ffffff11;
+    box-shadow: fill #000000aa 0px 0px 20px 0px;
+}
+
+.preview_bottom_row {
+    width: 100%;
+    padding: 0px 24px 24px 24px;
+    height: fit-children;
+    flow-children: right;
+}
+
+// Mirrors the left list column width so footer_content starts
+// exactly at the left edge of the preview image
+.footer_alignment_spacer {
+    width: fill-parent-flow(1.0);
+}
+
+.footer_content {
+    width: fill-parent-flow(3.0); // Must match right_preview's 3.0 proportion
+    flow-children: right;
+    margin: 24px 0px 0px 0px;
+}
+
+// Visually extends the left list column into the footer row.
+// fill-parent-flow(1.0) = exactly the same width as left_list_container.
+// height: 100% = fills the full footer row height.
+// Change background-color to match list if you want a solid visual connection.
+.footer_alignment_spacer {
+    width: fill-parent-flow(1.0);
+    height: 100%;
+    background-color: #00000000; // Fully transparent by default
+}
+
+.map_info_container {
+    flow-children: right;
+    vertical-align: center;
+    horizontal-align: left;
+}
+
+.title_column {
+    flow-children: down;
+    margin-right: 40px;
+    width: 300px;
+    vertical-align: center;
+}
+
+.info_column {
+    flow-children: down;
+    margin-right: 40px;
+    vertical-align: center;
+}
+
+.info_header {
+    font-family: "LexendDeca";
+    font-weight: light;
+    font-size: 16px;
+    color: #ffffff44;
+    text-transform: uppercase;
+}
+
+.map_subtitle_label {
+    font-family: "LexendDeca";
+    font-weight: bold;
+    font-size: 32px;
+    color: #eeeeee;
+    text-shadow: 0px 0px 8px #ffffff11;
+}
+
+// The requirements value label shares the class but needs APPortal-bold specifically
+#MapSubtitleLabel_Secondary {
+    font-family: "APPortal-bold";
+}
+
+.map_status_preview_label {
+    font-family: "APPortal-bold";
+    font-size: 28px;
+}
+
+//=============================================================================
+// 6. PLAY BUTTON
+//=============================================================================
+
+.play_button {
+    height: 70px;
+    width: 260px;
+    horizontal-align: right;
+    vertical-align: center;
+    border-radius: 6px;
+    background-color: #ffffff11;
+    border: 1px solid #ffffff11;
+    transition-property: background-color, border, transform, box-shadow;
+    transition-duration: 0.2s;
+
+    &:enabled:hover,
+    .InputController &:enabled:focus {
+        background-color: #ffffff22;
+        border: 1px solid #ffffff44;
+    }
+
+    &--active {
+        background-color: #ec6726;
+        border: 1px solid #ffffff22;
+
+        .play_button_text {
+            color: white;
+        }
+
+        &:hover,
+        &:focus {
+            background-color: #ff7b39; // Brighter orange
+        }
+    }
+
+    &:active {
+        background-color: #d1561d; // Darker orange for click
+    }
+
+    &:disabled {
+        background-color: #222222; // Dark grey
+        saturation: 0;
+        opacity: 0.6;
+    }
+}
+
+.play_button_text {
+    font-family: "APPortal-bold";
+    font-size: 42px;
+    color: #ffffff44;
+    horizontal-align: center;
+    vertical-align: center;
+}
+
+.play_button--active .play_button_text {
+    color: white;
+}

@@ -1,0 +1,32 @@
+<root>
+    <styles>
+        <include src="file://{resources}/styles/map_select.scss" />
+    </styles>
+    <scripts>
+        <include src="file://{resources}/scripts/map_select.js" />
+    </scripts>
+    <Panel class="MapSelectRoot">
+        <Panel class="MapSelectMain">
+            <!-- Left side: Chapter List -->
+            <Panel id="LeftListContainer" class="ChapterList">
+                <Label text="Chapters" class="ListHeader" />
+                <Panel id="LeftListInner" class="ChapterListInner" />
+            </Panel>
+
+            <!-- Middle: Map List (Dynamic) -->
+            <Panel id="DynamicChapterListContainer" class="MapList">
+                <Label text="Maps" class="ListHeader" />
+                <Panel id="DynamicChapterList" class="MapListInner" />
+            </Panel>
+
+            <!-- Right side: Preview & Details -->
+            <Panel id="MapDetailsContainer" class="MapDetails">
+                <Image id="PreviewImage" class="MapPreview" scaling="stretch-to-cover-preserve-aspect" />
+                <Label id="MapSubtitleLabel" class="MapSubtitle" text="" />
+                <Button id="PlayButton" class="PlayButton button">
+                    <Label text="Play" />
+                </Button>
+            </Panel>
+        </Panel>
+    </Panel>
+</root>

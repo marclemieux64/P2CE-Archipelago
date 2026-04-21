@@ -1,0 +1,128 @@
+[panorama] |-
+[panorama] | <code>ScrollPanelLeft()</code>
+[panorama] | Yes
+[panorama] | Scroll the panel left by one line.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ScrollPanelRight()</code>
+[panorama] | Yes
+[panorama] | Scroll the panel right by one line.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ScrollPanelUp()</code>
+[panorama] | Yes
+[panorama] | Scroll the panel up by one line.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ScrollRight()</code>
+[panorama] | No
+[panorama] | Scroll the panel right by one line.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ScrollToBottom()</code>
+[panorama] | Yes
+[panorama] | Scroll this panel to the bottom.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ScrollToTop()</code>
+[panorama] | Yes
+[panorama] | Scroll this panel to the top.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ScrollUp()</code>
+[panorama] | No
+[panorama] | Scroll the panel up by one line.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>SetChildPanelsSelected(bool selected)</code>
+[panorama] | Yes
+[panorama] | Set whether any child panels are :selected.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>SetInputFocus()</code>
+[panorama] | Yes
+[panorama] | Set focus to this panel.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>SetPanelEnabled(bool enabled)</code>
+[panorama] | Yes
+[panorama] | Sets whether the given panel is enabled
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>SetPanelSelected(bool selected)</code>
+[panorama] | Yes
+[panorama] | Set whether this panel is :selected.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>SettingsNavigateToPanel(js_raw_arg category, js_raw_arg settingPanel)</code>
+[panorama] | No
+[panorama] | Navigates to a setting by panel handle
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ShiftLeft()</code>
+[panorama] | No
+[panorama] | Shift page left. Should be implemented by the ui to support shoulder button tab navigation.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ShiftRight()</code>
+[panorama] | No
+[panorama] | Shift page right. Should be implemented by the ui to support shoulder button tab navigation.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ShowCenterPrintText(string utf8 message string, CCenterPrint::EPriority)</code>
+[panorama] | No
+[panorama] | Display the string in the center of the hud.
+[panorama] | No
+[panorama] | Yes
+[panorama] |-
+[panorama] | <code>ShowVoteContextMenu()</code>
+[panorama] | No
+[panorama] | Show vote context menu in pause menu
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>StaticHudMenu_EntrySelected(panorama::CPanel2D * Panel representing the selected entry)</code>
+[panorama] | No
+[panorama] | Fired when any of the entries is activated
+[panorama] | No
+[panorama] | Yes
+[panorama] |-
+[panorama] | <code>SwitchStyle(string slot, string class)</code>
+[panorama] | Yes
+[panorama] | Switch which class the panel has for a given attribute slot. Allows easily changing between multiple states.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>TogglePanelSelected()</code>
+[panorama] | Yes
+[panorama] | Toggle whether this panel is :selected.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>ToggleStyle(string class)</code>
+[panorama] | Yes
+[panorama] | Toggle whether a panel has the given CSS class.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>TriggerStyle(string class)</code>
+[panorama] | Yes
+[panorama] | Remove then immediately add back a CSS class from a panel. Useful to re-trigger events like animations or sound effects.
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>WeaponEquipped(string classname)</code>
+[panorama] | No
+[panorama] | Invoked when a new weapon is picked up
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>WeaponsDropped()</code>
+[panorama] | No
+[panorama] | Invoked when all weapons are dropped
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>WeaponSelect(int32 action)</code>
+[panorama] | No
+[panorama] | Invoked when the player is trying to select a weapon or see the weapon hud in general. See WeaponSelectorAction enum
+[panorama] | Yes (x2)
+[panorama] |-
+[panorama] | <code>WeaponStateChange(int32 mode, int32 weapon_index)</code>
+[panorama] | No
+[panorama] | Invoked when player picks up, drops or switches to a weapon. weapon_index may be used with WeaponAPI funcs
+[panorama] | Yes (x2)
+[panorama] |}

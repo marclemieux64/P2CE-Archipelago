@@ -1,0 +1,13 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/main.scss" />
+		<include src="file://{resources}/styles/hud/cc.scss" />
+	</styles>
+	<scripts>
+		<include src="file://{scripts}/hud/cc.ts" />
+	</scripts>
+	<Panel class="full-width full-height" hittest="false" hittestchildren="false">
+		<Panel id="CaptionsBg" class="closecaptions__outer" />
+		<Panel id="CaptionsBox" class="closecaptions__inner" />
+	</Panel>
+</root>

@@ -1,0 +1,13 @@
+@use '../config' as *;
+
+.VersionInfo {
+	flow-children: down;
+	margin: 15px;
+	padding: 10px 15px;
+
+	.VersionInfoText {
+		font-size: 14px;
+		font-family: $font-monospace;
+		text-shadow-fast: 2px 2px $base-950;
+	}
+}

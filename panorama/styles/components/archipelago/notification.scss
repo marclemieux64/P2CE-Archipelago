@@ -1,0 +1,119 @@
+
+
+.notify-entry {
+    width: 400px;
+    background-color: #141414ee;
+    flow-children: right;
+    overflow: clip;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    // FIX: Only transition the properties Panorama explicitly supports
+    transition-property: transform, opacity, height;
+    transition-duration: 0.35s;
+    transition-timing-function: linear;
+
+    animation-name: enter-anim;
+    animation-duration: 0.35s;
+    animation-timing-function: ease-out;
+}
+
+.accent-bar {
+    width: 4px;
+    height: 100%;
+    background-color: #ec6726;
+}
+
+.content {
+    flow-children: down; // Stacks Title above Message
+    padding: 8px 12px;
+    width: fill-parent-flow(1.0);
+    height: fit-children;
+    vertical-align: center;
+}
+
+.title {
+    font-family: "Lexend Deca", Bold;
+    font-size: 20px;
+    color: #ffffff;
+    width: 100%;
+    height: fit-children;
+    text-shadow: 0px 0px 4px 2.0 #000000;
+}
+
+.body {
+    font-size: 16px;
+    color: #cccccc;
+    width: 100%;
+    height: fit-children;
+}
+
+// Type variations
+.type-success .accent-bar {
+    background-color: #63fd68;
+}
+
+.type-success .title {
+    color: #63fd68;
+}
+
+.type-error .accent-bar {
+    background-color: #f32424;
+}
+
+.type-error .title {
+    color: #f32424;
+}
+
+
+
+
+.notify-bucket {
+    width: 410px;
+    height: fit-children;
+    margin-top: 10px;
+    horizontal-align: right;
+    vertical-align: top;
+    flow-children: down;
+    overflow: squish scroll;
+}
+
+
+
+
+
+
+.exit-anim {
+    opacity: 0;
+    transform: translateX(50px);
+
+    // The Magic Sauce: Collapse the physical space to 0 so items slide up
+    min-height: 0px;
+    height: 0px;
+    margin-bottom: 0px;
+    border-color: transparent;
+}
+
+@keyframes exit-anim {
+    0% {
+        opacity: 1;
+        transform: translateX(0px);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+}
+
+@keyframes enter-anim {
+    0% {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0px);
+    }
+}

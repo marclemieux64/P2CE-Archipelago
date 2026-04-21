@@ -1,0 +1,74 @@
+<Root>
+<styles>
+    <include src="file://{resources}/styles/main.scss" />
+    <include src="file://{resources}/styles/components/steam-input.scss" />
+    <include src="file://{resources}/styles/pages/archipelago/map-select.scss" />
+</styles>
+
+<script>
+    $.DispatchEvent('MainMenuSetPageLines', 'Archipelago Maps', '');
+</script>
+<scripts>
+    <include src="file://{resources}/scripts/pages/archipelago/map-select.ts" />
+</scripts>
+
+    <Panel class="archipelago__page mainmenu__page mainmenu" onload="ArchipelagoMapSelect.onLoad()">
+        <Panel id="MainBox" class="main_box">
+            
+            <Panel id="ColumnsWrapper" class="columns_wrapper">
+                <!-- LEFT COLUMN -->
+                <Panel id="LeftList" class="left_list_container">
+                    <Panel id="LeftListInner" class="left_list_inner" />
+                </Panel>
+
+                <!-- RIGHT PREVIEW -->
+                <Panel id="RightPreview" class="right_preview">
+                    <Image
+                        id="PreviewImage"
+                        src="file://{images}/menu/p2ce-generic.png"
+                        class="preview_image"
+                        scaling="stretch-to-cover-preserve-aspect" />
+                </Panel>
+            </Panel>
+
+            <!-- FULL WIDTH CONTROL BAR -->
+            <Panel id="FullWidthFooter" class="preview_bottom_row">
+                
+                <!-- ALIGNMENT SPACER -->
+                <Panel id="FooterAlignmentSpacer" class="footer_alignment_spacer" />
+
+                <!-- CONTENT STARTING UNDER PICTURE -->
+                <Panel id="FooterContent" class="footer_content">
+                    <Panel id="MapInfoContainer" class="map_info_container">
+                        <!-- CHAPTER/TITLE LABEL -->
+                        <Panel id="TitleColumn" class="title_column">
+                            <Label id="MapSubtitleLabel" class="map_subtitle_label" text="" />
+                        </Panel>
+
+                        <!-- CHECKS -->
+                        <Panel id="ChecksColumn" class="info_column">
+                            <Label class="info_header" text="CHECKS" />
+                            <Label id="MapStatusIconsPreview" class="map_status_preview_label" text="" />
+                        </Panel>
+
+                        <!-- REQUIREMENTS -->
+                        <Panel id="RequirementsColumn" class="info_column">
+                            <Label class="info_header" text="REQUIREMENTS" />
+                            <Label id="MapSubtitleLabel_Secondary" class="map_subtitle_label" text="" />
+                        </Panel>
+                    </Panel>
+
+                    <!-- PUSHES PLAY BUTTON TO THE RIGHT -->
+                    <Panel id="PlayButtonSpacer" class="footer_spacer" />
+
+                    <Button id="PlayButton"
+                            class="play_button"
+                            onactivate="ArchipelagoMapSelect.playSelectedMap()">
+                        <Label class="play_button_text" text="PLAY" />
+                    </Button>
+                </Panel>
+            </Panel>
+
+        </Panel>
+    </Panel>
+</Root>

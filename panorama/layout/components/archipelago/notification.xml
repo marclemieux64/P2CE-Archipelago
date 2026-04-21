@@ -1,0 +1,22 @@
+<root>
+    <styles>
+        <include src="file://{resources}/styles/components/archipelago/notification.scss" />
+    </styles>
+    <scripts>
+        <include src="file://{resources}/scripts/components/archipelago/notification.ts" />
+    </scripts>
+
+<snippets>
+        <snippet name="MessageEntry">
+            <Panel class="notify-entry">
+                <Panel id="AccentBar" class="accent-bar" />
+                <Panel class="content"> 
+                    <Label id="Title" class="title" text="TEST TITLE" /> 
+                    <Label id="Message" class="body" text="TEST MESSAGE" /> 
+                </Panel>
+            </Panel>
+        </snippet>
+    </snippets>
+
+    <Panel class="notify-bucket" hittest="false" />
+</root>

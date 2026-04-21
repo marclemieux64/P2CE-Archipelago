@@ -1,0 +1,9 @@
+.idea/
+.vs/
+.vscode/
+node_modules/
+pnpm-lock.yaml
+fonts.uuid
+.uuid
+conf.d
+/scripts_dist/

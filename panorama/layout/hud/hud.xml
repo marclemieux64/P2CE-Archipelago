@@ -9,6 +9,7 @@
 		<!-- In world UI is first to make sure it shows up behind all "screen-looking" UI -->
 		<Panel id="HudInWorld" hittest="false" hittestchildren="false">
 		</Panel>
+		<Panel id="BlackFadeOverlay" class="black-fade-overlay" hittest="false" />
 
 		<!-- Center of screen HUD laid out vertically top-to-bottom -->
 		<Panel id="HudCenter" hittest="false" hittestchildren="false">

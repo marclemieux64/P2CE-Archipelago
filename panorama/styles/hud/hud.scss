@@ -75,3 +75,17 @@ Hud,
 	width: 100%;
 	height: 100%;
 }
+
+.black-fade-overlay {
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.8s;
+    transition-timing-function: ease-in-out;
+}
+
+.fade-active .black-fade-overlay {
+    opacity: 1;
+}

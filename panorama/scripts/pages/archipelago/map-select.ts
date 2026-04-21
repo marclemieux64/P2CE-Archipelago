@@ -323,23 +323,3 @@ class ArchipelagoMapSelect {
 }
 
 Object.assign($.GetContextPanel(), { ArchipelagoMapSelect });
-
-
-
-// 1. DEFINITION
-$.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch");
-
-interface GlobalEventNameMap {
-    'Archipelago_WarpToMenu': (content: string) => void;
-}
-
-// 2. LISTENER
-$.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
-    $.Msg("[Panorama] WarpToMenu event received! Setting bookmark and disconnecting...");
-
-    // Save the bookmark so the Base Menu script sees it after the world is destroyed
-    $.persistentStorage.setItem("ap_return_to_map_select", "true");
-
-    // Execute the disconnect to return to the Base Menu
-    GameInterfaceAPI.ConsoleCommand("disconnect");
-});

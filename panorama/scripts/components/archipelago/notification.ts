@@ -1,13 +1,72 @@
-$.Msg(">>> Archipelago Notification Bridge (Memory Queue Mode)!");
-
-// Track our panels purely in memory to bypass Panorama's DOM lag
 const notificationQueue: Panel[] = [];
 let isTimerRunning = false;
+let isWarpPending = false;
+
+/**
+ * Find the root HUD panel by searching upwards through parents.
+ */
+function GetHudRoot(): Panel | null {
+    let p = $.GetContextPanel();
+    while (p) {
+        if (p.id === "Hud") return p;
+        p = p.GetParent();
+    }
+    return null;
+}
+
+// RESET: Ensure we aren't stuck in a fade state from a previous map or reload
+(function() {
+    const hud = GetHudRoot();
+    if (hud) hud.RemoveClass("fade-active");
+})();
+
+// 1. DEFINITIONS: Ensure the engine understands these event types before we register listeners
+$.DefineEvent("AP_QueueUpdated", 0);
+$.DefineEvent("AP_Notify", 1, "payload");
+
+// Only define this one if it hasn't been defined by another panel (avoids console warnings)
+try {
+    $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch with fade buffer");
+} catch (e) {
+    // Already defined, safe to ignore
+}
+
+// 2. WARP LISTENER: Catches the signal to end the level
+$.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
+    $.Msg("[AP] WarpToMenu received. Starting black fade buffer...");
+    
+    isWarpPending = true;
+
+    // Trigger the black fade on the HUD root
+    const hud = GetHudRoot();
+    if (hud) {
+        hud.AddClass("fade-active");
+    }
+
+    // If the queue is already empty, wait a 1.5s buffer for final network packets, then warp
+    if (notificationQueue.length === 0) {
+        $.Schedule(1.5, () => {
+            if (isWarpPending) ProcessQueue();
+        });
+    }
+});
 
 function ProcessQueue() {
-    // If nothing is left in our memory queue, we stop the loop
+    // If nothing is left in our memory queue
     if (notificationQueue.length === 0) {
         isTimerRunning = false;
+
+        // WARP CHECK: If we were waiting for the queue to clear before switching levels
+        if (isWarpPending) {
+            $.Msg("[AP] Notification queue clear. Moving to menu bookmark...");
+            // Save the bookmark so the Base Menu script sees it after the world is destroyed
+            $.persistentStorage.setItem("ap_return_to_map_select", "true");
+            
+            // Final short delay so the player can actually see the "all clear" state in the black
+            $.Schedule(0.5, () => {
+                GameInterfaceAPI.ConsoleCommand("disconnect");
+            });
+        }
         return;
     }
 
@@ -26,7 +85,7 @@ function ProcessQueue() {
 
     $.Msg("[AP] 3-second timer started for top panel.");
 
-    // 3 econd reading timer
+    // 3 second reading timer
     $.Schedule(3.0, () => {
         if (topPanel && topPanel.IsValid()) {
             topPanel.AddClass('exit-anim');
@@ -38,14 +97,10 @@ function ProcessQueue() {
                     topPanel.DeleteAsync(0);
                 }
 
-                // 1. Remove the finished panel from our memory array
                 notificationQueue.shift();
-
-                // 2. Immediately process the next panel in line!
                 ProcessQueue();
             });
         } else {
-            // If it became invalid during the 5 seconds, just move on
             notificationQueue.shift();
             ProcessQueue();
         }
@@ -101,4 +156,15 @@ function OnAPNotify(payload: string) {
     }
 }
 
-$.RegisterForUnhandledEvent("AP_Notify", OnAPNotify);
+$.RegisterForUnhandledEvent("AP_QueueUpdated", CheckQueue);
+
+function CheckQueue() {
+    const global: any = UiToolkitAPI.GetGlobalObject();
+    if (!global || !global.AP_MessageQueue) return;
+    const pending = global.AP_MessageQueue.filter((msg: any) => !msg.shown);
+    for (const msg of pending) {
+        msg.shown = true;
+        OnAPNotify(msg.payload);
+    }
+}
+CheckQueue();

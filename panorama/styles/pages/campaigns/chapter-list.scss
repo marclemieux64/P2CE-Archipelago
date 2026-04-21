@@ -138,10 +138,11 @@
 		flow-children: right;
 
 		#{$root}__entry {
+			vertical-align: center;
+
 			&__outer {
 				margin: 0 10px;
 			}
-			vertical-align: center;
 		}
 	}
 

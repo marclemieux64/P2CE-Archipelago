@@ -110,6 +110,26 @@ void APPrintCompleteCmd(const CommandArgs@ args) {
     HandleMapCompletion();
 }
 
+[ServerCommand("ap_debug_map", "Scans for all trigger and relay entities")]
+void APDebugMapCmd(const CommandArgs@ args) {
+    Msgl("--- ARCHIPELAGO BRUTE FORCE SCAN ---");
+    array<string> classes = { "trigger_once", "trigger_multiple", "trigger_changelevel", "logic_relay", "logic_auto", "point_servercommand" };
+    uint foundTotal = 0;
+
+    for (uint i = 0; i < classes.length(); i++) {
+        CBaseEntity@ ent = null;
+        uint countForClass = 0;
+        while ((@ent = EntityList().FindByClassname(ent, classes[i])) !is null) {
+            Msgl("Class: " + classes[i] + " | Name: " + ent.GetEntityName());
+            foundTotal++;
+            countForClass++;
+        }
+    }
+    
+    Msgl("Found " + foundTotal + " potential entities.");
+    Msgl("------------------------------------");
+}
+
 [ServerCommand("ap_print_complete_no_exit", "Prints completion but stays in map")]
 void APPrintCompleteNoExitCmd(const CommandArgs@ args) {
     Msgl("map_complete:" + current_map);

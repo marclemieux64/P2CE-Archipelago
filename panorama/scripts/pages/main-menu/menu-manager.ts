@@ -39,6 +39,28 @@ class MenuManager {
 	static isLoaded = false;
 	static eventsRegistered = false;
 
+	// Persistence for Archipelago notifications
+	static initAPPersistence() {
+		$.DefineEvent('AP_Notify', 1, "payload");
+		$.DefineEvent('AP_QueueUpdated', 0);
+
+		const global: any = UiToolkitAPI.GetGlobalObject();
+		if (!global.AP_MessageQueue) {
+			global.AP_MessageQueue = [];
+		}
+
+		$.RegisterForUnhandledEvent('AP_Notify', (payload: string) => {
+			$.Msg('[AP Persistence] Captured message in Main Menu: ' + payload);
+			global.AP_MessageQueue.push({
+				payload: payload,
+				shown: false,
+				timestamp: Date.now()
+			});
+			// Notify the HUD to check the queue
+			$.DispatchEvent('AP_QueueUpdated');
+		});
+	}
+
 	static {
 		$.RegisterForUnhandledEvent('LayoutReloaded', () => {
 			this.closePages();
@@ -211,6 +233,7 @@ class MenuManager {
 
 			MenuAnimation.init();
 
+			this.initAPPersistence();
 			this.eventsRegistered = true;
 		}
 

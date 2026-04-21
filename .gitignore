@@ -50,3 +50,12 @@ voice_ban.dt
 whitelist.cfg
 /.vs
 .vscode/
+
+# Auto-generated and reference files
+code/as.predefined
+code/api_reference.html
+data/client/css_dump.txt
+data/client/panorama.event
+data/client/ts.scope
+data/client/as.predefined
+data/cvars.json

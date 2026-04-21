@@ -172,6 +172,13 @@ There is a very small chance that for people running another server on their mac
 ### P2CE Mod
 - **marclemieux64** - Lead Tinkerer
 
+### P2CE Mod Repo Foundation
+- [p2ce-mod-ui](https://github.com/marclemieux64/p2ce-mod-ui)
+- [p2ce-mod-template](https://github.com/marclemieux64/p2ce-mod-template)
+- [Portal2ArchipelagoMod](https://github.com/marclemieux64/Portal2ArchipelagoMod)
+
+
 ### Initial Testers
 
 **22TwentyTwo, ahhh reptar, Bfbfan26, buzzman5001, ChaiMint, Default Miserable, Fewffwa, Fox, Grenhunterr, Kit Lemonfoot, Knux, MarioXTurn, miketizzle411, Pigmaster100, Rya, Scrungip**
+

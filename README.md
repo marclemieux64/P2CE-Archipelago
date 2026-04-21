@@ -1,4 +1,4 @@
-![Portal 2 CE Archipelago Mod](md-imgs/Portal2pelago-LOGO.png)
+![Portal 2 CE Archipelago Mod](.assets/Portal2pelago-LOGO.png)
 
 `Version 0.7.0`
 

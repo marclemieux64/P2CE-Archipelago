@@ -50,12 +50,16 @@ $.DefineEvent('LoadingScreenClearLastMap', 0);
 $.DefineEvent('MainMenuModeRequestCleanup', 0);
 $.DefineEvent('MainMenuPageClosed', 2);
 $.DefineEvent('CampaignMenuRefreshUserSettings', 0);
+$.DefineEvent('ReloadCCSettings', 0);
 
 /**
  * AP_Notify
  * @param {string} payload - JSON string containing {title, message, type}
  */
 $.DefineEvent('AP_Notify', 1, 'payload', 'Direct VScript notification for Archipelago items and events');
+
+$.DefineEvent('AP_MutePotatos', 1, 'active', 'Mutes all PotatOS/GLaDOS related captions');
+
 
 // Dans scripts/util/event-definition.ts
 $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch");

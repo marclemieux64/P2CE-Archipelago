@@ -838,6 +838,8 @@
 		"MainMenu_Navigation_Play_Archipelago_Tagline"	"Start an archipelago P2CE game"
 		"PauseMenu_Navigation_Archipelago" "Change Map"
 		"PauseMenu_Navigation_Archipelago_Tagline"	"Change the map you are playing"
+		"PauseMenu_Navigation_Reload" "Reload"
+		"PauseMenu_Navigation_Reload_Tagline" "Reload the current map"
 		"MainMenu_Navigation_Play_Modes"				"Select a singleplayer or multiplayer map"
 		"MainMenu_Navigation_Play_MapTypes"				"Select a P2:CE or Portal 2 Workshop map"
 		"MainMenu_Navigation_Featured"					"Featured Items"

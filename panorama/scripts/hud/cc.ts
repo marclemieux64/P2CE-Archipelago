@@ -1,12 +1,5 @@
 'use strict';
 
-enum CCSetting {
-	BG_OPACITY = 'cc_bg_opacity',
-	FONT_SIZE = 'cc_font_size',
-	FONT_TYPE = 'cc_font_type',
-	TEXT_ALIGN = 'cc_text_align'
-}
-
 // caption helper class. current implementation does **not** require this
 // but obviously we need to reimplement standard caption behavior
 //
@@ -142,7 +135,12 @@ class CloseCaptioning {
 		boxWidth: 1102
 	};
 
+	static bPotatosMuted: boolean = false;
+
 	static captionRecord: Map<string, number> = new Map<string, number>();
+	static textCooldowns: Map<string, number> = new Map<string, number>();
+
+
 
 	static getVars() {
 		// FIX SETTING SLIDERS BEFORE TURNING THIS ON
@@ -184,7 +182,18 @@ class CloseCaptioning {
 			this.getVars();
 		});
 
+		$.RegisterForUnhandledEvent('AP_MutePotatos', (active: string) => {
+			this.bPotatosMuted = (active === '1');
+			if (this.bPotatosMuted) {
+				this.wipeCaptions();
+				$.Msg("CC: PotatOS/GLaDOS Subtitles are now MUTED.");
+			} else {
+				$.Msg("CC: PotatOS/GLaDOS Subtitles are now UNMUTED.");
+			}
+		});
+
 		$.RegisterForUnhandledEvent('GameUIStateChanged', (old: GameUIState, newS: GameUIState) => {
+
 			this.updateStyle();
 		});
 
@@ -253,7 +262,15 @@ class CloseCaptioning {
 					this.captionRecord.delete(token);
 				}
 			}
+
+			// Clean up text history (keep for 1s just in case)
+			for (const [txt, life] of this.textCooldowns) {
+				if (time >= life) {
+					this.textCooldowns.delete(txt);
+				}
+			}
 		});
+
 
 		// when a caption is missing. must have cc_captiontrace
 		$.RegisterEventHandler('BadCaptionRequest', $.GetContextPanel(), (token: string, lifetime: number) => {
@@ -282,7 +299,17 @@ class CloseCaptioning {
 			'DisplayCaptionRequest',
 			$.GetContextPanel(),
 			(token: string, caption: Caption, lifetime: number, time: number) => {
+				// Block GLaDOS/PotatOS if muted
+				if (this.bPotatosMuted) {
+					const t = token.toLowerCase();
+					if (t.indexOf('glados.') !== -1 || t.indexOf('potatos.') !== -1) {
+						$.Msg("CC: Blocking muted caption: " + token);
+						return;
+					}
+				}
+
 				// do not display multiple of the same
+
 				// TODO: include norepeat field instead of blatantly disregarding refires
 				//if (this.captions.has(token)) {
 				//	const showmissing = GameInterfaceAPI.GetSettingInt('cc_captiontrace');
@@ -293,16 +320,25 @@ class CloseCaptioning {
 				//}
 
 				if (this.captionRecord.has(token)) {
-					$.Warning(`Ignoring refire for ${token}`);
 					return;
 				}
 
-				// record caption
-				if (caption.nNoRepeat > 0) {
-					this.captionRecord.set(token, time + caption.nNoRepeat);
+				// SAFETY: Check if this EXACT text was played recently (within 0.1s)
+				// This catches engine bugs where the same scene fires multiple times in one frame
+				const localizedText = $.Localize(caption.text);
+				const lastTime = this.textCooldowns.get(localizedText);
+				if (lastTime !== undefined && (time - lastTime) < 0.1) {
+					return;
 				}
-				this.captions.push(new CaptionEntry(token, caption, lifetime));
 
+				// Record this line in the cooldown map
+				this.textCooldowns.set(localizedText, time);
+
+				// record caption with an enforced minimum cooldown of 0.5s
+				const cooldown = (caption.nNoRepeat > 0.5) ? caption.nNoRepeat : 0.5;
+				this.captionRecord.set(token, time + cooldown);
+
+				this.captions.push(new CaptionEntry(token, caption, lifetime));
 				this.showBox();
 			}
 		);

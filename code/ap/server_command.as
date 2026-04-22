@@ -105,34 +105,31 @@ void APPrintMonitorCmd(const CommandArgs@ args) {
     }
 }
 
+[ServerCommand("ap_print_complete_no_exit", "Prints map complete without exiting")]
+void APPrintCompleteNoExitCmd(const CommandArgs@ args) {
+    PrintMapCompleteNoExit();
+}
+
 [ServerCommand("ap_print_complete", "Handles map completion and returns to menu")]
 void APPrintCompleteCmd(const CommandArgs@ args) {
-    HandleMapCompletion();
+    PrintMapComplete();
 }
 
-[ServerCommand("ap_debug_map", "Scans for all trigger and relay entities")]
-void APDebugMapCmd(const CommandArgs@ args) {
-    Msgl("--- ARCHIPELAGO BRUTE FORCE SCAN ---");
-    array<string> classes = { "trigger_once", "trigger_multiple", "trigger_changelevel", "logic_relay", "logic_auto", "point_servercommand" };
-    uint foundTotal = 0;
+[ServerCommand("ap_block_wheatley_fight", "Internal - Triggers the Wheatley fight block logic")]
+void APBlockWheatleyFightCmd(const CommandArgs@ args) {
+    BlockWheatleyFight();
+}
 
-    for (uint i = 0; i < classes.length(); i++) {
-        CBaseEntity@ ent = null;
-        uint countForClass = 0;
-        while ((@ent = EntityList().FindByClassname(ent, classes[i])) !is null) {
-            Msgl("Class: " + classes[i] + " | Name: " + ent.GetEntityName());
-            foundTotal++;
-            countForClass++;
-        }
+
+[ServerCommand("ap_warp_to_menu", "Internal - Warps back to menu")]
+void APWarpToMenuCmd(const CommandArgs@ args) {
+    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
+    if (cmdEnt !is null) {
+        Variant vCmd;
+        vCmd.SetString("host_timescale 1.0");
+        cmdEnt.FireInput("Command", vCmd, 0.0f, null, null, 0);
     }
-    
-    Msgl("Found " + foundTotal + " potential entities.");
-    Msgl("------------------------------------");
-}
-
-[ServerCommand("ap_print_complete_no_exit", "Prints completion but stays in map")]
-void APPrintCompleteNoExitCmd(const CommandArgs@ args) {
-    Msgl("map_complete:" + current_map);
+    WarpToMenu();
 }
 
 [ServerCommand("ap_spawn_holos", "Manually trigger map-specific holograms")]
@@ -221,22 +218,16 @@ void CubeConfettiTrapCmd(const CommandArgs@ args) {
     TriggerCubeConfettiTrap();
 }
 
+
+
+
 [ServerCommand("MotionBlurTrap", "Triggers motion blur trap")]
 void MotionBlurTrapCmd(const CommandArgs@ args) {
     TriggerMotionBlurTrap();
 }
 
-[ServerCommand("NastyTextTrap", "MAXIMUM SENSORY OVERLOAD")]
-void NastyTextTrapCmd(const CommandArgs@ args) {
-    TriggerNastyTextTrap();
-}
-
-[ServerCommand("ap_nasty_text_tick", "Strobe Logic")]
-void APNastyTextTickCmd(const CommandArgs@ args) {
-    RunNastyTextTick();
-}
-
 [ServerCommand("SlipperyFloorTrap", "Triggers slippery floor trap")]
+
 void SlipperyFloorTrapCmd(const CommandArgs@ args) {
     TriggerSlipperyFloorTrap();
 }
@@ -260,3 +251,27 @@ void ButterFingersTrapCmd(const CommandArgs@ args) {
 void APButterFingersTickCmd(const CommandArgs@ args) {
     RunButterFingersTick();
 }
+
+[ServerCommand("RemovePotatosFromGun", "Removes PotatOS from the player's portal gun")]
+void RemovePotatosFromGunCmd(const CommandArgs@ args) {
+    RemovePotatosFromGun();
+}
+
+[ServerCommand("RestorePotatosToGun", "Restores PotatOS to the player's portal gun")]
+void RestorePotatosToGunCmd(const CommandArgs@ args) {
+    RestorePotatosToGun();
+}
+
+
+
+
+[ServerCommand("AttachDeathTrigger", "Activates DeathLink health monitoring")]
+void AttachDeathTriggerCmd(const CommandArgs@ args) {
+    AttachDeathTrigger();
+}
+
+
+
+
+
+

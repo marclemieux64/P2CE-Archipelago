@@ -177,4 +177,25 @@ function ButterFingersTrap() { SendToConsole("ButterFingersTrap"); }
 function CubeConfettiTrap() { SendToConsole("CubeConfettiTrap"); }
 function SlipperyFloorTrap() { SendToConsole("SlipperyFloorTrap"); }
 function DialogTrap() { SendToConsole("DialogTrap"); }
-function NastyTextTrap() { SendToConsole("NastyTextTrap"); }
+
+
+function RemovePotatosFromGun() {
+    SendToConsole("RemovePotatosFromGun");
+}
+
+function BlockWheatleyFight() {
+    SendToConsole("ap_block_wheatley_fight");
+}
+
+
+function MutePotatOSSubtitles(mute) {
+    if (mute) {
+        SendToPanorama("AP_MutePotatos", "1");
+    } else {
+        SendToPanorama("AP_MutePotatos", "0");
+    }
+}
+
+
+
+

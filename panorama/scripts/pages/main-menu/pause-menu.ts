@@ -24,6 +24,18 @@ class PauseMenu {
             focusIsHover: true
         },
         {
+            id: 'ReloadMapBtn',
+            headline: '#PauseMenu_Navigation_Reload',
+            tagline: '#PauseMenu_Navigation_Reload_Tagline',
+            activated: () => {
+                GameInterfaceAPI.ConsoleCommand('reload');
+                $.DispatchEvent('MainMenuResumeGame');
+            },
+            hovered: () => { },
+            unhovered: () => { },
+            focusIsHover: true
+        },
+        {
             id: 'SettingsKeyboardBtn',
             headline: '#MainMenu_Navigation_Options',
             tagline: '#MainMenu_Navigation_Options_Tagline',

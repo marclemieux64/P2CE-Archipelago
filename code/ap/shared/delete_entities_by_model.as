@@ -1,15 +1,14 @@
-void DeleteEntitiesByModel(string modelPath) {
+void DeleteEntitiesByModel(string modelPath, bool holo = true, float scale = 0.7f) {
     CBaseEntity@ ent = null;
     int count = 0;
-    // Iterate through all entities using FindByName with a wildcard
-    // (NextEntity is not supported in the P2CE AngelScript API)
-    while ((@ent = EntityList().FindByName(ent, "*")) !is null) {
-        if (ent.GetModelName() == modelPath) {
-            ent.Remove();
-            count++;
-        }
+    while ((@ent = EntityList().FindByModel(ent, modelPath)) !is null) {
+        // Use the main DeleteEntity logic to ensure holograms and delays are handled!
+        string tName = ent.GetEntityName();
+        if (tName == "") tName = ent.GetClassname();
+        DeleteEntity(tName, holo, scale);
+        count++;
     }
     if (count > 0) {
-        Msgl("[AP] Removed " + count + " entities matching model: " + modelPath);
+        Msgl("[AP] Processed " + count + " entities matching model: " + modelPath);
     }
 }

@@ -40,7 +40,9 @@
 #include "ap/shared/delete_core_on_output.as"
 #include "ap/shared/delete_entities_by_model.as"
 #include "ap/shared/delete_entity.as"
+#include "ap/shared/disable_entity.as"
 #include "ap/shared/disable_entity_physics.as"
+
 #include "ap/shared/disable_entity_pickup.as"
 #include "ap/shared/disable_portal_gun.as"
 #include "ap/shared/extract_floats.as"
@@ -70,11 +72,13 @@ bool InitializeArchipelago() {
         // Using the cmd entity to handle the precaching
         cmd.PrecacheModel("models/props/archipelago/ap_buttonframe.mdl");
         cmd.PrecacheModel("models/props/archipelago/ap_floorbuttonframe.mdl");
+        cmd.PrecacheModel("models/props/archipelago/ap_proptractorbeamframe.mdl");
         cmd.PrecacheModel("models/effects/ap/archipelago_hologram.mdl");
         
         // Precache standard entities used in traps
         cmd.PrecacheModel("models/props/weighted_cube.mdl");
         cmd.PrecacheModel("models/props/metal_box.mdl");
+        cmd.PrecacheModel("models/props_underground/underground_weighted_cube.mdl");
         
         // Start background systems immediately.
         AttachDeathTrigger();

@@ -6,6 +6,6 @@ void TriggerMotionBlurTrap() {
     CallVScript("Convars.SetValue(\"mat_motion_blur_enabled\", 1)");
     CallVScript("Convars.SetValue(\"mat_motion_blur_strength\", 5)");
     
-    // Reset after 10 seconds
-    WaitExecute("script Convars.SetValue(\"mat_motion_blur_enabled\", 0)", 10.0f);
+    // Reset after 20 seconds
+    WaitExecute("script Convars.SetValue(\"mat_motion_blur_enabled\", 0)", 20.0f);
 }

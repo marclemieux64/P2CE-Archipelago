@@ -40,11 +40,27 @@ void DeleteEntityCmd(const CommandArgs@ args) {
     DeleteEntity(target, holo, scale);
 }
 
+[ServerCommand("ap_finalize_delete", "Internal - Finalizes a delayed entity deletion")]
+void APFinalizeDeleteCmd(const CommandArgs@ args) {
+    if (args is null || args.ArgC() < 2) return;
+    string target = args.Arg(1);
+    bool holo = (args.ArgC() > 2) ? (args.Arg(2) == "1" || args.Arg(2) == "true") : true;
+    float scale = (args.ArgC() > 3) ? args.Arg(3).toFloat() : 0.7f;
+    DeleteEntity(target, holo, scale, true); // Force bypass of delay
+}
+
 [ServerCommand("DisableEntityPickup", "Disables pickup for an entity by name, class, or model")]
 void DisableEntityPickupCmd(const CommandArgs@ args) {
     if (args is null || args.ArgC() < 2) return;
     DisableEntityPickup(args.Arg(1));
 }
+
+[ServerCommand("DisableEntity", "Safely disables an entity via inputs")]
+void DisableEntityCmd(const CommandArgs@ args) {
+    if (args is null || args.ArgC() < 2) return;
+    DisableEntity(args.Arg(1));
+}
+
 
 [ServerCommand("DeleteCoreOnOutput", "Triggers core deletion on entity output (core_name, target_name, output)")]
 void DeleteCoreOnOutputCmd(const CommandArgs@ args) {

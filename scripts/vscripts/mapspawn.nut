@@ -116,6 +116,11 @@ function DisableEntityPhysics(entity_name) {
     SendToConsole("DisableEntityPhysics \"" + entity_name + "\"");
 }
 
+function DisableEntity(entity_name) {
+    SendToConsole("DisableEntity \"" + entity_name + "\"");
+}
+
+
 // =============================================================
 // ARCHIPELAGO MAP COMPLETION INTERCEPT
 // =============================================================

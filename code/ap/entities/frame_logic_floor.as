@@ -23,5 +23,5 @@ void AddFloorButtonFrame(string search_term) {
     }
 
     // Call bridge for hologram (1.0 scale, 40px vertical offset, skin 4)
-    AttachHologramToEntity(search_term, "", 1.0f, 40.0f, 4);
+    AttachHologramToEntity(search_term, "", 1.0f, 80.0f, 4);
 }

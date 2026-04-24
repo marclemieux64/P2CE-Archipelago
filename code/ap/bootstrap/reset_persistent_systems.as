@@ -4,8 +4,8 @@
  */
 void ResetPersistentSystems() {
     // 1. Reset AngelScript Global Ticks
-    g_NastyTextTicks = 0;
     g_ButterFingersTicks = 0;
+
     g_bSentDeathLink = false;
 
 

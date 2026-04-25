@@ -34,7 +34,6 @@ void DoMapSpecificSetup(string current_map) {
             potatos.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
         }
     } else if (current_map == "sp_a2_bts2") {
-        // 2. Physics/Movement restrictions
         CBaseEntity@ trigger = EntityList().FindByClassnameNearest("trigger_once", Vector(1514, -3898, 64), 150.0f);
         if (trigger !is null) {
             Variant vOut;
@@ -46,6 +45,16 @@ void DoMapSpecificSetup(string current_map) {
         if (trigger !is null) {
             Variant vOut;
             vOut.SetString("OnStartTouch ap_init_cmd:Command:DisableEntityPhysics npc_portal_turret_floor:2.5:1");
+            trigger.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
+        }
+    } else if (current_map == "sp_a4_intro") {
+        // --- RESTORED SP_A4_INTRO HOOK ---
+        CBaseEntity@ trigger = EntityList().FindByClassnameNearest("trigger_once", Vector(-816, 64, 320), 10.0f);
+        if (trigger !is null) {
+            Msgl("[AP] Hooking dynamic Frankenturret spawner for session...");
+            Variant vOut;
+            // Scan for monsters (robustly) 1s after trigger touch
+            vOut.SetString("OnStartTouch ap_init_cmd:Command:DeleteEntity prop_monster_box 1 0.7:1.0:-1");
             trigger.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
         }
     }

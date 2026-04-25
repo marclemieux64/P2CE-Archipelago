@@ -42,18 +42,18 @@ dictionary g_monitor_break_names;
 
 void InitWheatleyMonitorRegistry() {
     g_monitor_break_names.deleteAll();
-    g_monitor_break_names["sp_a4_tb_intro:monitor1-relay_break"] = "sp_a4_tb_intro";
-    g_monitor_break_names["sp_a4_tb_trust_drop:monitor1-relay_break"] = "sp_a4_tb_trust_drop";
-    g_monitor_break_names["sp_a4_tb_wall_button:wheatley_monitor-relay_break"] = "sp_a4_tb_wall_button";
-    g_monitor_break_names["sp_a4_tb_polarity:monitor1-relay_break"] = "sp_a4_tb_polarity";
-    g_monitor_break_names["sp_a4_tb_catch:monitor1-relay_break"] = "sp_a4_tb_catch 1";
-    g_monitor_break_names["sp_a4_tb_catch:monitor2-relay_break"] = "sp_a4_tb_catch 2";
-    g_monitor_break_names["sp_a4_stop_the_box:wheatley_monitor-relay_break"] = "sp_a4_stop_the_box";
-    g_monitor_break_names["sp_a4_laser_catapult:wheatley_monitor_1-relay_break"] = "sp_a4_laser_catapult";
-    g_monitor_break_names["sp_a4_laser_platform:wheatley_monitor_1-relay_break"] = "sp_a4_laser_platform";
-    g_monitor_break_names["sp_a4_speed_tb_catch:wheatley_monitor-relay_break"] = "sp_a4_speed_tb_catch";
-    g_monitor_break_names["sp_a4_jump_polarity:wheatley_monitor_1-relay_break"] = "sp_a4_jump_polarity";
-    g_monitor_break_names["sp_a4_finale3:wheatley_screen-relay_break"] = "sp_a4_finale3";
+    g_monitor_break_names["sp_a4_tb_intro:monitor1-relay_monitor_broken"] = "sp_a4_tb_intro";
+    g_monitor_break_names["sp_a4_tb_trust_drop:monitor1-relay_monitor_broken"] = "sp_a4_tb_trust_drop";
+    g_monitor_break_names["sp_a4_tb_wall_button:wheatley_monitor-relay_monitor_broken"] = "sp_a4_tb_wall_button";
+    g_monitor_break_names["sp_a4_tb_polarity:monitor1-relay_monitor_broken"] = "sp_a4_tb_polarity";
+    g_monitor_break_names["sp_a4_tb_catch:monitor1-relay_monitor_broken"] = "sp_a4_tb_catch 1";
+    g_monitor_break_names["sp_a4_tb_catch:monitor2-relay_monitor_broken"] = "sp_a4_tb_catch 2";
+    g_monitor_break_names["sp_a4_stop_the_box:wheatley_monitor-relay_monitor_broken"] = "sp_a4_stop_the_box";
+    g_monitor_break_names["sp_a4_laser_catapult:wheatley_monitor_1-relay_monitor_broken"] = "sp_a4_laser_catapult";
+    g_monitor_break_names["sp_a4_laser_platform:wheatley_monitor_1-relay_monitor_broken"] = "sp_a4_laser_platform";
+    g_monitor_break_names["sp_a4_speed_tb_catch:wheatley_monitor-relay_monitor_broken"] = "sp_a4_speed_tb_catch";
+    g_monitor_break_names["sp_a4_jump_polarity:wheatley_monitor_1-relay_monitor_broken"] = "sp_a4_jump_polarity";
+    g_monitor_break_names["sp_a4_finale3:wheatley_screen-relay_monitor_broken"] = "sp_a4_finale3";
 }
 
 /**

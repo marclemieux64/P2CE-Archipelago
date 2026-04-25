@@ -1,166 +1,31 @@
-// =============================================================
-// ARCHIPELAGO SERVER COMMANDS 
-// =============================================================
-
-// -------------------------------------------------------------
-// UTILITY COMMANDS 
-// -------------------------------------------------------------
-
-[ServerCommand("GetMapName", "Prints the current map name")]
-void GetMapNameCmd(const CommandArgs@ args) {
-    UpdateInternalMapName();
-    Msgl("map_name:" + current_map);
+/**
+ * ParseMath - Handles simple inline math like "320-65".
+ */
+float ParseMath(string val) {
+    if (val.length() == 0) return 0.0f;
+    uint m = val.locate("-", 1);
+    if (m != uint(-1)) return val.substr(0, int(m)).toFloat() - val.substr(int(m + 1)).toFloat();
+    uint p = val.locate("+", 1);
+    if (p != uint(-1)) return val.substr(0, int(p)).toFloat() + val.substr(int(p + 1)).toFloat();
+    return val.toFloat();
 }
 
-[ServerCommand("ap_set_current_map", "Internal - Sets the current map name from VScript")]
-void APSetCurrentMapCmd(const CommandArgs@ args) {
-    if (args !is null && args.ArgC() > 1) {
-        current_map = args.Arg(1);
-        Msgl("AP-Mod: Map name confirmed from VScript -> " + current_map);
+/**
+ * ExtractFloats - Snatches all float-like values from a string.
+ */
+array<float> ExtractFloats(string raw) {
+    string clean = raw.replace("Vector", " ").replace("QAngle", " ").replace("(", " ").replace(")", " ").replace(",", " ").replace("\x22", " ");
+    array<string>@ parts = clean.split(" ");
+    array<float> results;
+    for (uint i = 0; i < parts.length(); i++) {
+        string t = parts[i].trim();
+        if (t.length() > 0) results.insertLast(ParseMath(t));
     }
-}
-
-[ServerCommand("ap_print_item", "Prints collected item")]
-void APPrintItemCmd(const CommandArgs@ args) {
-    if (args is null) return;
-    string raw = args.GetCommandString();
-    uint spaceIdx = raw.locate(" ");
-    if (spaceIdx != uint(-1)) {
-        string item = raw.substr(int(spaceIdx) + 1).trim();
-        Msgl("item_collected:" + item);
-    }
-}
-
-[ServerCommand("DeleteEntity", "Deletes an entity by name, class, or model")]
-void DeleteEntityCmd(const CommandArgs@ args) {
-    if (args is null || args.ArgC() < 2) return;
-    string target = args.Arg(1);
-    bool holo = (args.ArgC() > 2) ? (args.Arg(2) == "1" || args.Arg(2) == "true") : true;
-    float scale = (args.ArgC() > 3) ? args.Arg(3).toFloat() : 0.7f;
-    DeleteEntity(target, holo, scale);
-}
-
-[ServerCommand("ap_finalize_delete", "Internal - Finalizes a delayed entity deletion")]
-void APFinalizeDeleteCmd(const CommandArgs@ args) {
-    if (args is null || args.ArgC() < 2) return;
-    string target = args.Arg(1);
-    bool holo = (args.ArgC() > 2) ? (args.Arg(2) == "1" || args.Arg(2) == "true") : true;
-    float scale = (args.ArgC() > 3) ? args.Arg(3).toFloat() : 0.7f;
-    DeleteEntity(target, holo, scale, true); // Force bypass of delay
-}
-
-[ServerCommand("DisableEntityPickup", "Disables pickup for an entity by name, class, or model")]
-void DisableEntityPickupCmd(const CommandArgs@ args) {
-    if (args is null || args.ArgC() < 2) return;
-    DisableEntityPickup(args.Arg(1));
-}
-
-[ServerCommand("DisableEntity", "Safely disables an entity via inputs")]
-void DisableEntityCmd(const CommandArgs@ args) {
-    if (args is null || args.ArgC() < 2) return;
-    DisableEntity(args.Arg(1));
-}
-
-
-[ServerCommand("DeleteCoreOnOutput", "Triggers core deletion on entity output (core_name, target_name, output)")]
-void DeleteCoreOnOutputCmd(const CommandArgs@ args) {
-    if (args !is null && args.ArgC() >= 4) DeleteCoreOnOutput(args.Arg(1), args.Arg(2), args.Arg(3));
-}
-
-[ServerCommand("DisablePortalGun", "Disables blue/orange portal firing (1=blue, 2=orange)")]
-void DisablePortalGunCmd(const CommandArgs@ args) {
-    if (args is null || args.ArgC() < 2) return;
-    bool blue = false;
-    bool orange = false;
-    bool delayed = (args.ArgC() > 3 && args.Arg(3) == "1");
-
-    for (int i = 1; i < args.ArgC(); i++) {
-        string a = args.Arg(i);
-        if (a == "1" || a == "blue") blue = true;
-        if (a == "2" || a == "orange") orange = true;
-    }
-    DisablePortalGun(blue, orange, delayed);
-}
-
-[ServerCommand("ap_add_script", "Internal - Attaches a script output to an entity")]
-void APAddScriptCmd(const CommandArgs@ args) {
-    if (args is null || args.ArgC() < 4) return;
-    string target = args.Arg(1);
-    string output = args.Arg(2);
-    string script = args.Arg(3);
-    float delay = (args.ArgC() > 4) ? args.Arg(4).toFloat() : 0.0f;
-    int times = (args.ArgC() > 5) ? args.Arg(5).toInt() : -1;
-    AddEntityOutputScript(target, output, script, delay, times);
-}
-
-[ServerCommand("ap_add_script_at_pos", "Internal - Attaches script output to entity at position")]
-void APAddScriptAtPosCmd(const CommandArgs@ args) {
-    if (args is null || args.ArgC() < 6) return;
-    Vector pos = Vector(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
-    string cls = args.Arg(4);
-    string output = args.Arg(5);
-    string script = args.Arg(6);
-    float delay = (args.ArgC() > 7) ? args.Arg(7).toFloat() : 0.0f;
-    int times = (args.ArgC() > 8) ? args.Arg(8).toInt() : -1;
-    AddEntityOutputScriptAtPos(pos, cls, output, script, delay, times);
-}
-
-[ServerCommand("ap_debug_triggers", "Lists all relays and triggers in the map for debugging")]
-void APDebugTriggersCmd(const CommandArgs@ args) {
-    DebugListMapTriggers();
+    return results;
 }
 
 // -------------------------------------------------------------
-// MAP LOGIC COMMANDS 
-// -------------------------------------------------------------
-
-[ServerCommand("ap_print_monitor", "Internal - Prints monitor break check to console")]
-void APPrintMonitorCmd(const CommandArgs@ args) {
-    if (args !is null && args.ArgC() > 1) {
-        Msgl("monitor_break:" + args.Arg(1));
-    }
-}
-
-[ServerCommand("ap_print_complete_no_exit", "Prints map complete without exiting")]
-void APPrintCompleteNoExitCmd(const CommandArgs@ args) {
-    PrintMapCompleteNoExit();
-}
-
-[ServerCommand("ap_print_complete", "Handles map completion and returns to menu")]
-void APPrintCompleteCmd(const CommandArgs@ args) {
-    PrintMapComplete();
-}
-
-[ServerCommand("ap_block_wheatley_fight", "Internal - Triggers the Wheatley fight block logic")]
-void APBlockWheatleyFightCmd(const CommandArgs@ args) {
-    BlockWheatleyFight();
-}
-
-
-[ServerCommand("ap_warp_to_menu", "Internal - Warps back to menu")]
-void APWarpToMenuCmd(const CommandArgs@ args) {
-    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
-    if (cmdEnt !is null) {
-        Variant vCmd;
-        vCmd.SetString("host_timescale 1.0");
-        cmdEnt.FireInput("Command", vCmd, 0.0f, null, null, 0);
-    }
-    WarpToMenu();
-}
-
-[ServerCommand("ap_spawn_holos", "Manually trigger map-specific holograms")]
-void ManualHoloSpawnCmd(const CommandArgs@ args) {
-    UpdateInternalMapName();
-    Msgl("AP-Mod: Manual holo spawn triggered for: " + current_map);
-    if (current_map != "unknown" && current_map != "") {
-        CreateMapSpecificHolos(current_map);
-    } else {
-        Msgl("AP-Mod: Failed to spawn - map name is still unknown.");
-    }
-}
-
-// -------------------------------------------------------------
-// BUTTON COMMANDS 
+// CORE ARCHIPELAGO COMMANDS
 // -------------------------------------------------------------
 
 [ServerCommand("ReportAPButton", "Routes button press")]
@@ -169,125 +34,184 @@ void ReportAPButtonCmd(const CommandArgs@ args) {
     RunButtonScenarioCheck(args.Arg(1));
 }
 
-[ServerCommand("CreateAPButton", "Main Parser")]
+[ServerCommand("CreateAPButton", "Spawns custom buttons")]
 void CreateAPButtonCmd(const CommandArgs@ args) {
     if (args is null) return;
     string raw = args.GetCommandString();
     uint vIdx = raw.locate("Vector");
     if (vIdx == uint(-1)) return;
+
     string name = raw.substr(0, int(vIdx)).replace("\x22", "").replace("'", "").replace("(", "").replace(",", "").replace("CreateAPButton", "").trim();
     array<float> c = ExtractFloats(raw.substr(int(vIdx)));
-    if (c.length() < 7) return;
-    SpawnAPButtonLogic(name, Vector(c[0], c[1], c[2]), QAngle(c[3], c[4], c[5]), c[6]);
+    
+    if (c.length() >= 7) {
+        SpawnAPButtonLogic(name, Vector(c[0], c[1], c[2]), QAngle(c[3], c[4], c[5]), c[6]);
+    }
 }
 
-[ServerCommand("AddButtonFrame", "Adds an AP button frame to named pedestal entities")]
+[ServerCommand("DeleteEntity", "Removes entities and optionally spawns a hologram")]
+void DeleteEntityCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    string target = args.Arg(1);
+    bool create_holo = (args.ArgC() > 2) ? (args.Arg(2) == "1") : true;
+    float scale = (args.ArgC() > 3) ? args.Arg(3).toFloat() : 0.7f;
+    DeleteEntity(target, create_holo, scale);
+}
+
+[ServerCommand("DeleteCoreOnOutput", "Queues core deletion for a specific entity output")]
+void DeleteCoreOnOutputCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    DeleteCoreOnOutput(args.Arg(1), args.Arg(2), args.Arg(3));
+}
+
+[ServerCommand("AddButtonFrame", "Adds frame/hologram to a pedestal button")]
 void AddButtonFrameCmd(const CommandArgs@ args) {
-    if (args !is null && args.ArgC() >= 2) AddButtonFrame(args.Arg(1));
+    if (args.ArgC() < 2) return;
+    AddButtonFrame(args.Arg(1));
 }
 
-[ServerCommand("AddFloorButtonFrame", "Adds an AP frame to floor buttons")]
+[ServerCommand("AddFloorButtonFrame", "Adds frame/hologram to a floor button")]
 void AddFloorButtonFrameCmd(const CommandArgs@ args) {
-    if (args !is null && args.ArgC() >= 2) AddFloorButtonFrame(args.Arg(1));
+    if (args.ArgC() < 2) return;
+    AddFloorButtonFrame(args.Arg(1));
 }
 
-[ServerCommand("RemoveButtonFrame", "Clears pedestal button AP assets")]
-void RemoveButtonFrameCmd(const CommandArgs@ args) {
-    RemoveAllButtonFrames();
+[ServerCommand("DisablePortalGun", "Disables specific portals on the player gun")]
+void DisablePortalGunCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 3) return;
+    bool blue = (args.Arg(1) == "1");
+    bool orange = (args.Arg(2) == "2");
+    DisablePortalGun(blue, orange);
 }
 
-[ServerCommand("RemoveFloorButtonFrame", "Clears floor button AP assets")]
-void RemoveFloorButtonFrameCmd(const CommandArgs@ args) {
-    RemoveAllFloorButtonFrames();
+[ServerCommand("DisableEntityPickup", "Global lock on generic entity picking up")]
+void DisableEntityPickupCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    DisableEntityPickup(args.Arg(1));
 }
 
-// -------------------------------------------------------------
-// HOLOGRAM COMMANDS 
-// -------------------------------------------------------------
-
-[ServerCommand("CreateAPHologram", "Creates an AP Hologram")]
-void CreateAPHologramCmd(const CommandArgs@ args) {
-    if (args is null || args.ArgC() < 4) return;
-    string raw = args.GetCommandString();
-    array<float> f = ExtractFloats(raw);
-    if (f.length() < 7) return;
-    CreateAPHologram(Vector(f[0], f[1], f[2]), QAngle(f[3], f[4], f[5]), f[6], "", "", 0);
-}
-
-[ServerCommand("AttachHologramToEntity", "Attaches a hologram to named entities")]
+[ServerCommand("AttachHologramToEntity", "Forces a hologram to stick to a moving entity")]
 void AttachHologramToEntityCmd(const CommandArgs@ args) {
-    if (args is null || args.ArgC() < 2) return;
-    string search = args.Arg(1);
-    string attachment = (args.ArgC() >= 3) ? args.Arg(2) : "";
-    float scale = (args.ArgC() >= 4) ? args.Arg(3).toFloat() : 1.0f;
-    float offset = (args.ArgC() >= 5) ? args.Arg(4).toFloat() : 20.0f;
-    int skin = (args.ArgC() >= 6) ? args.Arg(5).toInt() : 0;
-    AttachHologramToEntity(search, attachment, scale, offset, skin);
+    if (args.ArgC() < 6) return;
+    AttachHologramToEntity(args.Arg(1), args.Arg(2), args.Arg(3).toFloat(), args.Arg(4).toFloat(), args.Arg(5).toInt());
 }
 
-// -------------------------------------------------------------
-// TRAP COMMANDS 
-// -------------------------------------------------------------
-
-[ServerCommand("CubeConfettiTrap", "Triggers cube confetti trap")]
-void CubeConfettiTrapCmd(const CommandArgs@ args) {
-    TriggerCubeConfettiTrap();
+[ServerCommand("ap_spawn_holos", "One-time map hologram initialization")]
+void APSpawnHolosCmd(const CommandArgs@ args) {
+    UpdateInternalMapName();
+    CreateMapSpecificHolos(current_map);
 }
 
-
-
-
-[ServerCommand("MotionBlurTrap", "Triggers motion blur trap")]
-void MotionBlurTrapCmd(const CommandArgs@ args) {
-    TriggerMotionBlurTrap();
+[ServerCommand("ap_print_complete", "Triggers map completion logic")]
+void APPrintCompleteCmd(const CommandArgs@ args) {
+    PrintMapComplete();
 }
 
-[ServerCommand("SlipperyFloorTrap", "Triggers slippery floor trap")]
+[ServerCommand("ap_hologram_offset", "Nudges the nearest hologram: ap_hologram_offset x y z")]
+void APHologramOffsetCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    float x = args.Arg(1).toFloat();
+    float y = args.Arg(2).toFloat();
+    float z = args.Arg(3).toFloat();
+    
+    // 1. Find nearest hologram
+    CBaseEntity@ nearest = null;
+    float minDist = 999999.0f;
+    CBaseEntity@ ent = null;
+    
+    CBaseEntity@ player = EntityList().FindByClassname(null, "player");
+    if (player is null) {
+        Msgl("[AP] Error: Could not find player to calculate nudge distance.");
+        return;
+    }
+    Vector pPos = player.GetAbsOrigin();
 
-void SlipperyFloorTrapCmd(const CommandArgs@ args) {
-    TriggerSlipperyFloorTrap();
+    while ((@ent = EntityList().FindByClassname(ent, "prop_dynamic")) !is null) {
+        if (ent.GetModelName().locate("archipelago_hologram") != uint(-1)) {
+            float d = (ent.GetAbsOrigin() - pPos).Length();
+            if (d < minDist) {
+                minDist = d;
+                @nearest = ent;
+            }
+        }
+    }
+
+    if (nearest !is null && minDist < 300.0f) {
+        Vector newPos = nearest.GetAbsOrigin() + Vector(x, y, z);
+        nearest.SetAbsOrigin(newPos);
+        Msgl("[AP] Nudged '" + nearest.GetEntityName() + "' to: " + newPos.x + " " + newPos.y + " " + newPos.z);
+    } else {
+        Msgl("[AP] No hologram near enough to nudge (limit 300 units).");
+    }
 }
 
-[ServerCommand("FizzlePortalTrap", "Triggers fizzle portal trap")]
-void FizzlePortalTrapCmd(const CommandArgs@ args) {
-    TriggerFizzlePortalTrap();
+[ServerCommand("ap_hologram_rotate", "Rotates the nearest hologram: ap_hologram_rotate p y r")]
+void APHologramRotateCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    float p = args.Arg(1).toFloat();
+    float y = args.Arg(2).toFloat();
+    float r = args.Arg(3).toFloat();
+
+    CBaseEntity@ nearest = null;
+    float minDist = 999999.0f;
+    CBaseEntity@ ent = null;
+    CBaseEntity@ player = EntityList().FindByClassname(null, "player");
+    if (player is null) {
+        Msgl("[AP] Error: Rotate tool could not find player.");
+        return;
+    }
+    Vector pPos = player.GetAbsOrigin();
+
+    int foundCount = 0;
+    while ((@ent = EntityList().FindByClassname(ent, "prop_dynamic")) !is null) {
+        if (ent.GetModelName().locate("archipelago_hologram") != uint(-1)) {
+            foundCount++;
+            float d = (ent.GetAbsOrigin() - pPos).Length();
+            if (d < minDist) {
+                minDist = d;
+                @nearest = ent;
+            }
+        }
+    }
+
+    if (nearest !is null && minDist < 300.0f) {
+        QAngle angles = nearest.GetAbsAngles();
+        angles.x += p;
+        angles.y += y;
+        angles.z += r;
+        nearest.SetAbsAngles(angles);
+        Msgl("[AP] Rotated '" + nearest.GetEntityName() + "' to: " + angles.x + " " + angles.y + " " + angles.z);
+    } else {
+        Msgl("[AP] No hologram near enough to rotate (Evaluated " + foundCount + " candidates). Distance: " + (nearest !is null ? string(minDist) : "N/A"));
+    }
 }
 
-[ServerCommand("DialogTrap", "Triggers dialog trap")]
-void DialogTrapCmd(const CommandArgs@ args) {
-    if (args !is null && args.ArgC() >= 2) TriggerDialogTrap(args.Arg(1)); else TriggerDialogTrap();
-}
-
-[ServerCommand("ButterFingersTrap", "Triggers butter fingers trap")]
-void ButterFingersTrapCmd(const CommandArgs@ args) {
-    TriggerButterFingersTrap();
-}
-
-[ServerCommand("ap_butterfingers_tick", "Internal")]
-void APButterFingersTickCmd(const CommandArgs@ args) {
-    RunButterFingersTick();
-}
-
-[ServerCommand("RemovePotatosFromGun", "Removes PotatOS from the player's portal gun")]
+[ServerCommand("RemovePotatosFromGun", "Removes PotatOS from the gun")]
 void RemovePotatosFromGunCmd(const CommandArgs@ args) {
     RemovePotatosFromGun();
 }
 
-[ServerCommand("RestorePotatosToGun", "Restores PotatOS to the player's portal gun")]
-void RestorePotatosToGunCmd(const CommandArgs@ args) {
-    RestorePotatosToGun();
+[ServerCommand("ap_debug_scansprayers", "Scans for all paint sprayers in the map")]
+void APDebugScanSprayersCmd(const CommandArgs@ args) {
+    int count = 0;
+    CBaseEntity@ ent = null;
+    Msgl("[AP] Scanning for paint sprayers/bombs...");
+    
+    while ((@ent = EntityList().Next(ent)) !is null) {
+        string classname = ent.GetClassname();
+        string name = ent.GetEntityName();
+        
+        bool isSprayer = (classname == "info_paint_sprayer" || classname == "prop_paint_bomb" || name.locate("paint_sprayer") != uint(-1));
+        
+        if (isSprayer) {
+            count++;
+            Vector pos = ent.GetAbsOrigin();
+            QAngle ang = ent.GetAbsAngles();
+            Msgl("  > [" + count + "] " + classname + " | Name: " + name);
+            Msgl("    - Pos: " + pos.x + " " + pos.y + " " + pos.z);
+            Msgl("    - Ang: " + ang.x + " " + ang.y + " " + ang.z);
+        }
+    }
+    
+    Msgl("[AP] Scan complete. Found " + count + " gel-related entities.");
 }
-
-
-
-
-[ServerCommand("AttachDeathTrigger", "Activates DeathLink health monitoring")]
-void AttachDeathTriggerCmd(const CommandArgs@ args) {
-    AttachDeathTrigger();
-}
-
-
-
-
-
-

@@ -33,22 +33,19 @@
 
 // 6. Shared Library
 #include "ap/shared/update_internal_map_name.as"
+#include "ap/shared/ap_hologram_visuals.as"
 #include "ap/shared/add_entity_output_script.as"
 #include "ap/shared/add_entity_output_script_at_pos.as"
 #include "ap/shared/call_vscript.as"
-#include "ap/shared/debug_list_map_triggers.as"
 #include "ap/shared/delete_core_on_output.as"
-#include "ap/shared/delete_entities_by_model.as"
 #include "ap/shared/delete_entity.as"
+#include "ap/shared/get_entities.as"
 #include "ap/shared/disable_entity.as"
 #include "ap/shared/disable_entity_physics.as"
 
 #include "ap/shared/disable_entity_pickup.as"
 #include "ap/shared/disable_portal_gun.as"
-#include "ap/shared/extract_floats.as"
 #include "ap/shared/find_entities.as"
-#include "ap/shared/parse_math.as"
-#include "ap/shared/wait_execute.as"
 #include "ap/shared/warp_to_menu.as"
 
 // 7. Interfaces & Startup
@@ -74,6 +71,7 @@ bool InitializeArchipelago() {
         cmd.PrecacheModel("models/props/archipelago/ap_floorbuttonframe.mdl");
         cmd.PrecacheModel("models/props/archipelago/ap_proptractorbeamframe.mdl");
         cmd.PrecacheModel("models/effects/ap/archipelago_hologram.mdl");
+        cmd.PrecacheModel("models/props/switch001.mdl");
         
         // Precache standard entities used in traps
         cmd.PrecacheModel("models/props/weighted_cube.mdl");

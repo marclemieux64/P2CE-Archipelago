@@ -7,5 +7,10 @@ void TriggerMotionBlurTrap() {
     CallVScript("Convars.SetValue(\"mat_motion_blur_strength\", 5)");
     
     // Reset after 20 seconds
-    WaitExecute("script Convars.SetValue(\"mat_motion_blur_enabled\", 0)", 20.0f);
+    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
+    if (cmdEnt !is null) {
+        Variant v;
+        v.SetString("script Convars.SetValue(\"mat_motion_blur_enabled\", 0)");
+        cmdEnt.FireInput("Command", v, 20.0f, null, null, 0);
+    }
 }

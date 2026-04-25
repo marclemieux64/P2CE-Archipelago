@@ -5,7 +5,12 @@ void DisablePortalGun(bool blue, bool orange, bool isDelayedCall = false) {
     if (!isDelayedCall) {
         if (current_map == "sp_a3_01") {
             // Delay disabling orange portal for 13s for the acquisition animation
-            WaitExecute("DisablePortalGun 0 1 1", 13.0f, "disable_portalgun2_sp_a3_01");
+            CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
+            if (cmdEnt !is null) {
+                Variant v;
+                v.SetString("DisablePortalGun 0 1 1");
+                cmdEnt.FireInput("Command", v, 13.0f, null, null, 0);
+            }
         }
 
         if (current_map == "sp_a2_intro") {

@@ -52,9 +52,13 @@ void PrintMapComplete() {
     
     PrintMapCompleteNoExit();
     
-    // Normal 2.0s real time delay. The engine isn't slowed down anymore,
-    // so this will execute perfectly on schedule.
-    WaitExecute("ap_warp_to_menu", 2.0f, "return_to_menu");
+    // Normal 2.0s real time delay.
+    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
+    if (cmdEnt !is null) {
+        Variant v;
+        v.SetString("ap_warp_to_menu");
+        cmdEnt.FireInput("Command", v, 2.0f, null, null, 0);
+    }
 }
 
 /**

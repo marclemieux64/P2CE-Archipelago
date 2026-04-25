@@ -56,10 +56,10 @@ IncludeScript("archipelago_notify");
 // This reconstructs the exact string that sv_init.as expects.
 // =============================================================
 function CreateAPButton(name, pos, rot, scale) {
-    local cmd = "CreateAPButton(\"" + name + "\", " +
-                "Vector(" + pos.x + ", " + pos.y + ", " + pos.z + "), " +
-                "Vector(" + rot.x + ", " + rot.y + ", " + rot.z + "), " +
-                scale + ")";
+    local cmd = "CreateAPButton \"" + name + "\" " +
+                "Vector(" + pos.x + " " + pos.y + " " + pos.z + ") " +
+                "Vector(" + rot.x + " " + rot.y + " " + rot.z + ") " +
+                scale;
     SendToConsole(cmd);
 }
 

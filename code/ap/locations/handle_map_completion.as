@@ -42,6 +42,19 @@ void PrintMapCompleteNoExit() {
 }
 
 /**
+ * WaitExecute - Schedules a console command to run after a delay.
+ */
+void WaitExecute(string command, float delay, string timerName = "") {
+    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
+    if (cmdEnt !is null) {
+        Variant v;
+        v.SetString(command);
+        cmdEnt.FireInput("Command", v, delay, null, null, 0);
+        Msgl("[AP] Scheduled command in " + delay + "s: " + command + (timerName != "" ? " (" + timerName + ")" : ""));
+    }
+}
+
+/**
  * PrintMapComplete - Print map complete and trigger the warp to the main menu.
  */
 void PrintMapComplete() {
@@ -52,13 +65,9 @@ void PrintMapComplete() {
     
     PrintMapCompleteNoExit();
     
-    // Normal 2.0s real time delay.
-    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
-    if (cmdEnt !is null) {
-        Variant v;
-        v.SetString("ap_warp_to_menu");
-        cmdEnt.FireInput("Command", v, 2.0f, null, null, 0);
-    }
+    // Normal 2.0s real time delay. The engine isn't slowed down anymore,
+    // so this will execute perfectly on schedule.
+    WaitExecute("ap_warp_to_menu", 2.0f, "return_to_menu");
 }
 
 /**

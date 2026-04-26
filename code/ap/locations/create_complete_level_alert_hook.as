@@ -13,7 +13,11 @@ void CreateCompleteLevelAlertHook(string map) {
             Vector pos = tr.GetAbsOrigin();
             bool is_target = false;
 
-            if (map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 100) is_target = true; else if (map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 100) is_target = true; else if (map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 100) is_target = true; else if (map == "sp_a4_finale1" && pos.DistTo(Vector(-12832, -3040, -112)) < 100) is_target = true; else if (map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 100) is_target = true;
+            if (map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 100) is_target = true;
+            else if (map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 100) is_target = true;
+            else if (map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 100) is_target = true;
+            else if (map == "sp_a4_finale1" && pos.DistTo(Vector(-12832, -3040, -112)) < 100) is_target = true;
+            else if (map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 100) is_target = true;
 
             if (is_target) {
                 Variant v;
@@ -59,11 +63,9 @@ void CreateCompleteLevelAlertHook(string map) {
         for (uint s = 0; s < targets.length(); s++) {
             CBaseEntity@ ent = null;
             while ((@ent = EntityList().FindByName(ent, targets[s])) != null) {
-                Variant v;
-                v.SetString("OnStartTouch ap_init_cmd:Command:ap_print_complete:0.0:-1");
+                Variant v; v.SetString("OnStartTouch ap_init_cmd:Command:ap_print_complete:0.0:-1");
                 ent.FireInput("AddOutput", v, 0.0f, null, null, 0);
-                Variant v2;
-                v2.SetString("OnTrigger ap_init_cmd:Command:ap_print_complete:0.0:-1");
+                Variant v2; v2.SetString("OnTrigger ap_init_cmd:Command:ap_print_complete:0.0:-1");
                 ent.FireInput("AddOutput", v2, 0.0f, null, null, 0);
             }
         }
@@ -78,6 +80,6 @@ void CreateCompleteLevelAlertHook(string map) {
                 cls[i].FireInput("AddOutput", v, 0.0f, null, null, 0);
             }
         }
-
+        DeleteEntity("@exit_teleport", false);
     }
 }

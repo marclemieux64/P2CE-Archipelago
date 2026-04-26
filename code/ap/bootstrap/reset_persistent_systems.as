@@ -7,6 +7,7 @@ void ResetPersistentSystems() {
     g_ButterFingersTicks = 0;
 
     g_bSentDeathLink = false;
+    g_suppressed_entities.resize(0);
 
 
     // 2. Reset Engine ConVars and Player Attributes via ServerCommand

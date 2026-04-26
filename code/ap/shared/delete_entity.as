@@ -2,7 +2,9 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
     UpdateInternalMapName();
     
     // 1. Get our targets (The finding logic handles the 'universal monster' complexity)
+    Msgl("[AP] DeleteEntity called for: '" + target + "'");
     array<CBaseEntity@> targets = FindEntities(target);
+    Msgl("[AP] FindEntities returned " + targets.length() + " result(s).");
 
     for (uint i = 0; i < targets.length(); i++) {
         CBaseEntity@ t = targets[i];
@@ -10,6 +12,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
         
         string classname = t.GetClassname();
         string tName = t.GetEntityName();
+        Msgl("[AP] Processing deletion for: [" + classname + "] " + tName);
 
         if (tName == "cube_platform_bad_landing" || tName == "cube_platform_good_landing" || tName.locate("paint_duct") != uint(-1)) {
             continue; // Skip system-critical or decorative triggers
@@ -38,7 +41,10 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
 
         // 2. Instant Hologram (Unified Registry) - Spawns only if allowed
         if (shouldSpawnHolo) {
-            Vector hPos; QAngle hAng; int hSkin; float hScale;
+            Vector hPos;
+            QAngle hAng;
+            int hSkin;
+            float hScale;
             GetHologramVisualOverrides(t, hPos, hAng, hSkin, hScale);
             
             string hName = (tName != "") ? (tName + "_holo") : (classname + "_holo");
@@ -73,11 +79,39 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
             }
         }
 
+        // 4. Final Removal / Disabling
+        bool isSprayer = (classname == "info_paint_sprayer" || classname == "paint_sphere" || 
+                          tName.locate("paint") != uint(-1) || tName.locate("sprayer") != uint(-1));
+        
+        if (isSprayer) {
+            // IDENTITY THEFT: Rename the entity so map-based loops targeting the original name fail!
+            string originalName = tName;
+            string newName = "ap_dead_sprayer_" + t.GetEntityIndex();
+            
+            // Apply the new identity
+            t.KeyValue("targetname", newName);
+            
+            // Register for recurring global suppression (heartbeat loop)
+            g_suppressed_entities.insertLast(newName);
+
+            // Force deactivation on the NEW name via engine command relay
+            CBaseEntity@ cmd = EntityList().FindByName(null, "ap_init_cmd");
+            if (cmd !is null) {
+                Variant vRelay;
+                vRelay.SetString("ent_fire " + newName + " Stop");
+                // Postpone deactivation to allow map sequence stability
+                cmd.FireInput("Command", vRelay, 0.5f, null, null, 0);
+
+                // Scrub existing gel messes after a safe delay to catch all initial flow
+                vRelay.SetString("removeallpaint");
+                cmd.FireInput("Command", vRelay, 1.0f, null, null, 0);
+            }
+
+            continue; // Keep the entity but orphan its map connections
+        }
+
         if (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel") {
             DisableEntity(target);
-        } else if (classname == "info_paint_sprayer") {
-            Variant v;
-            t.FireInput("Stop", v, 0.0f, null, null);
         } else {
             t.Remove();
         }

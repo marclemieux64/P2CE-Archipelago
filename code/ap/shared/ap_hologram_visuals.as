@@ -37,14 +37,9 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     }
 
     // 2. WHEATLEY MONITORS
-    bool isRegistered = g_monitor_break_names.exists(current_map + ":" + name);
-    bool isMonitorTrigger = (name.locate("trigger_tv_crack") != uint(-1));
-    bool isMonitorProp = (model.locate("wheatley_monitor") != uint(-1));
-
-    if (isRegistered || isMonitorTrigger || isMonitorProp) {
-        targetPos = ent.GetAbsOrigin() + (ent.Up() * 125.0f);
+    if (model.locate("wheatley_monitor") != uint(-1) || name.locate("monitor") != uint(-1) || name.locate("tv_crack") != uint(-1)) {
+        targetPos = ent.GetAbsOrigin() + (ent.Up() * 140.0f) + (ent.Left() * 40.0f);
         targetAng = ent.GetAbsAngles(); 
-        targetSkin = 0;
         targetScale = 0.9f;
         return;
     }
@@ -52,6 +47,11 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     // 3. CUBE DROPPERS (item_dropper.mdl / env_entity_maker)
     bool isDropper = (name.locate("dropper") != uint(-1) || model.locate("dropper") != uint(-1) || classname == "env_entity_maker");
     
+    // EXCLUSION: Ignore technical brushes/triggers that might have 'dropper' in name
+    if (classname.locate("func_") == 0 || classname.locate("trigger_") == 0) {
+        isDropper = false;
+    }
+
     // EXCLUSION: Only standalone buttons/cubes are excluded. If it has "dropper" in name, it counts.
     if (!isDropper && (classname.locate("cube") != uint(-1) || classname.locate("button") != uint(-1))) {
         // already false
@@ -59,7 +59,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         targetSkin = 4;
         
         bool isUnderground = (model.locate("underground") != uint(-1) || current_map.locate("sp_a3_") == 0);
-        float zOffset = isUnderground ? -130.0f : -355.0f;
+        float zOffset = isUnderground ? -130.0f : -420.0f;
         
         // env_entity_maker is usually placed at the mouth already
         if (classname == "env_entity_maker") {
@@ -78,15 +78,16 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
             while ((@maker = EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
                 string mName = maker.GetEntityName();
                 Msgl("  > Found maker in map: " + mName);
-                if (mName.locate(prefix) != uint(-1)) {
-                    // Found a maker for this instance! Use its full center as base
+                if (mName.locate(prefix) != uint(-1) && mName.locate("spawner") != uint(-1)) {
+                    // Found a maker for this instance! Use its center as base
                     Vector makerPos = maker.GetAbsOrigin();
-                    targetPos = makerPos; 
+                    targetPos = makerPos + (ent.Up() * zOffset); 
+                    
                     // Fine-tune underground maker centering (trap-style droppers)
                     if (isUnderground) {
                         targetPos.x += -0.625f;
                         targetPos.y += 0.0f;
-                        targetPos.z += -70.0f; // User identified nudge
+                        targetPos.z = makerPos.z + -70.0f; // Force specific Z for traps
                     }
                     break;
                 }
@@ -103,17 +104,18 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
             targetAng.x = 0.0f; // Standard floor/ceiling flat
         }
 
-        Msgl("[AP-DEBUG] Dropper: " + name + " Model: " + model + " Cls: " + classname);
-        Msgl("  > Origin: " + ent.GetAbsOrigin().x + ", " + ent.GetAbsOrigin().y + ", " + ent.GetAbsOrigin().z);
-        Msgl("  > TargetPos: " + targetPos.x + ", " + targetPos.y + ", " + targetPos.z);
-        Msgl("  > FinalAng: " + targetAng.x);
+        // Msgl("[AP-DEBUG] Dropper: " + name + " Model: " + model + " Cls: " + classname);
         return;
     }
 
-    // 4. PAINT SPRAYERS / GEL BOMBS (GEL DROPPERS)
-    if (classname == "info_paint_sprayer" || classname == "prop_paint_bomb" || name.locate("paint_sprayer") != uint(-1)) {
+    // 4. PAINT SPRAYERS / GEL BOMBS / PAINT SPHERES
+    bool isSprayer = (classname == "info_paint_sprayer" || classname == "paint_sphere" || 
+        name.locate("paint") != uint(-1) || name.locate("sprayer") != uint(-1));
+
+    if (isSprayer) {
+        bool isNozzle = (classname == "info_paint_sprayer" || classname == "paint_sphere");
         targetSkin = 4;
-        if (classname == "info_paint_sprayer") {
+        if (isNozzle) {
             targetPos = ent.GetAbsOrigin() + (ent.Forward() * 48.0f); 
         } else {
             targetPos = ent.GetAbsOrigin() + (ent.Up() * 24.0f);
@@ -200,6 +202,49 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         targetSkin = 4;
         targetPos = ent.GetAbsOrigin() + (ent.Up() * 40.0f);
         targetScale = 1.0f;
+        return;
+    }
+
+    // 11. LASER DEVICES (Catchers, Relays, Sensors, Emitters)
+    bool isLaser = (classname.locate("laser") != uint(-1) || name.locate("laser") != uint(-1));
+    if (isLaser) {
+        targetSkin = 4;
+        targetScale = 0.7f; // Default scale for all laser checks
+        
+        // Relay/Catcher/Emitter logic based on keyword found
+        if (classname.locate("relay") != uint(-1) || name.locate("relay") != uint(-1)) {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 50.0f);
+            targetScale = 0.66f;
+        } else if (classname.locate("catcher") != uint(-1) || name.locate("catcher") != uint(-1) ||
+            classname.locate("sensor") != uint(-1) || name.locate("sensor") != uint(-1)) {
+            
+            // ADAPTIVE OFFSET: If on floor/ceiling (high pitch), we need more room
+            QAngle ang = ent.GetAbsAngles();
+            float offsetDist = (abs(ang.x) > 45.0f) ? 45.0f : 32.0f;
+            
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * offsetDist);
+            targetScale = 0.5f;
+        } else if (classname.locate("env_portal_laser") != uint(-1) || model.locate("laser") != uint(-1)) {
+            // Emitters also stick out from face
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 25.0f);
+            targetScale = 0.7f;
+        }
+        return;
+    }
+
+    // 12. HARD LIGHT BRIDGES
+    if (classname == "prop_wall_projector" || name.locate("bridge") != uint(-1)) {
+        targetSkin = 4;
+        targetPos = ent.GetAbsOrigin() + (ent.Forward() * 25.0f);
+        targetScale = 0.8f;
+        return;
+    }
+
+    // 13. TURRETS
+    if (classname == "npc_portal_turret_floor" || classname == "npc_rocket_turret" || model.locate("turret") != uint(-1)) {
+        targetSkin = 2;
+        targetPos = ent.GetAbsOrigin() + (ent.Up() * 80.0f);
+        targetScale = 0.7f;
         return;
     }
 }

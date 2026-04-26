@@ -12,6 +12,10 @@ void DoMapSpecificSetup(string current_map) {
             Variant vOut;
             vOut.SetString("OnStartTouch ap_init_cmd:Command:ap_print_item Portal Gun:0.0:1");
             pg2.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
+            
+            // Force it to disable after one fire to prevent floods
+            Variant vDis; vDis.SetString("OnStartTouch !self:Disable::0.1:-1");
+            pg2.FireInput("AddOutput", vDis, 0.0f, null, null, 0);
         }
     } else if (current_map == "sp_a2_intro") {
         CBaseEntity@ gun_trigger = EntityList().FindByName(null, "player_near_portalgun");

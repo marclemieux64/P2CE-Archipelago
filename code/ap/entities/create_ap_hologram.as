@@ -5,7 +5,7 @@ void CreateAPHologram(Vector position, QAngle angles, float scale, string new_pa
 
     // 0. IDEMPOTENCY CHECK - Avoid double spawning at the same spot
     CBaseEntity@ check = null;
-    while ((@check = EntityList().FindByClassnameWithin(check, "prop_dynamic", position, 128.0f)) !is null) {
+    while ((@check = EntityList().FindByClassnameWithin(check, "prop_dynamic", position, 8.0f)) !is null) {
         if (check.GetModelName().locate("archipelago_hologram") != uint(-1)) {
             // New Name-Aware Check: Only snap if it's the SAME named hologram OR both are unnamed
             string checkName = check.GetEntityName();

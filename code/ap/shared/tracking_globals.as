@@ -26,6 +26,7 @@ bool portalgun_2_disabled = false;
 
 
 int transition_script_count = 0;
+array<string> g_suppressed_entities; 
 array<string> two_trigger_levels = { "sp_a1_intro1", "sp_a4_finale1", "sp_a4_finale3" };
 array<string> non_elevator_maps = { 
     "sp_a1_intro1", "sp_a1_intro7", "sp_a1_wakeup", "sp_a2_turret_intro", "sp_a2_bts1", 

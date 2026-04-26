@@ -24,6 +24,39 @@ array<float> ExtractFloats(string raw) {
     return results;
 }
 
+/**
+ * APDebugSprayersCmd - Prints diagnostic info for all gel dispensers.
+ */
+[ServerCommand("ap_debug_sprayers", "Diagnostics for paint sprayers")]
+void APDebugSprayersCmd(const CommandArgs@ args) {
+    Msgl("[AP] --- SPRAYER DIAGNOSTICS ---");
+    CBaseEntity@ ent = EntityList().First();
+    int count = 0;
+    while (@ent !is null) {
+        string cls = ent.GetClassname();
+        string name = ent.GetEntityName();
+        if (cls == "info_paint_sprayer" || cls == "paint_sphere" || name.locate("paint") != uint(-1) || name.locate("sprayer") != uint(-1)) {
+            count++;
+            Vector pos = ent.GetAbsOrigin();
+            Msgl("[AP] Sprayer [" + ent.GetEntityIndex() + "] Class: " + cls + " | Name: '" + name + "' | Pos: " + pos.x + " " + pos.y + " " + pos.z);
+            
+            // Look for a nearby hologram
+            bool hasHolo = false;
+            CBaseEntity@ h = EntityList().First();
+            while (@h !is null) {
+                if (h.GetClassname() == "prop_dynamic" && h.GetModelName().locate("hologram") != uint(-1)) {
+                    float dist = (h.GetAbsOrigin() - ent.GetAbsOrigin()).Length();
+                    if (dist < 100.0f) { hasHolo = true; break; }
+                }
+                @h = EntityList().Next(h);
+            }
+            Msgl("[AP]   -> Holo Detected: " + (hasHolo ? "YES" : "NO"));
+        }
+        @ent = EntityList().Next(ent);
+    }
+    Msgl("[AP] Found " + count + " gel-related entities.");
+}
+
 // -------------------------------------------------------------
 // CORE ARCHIPELAGO COMMANDS
 // -------------------------------------------------------------
@@ -105,6 +138,50 @@ void APSpawnHolosCmd(const CommandArgs@ args) {
 [ServerCommand("ap_print_complete", "Triggers map completion logic")]
 void APPrintCompleteCmd(const CommandArgs@ args) {
     PrintMapComplete();
+}
+
+[ServerCommand("ap_warp_to_menu", "Internal - Warps back to menu")]
+void APWarpToMenuCmd(const CommandArgs@ args) {
+    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
+    if (cmdEnt !is null) {
+        Variant vCmd;
+        vCmd.SetString("host_timescale 1.0");
+        cmdEnt.FireInput("Command", vCmd, 0.0f, null, null, 0);
+    }
+    WarpToMenu();
+}
+
+[ServerCommand("ap_print_item", "Prints collected item")]
+void APPrintItemCmd(const CommandArgs@ args) {
+    if (args is null) return;
+    string raw = args.GetCommandString();
+    uint spaceIdx = raw.locate(" ");
+    if (spaceIdx != uint(-1)) {
+        string item = raw.substr(int(spaceIdx) + 1).trim();
+        Msgl("item_collected:" + item);
+    }
+}
+
+[ServerCommand("ap_print_monitor", "Internal - Prints monitor break check to console")]
+void APPrintMonitorCmd(const CommandArgs@ args) {
+    if (args is null) return;
+    string raw = args.GetCommandString();
+    
+    // DEBUG: Show exactly what arrived at the command
+    Msgl("[AP DEBUG] Received Monitor Call: " + raw);
+
+    uint spaceIdx = raw.locate(" ");
+    if (spaceIdx != uint(-1)) {
+        string check = raw.substr(int(spaceIdx) + 1).trim();
+        check = check.replace(".", " "); // Restore spaces from periods
+        Msgl("monitor_break:" + check);
+    }
+}
+
+[ServerCommand("AddWheatleyMonitorBreakCheck", "Manually triggers Wheatley monitor break check setup")]
+void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
+    UpdateInternalMapName();
+    AddWheatleyMonitorBreakCheck(current_map);
 }
 
 [ServerCommand("ap_hologram_offset", "Nudges the nearest hologram: ap_hologram_offset x y z")]
@@ -191,27 +268,53 @@ void RemovePotatosFromGunCmd(const CommandArgs@ args) {
     RemovePotatosFromGun();
 }
 
-[ServerCommand("ap_debug_scansprayers", "Scans for all paint sprayers in the map")]
-void APDebugScanSprayersCmd(const CommandArgs@ args) {
+[ServerCommand("ap_debug_scanall", "Scans for all Archipelago-relevant checks in the map")]
+void APDebugScanAllCmd(const CommandArgs@ args) {
     int count = 0;
     CBaseEntity@ ent = null;
-    Msgl("[AP] Scanning for paint sprayers/bombs...");
+    Msgl("[AP] Scanning for all items (lasers, bridges, turrets, sprayers, etc)...");
     
     while ((@ent = EntityList().Next(ent)) !is null) {
-        string classname = ent.GetClassname();
+        string cls = ent.GetClassname();
         string name = ent.GetEntityName();
+        string model = ent.GetModelName();
         
-        bool isSprayer = (classname == "info_paint_sprayer" || classname == "prop_paint_bomb" || name.locate("paint_sprayer") != uint(-1));
-        
-        if (isSprayer) {
+        bool isCheck = false;
+        if (cls.locate("laser") != uint(-1) || name.locate("laser") != uint(-1)) isCheck = true;
+        if (cls.locate("paint") != uint(-1) || name.locate("paint") != uint(-1)) isCheck = true;
+        if (cls.locate("bridge") != uint(-1) || cls == "prop_wall_projector") isCheck = true;
+        if (cls.locate("turret") != uint(-1)) isCheck = true;
+        if (cls.locate("button") != uint(-1)) isCheck = true;
+        if (cls.locate("dropper") != uint(-1) || name.locate("dropper") != uint(-1)) isCheck = true;
+
+        if (isCheck) {
             count++;
             Vector pos = ent.GetAbsOrigin();
-            QAngle ang = ent.GetAbsAngles();
-            Msgl("  > [" + count + "] " + classname + " | Name: " + name);
+            Msgl("  > [" + count + "] [" + cls + "] " + (name == "" ? "(unnamed)" : name));
             Msgl("    - Pos: " + pos.x + " " + pos.y + " " + pos.z);
-            Msgl("    - Ang: " + ang.x + " " + ang.y + " " + ang.z);
+            if (model != "") Msgl("    - Model: " + model);
         }
     }
     
-    Msgl("[AP] Scan complete. Found " + count + " gel-related entities.");
+    Msgl("[AP] Scan complete. Found " + count + " relevant entities.");
+}
+
+[ServerCommand("ap_debug_find", "Tests the FindEntities function")]
+void APDebugFindCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) {
+        Msgl("Usage: ap_debug_find <search_string>");
+        return;
+    }
+    
+    string search = args.Arg(1);
+    Msgl("[AP] Testing FindEntities for: " + search);
+    
+    array<CBaseEntity@> targets = FindEntities(search);
+    Msgl("Found " + targets.length() + " result(s):");
+    
+    for (uint i = 0; i < targets.length(); i++) {
+        CBaseEntity@ t = targets[i];
+        Msgl("  > [" + (i + 1) + "] [" + t.GetClassname() + "] " + t.GetEntityName());
+        Msgl("    - Pos: " + t.GetAbsOrigin().x + " " + t.GetAbsOrigin().y + " " + t.GetAbsOrigin().z);
+    }
 }

@@ -113,7 +113,7 @@ void AddFloorButtonFrameCmd(const CommandArgs@ args) {
 void DisablePortalGunCmd(const CommandArgs@ args) {
     if (args.ArgC() < 3) return;
     bool blue = (args.Arg(1) == "1");
-    bool orange = (args.Arg(2) == "2");
+    bool orange = (args.Arg(2) == "1");
     DisablePortalGun(blue, orange);
 }
 
@@ -135,9 +135,14 @@ void APSpawnHolosCmd(const CommandArgs@ args) {
     CreateMapSpecificHolos(current_map);
 }
 
-[ServerCommand("ap_print_complete", "Triggers map completion logic")]
+[ServerCommand("FinishMap", "Triggers map completion logic")]
 void APPrintCompleteCmd(const CommandArgs@ args) {
     PrintMapComplete();
+}
+
+[ServerCommand("ap_print_complete_no_exit", "Triggers map completion logic without exiting")]
+void APPrintCompleteNoExitCmd(const CommandArgs@ args) {
+    PrintMapCompleteNoExit();
 }
 
 [ServerCommand("ap_warp_to_menu", "Internal - Warps back to menu")]
@@ -167,14 +172,19 @@ void APPrintMonitorCmd(const CommandArgs@ args) {
     if (args is null) return;
     string raw = args.GetCommandString();
     
-    // DEBUG: Show exactly what arrived at the command
-    Msgl("[AP DEBUG] Received Monitor Call: " + raw);
-
     uint spaceIdx = raw.locate(" ");
     if (spaceIdx != uint(-1)) {
         string check = raw.substr(int(spaceIdx) + 1).trim();
         check = check.replace(".", " "); // Restore spaces from periods
+        
+        // Suppression check: Don't print if already reported this session
+        if (g_reported_monitors.find(check) >= 0) return;
+        g_reported_monitors.insertLast(check);
+
         Msgl("monitor_break:" + check);
+
+        // Map-Specific Monitor Teleports
+        HandleMonitorWarp(check);
     }
 }
 
@@ -182,6 +192,21 @@ void APPrintMonitorCmd(const CommandArgs@ args) {
 void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
     UpdateInternalMapName();
     AddWheatleyMonitorBreakCheck(current_map);
+}
+
+[ServerCommand("RemovePotatOS", "Removes PotatOS and establishes instructor hints")]
+void APRemovePotatOSCmd(const CommandArgs@ args) {
+    RemovePotatOS();
+}
+
+[ServerCommand("InciniratorDisablePortalGun", "Bridge from VScript/Client")]
+void InciniratorDisablePortalGunCmd(const CommandArgs@ args) {
+    IncineratorDisablePortalGun();
+}
+
+[ServerCommand("BlockWheatleyFight", "Blocks the Wheatley fight and establishes instructor hints")]
+void APBlockWheatleyFightCmd(const CommandArgs@ args) {
+    BlockWheatleyFight();
 }
 
 [ServerCommand("ap_hologram_offset", "Nudges the nearest hologram: ap_hologram_offset x y z")]
@@ -268,6 +293,11 @@ void RemovePotatosFromGunCmd(const CommandArgs@ args) {
     RemovePotatosFromGun();
 }
 
+[ServerCommand("RestorePotatosToGun", "Restores PotatOS to the gun")]
+void RestorePotatosToGunCmd(const CommandArgs@ args) {
+    RestorePotatosToGun();
+}
+
 [ServerCommand("ap_debug_scanall", "Scans for all Archipelago-relevant checks in the map")]
 void APDebugScanAllCmd(const CommandArgs@ args) {
     int count = 0;
@@ -317,4 +347,43 @@ void APDebugFindCmd(const CommandArgs@ args) {
         Msgl("  > [" + (i + 1) + "] [" + t.GetClassname() + "] " + t.GetEntityName());
         Msgl("    - Pos: " + t.GetAbsOrigin().x + " " + t.GetAbsOrigin().y + " " + t.GetAbsOrigin().z);
     }
+}
+
+// -------------------------------------------------------------
+// TRAP COMMANDS 
+// -------------------------------------------------------------
+
+[ServerCommand("CubeConfettiTrap", "Triggers cube confetti trap")]
+void CubeConfettiTrapCmd(const CommandArgs@ args) {
+    TriggerCubeConfettiTrap();
+}
+
+[ServerCommand("MotionBlurTrap", "Triggers motion blur trap")]
+void MotionBlurTrapCmd(const CommandArgs@ args) {
+    TriggerMotionBlurTrap();
+}
+
+[ServerCommand("SlipperyFloorTrap", "Triggers slippery floor trap")]
+void SlipperyFloorTrapCmd(const CommandArgs@ args) {
+    TriggerSlipperyFloorTrap();
+}
+
+[ServerCommand("FizzlePortalTrap", "Triggers fizzle portal trap")]
+void FizzlePortalTrapCmd(const CommandArgs@ args) {
+    TriggerFizzlePortalTrap();
+}
+
+[ServerCommand("DialogTrap", "Triggers dialog trap")]
+void DialogTrapCmd(const CommandArgs@ args) {
+    if (args !is null && args.ArgC() >= 2) TriggerDialogTrap(args.Arg(1)); else TriggerDialogTrap();
+}
+
+[ServerCommand("ButterFingersTrap", "Triggers butter fingers trap")]
+void ButterFingersTrapCmd(const CommandArgs@ args) {
+    TriggerButterFingersTrap();
+}
+
+[ServerCommand("ap_butterfingers_tick", "Internal")]
+void APButterFingersTickCmd(const CommandArgs@ args) {
+    RunButterFingersTick();
 }

@@ -78,5 +78,16 @@ void SpawnAPButtonLogic(string name, Vector position, QAngle angle, float holo_s
             coll.SetCollisionBounds(Vector(-8, -8, -8), Vector(8, 8, 8));
         }
     }
-    CreateAPHologram(Vector(position.x, position.y, position.z + 53), QAngle(0, 0, 0), holo_scale, "", "", 0);
+   // --- NEW LOGIC FOR THE HOLOGRAM ---
+    Vector hPos;
+    QAngle hAng;
+    int hSkin;
+    float hScale = holo_scale;
+
+// Use our central visual override system
+    GetHologramVisualOverrides(body, hPos, hAng, hSkin, hScale);
+
+// Create the hologram with the new name
+    CreateAPHologram(hPos, hAng, hScale, "", "", hSkin, scenarioName + "_holo");
+
 }

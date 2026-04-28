@@ -8,6 +8,7 @@ void ResetPersistentSystems() {
 
     g_bSentDeathLink = false;
     g_suppressed_entities.resize(0);
+    g_reported_monitors.resize(0);
 
 
     // 2. Reset Engine ConVars and Player Attributes via ServerCommand
@@ -28,6 +29,12 @@ void ResetPersistentSystems() {
         
         // Reset Visuals (Motion Blur Trap)
         v.SetString("mat_motion_blur_enabled 1"); // Assuming default is 1
+        cmd.FireInput("Command", v, 0.0f, null, null, 0);
+
+        // Reset Sound Mixers (PotatOS Silence restoration)
+        v.SetString("snd_setmixer potatosVO vol 0.4");
+        cmd.FireInput("Command", v, 0.0f, null, null, 0);
+        v.SetString("snd_setmixer gladosVO vol 0.7");
         cmd.FireInput("Command", v, 0.0f, null, null, 0);
         
         Msgl("[AP] Persistent systems have been sanitized for the new session.");

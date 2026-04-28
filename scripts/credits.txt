@@ -19,6 +19,10 @@
 //========================================================
 "OutroCreditsNames"
 {
+	">P2CE Archipelago MOD Credits:" "CreditsOutroText"
+	">Lead Thinkerer:" "CreditsOutroText"
+	"Marclemieux64" "CreditsOutroText"
+	">Original Achieplago MOD Credits:" "CreditsOutroText"
 	">LIST PERSONNEL:" "CreditsOutroText"
 	"Dyroha" "CreditsOutroText"
 	"Proplayen" "CreditsOutroText"

@@ -16,6 +16,7 @@
 
 // 3. Locations (Randomizer Checks & Progression)
 #include "ap/locations/add_wheatley_monitor_break_check.as"
+#include "ap/locations/HandleMonitorWarp.as"
 #include "ap/locations/spawn_ap_button_logic.as"
 #include "ap/locations/create_complete_level_alert_hook.as"
 #include "ap/locations/handle_map_completion.as"
@@ -29,8 +30,6 @@
 #include "ap/overrides/disarm_legacy_logic.as"
 #include "ap/overrides/block_wheatley_fight.as"
 
-
-
 // 6. Shared Library
 #include "ap/shared/update_internal_map_name.as"
 #include "ap/shared/ap_hologram_visuals.as"
@@ -39,7 +38,7 @@
 #include "ap/shared/call_vscript.as"
 #include "ap/shared/delete_core_on_output.as"
 #include "ap/shared/delete_entity.as"
-#include "ap/shared/get_entities.as"
+//#include "ap/shared/get_entities.as"
 #include "ap/shared/disable_entity.as"
 #include "ap/shared/disable_entity_physics.as"
 

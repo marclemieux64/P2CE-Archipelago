@@ -65,3 +65,6 @@ data/client/ts.scope
 data/client/as.predefined
 data/server/as.predefined
 data/cvars.json
+scripts/extras.txt
+extras.txt
+run test todo.txt

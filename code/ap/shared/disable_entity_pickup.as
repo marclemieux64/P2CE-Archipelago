@@ -8,6 +8,6 @@ void DisableEntityPickup(string target) {
         CBaseEntity@ t = targets[i];
         if (t is null) continue;
         t.KeyValue("PickupEnabled", "0");
-        Msgl("[AP] Disabled pickup for: " + t.GetClassname() + " (" + target + ")");
+       //Msgl("[AP] Disabled pickup for: " + t.GetClassname() + " (" + target + ")");
     }
 }

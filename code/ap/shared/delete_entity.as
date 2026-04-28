@@ -2,9 +2,9 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
     UpdateInternalMapName();
     
     // 1. Get our targets (The finding logic handles the 'universal monster' complexity)
-    Msgl("[AP] DeleteEntity called for: '" + target + "'");
+    // Msgl("[AP] DeleteEntity called for: '" + target + "'");
     array<CBaseEntity@> targets = FindEntities(target);
-    Msgl("[AP] FindEntities returned " + targets.length() + " result(s).");
+    // Msgl("[AP] FindEntities returned " + targets.length() + " result(s).");
 
     for (uint i = 0; i < targets.length(); i++) {
         CBaseEntity@ t = targets[i];
@@ -12,7 +12,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
         
         string classname = t.GetClassname();
         string tName = t.GetEntityName();
-        Msgl("[AP] Processing deletion for: [" + classname + "] " + tName);
+        // Msgl("[AP] Processing deletion for: [" + classname + "] " + tName);
 
         if (tName == "cube_platform_bad_landing" || tName == "cube_platform_good_landing" || tName.locate("paint_duct") != uint(-1)) {
             continue; // Skip system-critical or decorative triggers
@@ -27,14 +27,14 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
             }
         }
         
-        // Special Rule: We never want holograms for catapults (user request for clean visuals)
+        // Special Rule: We never want holograms for catapults or specific laser beams (clean visuals)
         bool shouldSpawnHolo = create_holo;
-        if (classname == "trigger_catapult") {
+        if (classname == "trigger_catapult" || tName.locate("lower_gate_laser") != uint(-1)) {
             shouldSpawnHolo = false;
         }
 
         if (classname == "trigger_catapult" && isProtectedMap) {
-            Msgl("[AP] BLOCKED Deletion of protected catapult '" + tName + "' on " + current_map);
+            //Msgl("[AP] BLOCKED Deletion of protected catapult '" + tName + "' on " + current_map);
             // On these maps, we KEEP the catapult and spawn NO holo.
             shouldSpawnHolo = false; 
         }
@@ -74,45 +74,129 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
             }
             
             if (!foundPlate) {
-                Msgl("[AP] SKIPPING invisible catapult deletion (no faith plate nearby)");
+                //Msgl("[AP] SKIPPING invisible catapult deletion (no faith plate nearby)");
                 continue; 
             }
         }
 
         // 4. Final Removal / Disabling
         bool isSprayer = (classname == "info_paint_sprayer" || classname == "paint_sphere" || 
-                          tName.locate("paint") != uint(-1) || tName.locate("sprayer") != uint(-1));
+            tName.locate("paint") != uint(-1) || tName.locate("sprayer") != uint(-1));
         
         if (isSprayer) {
-            // IDENTITY THEFT: Rename the entity so map-based loops targeting the original name fail!
-            string originalName = tName;
-            string newName = "ap_dead_sprayer_" + t.GetEntityIndex();
+            // 1. Change the base property so it doesn't start on its own
+            t.KeyValue("start_active", "0");
             
-            // Apply the new identity
-            t.KeyValue("targetname", newName);
             
-            // Register for recurring global suppression (heartbeat loop)
-            g_suppressed_entities.insertLast(newName);
+            // 2. IDENTITY THEFT: Disable associated paint templates so they can't be spawned
+            CBaseEntity@ template = null;
+            while ((@template = EntityList().FindByClassname(template, "point_template")) !is null) {
+                string tempName = template.GetEntityName();
+                // Check if it's a paint bomb template (handles global and instanced names like prefix-paint_bomb_template)
+                if (tempName.locate("paint_bomb_template") != uint(-1) && tempName.locate("_disabled") == uint(-1)) {
+                    template.KeyValue("targetname", tempName + "_disabled");
+                    // Msgl("[AP] Disabled point_template: " + tempName);
+                }
+            }
+            
+            // 3. Direct AngelScript deactivation
+            Variant vEmpty;
+            // Stop it instantly...
+            t.FireInput("Stop", vEmpty, 0.0f, null, null, 0);
+            
+            // ...AND apply "this" (the delay) to the Stop input as well!
+            // This tells the sprayer to Stop again after 3 seconds, just in case the map tried to turn it back on.
+            t.FireInput("Stop", vEmpty, 3.0f, null, null, 0);
+            
+            // Map-specific fix for sp_a3_speed_flings
+            // Disable the timers that constantly try to turn the sprayers back on!
+            if (current_map == "sp_a3_speed_flings") {
+                CBaseEntity@ bounceTimer = EntityList().FindByName(null, "paint_bounce_timer");
+                if (bounceTimer !is null) bounceTimer.FireInput("Disable", vEmpty, 0.0f, null, null, 0);
+                
+                CBaseEntity@ speedTimer = EntityList().FindByName(null, "paint_speed_timer");
+                if (speedTimer !is null) speedTimer.FireInput("Disable", vEmpty, 0.0f, null, null, 0);
+            }
+            
+            // Map-specific fix for sp_a3_portal_intro
+            // Lock the pump buttons so the player can't manually start them, and show a hint if they try!
+            if (current_map == "sp_a3_portal_intro") {
+                string hintName = "ap_paint_hint";
+                CBaseEntity@ hint = EntityList().FindByName(null, hintName);
+                if (hint is null) {
+                    @hint = util::CreateEntityByName("env_instructor_hint");
+                    if (hint !is null) {
+                        hint.KeyValue("targetname", hintName);
+                        hint.KeyValue("hint_caption", "You don't have Paint!");
+                        hint.KeyValue("hint_color", "255 50 50");
+                        hint.KeyValue("hint_timeout", "3");
+                        hint.KeyValue("hint_icon_onscreen", "icon_tip");
+                        hint.KeyValue("hint_forcecaption", "1");
+                        hint.Spawn();
+                    }
+                }
 
-            // Force deactivation on the NEW name via engine command relay
+                Variant vHook;
+                vHook.SetString("OnUseLocked " + hintName + ":ShowHint::0:-1");
+
+                CBaseEntity@ btnBlue = EntityList().FindByName(null, "pump_machine_blue_button");
+                if (btnBlue !is null) {
+                    btnBlue.FireInput("Lock", vEmpty, 0.0f, null, null, 0);
+                    btnBlue.FireInput("AddOutput", vHook, 0.0f, null, null, 0);
+                }
+                
+                // Handling both just in case the trailing underscore you typed was a typo from Hammer!
+                CBaseEntity@ btnOrange = EntityList().FindByName(null, "pump_machine_orange_button");
+                if (btnOrange !is null) {
+                    btnOrange.FireInput("Lock", vEmpty, 0.0f, null, null, 0);
+                    btnOrange.FireInput("AddOutput", vHook, 0.0f, null, null, 0);
+                }
+                CBaseEntity@ btnOrangeTypo = EntityList().FindByName(null, "pump_machine_orange_button_");
+                if (btnOrangeTypo !is null) {
+                    btnOrangeTypo.FireInput("Lock", vEmpty, 0.0f, null, null, 0);
+                    btnOrangeTypo.FireInput("AddOutput", vHook, 0.0f, null, null, 0);
+                }
+                
+                CBaseEntity@ btnWhite = EntityList().FindByName(null, "pump_machine_white_button");
+                if (btnWhite !is null) {
+                    btnWhite.FireInput("Lock", vEmpty, 0.0f, null, null, 0);
+                    btnWhite.FireInput("AddOutput", vHook, 0.0f, null, null, 0);
+                }
+            }
+            
+            // 4. Scrub existing gel messes after a safe delay to catch any pre-load spills
             CBaseEntity@ cmd = EntityList().FindByName(null, "ap_init_cmd");
             if (cmd !is null) {
                 Variant vRelay;
-                vRelay.SetString("ent_fire " + newName + " Stop");
-                // Postpone deactivation to allow map sequence stability
-                cmd.FireInput("Command", vRelay, 0.5f, null, null, 0);
-
-                // Scrub existing gel messes after a safe delay to catch all initial flow
                 vRelay.SetString("removeallpaint");
-                cmd.FireInput("Command", vRelay, 1.0f, null, null, 0);
+                // Wait 4.5s to ensure any falling paint blobs hit the ground and explode first
+                cmd.FireInput("Command", vRelay,3.0f, null, null, 0);
             }
 
-            continue; // Keep the entity but orphan its map connections
+            continue; // Keep the entity but stop its flow
         }
 
         if (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel") {
             DisableEntity(target);
         } else {
+            // Map-specific cleanup for the Frankenturret on sp_a4_intro
+            if (current_map == "sp_a4_intro" && classname == "prop_monster_box") {
+                CBaseEntity@ cubeBot = null;
+                // 1. Delete the specific attached model the mapper used for this box
+                while ((@cubeBot = EntityList().FindByName(cubeBot, "cube_bot_model")) !is null) {
+                    cubeBot.Remove();
+                }
+
+                // 2. ONLY hook the dynamic spawner if Archipelago specifically asked us to delete them!
+                CBaseEntity@ trigger = EntityList().FindByClassnameNearest("trigger_once", Vector(-816, 64, 320), 10.0f);
+                if (trigger !is null) {
+                    Variant vOut;
+                    // Delete the dynamic box 1s after trigger touch
+                    vOut.SetString("OnStartTouch ap_init_cmd:Command:DeleteEntity prop_monster_box 1 0.7:1.0:-1");
+                    trigger.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
+                }
+            }
+            
             t.Remove();
         }
     }

@@ -1,16 +1,21 @@
 void TriggerMotionBlurTrap() {
-    CBaseEntity@ player = EntityList().FindByClassname(null, "player");
-    if (player is null) return;
-    
-    // Attempt to force motion blur via VScript as there is no native entity for it in P2CE
-    CallVScript("Convars.SetValue(\"mat_motion_blur_enabled\", 1)");
-    CallVScript("Convars.SetValue(\"mat_motion_blur_strength\", 5)");
-    
-    // Reset after 20 seconds
-    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
-    if (cmdEnt !is null) {
+    // 1. Find or create logic_playerproxy
+    CBaseEntity@ lpp = EntityList().FindByClassname(null, "logic_playerproxy");
+    if (lpp is null) {
+        @lpp = util::CreateEntityByName("logic_playerproxy");
+        if (lpp !is null) lpp.Spawn();
+    }
+
+    if (lpp !is null) {
         Variant v;
-        v.SetString("script Convars.SetValue(\"mat_motion_blur_enabled\", 0)");
-        cmdEnt.FireInput("Command", v, 20.0f, null, null, 0);
+        
+        // 2. Activate blur
+        v.SetFloat(1.0f);
+        lpp.FireInput("SetMotionBlurAmount", v, 0.0f, null, null);
+
+        // 3. Set up timed reset (20 seconds)
+        v.SetFloat(0.0f);
+        lpp.FireInput("SetMotionBlurAmount", v, 20.0f, null, null);
     }
 }
+

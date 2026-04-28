@@ -16,14 +16,6 @@ void PrintMapCompleteNoExit() {
     if (current_map == "sp_a4_finale4") {
         return;
     }
-    
-    // Play a distinct UI alert sound instantly on the same engine tick (no VScript latency)
-    CBaseEntity@ cmdInfo = EntityList().FindByName(null, "ap_init_cmd");
-    if (cmdInfo !is null) {
-        Variant vSnd; vSnd.SetString("play ui/menu_accept.wav");
-        cmdInfo.FireInput("Command", vSnd, 0.0f, null, null, 0);
-    }
-
     // Disable the player inputs cleanly
     CBaseEntity@ player = EntityList().FindByName(null, "!player");
     if (player !is null) {

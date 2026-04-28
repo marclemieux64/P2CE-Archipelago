@@ -47,6 +47,15 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     // 3. CUBE DROPPERS (item_dropper.mdl / env_entity_maker)
     bool isDropper = (name.locate("dropper") != uint(-1) || model.locate("dropper") != uint(-1) || classname == "env_entity_maker");
     
+    // EXCLUSION: If it's a cube entity, it's NOT a dropper, EXCEPT on specific maps where we want to use the maker's position
+    if (classname == "prop_weighted_cube") {
+        if ((current_map == "sp_a3_jump_intro" || current_map == "sp_a3_crazy_box" || current_map == "sp_a3_speed_flings") && name.locate("dropper") != uint(-1)) {
+            isDropper = true; // It's a dropper-spawned cube, find the maker!
+        } else {
+            isDropper = false; // It's a normal standalone cube, do not use maker offsets
+        }
+    }
+
     // EXCLUSION: Ignore technical brushes/triggers that might have 'dropper' in name
     if (classname.locate("func_") == 0 || classname.locate("trigger_") == 0) {
         isDropper = false;
@@ -58,12 +67,12 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     } else if (isDropper) {
         targetSkin = 4;
         
-        bool isUnderground = (model.locate("underground") != uint(-1) || current_map.locate("sp_a3_") == 0);
+        bool isUnderground = (model.locate("underground") != uint(-1) || current_map.locate("sp_a3_") == 0 || name.locate("room_") == 0);
         float zOffset = isUnderground ? -130.0f : -420.0f;
         
         // env_entity_maker is usually placed at the mouth already
         if (classname == "env_entity_maker") {
-            zOffset = -24.0f; 
+            zOffset = -30.0f; 
         }
 
         // 1. Calculate base position with vertical nudge
@@ -74,14 +83,21 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         if (dashIdx != uint(-1)) {
             string prefix = name.substr(0, int(dashIdx));
             CBaseEntity@ maker = null;
-            Msgl("[AP-DEBUG] Searching for maker with prefix: " + prefix);
+            // Msgl("[AP-DEBUG] Searching for maker with prefix: " + prefix);
             while ((@maker = EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
                 string mName = maker.GetEntityName();
-                Msgl("  > Found maker in map: " + mName);
+                // Msgl("  > Found maker in map: " + mName);
                 if (mName.locate(prefix) != uint(-1) && mName.locate("spawner") != uint(-1)) {
                     // Found a maker for this instance! Use its center as base
                     Vector makerPos = maker.GetAbsOrigin();
-                    targetPos = makerPos + (ent.Up() * zOffset); 
+                    
+                    if (current_map == "sp_a3_jump_intro" || current_map == "sp_a3_crazy_box" || current_map == "sp_a3_speed_flings") {
+                        // CHANGE THIS NUMBER to whatever offset you want for the maker on these 3 maps!
+                        targetPos = makerPos + (ent.Up() * -30.0f); 
+                    } else {
+                        // Default maker offset for other maps
+                        targetPos = makerPos + (ent.Up() * -24.0f); 
+                    }
                     
                     // Fine-tune underground maker centering (trap-style droppers)
                     if (isUnderground) {
@@ -116,13 +132,68 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         bool isNozzle = (classname == "info_paint_sprayer" || classname == "paint_sphere");
         targetSkin = 4;
         if (isNozzle) {
-            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 48.0f); 
+            // Forward from mouth + Local Up nudge (follows sprayer tilt)
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 60.0f); 
         } else {
             targetPos = ent.GetAbsOrigin() + (ent.Up() * 24.0f);
         }
+        
+        // Use full 3-axis rotation with Inverted Pitch
         targetAng = ent.GetAbsAngles();
         
-// Exceptional orientation for sp_a3_portal_intro
+        if (current_map == "sp_a3_jump_intro") {
+            // Apply custom distance offset ONLY on jump_intro
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * -60.0f); 
+            // We do NOT invert pitch or yaw here
+        } else {
+            // Standard behavior for all other maps
+            targetAng.x = -targetAng.x; // Invert Pitch
+            targetAng.y += 180.0f; // Flip to face the player
+        }
+        
+        // Exception for that one stubborn sprayer on sp_a3_speed_ramp
+        if (current_map == "sp_a3_speed_ramp" && name == "paint_sprayer") {
+            // Change these values to move it around!
+            // ent.Forward(), ent.Up(), ent.Left()
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 120.0f); 
+        }
+
+        // Exception for the bounce sprayer on sp_a3_speed_flings
+        if (current_map == "sp_a3_speed_flings" && name == "paint_sprayer_bounce") {
+            // Adjust the 120.0f to push it further out or closer in!
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 270.0f); 
+        }
+
+        // Exception for the bounce sprayer on sp_a3_speed_flings
+        if (current_map == "sp_a3_speed_flings" && name == "paint_sprayer_speed") {
+            // Adjust the 120.0f to push it further out or closer in!
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 20.0f); 
+        }
+
+// Exceptional orientations for sp_a3_portal_intro
+        if (current_map == "sp_a3_portal_intro" && name == "pump_machine_white_sprayer") {
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 60.0f); 
+            // The user requested to grab and apply the EXACT raw angles of the sprayer, bypassing the standard inversion
+            targetAng = ent.GetAbsAngles(); 
+            // If you still need slight tweaks, you can add them below:
+            // targetAng.x += 0.0f; 
+        }
+
+        if (current_map == "sp_a3_portal_intro" && name == "pump_machine_blue_sprayer") {
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 40.0f); 
+            // Re-adding the raw angle grab since the code line was missing!
+            targetAng = ent.GetAbsAngles();
+        }
+
+        // Using .locate() so it catches ALL of them if there are multiple!
+        if (current_map == "sp_a3_portal_intro" && name.locate("intermediate_chamber_paint_sprayer") != uint(-1)) {
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 0.0f) + (ent.Up() * -20.0f); 
+            // Grab the raw angles first
+            targetAng = ent.GetAbsAngles();
+            // Force the pitch to 90 degrees (Straight Down in the Source Engine)
+            targetAng.x = 90.0f; 
+        }
+
         if (current_map == "sp_a3_portal_intro" && name.locate("paint_sprayer_2") != uint(-1)) {
     
     // --- 1. BASE POSITION (The nozzle center) ---
@@ -181,18 +252,17 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         targetPos = ent.GetAbsOrigin() + (ent.Up() * 32.0f);
         return;
     }
-
-    // 8. STANDARD PEDESTAL BUTTONS (40.0f Offset)
-    if (classname == "prop_button" || classname == "prop_under_button") {
-        targetSkin = 4;
-        targetPos = ent.GetAbsOrigin() + (ent.Up() * 70.0f);
+// 8. RATMAN DEN BUTTONS (Check for both "rd" and "Ratman Den")
+    if (name.locate("rd") == 0 || name.locate("Ratman Den") != uint(-1)) {
+        targetPos = ent.GetAbsOrigin() + (ent.Up() * 90.0f);
         targetScale = 0.66f;
         return;
     }
 
-    // 9. RATMAN DEN BUTTONS (66.0f Offset)
-    if (classname == "prop_dynamic" && name.locate("rd") == 0 && name.locate("_model") != uint(-1)) {
-        targetPos = ent.GetAbsOrigin() + (ent.Up() * 90.0f);
+// 9. STANDARD PEDESTAL BUTTONS (Everything else)
+    if (classname == "prop_button" || classname == "prop_under_button") {
+        targetSkin = 4;
+        targetPos = ent.GetAbsOrigin() + (ent.Up() * 70.0f);
         targetScale = 0.66f;
         return;
     }
@@ -205,29 +275,21 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     }
 
-    // 11. LASER DEVICES (Catchers, Relays, Sensors, Emitters)
-    bool isLaser = (classname.locate("laser") != uint(-1) || name.locate("laser") != uint(-1));
+// 11. LASER DEVICES (Catchers, Relays, Sensors, Emitters)
+    bool isLaser = (classname.locate("laser") != uint(-1) || name.locate("laser") != uint(-1) || classname.locate("catcher") != uint(-1));
     if (isLaser) {
         targetSkin = 4;
-        targetScale = 0.7f; // Default scale for all laser checks
-        
-        // Relay/Catcher/Emitter logic based on keyword found
+        targetScale = 0.7f;
+        targetAng = ent.GetAbsAngles(); // Match mounting angle
         if (classname.locate("relay") != uint(-1) || name.locate("relay") != uint(-1)) {
-            targetPos = ent.GetAbsOrigin() + (ent.Up() * 50.0f);
+            // Relays use the Top (Up) sensor
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 40.0f);
             targetScale = 0.66f;
-        } else if (classname.locate("catcher") != uint(-1) || name.locate("catcher") != uint(-1) ||
-            classname.locate("sensor") != uint(-1) || name.locate("sensor") != uint(-1)) {
-            
-            // ADAPTIVE OFFSET: If on floor/ceiling (high pitch), we need more room
-            QAngle ang = ent.GetAbsAngles();
-            float offsetDist = (abs(ang.x) > 45.0f) ? 45.0f : 32.0f;
-            
-            targetPos = ent.GetAbsOrigin() + (ent.Forward() * offsetDist);
-            targetScale = 0.5f;
-        } else if (classname.locate("env_portal_laser") != uint(-1) || model.locate("laser") != uint(-1)) {
-            // Emitters also stick out from face
-            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 25.0f);
-            targetScale = 0.7f;
+        } else {
+            // Catchers and Emitters face Forward out of the device
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 24.0f);
+            targetAng.x += 90.0f; // Tilt to face out
+            targetScale = 0.55f;
         }
         return;
     }

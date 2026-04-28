@@ -35,17 +35,9 @@ IncludeScript("archipelago_notify");
         }
     }
     
-    function disable_pickup(target) {
-        SendToConsole("DisableEntityPickup \"" + target + "\"");
-    }
-    
-    function force_disable_pickup(target) {
-        SendToConsole("DisableEntityPickup \"" + target + "\"");
-    }
-    
-    function keyval(target, key, val) {
-        EntFire(target, "AddOutput", key + " " + val);
-    }
+    function disable_pickup(target) { SendToConsole("DisableEntityPickup \"" + target + "\""); }
+    function force_disable_pickup(target) { SendToConsole("DisableEntityPickup \"" + target + "\""); }
+    function keyval(target, key, val) { EntFire(target, "AddOutput", key + " " + val); }
 }
 
 // =============================================================
@@ -68,57 +60,28 @@ function CreateAPButton(name, pos, rot, scale) {
 // =============================================================
 ::scripted_fling_levels <- ["sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity"];
 
-/**
- * DeleteEntity - Bridge to AngelScript DeleteEntity command.
- */
-function DeleteEntity(entity_name, create_holo = true, scale = 0.7) {
-    local cmd = "DeleteEntity \"" + entity_name + "\" " + (create_holo ? "1" : "0") + " " + scale;
-    SendToConsole(cmd);
-}
-
-/**
- * ty - Alias for DeleteEntity (referenced in some item triggers).
- */
-function ty(entity_name, create_holo = true, scale = 0.7) {
-    DeleteEntity(entity_name, create_holo, scale);
-}
+function DeleteEntity(entity_name, create_holo = true, scale = 0.7) { SendToConsole("DeleteEntity \"" + entity_name + "\" " + (create_holo ? "1" : "0") + " " + scale);}
+function ty(entity_name, create_holo = true, scale = 0.7) {DeleteEntity(entity_name, create_holo, scale);}
 
 // =============================================================
 // ARCHIPELAGO PICKUP DISABLE BRIDGE
 // =============================================================
 
-/**
- * DisableEntityPickup - Bridge to AngelScript DisableEntityPickup command.
- */
-function DisableEntityPickup(entity_name) {
-    SendToConsole("DisableEntityPickup \"" + entity_name + "\"");
-}
+function DisableEntityPickup(entity_name) {SendToConsole("DisableEntityPickup \"" + entity_name + "\"");}
 
-/**
- * DeleteCoreOnOutput - Bridge to AngelScript DeleteCoreOnOutput command.
- */
-function DeleteCoreOnOutput(core_name, target_name, output) {
-    SendToConsole("DeleteCoreOnOutput \"" + core_name + "\" \"" + target_name + "\" \"" + output + "\"");
-}
+function DeleteCoreOnOutput(core_name, target_name, output) {SendToConsole("DeleteCoreOnOutput \"" + core_name + "\" \"" + target_name + "\" \"" + output + "\"");}
 
-/**
- * DisablePortalGun - Bridge to AngelScript DisablePortalGun command.
- */
-function DisablePortalGun(blue, orange) {
-    local cmd = "DisablePortalGun " + (blue ? "1" : "0") + " " + (orange ? "2" : "0");
+function DisablePortalGun(blue, orange) {   
+    local cmd = "DisablePortalGun " + (blue ? "1" : "0") + " " + (orange ? "1" : "0");
     SendToConsole(cmd);
 }
 
-/**
- * DisableEntityPhysics - Bridge to AngelScript DisableEntityPhysics command.
- */
-function DisableEntityPhysics(entity_name) {
-    SendToConsole("DisableEntityPhysics \"" + entity_name + "\"");
-}
+function InciniratorDisablePortalGun() { SendToConsole("InciniratorDisablePortalGun");}
 
-function DisableEntity(entity_name) {
-    SendToConsole("DisableEntity \"" + entity_name + "\"");
-}
+
+function DisableEntityPhysics(entity_name) {SendToConsole("DisableEntityPhysics \"" + entity_name + "\"");}
+
+function DisableEntity(entity_name) {SendToConsole("DisableEntity \"" + entity_name + "\"");}
 
 
 // =============================================================
@@ -129,9 +92,7 @@ function DisableEntity(entity_name) {
  * FinishedMap - Override for standard P2 transition function.
  * Called automatically by non-elevator maps via 'transition.nut'.
  */
-function FinishedMap() {
-    SendToConsole("ap_print_complete");
-}
+function FinishedMap() {  SendToConsole("FinishMap");}
 
 /**
  * ChangeLevel - Override for standard P2 transition function.
@@ -146,19 +107,9 @@ function ChangeLevel(next_map="") {
 // ARCHIPELAGO BUTTON FRAME BRIDGES
 // =============================================================
 
-/**
- * AddButtonFrame - Bridge to AngelScript AddButtonFrame command.
- */
-function AddButtonFrame(search_term) {
-    SendToConsole("AddButtonFrame \"" + search_term + "\"");
-}
 
-/**
- * AddFloorButtonFrame - Bridge to AngelScript AddFloorButtonFrame command.
- */
-function AddFloorButtonFrame(search_term) {
-    SendToConsole("AddFloorButtonFrame \"" + search_term + "\"");
-}
+function AddButtonFrame(search_term) {SendToConsole("AddButtonFrame \"" + search_term + "\"");}
+function AddFloorButtonFrame(search_term) {SendToConsole("AddFloorButtonFrame \"" + search_term + "\"");}
 
 // =============================================================
 // ARCHIPELAGO HOLOGRAM ATTACHMENT BRIDGE
@@ -184,13 +135,10 @@ function SlipperyFloorTrap() { SendToConsole("SlipperyFloorTrap"); }
 function DialogTrap() { SendToConsole("DialogTrap"); }
 
 
-function RemovePotatosFromGun() {
-    SendToConsole("RemovePotatosFromGun");
-}
-
-function BlockWheatleyFight() {
-    SendToConsole("ap_block_wheatley_fight");
-}
+function RemovePotatosFromGun() { SendToConsole("RemovePotatosFromGun");}
+function RestorePotatosToGun() { SendToConsole("RestorePotatosToGun");}
+function BlockWheatleyFight() { SendToConsole("BlockWheatleyFight");}
+function RemovePotatOS() { SendToConsole("RemovePotatOS");}
 
 
 function MutePotatOSSubtitles(mute) {
@@ -203,4 +151,4 @@ function MutePotatOSSubtitles(mute) {
 
 
 
-
+

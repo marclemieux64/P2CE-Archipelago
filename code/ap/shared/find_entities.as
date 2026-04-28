@@ -25,14 +25,7 @@ array<CBaseEntity@> FindEntities(string search) {
             string model = ent.GetModelName();
             string name = ent.GetEntityName();
 
-            // Special case: env_portal_laser MUST always be managed if we find it
-            if (cls == "env_portal_laser") {
-                bool alreadyIn = false;
-                for (uint j = 0; j < targets.length(); j++) { if (@targets[j] == @ent) alreadyIn = true; }
-                if (!alreadyIn) targets.insertLast(ent);
-                @ent = EntityList().Next(ent);
-                continue;
-            }
+
 
             // We look at physical props, NPCs, and critical environmental triggers/emitters
             if (cls.locate("prop") != uint(-1) || cls.locate("npc") != uint(-1) || cls.locate("env_") != uint(-1) || 

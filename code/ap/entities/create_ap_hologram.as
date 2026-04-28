@@ -1,7 +1,7 @@
 ConVar ap_hologram_freeze("ap_hologram_freeze", "0", FCVAR_CHEAT);
 
 void CreateAPHologram(Vector position, QAngle angles, float scale, string new_parent = "", string attachment = "", int skin = 0, string name = "") {
-    Msgl("[AP] CreateAPHologram executing: Pos(" + position.x + "," + position.y + "," + position.z + ") Name: " + name);
+    // Msgl("[AP] CreateAPHologram executing: Pos(" + position.x + "," + position.y + "," + position.z + ") Name: " + name);
 
     // 0. IDEMPOTENCY CHECK - Avoid double spawning at the same spot
     CBaseEntity@ check = null;
@@ -55,9 +55,15 @@ void CreateAPHologram(Vector position, QAngle angles, float scale, string new_pa
     }
 
     if (new_parent != "") {
-        holo.KeyValue("parentname", new_parent);
-        if (attachment != "") {
-            holo.SetParentAttachment(attachment);
+        CBaseEntity@ pEnt = EntityList().FindByName(null, new_parent);
+        if (pEnt !is null) {
+            holo.SetParent(pEnt, -1);
+            if (attachment != "") {
+                holo.SetParentAttachment(attachment);
+            }
+        } else {
+            // Fallback for cases where the parent might not be found by name yet
+            holo.KeyValue("parentname", new_parent);
         }
     }
 

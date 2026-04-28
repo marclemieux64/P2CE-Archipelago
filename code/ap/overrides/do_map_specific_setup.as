@@ -33,6 +33,13 @@ void DoMapSpecificSetup(string current_map) {
     } else if (current_map == "sp_a3_transition01") {
         CBaseEntity@ potatos = EntityList().FindByName(null, "sphere_entrance_potatos_button");
         if (potatos !is null) {
+            // Quality of Life: Always unlock the button immediately
+            // We use multiple delays to ensure we beat the map's own locking logic.
+            Variant vEmpty;
+            potatos.FireInput("Unlock", vEmpty, 0.1f, null, null, 0);
+            potatos.FireInput("Unlock", vEmpty, 1.0f, null, null, 0);
+            potatos.FireInput("Unlock", vEmpty, 2.0f, null, null, 0);
+
             Variant vOut;
             vOut.SetString("OnPressed ap_init_cmd:Command:ap_print_item PotatOS:0.0:1");
             potatos.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
@@ -51,15 +58,45 @@ void DoMapSpecificSetup(string current_map) {
             vOut.SetString("OnStartTouch ap_init_cmd:Command:DisableEntityPhysics npc_portal_turret_floor:2.5:1");
             trigger.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
         }
-    } else if (current_map == "sp_a4_intro") {
-        // --- RESTORED SP_A4_INTRO HOOK ---
-        CBaseEntity@ trigger = EntityList().FindByClassnameNearest("trigger_once", Vector(-816, 64, 320), 10.0f);
-        if (trigger !is null) {
-            Msgl("[AP] Hooking dynamic Frankenturret spawner for session...");
-            Variant vOut;
-            // Scan for monsters (robustly) 1s after trigger touch
-            vOut.SetString("OnStartTouch ap_init_cmd:Command:DeleteEntity prop_monster_box 1 0.7:1.0:-1");
-            trigger.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
+    } else if (current_map == "sp_a2_pull_the_rug") {
+        CBaseEntity@ door = EntityList().FindByName(null, "ratman_lockoff_door");
+        if (door !is null) {
+            Variant v;
+            door.FireInput("Open", v, 0.5f, null, null, 0);
         }
+    } else if (current_map == "sp_a2_laser_intro") {
+        // TIMING & NAME FIX: Reverting to specific names with the working 1.3s delay.
+        CBaseEntity@ cmd = EntityList().FindByName(null, "ap_init_cmd");
+        if (cmd !is null) {
+            Variant v;
+            // Parent the Emitter (Trying all likely names)
+            v.SetString("ent_fire laser_emitter_door_holo SetParent laser_emitter_door:0.8:-1");
+            cmd.FireInput("Command", v, 0.5f, null, null, 0);
+            v.SetString("ent_fire laser_emitter_holo SetParent laser_emitter_door:0.8:-1");
+            cmd.FireInput("Command", v, 0.5f, null, null, 0);
+            v.SetString("ent_fire emitter_1_holo SetParent laser_emitter_door:0.8:-1");
+            cmd.FireInput("Command", v, 0.5f, null, null, 0);
+
+            // Parent the Catcher (Working)
+            v.SetString("ent_fire laser_catcher_door_holo SetParent laser_catcher_door:0.8:-1");
+            cmd.FireInput("Command", v, 0.5f, null, null, 0);
+            v.SetString("ent_fire catcher_1_holo SetParent laser_catcher_door:0.8:-1");
+            cmd.FireInput("Command", v, 0.5f, null, null, 0);
+        }
+    }
+}
+
+/**
+ * IncineratorDisablePortalGun - Replicates the VScript incinerator logic.
+ * Disables the portal gun (if required) when the player enters the incinerator.
+ */
+void IncineratorDisablePortalGun() {
+    CBaseEntity@ trigger = EntityList().FindByName(null, "player_near_portalgun");
+    if (trigger !is null) {
+        Variant v;
+        // Arguments: blue=0 (off), orange=(portalgun_2_disabled ? 1 : 0), isDelayed=0
+        string orangeVal = portalgun_2_disabled ? "1" : "0";
+        v.SetString("OnStartTouch ap_init_cmd:Command:DisablePortalGun 0 " + orangeVal + " 0:0.25:-1");
+        trigger.FireInput("AddOutput", v, 0.0f, null, null, 0);
     }
 }

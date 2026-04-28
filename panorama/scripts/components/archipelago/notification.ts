@@ -15,7 +15,7 @@ function GetHudRoot(): Panel | null {
 }
 
 // RESET: Ensure we aren't stuck in a fade state from a previous map or reload
-(function() {
+(function () {
     const hud = GetHudRoot();
     if (hud) hud.RemoveClass("fade-active");
 })();
@@ -34,7 +34,7 @@ try {
 // 2. WARP LISTENER: Catches the signal to end the level
 $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
     $.Msg("[AP] WarpToMenu received. Starting black fade buffer...");
-    
+
     isWarpPending = true;
 
     // Trigger the black fade on the HUD root
@@ -61,7 +61,7 @@ function ProcessQueue() {
             $.Msg("[AP] Notification queue clear. Moving to menu bookmark...");
             // Save the bookmark so the Base Menu script sees it after the world is destroyed
             $.persistentStorage.setItem("ap_return_to_map_select", "true");
-            
+
             // Final short delay so the player can actually see the "all clear" state in the black
             $.Schedule(0.5, () => {
                 GameInterfaceAPI.ConsoleCommand("disconnect");
@@ -113,6 +113,8 @@ function OnAPNotify(payload: string) {
 
     try {
         const data = JSON.parse(payload);
+
+        $.PlaySoundEvent('Instructor.LessonStart');
 
         // 1. Create the main entry wrapper
         const entry = $.CreatePanel('Panel', container, '');

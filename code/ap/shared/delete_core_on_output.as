@@ -6,7 +6,7 @@ void DeleteCoreOnOutput(string core_name, string target_name, string output) {
     array<CBaseEntity@> targets = FindEntities(target_name);
 
     if (targets.length() == 0) {
-        Msgl("[AP] Error: DeleteCoreOnOutput target '" + target_name + "' not found");
+        // Msgl("[AP] Error: DeleteCoreOnOutput target '" + target_name + "' not found");
         return;
     }
 
@@ -17,5 +17,5 @@ void DeleteCoreOnOutput(string core_name, string target_name, string output) {
     for (uint i = 0; i < targets.length(); i++) {
         targets[i].FireInput("AddOutput", v, 0.0f, null, null, 0);
     }
-    Msgl("[AP] Hooked output '" + output + "' on '" + targets.length() + "' entities matched by '" + target_name + "' to delete '" + core_name + "' in 5s");
+    // Msgl("[AP] Hooked output '" + output + "' on '" + targets.length() + "' entities matched by '" + target_name + "' to delete '" + core_name + "' in 5s");
 }

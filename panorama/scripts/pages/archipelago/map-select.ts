@@ -447,7 +447,7 @@ class ArchipelagoMapSelect {
 
             if (starCount === chapter.maps.length && chapter.maps.length > 0) {
                 const chStarLabel = $.CreatePanel('Label', entry, '');
-                chStarLabel.text = "★";
+                chStarLabel.text = "✓";
                 chStarLabel.style.color = "#ffff44";
                 chStarLabel.style.fontSize = "26px";
                 chStarLabel.style.fontFamily = "APPortal-bold";
@@ -603,7 +603,7 @@ class ArchipelagoMapSelect {
                     greenLabel.style.marginRight = "10px";
                 } else if (statusIcons.length > 0 && statusIcons.replace(/✓/g, "").length === 0) {
                     const starLabel = $.CreatePanel('Label', mapBtn, '');
-                    starLabel.text = "★";
+                    starLabel.text = "✓";
                     starLabel.style.color = "#ffff44";
                     starLabel.style.fontSize = "26px";
                     starLabel.style.fontFamily = "APPortal-bold";

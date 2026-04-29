@@ -217,6 +217,109 @@ void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
     AddWheatleyMonitorBreakCheck(current_map);
 }
 
+bool g_rainbow_active = false;
+int g_rainbow_r = 255;
+int g_rainbow_g = 0;
+int g_rainbow_b = 0;
+
+void RunRainbowTick() {
+    if (!g_rainbow_active) return;
+    
+    int step = 15; 
+    
+    if (g_rainbow_r > 0 && g_rainbow_b == 0) {
+        g_rainbow_r -= step;
+        g_rainbow_g += step;
+        if (g_rainbow_r < 0) g_rainbow_r = 0;
+        if (g_rainbow_g > 255) g_rainbow_g = 255;
+    } else if (g_rainbow_g > 0 && g_rainbow_r == 0) {
+        g_rainbow_g -= step;
+        g_rainbow_b += step;
+        if (g_rainbow_g < 0) g_rainbow_g = 0;
+        if (g_rainbow_b > 255) g_rainbow_b = 255;
+    } else if (g_rainbow_b > 0 && g_rainbow_g == 0) {
+        g_rainbow_r += step;
+        g_rainbow_b -= step;
+        if (g_rainbow_b < 0) g_rainbow_b = 0;
+        if (g_rainbow_r > 255) g_rainbow_r = 255;
+    }
+    
+    string colorStr = g_rainbow_r + " " + g_rainbow_g + " " + g_rainbow_b;
+    Variant vColor;
+    vColor.SetString(colorStr);
+    
+    string laserColorStr = colorStr + " 255";
+    Variant vLaserColor;
+    vLaserColor.SetString(laserColorStr);
+    
+    CBaseEntity@ ent = EntityList().First();
+    while (@ent !is null) {
+        string cls = ent.GetClassname();
+        if (cls == "prop_weighted_cube") {
+            ent.FireInput("Color", vColor, 0.0f, null, null);
+        } else if (cls == "env_portal_laser") {
+            ent.FireInput("SetBeamColor", vLaserColor, 0.0f, null, null);
+        }
+        @ent = EntityList().Next(ent);
+    }
+}
+
+[ServerCommand("ap_rainbow_tick", "Internal master tick for rainbow effects")]
+void APRainbowTickCmd(const CommandArgs@ args) {
+    RunRainbowTick();
+}
+
+[ServerCommand("ap_rainbow", "Toggles rainbow color swap effect for all entities")]
+void APRainbowCmd(const CommandArgs@ args) {
+    g_rainbow_active = !g_rainbow_active;
+    
+    CBaseEntity@ oldTimer = EntityList().FindByName(null, "ap_rainbow_timer");
+    if (oldTimer !is null) oldTimer.Remove();
+    
+    if (g_rainbow_active) {
+        Msgl("[AP] Rainbow Mode Activated!");
+        CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
+        if (timer !is null) {
+            timer.KeyValue("targetname", "ap_rainbow_timer");
+            timer.KeyValue("RefireTime", "0.015");
+            timer.Spawn();
+            
+            Variant v;
+            v.SetString("OnTimer ap_init_cmd:Command:ap_rainbow_tick:0.0:-1");
+            timer.FireInput("AddOutput", v, 0.0f, null, null);
+        }
+    } else {
+        Msgl("[AP] Rainbow Mode Deactivated!");
+        Variant vDefault;
+        vDefault.SetString("255 255 255");
+        
+        Variant vLaserDefault;
+        vLaserDefault.SetString("255 0 0 255");
+
+        CBaseEntity@ ent = EntityList().First();
+        while (@ent !is null) {
+            string cls = ent.GetClassname();
+            if (cls == "prop_weighted_cube") {
+                ent.FireInput("Color", vDefault, 0.0f, null, null);
+            } else if (cls == "env_portal_laser") {
+                ent.FireInput("SetBeamColor", vLaserDefault, 0.0f, null, null);
+            }
+            @ent = EntityList().Next(ent);
+        }
+    }
+}
+
+[ServerCommand("ap_rainbow_cubes", "Alias master command toggle")]
+void APRainbowCubesCmd(const CommandArgs@ args) {
+    APRainbowCmd(args);
+}
+
+[ServerCommand("ap_rainbow_lasers", "Alias master command toggle")]
+void APRainbowLasersCmd(const CommandArgs@ args) {
+    APRainbowCmd(args);
+}
+
+
 [ServerCommand("RemovePotatOS", "Removes PotatOS and establishes instructor hints")]
 void APRemovePotatOSCmd(const CommandArgs@ args) {
     RemovePotatOS();

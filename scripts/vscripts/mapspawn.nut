@@ -92,7 +92,7 @@ function DisableEntity(entity_name) {SendToConsole("DisableEntity \"" + entity_n
  * FinishedMap - Override for standard P2 transition function.
  * Called automatically by non-elevator maps via 'transition.nut'.
  */
-function FinishedMap() {  SendToConsole("FinishMap");}
+function FinishedMap() {  SendToConsole("FinishedMap");}
 
 /**
  * ChangeLevel - Override for standard P2 transition function.

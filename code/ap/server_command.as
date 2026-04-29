@@ -135,7 +135,7 @@ void APSpawnHolosCmd(const CommandArgs@ args) {
     CreateMapSpecificHolos(current_map);
 }
 
-[ServerCommand("FinishMap", "Triggers map completion logic")]
+[ServerCommand("FinishedMap", "Triggers map completion logic")]
 void APPrintCompleteCmd(const CommandArgs@ args) {
     PrintMapComplete();
 }

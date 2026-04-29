@@ -48,9 +48,14 @@ void RemovePotatosFromGun() {
     
     // Use logic_playerproxy for reliable removal (the standard input method)
     CBaseEntity@ proxy = EntityList().FindByClassname(null, "logic_playerproxy");
+    if (proxy is null) {
+        @proxy = util::CreateEntityByName("logic_playerproxy");
+        if (proxy !is null) proxy.Spawn();
+    }
+    CBaseEntity@ player = EntityList().FindByClassname(null, "player");
     if (proxy !is null) {
         Variant v;
-        proxy.FireInput("RemovePotatosFromPortalgun", v, 0.0f, null, null, 0);
+        proxy.FireInput("RemovePotatosFromPortalgun", v, 0.0f, player, player, 0);
     }
 
     Fire("snd_setmixer potatosVO vol 0.0", 0.1f);

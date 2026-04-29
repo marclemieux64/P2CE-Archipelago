@@ -7,8 +7,8 @@ void HandleMonitorWarp(string monitorID) {
 
     // Placeholder coordinates - Update these with the real values
     if (monitorID == "sp_a4_tb_trust_drop") {
-        player.SetAbsOrigin(Vector(-12832, -3040, -112)); 
-        player.SetAbsAngles(QAngle(0, 180, 0)); 
+        player.SetAbsOrigin(Vector(320, 1107, 800)); 
+        player.SetAbsAngles(QAngle(0, 90, 0)); 
     } else if (monitorID == "sp_a4_tb_catch 1") {
         player.SetAbsOrigin(Vector(4, -1264, -95));
         player.SetAbsAngles(QAngle(0, 90, 0)); 

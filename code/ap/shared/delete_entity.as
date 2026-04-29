@@ -14,6 +14,32 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
         string tName = t.GetEntityName();
         // Msgl("[AP] Processing deletion for: [" + classname + "] " + tName);
 
+        // Disable blockade teleport on sp_a2_ricochet when deleting lasers
+        if (current_map == "sp_a2_ricochet" && (classname == "prop_laser_catcher" || classname == "env_portal_laser")) {
+            CBaseEntity@ teleport = EntityList().FindByName(null, "lower_blockade_player_teleport_trigger");
+            if (teleport !is null) {
+                teleport.FireInput("Disable", Variant(), 0.0f, null, null, 0);
+            }
+        }
+
+        // Early Faith Plate Proximity Check for trigger_catapult
+        if (classname == "trigger_catapult") {
+            CBaseEntity@ plate = null;
+            bool foundPlate = false;
+            while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
+                if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
+                    float dist = (plate.GetAbsOrigin() - t.GetAbsOrigin()).Length();
+                    if (dist < 30.0f) {
+                        foundPlate = true;
+                        break;
+                    }
+                }
+            }
+            if (!foundPlate) continue;
+        }
+
+        bool shouldSpawnHolo = create_holo;
+
         if (tName == "cube_platform_bad_landing" || tName == "cube_platform_good_landing" || tName.locate("paint_duct") != uint(-1)) {
             continue; // Skip system-critical or decorative triggers
         }
@@ -25,12 +51,6 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
                 isProtectedMap = true;
                 break;
             }
-        }
-        
-        // Special Rule: We never want holograms for catapults or specific laser beams (clean visuals)
-        bool shouldSpawnHolo = create_holo;
-        if (classname == "trigger_catapult" || tName.locate("lower_gate_laser") != uint(-1)) {
-            shouldSpawnHolo = false;
         }
 
         if (classname == "trigger_catapult" && isProtectedMap) {
@@ -56,29 +76,6 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
             continue; 
         }
 
-        // 4. Removal (With Faith Plate Proximity Check)
-        if (classname == "trigger_catapult") {
-            CBaseEntity@ plate = null;
-            bool foundPlate = false;
-            
-            // Search through dynamics for faith plates
-            while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
-                if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
-                    // Manual distance check (within 64 units)
-                    float dist = (plate.GetAbsOrigin() - t.GetAbsOrigin()).Length();
-                    if (dist < 64.0f) {
-                        foundPlate = true;
-                        break;
-                    }
-                }
-            }
-            
-            if (!foundPlate) {
-                //Msgl("[AP] SKIPPING invisible catapult deletion (no faith plate nearby)");
-                continue; 
-            }
-        }
-
         // 4. Final Removal / Disabling
         bool isSprayer = (classname == "info_paint_sprayer" || classname == "paint_sphere" || 
             tName.locate("paint") != uint(-1) || tName.locate("sprayer") != uint(-1));
@@ -86,8 +83,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
         if (isSprayer) {
             // 1. Change the base property so it doesn't start on its own
             t.KeyValue("start_active", "0");
-            
-            
+
             // 2. IDENTITY THEFT: Disable associated paint templates so they can't be spawned
             CBaseEntity@ template = null;
             while ((@template = EntityList().FindByClassname(template, "point_template")) !is null) {
@@ -170,7 +166,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
                 Variant vRelay;
                 vRelay.SetString("removeallpaint");
                 // Wait 4.5s to ensure any falling paint blobs hit the ground and explode first
-                cmd.FireInput("Command", vRelay,3.0f, null, null, 0);
+                cmd.FireInput("Command", vRelay, 3.0f, null, null, 0);
             }
 
             continue; // Keep the entity but stop its flow

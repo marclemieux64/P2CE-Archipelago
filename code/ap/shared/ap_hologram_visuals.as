@@ -24,6 +24,18 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         }
     }
 
+    if (current_map == "sp_a2_ricochet") {
+        if (name.locate("juggled_cube") != uint(-1)) {
+            targetPos = ent.GetAbsOrigin() + (ent.Left() * 25.0f);
+            targetAng.x = 0.0f;
+            targetAng.y = 0.0f;
+            targetAng.z = 0.0f;
+            targetSkin = 4;
+            targetScale = 0.66f;
+            return;
+        }
+    }
+
     if (current_map == "sp_a3_crazy_box") {
         if (classname == "prop_under_button") {
             // Nudge out from the front of the box AND up slightly
@@ -307,6 +319,25 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         targetSkin = 2;
         targetPos = ent.GetAbsOrigin() + (ent.Up() * 80.0f);
         targetScale = 0.7f;
+        return;
+    }
+
+    // 14. FAITH PLATES (Catapults)
+    if (classname == "trigger_catapult") {
+        targetSkin = 4;
+        targetScale = 0.7f;
+        targetPos = ent.GetAbsOrigin() + (ent.Up() * 32.0f);
+        
+        CBaseEntity@ plate = null;
+        while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
+            if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
+                float dist = (plate.GetAbsOrigin() - ent.GetAbsOrigin()).Length();
+                if (dist < 30.0f) {
+                    targetAng = plate.GetAbsAngles();
+                    break;
+                }
+            }
+        }
         return;
     }
 }

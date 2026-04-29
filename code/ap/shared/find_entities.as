@@ -16,9 +16,7 @@ array<CBaseEntity@> FindEntities(string search) {
     while ((@ent = EntityList().FindByModel(ent, search)) !is null) targets.insertLast(ent);
 
     // 2. KEYWORD & MODEL SEARCHES (Pass 2 - For monster boxes, cubes, lasers, and sprayers)
-    if (search.locate("monster") != uint(-1) || search.locate("cube") != uint(-1) || 
-        search.locate("laser") != uint(-1) || search.locate("paint") != uint(-1) || 
-            search.locate("sprayer") != uint(-1)) {
+    if (search == "monster" || search == "cube" || search == "laser" || search == "paint" || search == "sprayer") {
         @ent = EntityList().First();
         while (@ent !is null) {
             string cls = ent.GetClassname();

@@ -359,11 +359,123 @@ class ArchipelagoMapSelect {
                 });
             });
 
-            const title = $.CreatePanel('Label', entry, '');
+            let chapterGreenCount = 0;
+            let starCount = 0;
+            chapter.maps.forEach((map: any) => {
+                const rawTitle = map.title || "Unknown Map";
+                const statusIcons = (rawTitle.length > 4 ? rawTitle.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
+                
+                const isAllStars = statusIcons.length > 0 && statusIcons.replace(/✓/g, "").length === 0;
+                if (isAllStars) {
+                    starCount++;
+                }
+                
+                let mapCmdName = "";
+                if (map.command) {
+                    const parts = map.command.split(" ");
+                    if (parts.length >= 2) {
+                        mapCmdName = parts[1].trim().toLowerCase();
+                    }
+                }
+                const mItems = map.subtitle || "";
+
+                for (let i = 0; i < statusIcons.length; i++) {
+                    const char = statusIcons[i];
+                    let isGreen = false;
+
+                    if (char === "M") {
+                        isGreen = !(mItems && mItems.trim() !== "");
+                    } else if (char === "þ") {
+                        isGreen = true;
+                    } else if (char === "ù") {
+                        if (mapCmdName === "sp_a3_transition01") {
+                            isGreen = (mItems.indexOf("û") === -1);
+                        } else {
+                            isGreen = true;
+                        }
+                    } else if (char === "R") {
+                        if (mapCmdName === "sp_a1_intro4") {
+                            isGreen = (mItems.indexOf("ç") === -1 && mItems.indexOf("æ") === -1);
+                        } else if (mapCmdName === "sp_a2_dual_lasers") {
+                            isGreen = true;
+                        } else if (mapCmdName === "sp_a2_trust_fling") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("õ") === -1);
+                        } else if (mapCmdName === "sp_a2_bridge_intro") {
+                            isGreen = true;
+                        } else if (mapCmdName === "sp_a2_bridge_the_gap") {
+                            isGreen = (mItems.indexOf("û") === -1);
+                        } else if (mapCmdName === "sp_a2_laser_vs_turret") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("æ") === -1 && mItems.indexOf("ì") === -1);
+                        } else if (mapCmdName === "sp_a2_pull_the_rug") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¿") === -1);
+                        } else {
+                            isGreen = true; 
+                        }
+                    } else if (char === "ÿ") {
+                        if (mapCmdName === "sp_a4_tb_intro") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ð") === -1);
+                        } else if (mapCmdName === "sp_a4_tb_trust_drop") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ñ") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ð") === -1);
+                        } else if (mapCmdName === "sp_a4_tb_wall_button") {
+                            isGreen = (mItems.indexOf("û") === -1);
+                        } else if (mapCmdName === "sp_a4_tb_polarity") {
+                            isGreen = (mItems.indexOf("ó") === -1);
+                        } else if (mapCmdName === "sp_a4_tb_catch") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("ñ") === -1);
+                        } else if (mapCmdName === "sp_a4_stop_the_box") {
+                            isGreen = (mItems.indexOf("õ") === -1);
+                        } else if (mapCmdName === "sp_a4_laser_catapult") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ì") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("î") === -1);
+                        } else if (mapCmdName === "sp_a4_laser_platform") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("î") === -1 && mItems.indexOf("ì") === -1 && mItems.indexOf("ñ") === -1);
+                        } else if (mapCmdName === "sp_a4_speed_tb_catch") {
+                            isGreen = (mItems.indexOf("û") === -1);
+                        } else if (mapCmdName === "sp_a4_jump_polarity") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¢") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ó") === -1 && mItems.indexOf("æ") === -1 && mItems.indexOf("ñ") === -1);
+                        } else if (mapCmdName === "sp_a4_finale3") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¢") === -1);
+                        } else {
+                            isGreen = true;
+                        }
+                    }
+
+                    if (isGreen) {
+                        chapterGreenCount++;
+                    }
+                }
+            });
+
+            if (starCount === chapter.maps.length && chapter.maps.length > 0) {
+                const chStarLabel = $.CreatePanel('Label', entry, '');
+                chStarLabel.text = "★";
+                chStarLabel.style.color = "#ffff44";
+                chStarLabel.style.fontSize = "26px";
+                chStarLabel.style.fontFamily = "APPortal-bold";
+                chStarLabel.style.verticalAlign = "center";
+                chStarLabel.style.horizontalAlign = "right";
+                chStarLabel.style.marginRight = "15px";
+            } else if (chapterGreenCount > 0) {
+                const chGreenLabel = $.CreatePanel('Label', entry, '');
+                chGreenLabel.text = chapterGreenCount.toString();
+                chGreenLabel.style.color = "#44ff44";
+                chGreenLabel.style.fontSize = "26px";
+                chGreenLabel.style.fontFamily = "APPortal-bold";
+                chGreenLabel.style.verticalAlign = "center";
+                chGreenLabel.style.horizontalAlign = "right";
+                chGreenLabel.style.marginRight = "15px";
+            }
+
+            entry.style.flowChildren = "none";
+
+            const textWrapper = $.CreatePanel('Panel', entry, '');
+            textWrapper.style.flowChildren = "down";
+            textWrapper.style.verticalAlign = "center";
+
+            const title = $.CreatePanel('Label', textWrapper, '');
             title.text = chapter.title || "Chapter " + chId;
             title.AddClass('ChapterTitle');
 
-            const desc = $.CreatePanel('Label', entry, '');
+            const desc = $.CreatePanel('Label', textWrapper, '');
             desc.text = CHAPTER_NAMES[chId] || chapter.subtitle || "";
             desc.AddClass('ChapterSubtitle');
 
@@ -405,6 +517,99 @@ class ArchipelagoMapSelect {
                 const nameLabel = $.CreatePanel('Label', mapContent, '');
                 nameLabel.text = cleanName;
                 nameLabel.AddClass('MapPrimaryName');
+
+                let greenCount = 0;
+                let mapCmdName = "";
+                if (map.command) {
+                    const parts = map.command.split(" ");
+                    if (parts.length >= 2) {
+                        mapCmdName = parts[1].trim().toLowerCase();
+                    }
+                }
+                const mItems = map.subtitle || "";
+
+                for (let i = 0; i < statusIcons.length; i++) {
+                    const char = statusIcons[i];
+                    let isGreen = false;
+
+                    if (char === "M") {
+                        isGreen = !(mItems && mItems.trim() !== "");
+                    } else if (char === "þ") {
+                        isGreen = true;
+                    } else if (char === "ù") {
+                        if (mapCmdName === "sp_a3_transition01") {
+                            isGreen = (mItems.indexOf("û") === -1);
+                        } else {
+                            isGreen = true;
+                        }
+                    } else if (char === "R") {
+                        if (mapCmdName === "sp_a1_intro4") {
+                            isGreen = (mItems.indexOf("ç") === -1 && mItems.indexOf("æ") === -1);
+                        } else if (mapCmdName === "sp_a2_dual_lasers") {
+                            isGreen = true;
+                        } else if (mapCmdName === "sp_a2_trust_fling") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("õ") === -1);
+                        } else if (mapCmdName === "sp_a2_bridge_intro") {
+                            isGreen = true;
+                        } else if (mapCmdName === "sp_a2_bridge_the_gap") {
+                            isGreen = (mItems.indexOf("û") === -1);
+                        } else if (mapCmdName === "sp_a2_laser_vs_turret") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("æ") === -1 && mItems.indexOf("ì") === -1);
+                        } else if (mapCmdName === "sp_a2_pull_the_rug") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¿") === -1);
+                        } else {
+                            isGreen = true; 
+                        }
+                    } else if (char === "ÿ") {
+                        if (mapCmdName === "sp_a4_tb_intro") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ð") === -1);
+                        } else if (mapCmdName === "sp_a4_tb_trust_drop") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ñ") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ð") === -1);
+                        } else if (mapCmdName === "sp_a4_tb_wall_button") {
+                            isGreen = (mItems.indexOf("û") === -1);
+                        } else if (mapCmdName === "sp_a4_tb_polarity") {
+                            isGreen = (mItems.indexOf("ó") === -1);
+                        } else if (mapCmdName === "sp_a4_tb_catch") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("ñ") === -1);
+                        } else if (mapCmdName === "sp_a4_stop_the_box") {
+                            isGreen = (mItems.indexOf("õ") === -1);
+                        } else if (mapCmdName === "sp_a4_laser_catapult") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ì") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("î") === -1);
+                        } else if (mapCmdName === "sp_a4_laser_platform") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("î") === -1 && mItems.indexOf("ì") === -1 && mItems.indexOf("ñ") === -1);
+                        } else if (mapCmdName === "sp_a4_speed_tb_catch") {
+                            isGreen = (mItems.indexOf("û") === -1);
+                        } else if (mapCmdName === "sp_a4_jump_polarity") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¢") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ó") === -1 && mItems.indexOf("æ") === -1 && mItems.indexOf("ñ") === -1);
+                        } else if (mapCmdName === "sp_a4_finale3") {
+                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¢") === -1);
+                        } else {
+                            isGreen = true;
+                        }
+                    }
+
+                    if (isGreen) {
+                        greenCount++;
+                    }
+                }
+
+                if (greenCount > 0) {
+                    const greenLabel = $.CreatePanel('Label', mapBtn, '');
+                    greenLabel.text = greenCount.toString();
+                    greenLabel.style.color = "#44ff44";
+                    greenLabel.style.fontSize = "26px";
+                    greenLabel.style.fontFamily = "APPortal-bold";
+                    greenLabel.style.verticalAlign = "center";
+                    greenLabel.style.marginRight = "10px";
+                } else if (statusIcons.length > 0 && statusIcons.replace(/✓/g, "").length === 0) {
+                    const starLabel = $.CreatePanel('Label', mapBtn, '');
+                    starLabel.text = "★";
+                    starLabel.style.color = "#ffff44";
+                    starLabel.style.fontSize = "26px";
+                    starLabel.style.fontFamily = "APPortal-bold";
+                    starLabel.style.verticalAlign = "center";
+                    starLabel.style.marginRight = "10px";
+                }
 
                 const lockIcon = $.CreatePanel('Image', mapBtn, '');
                 lockIcon.AddClass('MapLockIcon');

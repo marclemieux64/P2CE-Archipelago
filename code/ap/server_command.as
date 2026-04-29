@@ -91,6 +91,29 @@ void DeleteEntityCmd(const CommandArgs@ args) {
     DeleteEntity(target, create_holo, scale);
 }
 
+[ServerCommand("ap_dump_holos", "Prints all active Archipelago holograms in the map")]
+void DumpAPHolosCmd(const CommandArgs@ args) {
+    CBaseEntity@ holo = null;
+    int count = 0;
+    Msgl("============================================");
+    Msgl("   ARCHIPELAGO HOLOGRAM REGISTRY DUMP");
+    Msgl("============================================");
+    while ((@holo = EntityList().FindByClassname(holo, "prop_dynamic")) !is null) {
+        if (holo.GetModelName().locate("archipelago_hologram") != uint(-1)) {
+            string hName = holo.GetEntityName();
+            Vector hPos = holo.GetAbsOrigin();
+            QAngle hAng = holo.GetAbsAngles();
+            Msgl(" > Holo [" + count + "] Name: '" + hName + "'");
+            Msgl("   Pos: Vector(" + hPos.x + ", " + hPos.y + ", " + hPos.z + ")");
+            Msgl("   Ang: QAngle(" + hAng.x + ", " + hAng.y + ", " + hAng.z + ")");
+            count++;
+        }
+    }
+    Msgl("============================================");
+    Msgl(" Total Holograms active: " + count);
+    Msgl("============================================");
+}
+
 [ServerCommand("DeleteCoreOnOutput", "Queues core deletion for a specific entity output")]
 void DeleteCoreOnOutputCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;

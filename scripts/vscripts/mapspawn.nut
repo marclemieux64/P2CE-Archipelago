@@ -38,6 +38,15 @@ IncludeScript("archipelago_notify");
     function disable_pickup(target) { SendToConsole("DisableEntityPickup \"" + target + "\""); }
     function force_disable_pickup(target) { SendToConsole("DisableEntityPickup \"" + target + "\""); }
     function keyval(target, key, val) { EntFire(target, "AddOutput", key + " " + val); }
+
+    function get(arg1, arg2 = null, arg3 = null, arg4 = null) {
+        return {
+            _name = arg1
+            function Destroy() { SendToConsole("DeleteEntity \"" + _name + "\" 1"); }
+            function Kill() { SendToConsole("DeleteEntity \"" + _name + "\" 1"); }
+            function Disable() { SendToConsole("DisableEntity \"" + _name + "\""); }
+        };
+    }
 }
 
 // =============================================================

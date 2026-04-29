@@ -23,7 +23,7 @@
    }
   "chapter 1.2"
    {
-      "title"    "Mý--Portal Gun"
+      "title"    "M✓--Portal Gun"
       "subtitle" ""
       "command"  "map sp_a1_intro3"
       "pic"      "vgui/chapters/chapter1"

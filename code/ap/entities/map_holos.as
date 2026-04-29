@@ -20,6 +20,21 @@ void CreateMapSpecificHolos(string current_map) {
         } else {
             Msgl("AP-Mod: Warning - Could not find 'sphere_entrance_potatos_button' to spawn hologram.");
         }
+    } else if (current_map == "sp_a1_intro7") {
+        CBaseEntity@ ent = null;
+        while ((@ent = EntityList().FindByClassname(ent, "prop_dynamic")) !is null) {
+            if (ent.GetModelName().locate("turret_01.mdl") != uint(-1)) {
+                Vector hPos;
+                QAngle hAng;
+                int hSkin;
+                float hScale;
+                GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale);
+                
+                string tName = ent.GetEntityName();
+                string hName = (tName != "") ? (tName + "_holo") : "turret_holo";
+                CreateAPHologram(hPos, hAng, hScale, "", "", hSkin, hName);
+            }
+        }
     }
     
     // 3. Kill any legacy map-based triggers that try to call 'ppmod'

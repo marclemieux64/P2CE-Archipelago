@@ -206,7 +206,107 @@ class ArchipelagoMapSelect {
             previewImage.SetImage(`file://{images}/${picPath}.png`);
         }
 
-        if (statusLabel) statusLabel.text = mapData.status || "";
+        if (statusLabel) {
+            let finalStatus = mapData.status || "";
+            if (finalStatus.indexOf("M") !== -1) {
+                const isMissing = mapData.subtitle && mapData.subtitle.trim() !== "";
+                const mColor = isMissing ? "#ff4444" : "#44ff44";
+                finalStatus = finalStatus.replace(/M/g, `<font color="${mColor}">M</font>`);
+            }
+            if (finalStatus.indexOf("þ") !== -1) {
+                finalStatus = finalStatus.replace(/þ/g, `<font color="#44ff44">þ</font>`);
+            }
+            
+            if (finalStatus.indexOf("ù") !== -1) {
+                let mapName = "";
+                if (mapData.command) {
+                    const parts = mapData.command.split(" ");
+                    if (parts.length >= 2) {
+                        mapName = parts[1].trim().toLowerCase();
+                    }
+                }
+                if (mapName === "sp_a3_transition01") {
+                    const missingItems = mapData.subtitle || "";
+                    const uColor = (missingItems.indexOf("û") !== -1) ? "#ff4444" : "#44ff44";
+                    finalStatus = finalStatus.replace(/ù/g, `<font color="${uColor}">ù</font>`);
+                }
+            }
+            
+            if (finalStatus.indexOf("R") !== -1) {
+                let mapName = "";
+                if (mapData.command) {
+                    const parts = mapData.command.split(" ");
+                    if (parts.length >= 2) {
+                        mapName = parts[1].trim().toLowerCase();
+                    }
+                }
+                const missingItems = mapData.subtitle || "";
+                let rColor = "";
+
+                if (mapName === "sp_a1_intro4") {
+                    rColor = (missingItems.indexOf("ç") !== -1 || missingItems.indexOf("æ") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a2_dual_lasers") {
+                    rColor = "#44ff44";
+                } else if (mapName === "sp_a2_trust_fling") {
+                    rColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("õ") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a2_bridge_intro") {
+                    rColor = "#44ff44";
+                } else if (mapName === "sp_a2_bridge_the_gap") {
+                    rColor = (missingItems.indexOf("û") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a2_laser_vs_turret") {
+                    rColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("í") !== -1 || missingItems.indexOf("æ") !== -1 || missingItems.indexOf("ì") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a2_pull_the_rug") {
+                    rColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("¿") !== -1) ? "#ff4444" : "#44ff44";
+                }
+
+                if (rColor !== "") {
+                    finalStatus = finalStatus.replace(/R/g, `<font color="${rColor}">R</font>`);
+                }
+            }
+
+            if (finalStatus.indexOf("ÿ") !== -1) {
+                let mapName = "";
+                if (mapData.command) {
+                    const parts = mapData.command.split(" ");
+                    if (parts.length >= 2) {
+                        mapName = parts[1].trim().toLowerCase();
+                    }
+                }
+                const missingItems = mapData.subtitle || "";
+                let yColor = "";
+
+                if (mapName === "sp_a4_tb_intro") {
+                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("ð") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_tb_trust_drop") {
+                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("ñ") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("ð") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_tb_wall_button") {
+                    yColor = (missingItems.indexOf("û") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_tb_polarity") {
+                    yColor = (missingItems.indexOf("ó") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_tb_catch") {
+                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("ð") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("õ") !== -1 || missingItems.indexOf("ñ") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_stop_the_box") {
+                    yColor = (missingItems.indexOf("õ") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_laser_catapult") {
+                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("ð") !== -1 || missingItems.indexOf("õ") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("ì") !== -1 || missingItems.indexOf("í") !== -1 || missingItems.indexOf("î") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_laser_platform") {
+                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("í") !== -1 || missingItems.indexOf("î") !== -1 || missingItems.indexOf("ì") !== -1 || missingItems.indexOf("ñ") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_speed_tb_catch") {
+                    yColor = (missingItems.indexOf("û") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_jump_polarity") {
+                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("¢") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("ó") !== -1 || missingItems.indexOf("æ") !== -1 || missingItems.indexOf("ñ") !== -1) ? "#ff4444" : "#44ff44";
+                } else if (mapName === "sp_a4_finale3") {
+                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("¢") !== -1) ? "#ff4444" : "#44ff44";
+                }
+
+                if (yColor !== "") {
+                    finalStatus = finalStatus.replace(/ÿ/g, `<font color="${yColor}">ÿ</font>`);
+                }
+            }
+
+            statusLabel.text = finalStatus;
+            statusLabel.style.color = "#eeeeee"; 
+        }
         if (mapSubtitleLabel) mapSubtitleLabel.text = mapData.title || "";
         if (mapSubtitleLabelSecondary) mapSubtitleLabelSecondary.text = mapData.subtitle || "";
 
@@ -283,7 +383,7 @@ class ArchipelagoMapSelect {
                 }
 
                 const rawTitle = map.title || "Unknown Map";
-                const statusIcons = rawTitle.length > 4 ? rawTitle.substring(0, 4).trim() : "";
+                const statusIcons = (rawTitle.length > 4 ? rawTitle.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
                 const cleanName = rawTitle.length > 4 ? rawTitle.substring(4).trim() : rawTitle;
 
                 const onSelect = () => {

@@ -48,12 +48,12 @@
                         <!-- CHECKS -->
                         <Panel id="ChecksColumn" class="info_column">
                             <Label class="info_header" text="CHECKS" />
-                            <Label id="MapStatusIconsPreview" class="map_status_preview_label" text="" />
+                            <Label id="MapStatusIconsPreview" class="map_status_preview_label" text="" html="true" />
                         </Panel>
 
                         <!-- REQUIREMENTS -->
                         <Panel id="RequirementsColumn" class="info_column">
-                            <Label class="info_header" text="REQUIREMENTS" />
+                            <Label class="info_header" text="MISSING ITEMS" />
                             <Label id="MapSubtitleLabel_Secondary" class="map_subtitle_label" text="" />
                         </Panel>
                     </Panel>

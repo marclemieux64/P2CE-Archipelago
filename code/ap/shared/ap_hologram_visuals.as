@@ -485,21 +485,23 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     if (classname == "trigger_catapult") {
         targetSkin = 4;
         targetScale = 0.7f;
-        targetPos = ent.
-            GetAbsOrigin() + (ent.
-            Up() * 32.0f);
         
         CBaseEntity@ plate = null;
-        while ((@plate =
-            EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
-            if (plate.
-                GetModelName().locate("faith_plate") != uint(-1)) {
+        bool foundPlate = false;
+        while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
+            if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
                 float dist = (plate.GetAbsOrigin() - ent.GetAbsOrigin()).Length();
-                if (dist < 30.0f) {
+                if (dist < 128.0f) {
+                    targetPos = plate.GetAbsOrigin() + (plate.Up() * 32.0f);
                     targetAng = plate.GetAbsAngles();
+                    foundPlate = true;
                     break;
                 }
             }
+        }
+        
+        if (!foundPlate) {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 32.0f);
         }
         return;
     }

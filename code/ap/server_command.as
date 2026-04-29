@@ -321,6 +321,154 @@ void RestorePotatosToGunCmd(const CommandArgs@ args) {
     RestorePotatosToGun();
 }
 
+[ServerCommand("RestoreCatapults", "Re-enables all Aerial Faith Plates")]
+void RestoreCatapultsCmd(const CommandArgs@ args) {
+    CBaseEntity@ catapult = null;
+    while ((@catapult = EntityList().FindByClassname(catapult, "trigger_catapult")) !is null) {
+        string catName = catapult.GetEntityName();
+        
+        // Exception for sp_a2_sphere_peek
+        if (current_map == "sp_a2_sphere_peek" && catName == "catapult2_up") {
+            // Keep disabled, but proceed to delete the hologram
+        } else {
+            catapult.FireInput("Enable", Variant(), 0.0f, null, null, 0);
+        }
+
+        string holoName = catName + "_holo";
+        if (catName == "") holoName = "trigger_catapult_holo";
+        
+        CBaseEntity@ holo = null;
+        while ((@holo = EntityList().FindByName(holo, holoName)) !is null) {
+            holo.FireInput("Kill", Variant(), 0.0f, null, null, 0);
+        }
+    }
+
+    CBaseEntity@ plate = null;
+    while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
+        if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
+            Variant vSkin;
+            vSkin.SetString("0");
+            plate.FireInput("Skin", vSkin, 0.0f, null, null, 0);
+        }
+    }
+
+    int disabledCount = 0;
+    CBaseEntity@ catCheck = null;
+    while ((@catCheck = EntityList().FindByClassname(catCheck, "trigger_catapult")) !is null) {
+        string cName = catCheck.GetEntityName();
+        string hName = cName + "_holo";
+        if (cName == "") hName = "trigger_catapult_holo";
+        
+        CBaseEntity@ holoCheck = EntityList().FindByName(null, hName);
+        if (holoCheck !is null || (current_map == "sp_a2_sphere_peek" && cName == "catapult2_up")) {
+            disabledCount++;
+        }
+    }
+
+    CBaseEntity@ ent = null;
+    while ((@ent = EntityList().Next(ent)) !is null) {
+        string n = ent.GetEntityName();
+        if (n.locate("ap_cat_snd_") == 0 || n.locate("ap_hint_") == 0 || n.locate("ap_hint_target_") == 0) {
+            ent.FireInput("Kill", Variant(), 0.0f, null, null, 0);
+        }
+        
+        if (n.locate("ap_cat_timer") == 0 && disabledCount == 0) {
+            ent.FireInput("Kill", Variant(), 0.0f, null, null, 0);
+        }
+    }
+}
+
+[ServerCommand("ap_catapult_effect_check", "Plays sound and sets skin to 1 if player is near a disabled catapult")]
+void APCatapultEffectCheckCmd(const CommandArgs@ args) {
+    CBaseEntity@ player = EntityList().FindByClassname(null, "player");
+    if (player is null) return;
+    
+    Vector pPos = player.GetAbsOrigin();
+    CBaseEntity@ catapult = null;
+    
+    while ((@catapult = EntityList().FindByClassname(catapult, "trigger_catapult")) !is null) {
+        string catName = catapult.GetEntityName();
+        string holoName = catName + "_holo";
+        if (catName == "") holoName = "trigger_catapult_holo";
+        CBaseEntity@ holo = EntityList().FindByName(null, holoName);
+        if (holo is null) {
+            if (current_map == "sp_a2_sphere_peek" && catName == "catapult2_up") {
+                // Keep checking even without the hologram!
+            } else {
+                continue;
+            }
+        }
+        
+        float distToPlayer = (catapult.GetAbsOrigin() - pPos).Length();
+        
+        CBaseEntity@ plate = null;
+        while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
+            if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
+                float distToPlate = (plate.GetAbsOrigin() - catapult.GetAbsOrigin()).Length();
+                if (distToPlate < 128.0f) {
+                    Vector pMins, pMaxs;
+                    player.ComputeWorldSpaceSurroundingBox(pMins, pMaxs);
+                    
+                    Vector catMins, catMaxs;
+                    catapult.ComputeWorldSpaceSurroundingBox(catMins, catMaxs);
+                    
+                    // Expand bounds slightly
+                    catMins.x -= 5.0f;
+                    catMins.y -= 5.0f;
+                    catMins.z -= 5.0f;
+                    catMaxs.x += 5.0f;
+                    catMaxs.y += 5.0f;
+                    catMaxs.z += 5.0f;
+                    
+                    bool isTouching = (distToPlayer < 80.0f) &&
+                        (pMins.x <= catMaxs.x && pMaxs.x >= catMins.x) &&
+                            (pMins.y <= catMaxs.y && pMaxs.y >= catMins.y) &&
+                                (pMins.z <= catMaxs.z && pMaxs.z >= catMins.z);
+
+                    if (isTouching) {
+                        Variant vSkin1;
+                        vSkin1.SetString("1");
+                        plate.FireInput("Skin", vSkin1, 0.0f, null, null, 0);
+                        
+                        Variant vSkin0;
+                        vSkin0.SetString("0");
+                        plate.FireInput("Skin", vSkin0, 0.5f, null, null, 0);
+                        
+                        CBaseEntity@ snd = EntityList().FindByName(null, "ap_cat_snd_" + plate.GetEntityName());
+                        if (snd !is null) {
+                            snd.FireInput("PlaySound", Variant(), 0.0f, null, null, 0);
+                        }
+                        
+                        CBaseEntity@ hint = EntityList().FindByName(null, "ap_hint_" + plate.GetEntityName());
+                        if (hint !is null) {
+                            hint.FireInput("ShowHint", Variant(), 0.0f, null, null, 0);
+                        }
+                        ap_last_hinted_catapult = plate.GetEntityName();
+                    } else {
+                        Variant vSkin;
+                        vSkin.SetString("0");
+                        plate.FireInput("Skin", vSkin, 0.0f, null, null, 0);
+                        
+                        if (ap_last_hinted_catapult == plate.GetEntityName()) {
+                            CBaseEntity@ hint = EntityList().FindByName(null, "ap_hint_" + plate.GetEntityName());
+                            if (hint !is null) {
+                                hint.FireInput("EndHint", Variant(), 2.0f, null, null, 0);
+                            }
+                            ap_last_hinted_catapult = "";
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
+[ServerCommand("ap_restore_catapults", "Alias for RestoreCatapults")]
+void APRestoreCatapultsCmd(const CommandArgs@ args) {
+    RestoreCatapultsCmd(args);
+}
+
 [ServerCommand("ap_debug_scanall", "Scans for all Archipelago-relevant checks in the map")]
 void APDebugScanAllCmd(const CommandArgs@ args) {
     int count = 0;

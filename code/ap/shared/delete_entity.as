@@ -29,7 +29,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
             while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
                 if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
                     float dist = (plate.GetAbsOrigin() - t.GetAbsOrigin()).Length();
-                    if (dist < 30.0f) {
+                    if (dist < 128.0f) {
                         foundPlate = true;
                         break;
                     }
@@ -44,21 +44,6 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
             continue; // Skip system-critical or decorative triggers
         }
 
-        // Check if map is in the scripted fling protection list
-        bool isProtectedMap = false;
-        for (uint j = 0; j < scripted_fling_levels.length(); j++) {
-            if (current_map == scripted_fling_levels[j]) {
-                isProtectedMap = true;
-                break;
-            }
-        }
-
-        if (classname == "trigger_catapult" && isProtectedMap) {
-            //Msgl("[AP] BLOCKED Deletion of protected catapult '" + tName + "' on " + current_map);
-            // On these maps, we KEEP the catapult and spawn NO holo.
-            shouldSpawnHolo = false; 
-        }
-
         // 2. Instant Hologram (Unified Registry) - Spawns only if allowed
         if (shouldSpawnHolo) {
             Vector hPos;
@@ -71,9 +56,87 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
             CreateAPHologram(hPos, hAng, hScale, "", "", hSkin, hName);
         }
 
-        // 3. Skip removal logic for protected maps
-        if (classname == "trigger_catapult" && isProtectedMap) {
-            continue; 
+        if (classname == "trigger_catapult") {
+            t.FireInput("Disable", Variant(), 0.0f, null, null, 0);
+            
+            // Using original names exclusively to prevent P2CE heap reallocation errors
+            
+            CBaseEntity@ proxTimer = EntityList().FindByName(null, "ap_cat_timer");
+            if (proxTimer is null) {
+                @proxTimer = util::CreateEntityByName("logic_timer");
+                if (proxTimer !is null) {
+                    proxTimer.KeyValue("targetname", "ap_cat_timer");
+                    proxTimer.KeyValue("RefireTime", "1.5");
+                    proxTimer.Spawn();
+                    
+                    Variant vProx;
+                    vProx.SetString("OnTimer ap_init_cmd:Command:ap_catapult_effect_check:0.0:-1");
+                    proxTimer.FireInput("AddOutput", vProx, 0.0f, null, null, 0);
+                }
+            }
+
+            CBaseEntity@ plate = null;
+            while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
+                if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
+                    float dist = (plate.GetAbsOrigin() - t.GetAbsOrigin()).Length();
+                    if (dist < 128.0f) {
+                        string pName = plate.GetEntityName();
+                        if (pName == "") {
+                            pName = "ap_faith_plate_" + RandomInt(1000, 9999);
+                            plate.KeyValue("targetname", pName);
+                        }
+
+                        plate.KeyValue("solid", "2");
+                        plate.SetSolid(SOLID_BBOX);
+                        plate.SetMoveType(MOVETYPE_PUSH);
+                        plate.FireInput("EnableCollision", Variant(), 0.0f, null, null, 0);
+                        
+                        string uid = "ap_cat_snd_" + pName;
+                        CBaseEntity@ snd = EntityList().FindByName(null, uid);
+                        if (snd is null) {
+                            @snd = util::CreateEntityByName("ambient_generic");
+                            if (snd !is null) {
+                                snd.KeyValue("targetname", uid);
+                                snd.KeyValue("message", "World.RobotNegInteractPitchedUp");
+                                snd.KeyValue("spawnflags", "48"); 
+                                snd.KeyValue("health", "10"); 
+                                snd.SetAbsOrigin(plate.GetAbsOrigin());
+                                snd.Spawn();
+                            }
+                        }
+
+                        string targetUid = "ap_hint_target_" + pName;
+                        CBaseEntity@ hintTarget = EntityList().FindByName(null, targetUid);
+                        if (hintTarget is null) {
+                            @hintTarget = util::CreateEntityByName("info_target_instructor_hint");
+                            if (hintTarget !is null) {
+                                hintTarget.KeyValue("targetname", targetUid);
+                                hintTarget.SetAbsOrigin(plate.GetAbsOrigin());
+                                hintTarget.Spawn();
+                            }
+                        }
+
+                        string hintUid = "ap_hint_" + pName;
+                        CBaseEntity@ hint = EntityList().FindByName(null, hintUid);
+                        if (hint is null) {
+                            @hint = util::CreateEntityByName("env_instructor_hint");
+                            if (hint !is null) {
+                                hint.KeyValue("targetname", hintUid);
+                                hint.KeyValue("hint_target", targetUid);
+                                hint.KeyValue("hint_static", "0");
+                                hint.KeyValue("hint_caption", "You don't have the Aerial Faith Plates");
+                                hint.KeyValue("hint_icon_onscreen", "icon_alert");
+                                hint.KeyValue("hint_color", "255 50 50");
+                                hint.KeyValue("hint_timeout", "0");
+                                hint.Spawn();
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            continue;
         }
 
         // 4. Final Removal / Disabling

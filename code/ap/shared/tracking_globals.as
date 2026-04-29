@@ -10,6 +10,8 @@ array<string> trap_colors = { "255 0 0", "0 255 0", "0 0 255", "255 255 0", "255
 
 // Fling Levels
 array<string> scripted_fling_levels = { "sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity" };
+bool ap_catapult_skin_toggle = false;
+string ap_last_hinted_catapult = "";
 
 // Butter Fingers Globals
 int g_ButterFingersTicks = 0;

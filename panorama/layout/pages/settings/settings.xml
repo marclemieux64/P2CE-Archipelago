@@ -120,7 +120,7 @@
 							group="SettingsNav"
 							onactivate="MainMenuSettings.navigateToTab('ArchipelagoSettings')"
 						>
-							<Label class="settings-nav__item-label" text="Archipelago" />
+							<Label class="settings-nav__item-label" text="#Archipelago_Settings_Title" />
 						</RadioButton>
 
 

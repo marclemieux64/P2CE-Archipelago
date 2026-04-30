@@ -4,21 +4,44 @@
 	</styles>
 	<scripts>
 		<include src="file://{scripts}/pages/settings/page.js" />
+		<include src="file://{scripts}/pages/settings/archipelago.ts" />
 	</scripts>
 
-	<Panel class="settings-page" searchtitle="Archipelago">
+	<Panel class="settings-page" searchtitle="#Archipelago_Settings_Title">
 		<Panel id="SettingsPageContainer" class="settings-page__container">
 
 			<!-- Group 1: General -->
 			<Panel id="ArchipelagoGeneral" class="settings-group">
 				<Panel class="settings-group__header">
-					<Label class="settings-group__title" text="General Settings" />
+					<Label class="settings-group__title" text="#Archipelago_Settings_General" />
 				</Panel>
 
+				<!-- Hide Location Counts -->
+				<SettingsEnum
+					id="HideCountsSetting"
+					text="#Archipelago_Settings_HideLocationCounts"
+					psvar="ap_hide_location_counts"
+					infomessage="#Archipelago_Settings_HideLocationCounts_info"
+					hasdocspage="false"
+				>
+					<RadioButton group="ap_hide_location_counts" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().UpdateCompletionSymbolStatus()" />
+					<RadioButton group="ap_hide_location_counts" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().UpdateCompletionSymbolStatus()" />
+				</SettingsEnum>
+
+				<!-- Completion Symbol -->
+				<SettingsEnumDropDown
+					id="CompletionSymbolSetting"
+					text="#Archipelago_Settings_CompletionSymbol"
+					psvar="ap_completion_symbol"
+					infomessage="#Archipelago_Settings_CompletionSymbol_info"
+				>
+					<Label text="#Archipelago_Settings_Symbol_Checkmark" value="0" id="ap_symbol0" html="true" />
+					<Label text="#Archipelago_Settings_Symbol_Star" value="1" id="ap_symbol1" html="true" />
+				</SettingsEnumDropDown>
+
 				<!-- Example Toggle -->
-				<SettingsEnum text="Enable archipelago" convar="ap_enabled">
-					<RadioButton group="ap_enable" text="#Common_Off" value="0" />
-					<RadioButton group="ap_enable" text="#Common_On" value="1" />
+				<SettingsEnum text="#Archipelago_Settings_WIP" convar="ap_enabled">
+
 				</SettingsEnum>
 			</Panel>
 

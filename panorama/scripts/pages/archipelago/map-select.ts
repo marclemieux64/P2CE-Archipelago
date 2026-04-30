@@ -6,17 +6,7 @@ interface Panel { [key: string]: any; }
 interface ImagePanel extends Panel { }
 interface LabelPanel extends Panel { }
 
-const CHAPTER_NAMES: { [key: string]: string } = {
-    "1": "The Courtesy Call",
-    "2": "The Cold Boot",
-    "3": "The Return",
-    "4": "The Surprise",
-    "5": "The Escape",
-    "6": "The Fall",
-    "7": "The Reunion",
-    "8": "The Itch",
-    "9": "The Part Where He Kills You"
-};
+
 
 class ArchipelagoMapSelect {
     static g_ChapterData: any = {};
@@ -46,6 +36,10 @@ class ArchipelagoMapSelect {
             }
         }
         return false;
+    }
+
+    static getCompletionSymbol(): string {
+        return ($.persistentStorage.getItem('ap_completion_symbol') ?? 0) === 1 ? "★" : "✓";
     }
 
     static onLoad() {
@@ -194,7 +188,7 @@ class ArchipelagoMapSelect {
         if (chapter) {
             this.selectMap({
                 pic: chapter.pic,
-                title: CHAPTER_NAMES[chapterId] || chapter.title || "Chapter " + chapterId,
+                title: $.Localize(`#portal2_Chapter${chapterId}_Title`) || chapter.title || "Chapter " + chapterId,
                 subtitle: "",
                 status: "",
                 command_deactivated: true,
@@ -329,6 +323,7 @@ class ArchipelagoMapSelect {
         const showDetails = !mapData.is_chapter;
         if (checks) checks.visible = showDetails;
         if (reqs) reqs.visible = showDetails;
+        if (playButton) playButton.visible = showDetails;
 
         if (playButton) {
             this.g_SelectedMapCommand = mapData.command || mapData.command_deactivated || "";
@@ -366,7 +361,7 @@ class ArchipelagoMapSelect {
             entry.SetPanelEvent('onfocus', () => {
                 this.selectMap({
                     pic: chapter.pic,
-                    title: CHAPTER_NAMES[chId] || chapter.title || "Chapter " + chId,
+                    title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title || "Chapter " + chId,
                     subtitle: "",
                     status: "",
                     command_deactivated: true,
@@ -380,7 +375,8 @@ class ArchipelagoMapSelect {
                 const rawTitle = map.title || "Unknown Map";
                 const statusIcons = (rawTitle.length > 4 ? rawTitle.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
 
-                const isAllStars = statusIcons.length > 0 && statusIcons.replace(/✓/g, "").length === 0;
+                const symbol = ArchipelagoMapSelect.getCompletionSymbol();
+                const isAllStars = statusIcons.length > 0 && statusIcons.replace(new RegExp(symbol, 'g'), "").length === 0;
                 if (isAllStars) {
                     starCount++;
                 }
@@ -462,14 +458,14 @@ class ArchipelagoMapSelect {
 
             if (starCount === chapter.maps.length && chapter.maps.length > 0) {
                 const chStarLabel = $.CreatePanel('Label', entry, '');
-                chStarLabel.text = "✓";
+                chStarLabel.text = ArchipelagoMapSelect.getCompletionSymbol();
                 chStarLabel.style.color = "#ffff44";
                 chStarLabel.style.fontSize = "26px";
                 chStarLabel.style.fontFamily = "APPortal-bold";
                 chStarLabel.style.verticalAlign = "center";
                 chStarLabel.style.horizontalAlign = "right";
                 chStarLabel.style.marginRight = "15px";
-            } else if (chapterGreenCount > 0) {
+            } else if (chapterGreenCount > 0 && ($.persistentStorage.getItem('ap_hide_location_counts') ?? 0) === 0) {
                 const chGreenLabel = $.CreatePanel('Label', entry, '');
                 chGreenLabel.text = chapterGreenCount.toString();
                 chGreenLabel.style.color = "#44ff44";
@@ -487,11 +483,11 @@ class ArchipelagoMapSelect {
             textWrapper.style.verticalAlign = "center";
 
             const title = $.CreatePanel('Label', textWrapper, '');
-            title.text = chapter.title || "Chapter " + chId;
+            title.text = $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title || "Chapter " + chId;
             title.AddClass('ChapterTitle');
 
             const desc = $.CreatePanel('Label', textWrapper, '');
-            desc.text = CHAPTER_NAMES[chId] || chapter.subtitle || "";
+            desc.text = $.Localize(`#portal2_Chapter${chId}_Subtitle`) || chapter.subtitle || "";
             desc.AddClass('ChapterSubtitle');
 
             const mapList = $.CreatePanel('Panel', container, `ChapterMaps_${chId}`);
@@ -513,8 +509,22 @@ class ArchipelagoMapSelect {
                 const statusIcons = (rawTitle.length > 4 ? rawTitle.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
                 const cleanName = rawTitle.length > 4 ? rawTitle.substring(4).trim() : rawTitle;
 
+                let greenCount = 0;
+                let mapCmdName = "";
+                if (map.command) {
+                    const parts = map.command.split(" ");
+                    if (parts.length >= 2) {
+                        mapCmdName = parts[1].trim().toLowerCase();
+                    }
+                }
+                const mItems = map.subtitle || "";
+
+                const mapToken = `#portal2_MapName_${mapCmdName}`;
+                const localizedMapName = $.Localize(mapToken);
+                const finalMapName = (localizedMapName !== mapToken) ? localizedMapName : cleanName;
+
                 const onSelect = () => {
-                    this.selectMap({ ...map, title: cleanName, subtitle: map.subtitle || "", status: statusIcons, is_chapter: false });
+                    this.selectMap({ ...map, title: finalMapName, subtitle: map.subtitle || "", status: statusIcons, is_chapter: false });
                 };
 
                 mapBtn.SetPanelEvent('onactivate', () => {
@@ -530,18 +540,8 @@ class ArchipelagoMapSelect {
                 mapContent.AddClass('map-title-container');
 
                 const nameLabel = $.CreatePanel('Label', mapContent, '');
-                nameLabel.text = cleanName;
+                nameLabel.text = finalMapName;
                 nameLabel.AddClass('MapPrimaryName');
-
-                let greenCount = 0;
-                let mapCmdName = "";
-                if (map.command) {
-                    const parts = map.command.split(" ");
-                    if (parts.length >= 2) {
-                        mapCmdName = parts[1].trim().toLowerCase();
-                    }
-                }
-                const mItems = map.subtitle || "";
 
                 for (let i = 0; i < statusIcons.length; i++) {
                     const char = statusIcons[i];
@@ -608,7 +608,7 @@ class ArchipelagoMapSelect {
                     }
                 }
 
-                if (greenCount > 0) {
+                if (greenCount > 0 && ($.persistentStorage.getItem('ap_hide_location_counts') ?? 0) === 0) {
                     const greenLabel = $.CreatePanel('Label', mapBtn, '');
                     greenLabel.text = greenCount.toString();
                     greenLabel.style.color = "#44ff44";
@@ -616,9 +616,9 @@ class ArchipelagoMapSelect {
                     greenLabel.style.fontFamily = "APPortal-bold";
                     greenLabel.style.verticalAlign = "center";
                     greenLabel.style.marginRight = "10px";
-                } else if (statusIcons.length > 0 && statusIcons.replace(/✓/g, "").length === 0) {
+                } else if (statusIcons.length > 0 && statusIcons.replace(new RegExp(ArchipelagoMapSelect.getCompletionSymbol(), 'g'), "").length === 0) {
                     const starLabel = $.CreatePanel('Label', mapBtn, '');
-                    starLabel.text = "✓";
+                    starLabel.text = ArchipelagoMapSelect.getCompletionSymbol();
                     starLabel.style.color = "#ffff44";
                     starLabel.style.fontSize = "26px";
                     starLabel.style.fontFamily = "APPortal-bold";

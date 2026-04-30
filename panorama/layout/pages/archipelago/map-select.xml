@@ -6,7 +6,7 @@
 </styles>
 
 <script>
-    $.DispatchEvent('MainMenuSetPageLines', 'Archipelago Maps', '');
+    $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
 </script>
 <scripts>
     <include src="file://{resources}/scripts/pages/archipelago/map-select.ts" />
@@ -47,13 +47,13 @@
 
                         <!-- CHECKS -->
                         <Panel id="ChecksColumn" class="info_column">
-                            <Label class="info_header" text="CHECKS" />
+                            <Label class="info_header" text="#Archipelago_Map_Checks" />
                             <Label id="MapStatusIconsPreview" class="map_status_preview_label" text="" html="true" />
                         </Panel>
 
                         <!-- REQUIREMENTS -->
                         <Panel id="RequirementsColumn" class="info_column">
-                            <Label class="info_header" text="MISSING ITEMS" />
+                            <Label class="info_header" text="#Archipelago_Map_MissingItems" />
                             <Label id="MapSubtitleLabel_Secondary" class="map_subtitle_label" text="" />
                         </Panel>
                     </Panel>
@@ -64,7 +64,7 @@
                     <Button id="PlayButton"
                             class="play_button"
                             onactivate="ArchipelagoMapSelect.playSelectedMap()">
-                        <Label class="play_button_text" text="PLAY" />
+                        <Label class="play_button_text" text="#MainMenu_Navigation_Play" />
                     </Button>
                 </Panel>
             </Panel>

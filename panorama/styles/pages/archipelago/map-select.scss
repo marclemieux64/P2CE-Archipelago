@@ -217,6 +217,8 @@
 }
 
 .footer_content {
+    min-height: 93px;
+    max-height: 93px;
     width: fill-parent-flow(3.0); // Must match right_preview's 3.0 proportion
     flow-children: right;
     margin: 24px 0px 0px 0px;
@@ -262,7 +264,7 @@
 .map_subtitle_label {
     font-family: "LexendDeca";
     font-weight: bold;
-    font-size: 32px;
+    font-size: 30px;
     color: #eeeeee;
     text-shadow: 0px 0px 8px #ffffff11;
 }

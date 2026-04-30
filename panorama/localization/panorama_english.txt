@@ -29,8 +29,102 @@
 		"SP_PRESENCE_TEXT_CH6"					"Chapter 6\nThe Fall"
 		"SP_PRESENCE_TEXT_CH7"					"Chapter 7\nThe Reunion"
 		"SP_PRESENCE_TEXT_CH8"					"Chapter 8\nThe Itch"
-		"SP_PRESENCE_TEXT_CH9"					"Chapter 9\nThe Part Where He Kills You"
+		"SP_PRESENCE_TEXT_CH9"					"Chapter 9\nThe Part Where..."
 		"SP_PRESENCE_TEXT_CH10"					"Chapter 10\nThe Credits"
+
+		// Chapter 1 Maps
+		"portal2_MapName_sp_a1_intro1"          "Container Ride"
+		"portal2_MapName_sp_a1_intro2"          "Portal Carousel"
+		"portal2_MapName_sp_a1_intro3"          "Portal Gun"
+		"portal2_MapName_sp_a1_intro4"          "Smooth Jazz"
+		"portal2_MapName_sp_a1_intro5"          "Cube Momentum"
+		"portal2_MapName_sp_a1_intro6"          "Future Starter"
+		"portal2_MapName_sp_a1_intro7"          "Secret Panel"
+		"portal2_MapName_sp_a1_wakeup"          "Her Chamber"
+		"portal2_MapName_sp_a2_intro"           "Incinerator"
+
+		// Chapter 2 Maps
+		"portal2_MapName_sp_a2_laser_intro"     "Laser Intro"
+		"portal2_MapName_sp_a2_laser_stairs"    "Laser Stairs"
+		"portal2_MapName_sp_a2_dual_lasers"     "Dual Lasers"
+		"portal2_MapName_sp_a2_laser_over_goo"  "Laser Over Goo"
+		"portal2_MapName_sp_a2_catapult_intro"  "Catapult Intro"
+		"portal2_MapName_sp_a2_trust_fling"     "Trust Fling"
+		"portal2_MapName_sp_a2_pit_flings"      "Pit Flings"
+		"portal2_MapName_sp_a2_fizzler_intro"   "Fizzler Intro"
+
+		// Chapter 3 Maps
+		"portal2_MapName_sp_a2_sphere_peek"     "Ceiling Catapult"
+		"portal2_MapName_sp_a2_ricochet"        "Ricochet"
+		"portal2_MapName_sp_a2_bridge_intro"    "Bridge Intro"
+		"portal2_MapName_sp_a2_bridge_the_gap"  "Bridge the Gap"
+		"portal2_MapName_sp_a2_turret_intro"    "Turret Intro"
+		"portal2_MapName_sp_a2_laser_relays"    "Laser Relays"
+		"portal2_MapName_sp_a2_turret_blocker"  "Turret Blocker"
+		"portal2_MapName_sp_a2_laser_vs_turret" "Laser vs. Turret"
+		"portal2_MapName_sp_a2_pull_the_rug"    "Pull the Rug"
+
+		// Chapter 4 Maps
+		"portal2_MapName_sp_a2_column_blocker"  "Column Blocker"
+		"portal2_MapName_sp_a2_laser_chaining"  "Laser Chaining"
+		"portal2_MapName_sp_a2_triple_laser"    "Triple Laser"
+		"portal2_MapName_sp_a2_bts1"            "Jailbreak"
+		"portal2_MapName_sp_a2_bts2"            "Escape"
+
+		// Chapter 5 Maps
+		"portal2_MapName_sp_a2_bts3"            "Turret Factory"
+		"portal2_MapName_sp_a2_bts4"            "Turret Sabotage"
+		"portal2_MapName_sp_a2_bts5"            "Neurotoxin Sabotage"
+		"portal2_MapName_sp_a2_bts6"            "Tube Ride"
+		"portal2_MapName_sp_a2_core"            "Core Transfer"
+
+		// Chapter 6 Maps
+		"portal2_MapName_sp_a3_00"              "The Fall"
+		"portal2_MapName_sp_a3_01"              "Underground"
+		"portal2_MapName_sp_a3_03"              "Cave Johnson"
+		"portal2_MapName_sp_a3_jump_intro"      "Repulsion Gel Intro"
+		"portal2_MapName_sp_a3_bomb_flings"     "Bomb Flings"
+		"portal2_MapName_sp_a3_crazy_box"       "Crazy Box"
+		"portal2_MapName_sp_a3_transition01"    "Reunion"
+
+		// Chapter 7 Maps
+		"portal2_MapName_sp_a3_speed_ramp"      "Propulsion Gel Intro"
+		"portal2_MapName_sp_a3_speed_flings"     "Speed Flings"
+		"portal2_MapName_sp_a3_portal_intro"    "Conversion Gel Intro"
+		"portal2_MapName_sp_a3_end"             "Three Gels"
+
+		// Chapter 8 Maps
+		"portal2_MapName_sp_a4_intro"           "TEST"
+		"portal2_MapName_sp_a4_tb_intro"        "Excursion Funnel Intro"
+		"portal2_MapName_sp_a4_tb_trust_drop"   "Trust Drop"
+		"portal2_MapName_sp_a4_tb_wall_button"  "Wall Button"
+		"portal2_MapName_sp_a4_tb_polarity"     "Polarity"
+		"portal2_MapName_sp_a4_tb_catch"        "Funnel Catch"
+		"portal2_MapName_sp_a4_stop_the_box"    "Stop the Box"
+		"portal2_MapName_sp_a4_laser_catapult"  "Laser Catapult"
+		"portal2_MapName_sp_a4_laser_platform"  "Laser Platform"
+		"portal2_MapName_sp_a4_speed_tb_catch"  "Propulsion Catch"
+		"portal2_MapName_sp_a4_jump_polarity"   "Repulsion Polarity"
+
+	// Chapter 9 Maps
+		"portal2_MapName_sp_a4_finale1"         "Finale 1"
+		"portal2_MapName_sp_a4_finale2"         "Finale 2"
+		"portal2_MapName_sp_a4_finale3"         "Finale 3"
+		"portal2_MapName_sp_a4_finale4"         "Finale 4"
+
+		"Archipelago_Map_Checks"                "CHECKS"
+		"Archipelago_Map_MissingItems"          "MISSING ITEMS"
+		"Archipelago_Maps_Title"                "Archipelago Maps"
+		"Archipelago_Maps_Tagline"              "Select a map to play"
+		"Archipelago_Settings_Title"            "Archipelago"
+		"Archipelago_Settings_General"          "General Settings"
+		"Archipelago_Settings_HideLocationCounts" "Hide Location Counts"
+		"Archipelago_Settings_HideLocationCounts_info" "Hide the number of checks available in each map and chapter."
+		"Archipelago_Settings_CompletionSymbol" " Full Completion Symbol"
+		"Archipelago_Settings_CompletionSymbol_info" "Choose the symbol used to indicate a completed map or chapter."
+		"Archipelago_Settings_Symbol_Checkmark" "Checkmark <font color='#ffff44' face='apportalb'>✓</font>"
+		"Archipelago_Settings_Symbol_Star"      "Star <font color='#ffff44' face='apportalb'>★</font>"
+		"Archipelago_Settings_WIP"              "Work in progress"
 
 		"COOP_PRESENCE_WAITING_DEFAULT"			"Waiting for Partner"
 		"COOP_PRESENCE_WAITING_SPLITSCREEN"		"Splitscreen"

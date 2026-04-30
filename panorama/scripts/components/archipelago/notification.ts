@@ -1,6 +1,7 @@
 const notificationQueue: Panel[] = [];
 let isTimerRunning = false;
 let isWarpPending = false;
+let pendingWarpMapName = "";
 
 /**
  * Find the root HUD panel by searching upwards through parents.
@@ -33,9 +34,10 @@ try {
 
 // 2. WARP LISTENER: Catches the signal to end the level
 $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
-    $.Msg("[AP] WarpToMenu received. Starting black fade buffer...");
+    $.Msg("[AP] WarpToMenu received for map: " + content + ". Starting black fade buffer...");
 
     isWarpPending = true;
+    pendingWarpMapName = content;
 
     // Trigger the black fade on the HUD root
     const hud = GetHudRoot();
@@ -64,7 +66,12 @@ function ProcessQueue() {
 
             // Final short delay so the player can actually see the "all clear" state in the black
             $.Schedule(0.5, () => {
-                GameInterfaceAPI.ConsoleCommand("disconnect");
+                const useSmartWarp = ($.persistentStorage.getItem('ap_smart_warp') ?? 0) === 1;
+                if (useSmartWarp) {
+                    (UiToolkitAPI.GetGlobalObject() as any).SmartWarpNextMap(pendingWarpMapName);
+                } else {
+                    GameInterfaceAPI.ConsoleCommand("disconnect");
+                }
             });
         }
         return;

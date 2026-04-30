@@ -39,6 +39,16 @@
 					<Label text="#Archipelago_Settings_Symbol_Star" value="1" id="ap_symbol1" html="true" />
 				</SettingsEnumDropDown>
 
+				<!-- Transition Type -->
+				<SettingsEnumDropDown
+					text="#Archipelago_Settings_TransitionType"
+					psvar="ap_smart_warp"
+					infomessage="#Archipelago_Settings_TransitionType_info"
+				>
+					<Label text="#Archipelago_Settings_Transition_Menu" value="0" />
+					<Label text="#Archipelago_Settings_Transition_Smart" value="1" />
+				</SettingsEnumDropDown>
+
 				<!-- Example Toggle -->
 				<SettingsEnum text="#Archipelago_Settings_WIP" convar="ap_enabled">
 

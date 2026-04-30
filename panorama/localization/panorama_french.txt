@@ -124,6 +124,10 @@
 		"Archipelago_Settings_CompletionSymbol_info" "Choisissez le symbole utilisé pour l'indicateur de niveau ou un chapitre terminé."
 		"Archipelago_Settings_Symbol_Checkmark" "Coche <font color='#ffff44' face='apportalb'>✓</font>"
 		"Archipelago_Settings_Symbol_Star"      "Étoile <font color='#ffff44' face='apportalb'>★</font>"
+		"Archipelago_Settings_TransitionType"   "Type de transition"
+		"Archipelago_Settings_TransitionType_info" "Choisissez ce qu'il se passe après avoir terminé un niveau."
+		"Archipelago_Settings_Transition_Menu"   "Retour au menu"
+		"Archipelago_Settings_Transition_Smart"  "Transition intelligente"
 		"Archipelago_Settings_WIP"              "Travail en cours"
 
 		"COOP_PRESENCE_WAITING_DEFAULT"			"Waiting for Partner"

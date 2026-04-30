@@ -1,6 +1,6 @@
 "lang"
 {
-	"Language"		"English"
+	"Language"		"French"
 	"Tokens"
 	{
 		// Moved from p2ce_english.txt
@@ -871,12 +871,12 @@
 		"MainMenu_Navigation_Home"						"Home"
 		"MainMenu_Navigation_Play"						"Play"
 		"MainMenu_Navigation_Play_Tagline"				"Begin testing"
-		"MainMenu_Navigation_Play_Archipelago"			"Play P2CE Archipelago"
-		"MainMenu_Navigation_Play_Archipelago_Tagline"	"Start an archipelago P2CE game"
-		"PauseMenu_Navigation_Archipelago" "Change Map"
-		"PauseMenu_Navigation_Archipelago_Tagline"	"Change the map you are playing"
-		"PauseMenu_Navigation_Reload" "Reload"
-		"PauseMenu_Navigation_Reload_Tagline" "Reload the current map"
+		"MainMenu_Navigation_Play_Archipelago"			"Jouer à P2CE Archipelago"
+		"MainMenu_Navigation_Play_Archipelago_Tagline"	"Commencer une partie P2CE Archipelago"
+		"PauseMenu_Navigation_Archipelago" "Changer de niveau"
+		"PauseMenu_Navigation_Archipelago_Tagline"	"Choisir un autre niveau à jouer"
+		"PauseMenu_Navigation_Reload" "Recharger"
+		"PauseMenu_Navigation_Reload_Tagline" "Recharger le niveau en cours"
 		"MainMenu_Navigation_Play_Modes"				"Choose what to play"
 		"MainMenu_Navigation_Workshop"					"Workshop Maps"
 		"MainMenu_Navigation_Workshop_Tagline"			"Select a Workshop map to play"

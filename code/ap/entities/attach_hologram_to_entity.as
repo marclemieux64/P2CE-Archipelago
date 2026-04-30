@@ -2,6 +2,18 @@ void AttachHologramToEntity(string entity_name, string attachment_point, float h
     array<CBaseEntity@> targets;
     CBaseEntity@ ent = null;
     
+    // 0. Auto-Class Suppression for dynamic NPCs (Turrets)
+    if (entity_name == "npc_portal_turret_floor") {
+        bool alreadySuppressed = false;
+        for (uint j = 0; j < g_suppressed_classes.length(); j++) {
+            if (g_suppressed_classes[j] == entity_name) { alreadySuppressed = true; break; }
+        }
+        if (!alreadySuppressed) {
+            g_suppressed_classes.insertLast(entity_name);
+            Msgl("[AP] Persistent Class Attachment activated for: " + entity_name);
+        }
+    }
+
     // 1. Collect targets
     while ((@ent = EntityList().FindByName(ent, entity_name)) !is null) targets.insertLast(ent);
     @ent = null;
@@ -13,11 +25,23 @@ void AttachHologramToEntity(string entity_name, string attachment_point, float h
         if (!isDuplicate) targets.insertLast(ent);
     }
     
+    bool isBTS4Turret = (current_map == "sp_a2_bts4" && entity_name == "npc_portal_turret_floor");
+
     for (uint i = 0; i < targets.length(); i++) {
         CBaseEntity@ t = targets[i];
         
-        string tName = entity_name + "_attached_" + i;
-        t.KeyValue("targetname", tName);
+        string tName;
+        if (isBTS4Turret) {
+            // In BTS4, we MUST not rename turrets or we break choreography!
+            string originalName = t.GetEntityName();
+            tName = (originalName != "") ? originalName : (entity_name + "_" + t.GetEntityIndex());
+        } else {
+            // Legacy behavior for other maps/entities: Rename to ensure unique parenting by name
+            tName = entity_name + "_" + t.GetEntityIndex() + "_attached";
+            t.KeyValue("targetname", tName);
+        }
+        
+        string hName = tName + "_holo";
         
         // 2. Fetch Registry Overrides (Unified Logic)
         Vector finalPos;
@@ -28,11 +52,13 @@ void AttachHologramToEntity(string entity_name, string attachment_point, float h
         // Crucial: We pull from our visual registry!
         GetHologramVisualOverrides(t, finalPos, finalAng, finalSkin, finalScale);
         
-        // If the registry didn't find a map-specific override, 
-        // we keep the 'Attachment' default style but use registry's suggested skin/scale
-        
         // 3. Create the Hologram
-        // We use the registry results (finalPos, finalAng)
-        CreateAPHologram(finalPos, finalAng, finalScale, tName, attachment_point, finalSkin, tName + "_holo");
+        if (isBTS4Turret) {
+            // Pass handle 't' directly as parent to avoid renaming
+            CreateAPHologram(finalPos, finalAng, finalScale, "", attachment_point, finalSkin, hName, t);
+        } else {
+            // Search by name (Legacy)
+            CreateAPHologram(finalPos, finalAng, finalScale, tName, attachment_point, finalSkin, hName);
+        }
     }
 }

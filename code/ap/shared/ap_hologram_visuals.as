@@ -27,7 +27,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
 
     if (current_map == "sp_a1_intro2") {
         if (name.locate("box") != uint(-1)) {
-            targetPos = ent.GetAbsOrigin() + (ent.Up() * -24.0f);
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * -30.0f);
             targetAng.x = 0.0f;
             targetAng.y = 0.0f;
             targetAng.z = 0.0f;
@@ -198,6 +198,15 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         }
     }
 
+    if (current_map == "sp_a2_triple_laser") {
+        if (name == "new_box1" || classname == "prop_weighted_cube") {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 30.0f);
+            targetSkin = 4;
+            targetScale = 0.66f;
+            return;
+        }
+    }
+
     if (current_map == "sp_a2_catapult_intro") {
         if (name.locate("cube_dropper-cube_dropper_box") != uint(-1)) {
             CBaseEntity@ maker = null;
@@ -236,10 +245,136 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         }
     }
 
+    if (current_map == "sp_a2_fizzler_intro") {
+        if (name.locate("cube_dropper-cube_dropper_box") != uint(-1)) {
+            CBaseEntity@ maker = null;
+            while ((@maker = EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
+                if (maker.GetEntityName().locate("cube_dropper") != uint(-1)) {
+                    targetPos = maker.GetAbsOrigin() + (maker.Up() * -420.0f);
+                    break;
+                }
+            }
+            targetSkin = 4;
+            return;
+        }
+    }
+
+    if (current_map == "sp_a2_sphere_peek") {
+        if (name.locate("reflectocube_dropper_box") != uint(-1)) {
+            CBaseEntity@ maker = null;
+            while ((@maker = EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
+                if (maker.GetEntityName().locate("cube_dropper") != uint(-1)) {
+                    targetPos = maker.GetAbsOrigin() + (maker.Up() * -470.0f);
+                    break;
+                }
+            }
+            targetSkin = 4;
+            return;
+        }
+    }
+
+    if (current_map == "sp_a2_ricochet") {
+        if (name.locate("reflecto_cube_dropper-cube_dropper") != uint(-1)) {
+            CBaseEntity@ maker = null;
+            while ((@maker = EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
+                if (maker.GetEntityName().locate("cube_dropper") != uint(-1)) {
+                    targetPos = maker.GetAbsOrigin() + (maker.Up() * -420.0f);
+                    break;
+                }
+            }
+            targetSkin = 4;
+            return;
+        }
+    }
+    if (current_map == "sp_a2_bridge_intro") {
+        if (name.locate("box_dropper_01-cube_dropper_box") != uint(-1) || classname == "env_entity_maker") {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * -330.0f);
+            targetSkin = 4;
+            return;
+        }
+    }
+
+    if (current_map == "sp_a2_bridge_the_gap") {
+        if (name.locate("cube_dropper-cube_dropper_box") != uint(-1)) {
+            CBaseEntity@ maker = null;
+            while ((@maker = EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
+                if (maker.GetEntityName().locate("cube_dropper") != uint(-1)) {
+                    targetPos = maker.GetAbsOrigin() + (maker.Up() * -420.0f);
+                    break;
+                }
+            }
+            targetSkin = 4;
+            return;
+        }
+    }
+
+    if (current_map == "sp_a2_turret_blocker") {
+        if (name.locate("prop_weighted_cube") != uint(-1) || classname == "prop_weighted_cube") {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 30.0f);
+            targetSkin = 4;
+            targetScale = 0.66f;
+            return;
+        }
+
+    }
+
+    if (current_map == "sp_a2_pull_the_rug") {
+        if (name.locate("laser_cube_wall_mixup_start_cube") != uint(-1) || classname == "prop_weighted_cube") {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 30.0f);
+            targetSkin = 4;
+            targetScale = 0.66f;
+            return;
+        }
+
+    }
+
+    if (current_map == "sp_a2_laser_chaining") {
+        if (name.locate("box") != uint(-1)) {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 30.0f);
+            targetSkin = 4;
+            targetScale = 0.66f;
+            return;
+        }
+    }
+
+    if (current_map == "sp_a3_jump_intro") {
+        if (name.locate("room_1_cube_dropper-cube_dropper_box") != uint(-1)) {
+            CBaseEntity@ maker = null;
+            while ((@maker = EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
+                if (maker.GetEntityName().locate("cube_dropper") != uint(-1)) {
+                    targetPos = maker.GetAbsOrigin() + (maker.Up() * -60.0f);
+                    break;
+                }
+            }
+            targetSkin = 4;
+            return;
+        }
+        if (name.locate("room_2_cube_dropper_2-cube_dropper_box") != uint(-1)) {
+            CBaseEntity@ maker = null;
+            while ((@maker = EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
+                if (maker.GetEntityName().locate("cube_dropper") != uint(-1)) {
+                    targetPos = maker.GetAbsOrigin() + (maker.Up() * -420.0f);
+                    break;
+                }
+            }
+            targetSkin = 4;
+            return;
+        }
+        if (name.locate("room_2_cube_dropper_1-cube_dropper_box_359") != uint(-1)) {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 30.0f);
+            targetSkin = 4;
+            targetScale = 0.66f;
+            return;
+        }
+    }
+
     if (current_map == "sp_a3_crazy_box") {
         if (classname == "prop_under_button") {
             // Nudge out from the front of the box AND up slightly
-            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 45.0f) + (ent.Up() * 25.0f);
+            targetPos = ent.
+                GetAbsOrigin() + (ent.
+                Forward() * 45.0f) + (ent.
+                Up() * 25.0f);
             // Face outward
             targetAng = ent.GetAbsAngles();
             targetAng.x += 90.0f; 
@@ -248,9 +383,38 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         }
     }
 
+    if (current_map == "sp_a2_bts1") {
+        if (name.locate("cube_dropper-cube_dropper_box") != uint(-1)) {
+            CBaseEntity@ maker = null;
+            float bestDist = 999999.0f;
+            CBaseEntity@ bestMaker = null;
+            while ((@maker =
+                EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
+                if (maker.
+                    GetEntityName().locate("cube_dropper") != uint(-1)) {
+                    float d = (maker.GetAbsOrigin() - ent.GetAbsOrigin()).Length();
+                    if (d < bestDist) {
+                        bestDist = d;
+                        @bestMaker = maker;
+                    }
+                }
+            }
+            if (bestMaker !is null) {
+                targetPos = bestMaker.
+                    GetAbsOrigin() + (bestMaker.
+                    Up() * -470.0f);
+            }
+            targetSkin = 4;
+            return;
+        }
+    }
+
     // 2. WHEATLEY MONITORS
     if (model.locate("wheatley_monitor") != uint(-1) || name.locate("monitor") != uint(-1) || name.locate("tv_crack") != uint(-1)) {
-        targetPos = ent.GetAbsOrigin() + (ent.Up() * 140.0f) + (ent.Left() * 40.0f);
+        targetPos = ent.
+            GetAbsOrigin() + (ent.
+            Up() * 140.0f) + (ent.
+            Left() * 40.0f);
         targetAng = ent.GetAbsAngles(); 
         targetScale = 0.9f;
         return;
@@ -488,11 +652,15 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         
         CBaseEntity@ plate = null;
         bool foundPlate = false;
-        while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
-            if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
+        while ((@plate =
+            EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
+            if (plate.
+                GetModelName().locate("faith_plate") != uint(-1)) {
                 float dist = (plate.GetAbsOrigin() - ent.GetAbsOrigin()).Length();
                 if (dist < 128.0f) {
-                    targetPos = plate.GetAbsOrigin() + (plate.Up() * 32.0f);
+                    targetPos = plate.
+                        GetAbsOrigin() + (plate.
+                        Up() * 32.0f);
                     targetAng = plate.GetAbsAngles();
                     foundPlate = true;
                     break;
@@ -501,7 +669,9 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         }
         
         if (!foundPlate) {
-            targetPos = ent.GetAbsOrigin() + (ent.Up() * 32.0f);
+            targetPos = ent.
+                GetAbsOrigin() + (ent.
+                Up() * 32.0f);
         }
         return;
     }

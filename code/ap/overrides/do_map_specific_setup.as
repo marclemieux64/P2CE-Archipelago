@@ -59,10 +59,19 @@ void DoMapSpecificSetup(string current_map) {
             trigger.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
         }
     } else if (current_map == "sp_a2_pull_the_rug") {
-        CBaseEntity@ door = EntityList().FindByName(null, "ratman_lockoff_door");
-        if (door !is null) {
+        // Create a persistent timer to check if the bridge is gone (handles delayed deletions)
+        CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
+        if (timer !is null) {
+            timer.KeyValue("targetname", "ap_ratman_door_timer");
+            timer.KeyValue("RefireTime", "1.0");
+            timer.Spawn();
+            
             Variant v;
-            door.FireInput("Open", v, 0.5f, null, null, 0);
+            v.SetString("OnTimer ap_init_cmd:Command:ap_check_bridge_lockout:0.0:-1");
+            timer.FireInput("AddOutput", v, 0.0f, null, null, 0);
+            
+            // Initial fire
+            timer.FireInput("FireTimer", Variant(), 0.1f, null, null, 0);
         }
     } else if (current_map == "sp_a2_laser_intro") {
         // TIMING & NAME FIX: Reverting to specific names with the working 1.3s delay.

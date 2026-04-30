@@ -2,9 +2,10 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
     UpdateInternalMapName();
     
     // 1. Get our targets (The finding logic handles the 'universal monster' complexity)
-    // Msgl("[AP] DeleteEntity called for: '" + target + "'");
+    Msgl("[AP] DeleteEntity called for: '" + target + "'");
+    
     array<CBaseEntity@> targets = FindEntities(target);
-    // Msgl("[AP] FindEntities returned " + targets.length() + " result(s).");
+    Msgl("[AP] FindEntities returned " + targets.length() + " result(s).");
 
     for (uint i = 0; i < targets.length(); i++) {
         CBaseEntity@ t = targets[i];
@@ -52,7 +53,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
             float hScale;
             GetHologramVisualOverrides(t, hPos, hAng, hSkin, hScale);
             
-            string hName = (tName != "") ? (tName + "_holo") : (classname + "_holo");
+            string hName = (tName != "") ? (tName + "_" + t.GetEntityIndex() + "_holo") : (classname + "_" + t.GetEntityIndex() + "_holo");
             CreateAPHologram(hPos, hAng, hScale, "", "", hSkin, hName);
         }
 

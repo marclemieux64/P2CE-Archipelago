@@ -8,6 +8,7 @@ void ResetPersistentSystems() {
 
     g_bSentDeathLink = false;
     g_suppressed_entities.resize(0);
+    g_suppressed_classes.resize(0);
     g_reported_monitors.resize(0);
 
 

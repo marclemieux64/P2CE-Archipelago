@@ -1,9 +1,22 @@
 ConVar ap_hologram_freeze("ap_hologram_freeze", "0", FCVAR_CHEAT);
 
-void CreateAPHologram(Vector position, QAngle angles, float scale, string new_parent = "", string attachment = "", int skin = 0, string name = "") {
+void CreateAPHologram(Vector position, QAngle angles, float scale, string new_parent = "", string attachment = "", int skin = 0, string name = "", CBaseEntity@ parentEnt = null) {
     // Msgl("[AP] CreateAPHologram executing: Pos(" + position.x + "," + position.y + "," + position.z + ") Name: " + name);
 
-    // 0. IDEMPOTENCY CHECK - Avoid double spawning at the same spot
+    // 0. IDEMPOTENCY CHECK - Avoid double spawning
+    if (name != "") {
+        CBaseEntity@ h = EntityList().FindByName(null, name);
+        if (h !is null) {
+            // Found existing by name, update it instead of spawning a new one
+            h.SetAbsOrigin(position);
+            h.SetAbsAngles(angles);
+            h.KeyValue("skin", skin);
+            h.KeyValue("modelscale", "" + scale);
+            return;
+        }
+    }
+
+    // Fallback: Proximity check (Avoid double spawning at the same spot if unnamed)
     CBaseEntity@ check = null;
     while ((@check = EntityList().FindByClassnameWithin(check, "prop_dynamic", position, 8.0f)) !is null) {
         if (check.GetModelName().locate("archipelago_hologram") != uint(-1)) {

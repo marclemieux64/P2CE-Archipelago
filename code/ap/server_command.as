@@ -91,6 +91,20 @@ void DeleteEntityCmd(const CommandArgs@ args) {
     DeleteEntity(target, create_holo, scale);
 }
 
+[ServerCommand("GlobalDeleteClass", "Mark a class for persistent deletion/hologram replacement")]
+void GlobalDeleteClassCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    string cls = args.Arg(1);
+    
+    // Avoid duplicates
+    for (uint i = 0; i < g_suppressed_classes.length(); i++) {
+        if (g_suppressed_classes[i] == cls) return;
+    }
+    
+    g_suppressed_classes.insertLast(cls);
+    Msgl("[AP] Persistent suppression enabled for class: " + cls);
+}
+
 [ServerCommand("ap_dump_holos", "Prints all active Archipelago holograms in the map")]
 void DumpAPHolosCmd(const CommandArgs@ args) {
     CBaseEntity@ holo = null;
@@ -318,7 +332,6 @@ void APRainbowCubesCmd(const CommandArgs@ args) {
 void APRainbowLasersCmd(const CommandArgs@ args) {
     APRainbowCmd(args);
 }
-
 
 [ServerCommand("RemovePotatOS", "Removes PotatOS and establishes instructor hints")]
 void APRemovePotatOSCmd(const CommandArgs@ args) {
@@ -660,4 +673,56 @@ void ButterFingersTrapCmd(const CommandArgs@ args) {
 [ServerCommand("ap_butterfingers_tick", "Internal")]
 void APButterFingersTickCmd(const CommandArgs@ args) {
     RunButterFingersTick();
+}
+[ServerCommand("ap_check_bridge_lockout", "Checks if the bridge is present and locks the ratman door accordingly")]
+void APCheckBridgeLockoutCmd(const CommandArgs@ args) {
+    if (current_map != "sp_a2_pull_the_rug") return;
+    
+    CBaseEntity@ door = EntityList().FindByName(null, "ratman_lockoff_door");
+    CBaseEntity@ bridge = EntityList().FindByClassname(null, "prop_wall_projector");
+    
+    if (bridge !is null) {
+        // Bridge IS present
+        if (door !is null) {
+            Variant v;
+            door.FireInput("Open", v, 0.0f, null, null, 0);
+            
+            // Clean up hints
+            CBaseEntity@ hint = EntityList().FindByName(null, "ratman_door_hint");
+            if (hint !is null) hint.Remove();
+            CBaseEntity@ target = EntityList().FindByName(null, "ratman_door_hint_target");
+            if (target !is null) target.Remove();
+        }
+    } else {
+        // Bridge is MISSING
+        if (door !is null) {
+            Variant v;
+            door.FireInput("Close", v, 0.0f, null, null, 0);
+            
+            // Setup hint if it doesn't exist
+            CBaseEntity@ hint = EntityList().FindByName(null, "ratman_door_hint");
+            if (hint is null) {
+                CBaseEntity@ hintTarget = util::CreateEntityByName("info_target_instructor_hint");
+                if (hintTarget !is null) {
+                    hintTarget.KeyValue("targetname", "ratman_door_hint_target");
+                    hintTarget.SetAbsOrigin(door.GetAbsOrigin() + Vector(0, 0, 50));
+                    hintTarget.Spawn();
+                }
+                
+                CBaseEntity@ hintObj = util::CreateEntityByName("env_instructor_hint");
+                if (hintObj !is null) {
+                    hintObj.KeyValue("targetname", "ratman_door_hint");
+                    hintObj.KeyValue("hint_target", "ratman_door_hint_target");
+                    hintObj.KeyValue("hint_caption", "You don't have the Hard Light Bridges");
+                    hintObj.KeyValue("hint_icon_onscreen", "icon_alert");
+                    hintObj.KeyValue("hint_color", "255 50 50");
+                    hintObj.KeyValue("hint_static", "0");
+                    hintObj.KeyValue("hint_timeout", "0");
+                    hintObj.KeyValue("hint_range", "300"); 
+                    hintObj.Spawn();
+                    hintObj.FireInput("ShowHint", Variant(), 0.01f, null, null, 0);
+                }
+            }
+        }
+    }
 }

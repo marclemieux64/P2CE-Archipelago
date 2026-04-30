@@ -14,9 +14,25 @@ array<CBaseEntity@> FindEntities(string search) {
     while ((@ent = EntityList().FindByTarget(ent, search)) !is null) targets.insertLast(ent);
     @ent = null;
     while ((@ent = EntityList().FindByModel(ent, search)) !is null) targets.insertLast(ent);
+    
+    // 1.1. MAP-SPECIFIC EXCEPTIONS (Catch targets that the engine's model/name search might miss)
+    if (current_map == "sp_a2_triple_laser" && search.locate("reflection_cube") != uint(-1)) {
+        CBaseEntity@ box = EntityList().FindByName(null, "new_box1");
+        if (box !is null) {
+            bool alreadyIn = false;
+            for (uint j = 0; j < targets.length(); j++) { if (@targets[j] == @box) alreadyIn = true; }
+            if (!alreadyIn) targets.insertLast(box);
+        }
+    }
 
     // 2. KEYWORD & MODEL SEARCHES (Pass 2 - For monster boxes, cubes, lasers, sprayers, and turrets)
-    if (search == "monster" || search == "cube" || search == "laser" || search == "paint" || search == "sprayer" || search.locate("turret") != uint(-1)) {
+    bool isReflectionCubeRequest = (search.locate("reflection_cube") != uint(-1));
+    bool isSprayerRequest = (search.locate("paint") != uint(-1) || search.locate("sprayer") != uint(-1));
+    bool isTurretRequest = (search.locate("turret") != uint(-1));
+
+    if (search == "monster" || search == "cube" || search == "laser" || search == "paint" || search == "sprayer" || 
+        isTurretRequest || isReflectionCubeRequest) {
+        
         @ent = EntityList().First();
         while (@ent !is null) {
             string cls = ent.GetClassname();
@@ -27,14 +43,13 @@ array<CBaseEntity@> FindEntities(string search) {
             if (cls.locate("prop") != uint(-1) || cls.locate("npc") != uint(-1) || cls.locate("env_") != uint(-1) || 
                 cls == "info_paint_sprayer" || cls == "paint_sphere") {
                 
-                // Special broad match for paint/sprayers: If search term is related, match all sprayers
-                bool isSprayerRequest = (search.locate("paint") != uint(-1) || search.locate("sprayer") != uint(-1));
                 bool isSprayerCls = (cls == "info_paint_sprayer" || cls == "paint_sphere");
+                bool isFakeTurret = (isTurretRequest && model.locate("turret_01.mdl") != uint(-1));
+                bool isChainingBox = (current_map == "sp_a2_laser_chaining" && name.locate("box") != uint(-1));
 
-                bool isFakeTurret = (search.locate("turret") != uint(-1) && model.locate("turret_01.mdl") != uint(-1));
-
-                // Match if Name, Class, or Model contains the search term, OR if it's a sprayer being requested
-                if (cls.locate(search) != uint(-1) || model.locate(search) != uint(-1) || name.locate(search) != uint(-1) || isFakeTurret || (isSprayerRequest && isSprayerCls)) {
+                if (cls.locate(search) != uint(-1) || model.locate(search) != uint(-1) || name.locate(search) != uint(-1) || 
+                    isFakeTurret || (isSprayerRequest && isSprayerCls) || (isReflectionCubeRequest && isChainingBox)) {
+                    
                     bool alreadyIn = false;
                     for (uint j = 0; j < targets.length(); j++) { if (@targets[j] == @ent) alreadyIn = true; }
                     if (!alreadyIn) targets.insertLast(ent);

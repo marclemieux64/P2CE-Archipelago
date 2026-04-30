@@ -35,6 +35,9 @@ class MainMenuSettings {
 		CustomizationSettings: {
 			xml: 'customization'
 		},
+		ArchipelagoSettings: {
+			xml: 'archipelago'
+		},
 		SearchSettings: {
 			xml: 'search'
 		}

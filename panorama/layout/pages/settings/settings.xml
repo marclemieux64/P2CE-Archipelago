@@ -110,6 +110,20 @@
 						>
 							<Label class="settings-nav__item-label" text="#Settings_Customization" />
 						</RadioButton>
+
+						<Panel class="settings-nav__separator" />
+						
+						<!-- ARCHIPELAGO -->
+						<RadioButton
+							id="ArchipelagoSettingsRadio"
+							class="settings-nav__item"
+							group="SettingsNav"
+							onactivate="MainMenuSettings.navigateToTab('ArchipelagoSettings')"
+						>
+							<Label class="settings-nav__item-label" text="Archipelago" />
+						</RadioButton>
+
+
 					</Panel>
 					<SteamInputAction
 						id="SettingsNavRight"

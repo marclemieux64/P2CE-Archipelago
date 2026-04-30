@@ -1,0 +1,27 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/main.scss" />
+	</styles>
+	<scripts>
+		<include src="file://{scripts}/pages/settings/page.js" />
+	</scripts>
+
+	<Panel class="settings-page" searchtitle="Archipelago">
+		<Panel id="SettingsPageContainer" class="settings-page__container">
+
+			<!-- Group 1: General -->
+			<Panel id="ArchipelagoGeneral" class="settings-group">
+				<Panel class="settings-group__header">
+					<Label class="settings-group__title" text="General Settings" />
+				</Panel>
+
+				<!-- Example Toggle -->
+				<SettingsEnum text="Enable archipelago" convar="ap_enabled">
+					<RadioButton group="ap_enable" text="#Common_Off" value="0" />
+					<RadioButton group="ap_enable" text="#Common_On" value="1" />
+				</SettingsEnum>
+			</Panel>
+
+		</Panel>
+	</Panel>
+</root>

@@ -33,6 +33,21 @@ class ArchipelagoMapSelect {
         }
         return false;
     }
+
+    static isSymbolMissingGlobally(symbol: string): boolean {
+        for (const chId in this.g_ChapterData) {
+            const chapter = this.g_ChapterData[chId];
+            if (chapter.maps) {
+                for (const map of chapter.maps) {
+                    if (map.subtitle && map.subtitle.indexOf(symbol) !== -1) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     static onLoad() {
         const syncInputMode = () => {
             $.GetContextPanel().SetHasClass('is-controller-mode', this.isController());
@@ -216,7 +231,7 @@ class ArchipelagoMapSelect {
             if (finalStatus.indexOf("þ") !== -1) {
                 finalStatus = finalStatus.replace(/þ/g, `<font color="#44ff44">þ</font>`);
             }
-            
+
             if (finalStatus.indexOf("ù") !== -1) {
                 let mapName = "";
                 if (mapData.command) {
@@ -231,7 +246,7 @@ class ArchipelagoMapSelect {
                     finalStatus = finalStatus.replace(/ù/g, `<font color="${uColor}">ù</font>`);
                 }
             }
-            
+
             if (finalStatus.indexOf("R") !== -1) {
                 let mapName = "";
                 if (mapData.command) {
@@ -282,7 +297,7 @@ class ArchipelagoMapSelect {
                 } else if (mapName === "sp_a4_tb_wall_button") {
                     yColor = (missingItems.indexOf("û") !== -1) ? "#ff4444" : "#44ff44";
                 } else if (mapName === "sp_a4_tb_polarity") {
-                    yColor = (missingItems.indexOf("ó") !== -1) ? "#ff4444" : "#44ff44";
+                    yColor = this.isSymbolMissingGlobally("ó") ? "#ff4444" : "#44ff44";
                 } else if (mapName === "sp_a4_tb_catch") {
                     yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("ð") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("õ") !== -1 || missingItems.indexOf("ñ") !== -1) ? "#ff4444" : "#44ff44";
                 } else if (mapName === "sp_a4_stop_the_box") {
@@ -305,7 +320,7 @@ class ArchipelagoMapSelect {
             }
 
             statusLabel.text = finalStatus;
-            statusLabel.style.color = "#eeeeee"; 
+            statusLabel.style.color = "#eeeeee";
         }
         if (mapSubtitleLabel) mapSubtitleLabel.text = mapData.title || "";
         if (mapSubtitleLabelSecondary) mapSubtitleLabelSecondary.text = mapData.subtitle || "";
@@ -364,12 +379,12 @@ class ArchipelagoMapSelect {
             chapter.maps.forEach((map: any) => {
                 const rawTitle = map.title || "Unknown Map";
                 const statusIcons = (rawTitle.length > 4 ? rawTitle.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
-                
+
                 const isAllStars = statusIcons.length > 0 && statusIcons.replace(/✓/g, "").length === 0;
                 if (isAllStars) {
                     starCount++;
                 }
-                
+
                 let mapCmdName = "";
                 if (map.command) {
                     const parts = map.command.split(" ");
@@ -409,7 +424,7 @@ class ArchipelagoMapSelect {
                         } else if (mapCmdName === "sp_a2_pull_the_rug") {
                             isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¿") === -1);
                         } else {
-                            isGreen = true; 
+                            isGreen = true;
                         }
                     } else if (char === "ÿ") {
                         if (mapCmdName === "sp_a4_tb_intro") {
@@ -419,7 +434,7 @@ class ArchipelagoMapSelect {
                         } else if (mapCmdName === "sp_a4_tb_wall_button") {
                             isGreen = (mItems.indexOf("û") === -1);
                         } else if (mapCmdName === "sp_a4_tb_polarity") {
-                            isGreen = (mItems.indexOf("ó") === -1);
+                            isGreen = !ArchipelagoMapSelect.isSymbolMissingGlobally("ó");
                         } else if (mapCmdName === "sp_a4_tb_catch") {
                             isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("ñ") === -1);
                         } else if (mapCmdName === "sp_a4_stop_the_box") {
@@ -558,7 +573,7 @@ class ArchipelagoMapSelect {
                         } else if (mapCmdName === "sp_a2_pull_the_rug") {
                             isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¿") === -1);
                         } else {
-                            isGreen = true; 
+                            isGreen = true;
                         }
                     } else if (char === "ÿ") {
                         if (mapCmdName === "sp_a4_tb_intro") {
@@ -568,7 +583,7 @@ class ArchipelagoMapSelect {
                         } else if (mapCmdName === "sp_a4_tb_wall_button") {
                             isGreen = (mItems.indexOf("û") === -1);
                         } else if (mapCmdName === "sp_a4_tb_polarity") {
-                            isGreen = (mItems.indexOf("ó") === -1);
+                            isGreen = !ArchipelagoMapSelect.isSymbolMissingGlobally("ó");
                         } else if (mapCmdName === "sp_a4_tb_catch") {
                             isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("ñ") === -1);
                         } else if (mapCmdName === "sp_a4_stop_the_box") {

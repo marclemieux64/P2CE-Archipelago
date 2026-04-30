@@ -65,7 +65,7 @@
 		"portal2_MapName_sp_a2_pull_the_rug"    "Tirage de Tapis"
 
 		// Chapter 4 Maps
-		"portal2_MapName_sp_a2_column_blocker"  "Blocqueur de Colonne"
+		"portal2_MapName_sp_a2_column_blocker"  "Bloqueur de Colonne"
 		"portal2_MapName_sp_a2_laser_chaining"  "Enchaînement Laser"
 		"portal2_MapName_sp_a2_triple_laser"    "Triple Laser"
 		"portal2_MapName_sp_a2_bts1"            "Grande Évasion"
@@ -128,6 +128,8 @@
 		"Archipelago_Settings_TransitionType_info" "Choisissez ce qu'il se passe après avoir terminé un niveau."
 		"Archipelago_Settings_Transition_Menu"   "Retour au menu"
 		"Archipelago_Settings_Transition_Smart"  "Transition intelligente"
+		"Archipelago_Settings_MapStatusHUD"     "HUD de progression du niveau"
+		"Archipelago_Settings_MapStatusHUD_info" "Affiche le statut des validations du niveau actuel en haut à gauche lors de l'entrée."
 		"Archipelago_Settings_WIP"              "Travail en cours"
 
 		"COOP_PRESENCE_WAITING_DEFAULT"			"Waiting for Partner"

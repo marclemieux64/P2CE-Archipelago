@@ -5,6 +5,11 @@ class ArchipelagoMapStatus {
         return ($.persistentStorage.getItem('ap_completion_symbol') ?? 0) === 1 ? "★" : "✓";
     }
 
+    static isMissingItem(char: string): boolean {
+        if (!char || char === " ") return false;
+        return true;
+    }
+
     static isSymbolMissingGlobally(symbol: string, data: any): boolean {
         for (const chId in data) {
             const chapter = data[chId];

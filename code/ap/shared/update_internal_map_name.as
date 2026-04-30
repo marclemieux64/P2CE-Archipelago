@@ -12,6 +12,7 @@ void UpdateInternalMapName() {
             if (current_map != detected) {
                 current_map = detected; 
                 Msgl("map_name:" + current_map);
+                CallVScript("SendToPanorama(\"AP_MapNameUpdated\", \"" + current_map + "|0\")");
             }
         }
     }

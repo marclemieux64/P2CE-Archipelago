@@ -59,6 +59,7 @@ $.DefineEvent('ReloadCCSettings', 0);
 $.DefineEvent('AP_Notify', 1, 'payload', 'Direct VScript notification for Archipelago items and events');
 
 $.DefineEvent('AP_MutePotatos', 1, 'active', 'Mutes all PotatOS/GLaDOS related captions');
+$.DefineEvent('AP_MapNameUpdated', 1, 'payload', 'Triggered when the current map name changes in the engine');
 
 
 // Dans scripts/util/event-definition.ts

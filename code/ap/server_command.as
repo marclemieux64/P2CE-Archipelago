@@ -193,6 +193,12 @@ void APWarpToMenuCmd(const CommandArgs@ args) {
     WarpToMenu();
 }
 
+[ServerCommand("ap_show_status", "Re-shows the Map Progress HUD")]
+void APShowStatusCmd(const CommandArgs@ args) {
+    UpdateInternalMapName();
+    CallVScript("SendToPanorama(\"AP_MapNameUpdated\", \"" + current_map + "|1\")");
+}
+
 [ServerCommand("ap_print_item", "Prints collected item")]
 void APPrintItemCmd(const CommandArgs@ args) {
     if (args is null) return;

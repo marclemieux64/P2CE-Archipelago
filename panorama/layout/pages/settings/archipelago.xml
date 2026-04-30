@@ -49,6 +49,22 @@
 					<Label text="#Archipelago_Settings_Transition_Smart" value="1" />
 				</SettingsEnumDropDown>
 
+				<!-- Map Status HUD -->
+				<SettingsEnum
+					text="#Archipelago_Settings_MapStatusHUD"
+					psvar="ap_show_map_status_hud"
+					infomessage="#Archipelago_Settings_MapStatusHUD_info"
+					hasdocspage="false"
+				>
+					<RadioButton group="ap_show_map_status_hud" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().UpdateMapStatusHUDKeyBinder()" />
+					<RadioButton group="ap_show_map_status_hud" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().UpdateMapStatusHUDKeyBinder()" />
+				</SettingsEnum>
+				<SettingsKeyBinder
+					id="MapStatusKeyBinder"
+					text="#Archipelago_Settings_Key_ShowStatus"
+					bind="ap_show_status"
+				/>
+
 				<!-- Example Toggle -->
 				<SettingsEnum text="#Archipelago_Settings_WIP" convar="ap_enabled">
 

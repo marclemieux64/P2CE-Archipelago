@@ -1,0 +1,26 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/main.scss" />
+		<include src="file://{resources}/styles/components/archipelago/map-status.scss" />
+	</styles>
+
+	<scripts>
+		<include src="file://{resources}/scripts/util/archipelago-maps.ts" />
+		<include src="file://{resources}/scripts/components/archipelago/map-status.ts" />
+	</scripts>
+
+	<Panel class="ap-map-status" hittest="false">
+		<Panel id="MainContainer" class="main-container">
+			<Panel class="accent-bar" />
+			<Panel class="content">
+				<Label id="MapTitle" class="map-title" text="MAP NAME" />
+				
+				<Label class="section-label" text="#Archipelago_Map_Checks" />
+				<Panel id="StatusIcons" class="status-icons" />
+
+				<Label id="MissingLabel" class="section-label" text="#Archipelago_Map_MissingItems" />
+				<Panel id="MissingIcons" class="status-icons" />
+			</Panel>
+		</Panel>
+	</Panel>
+</root>

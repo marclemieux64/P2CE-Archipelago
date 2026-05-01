@@ -2,6 +2,99 @@
 // ARCHIPELAGO HOLOGRAM VISUAL REGISTRY
 // =============================================================
 
+ConVar ap_map_status("ap_map_status", "0", FCVAR_ARCHIVE);
+ConVar ap_ratman_status("ap_ratman_status", "0", FCVAR_ARCHIVE);
+ConVar ap_map_symbols("ap_map_symbols", "", FCVAR_ARCHIVE);
+// 0: Red, 1: Green, 2: Checkmark
+
+ConVar ap_portal_gun_status("ap_portal_gun_status", "0", FCVAR_ARCHIVE);
+ConVar ap_potatos_status("ap_potatos_status", "0", FCVAR_ARCHIVE);
+ConVar ap_wheatley_status("ap_wheatley_status", "0", FCVAR_ARCHIVE);
+
+[ServerCommand("ap_set_map_status", "Live refresh of map progression")]
+void APSetMapStatusCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    
+    int mapStatus = args.Arg(1).toInt();
+    ap_map_status.SetValue(mapStatus);
+    
+    if (args.ArgC() >= 3) {
+        ap_ratman_status.SetValue(args.Arg(2).toInt());
+    }
+
+    if (args.ArgC() >= 4) {
+        ap_portal_gun_status.SetValue(args.Arg(3).toInt());
+    }
+
+    if (args.ArgC() >= 5) {
+        ap_potatos_status.SetValue(args.Arg(4).toInt());
+    }
+
+    if (args.ArgC() >= 6) {
+        ap_wheatley_status.SetValue(args.Arg(5).toInt());
+    }
+    
+    if (args.ArgC() >= 7) {
+        string symbols = "";
+        for (int i = 6; i < args.ArgC(); i++) {
+            symbols += args.Arg(i) + (i == args.ArgC() - 1 ? "" : " ");
+        }
+        ap_map_symbols.SetValue(symbols);
+    }
+    
+    UpdateInternalMapName();
+    RefreshAllAPHolograms();
+}
+
+void RefreshAllAPHolograms() {
+    UpdateInternalMapName();
+    
+    CBaseEntity@ holo = null;
+    while ((@holo = EntityList().FindByClassname(holo, "prop_dynamic")) !is null) {
+        string modelName = holo.GetModelName();
+        string holoName = holo.GetEntityName();
+        
+        if (modelName.locate("archipelago_hologram") != uint(-1)) {
+            int finalSkin = -1;
+
+            string symbols = ap_map_symbols.GetString();
+            bool hasCheckmark = (symbols.locate("★") != uint(-1) || symbols.locate("✓") != uint(-1));
+            bool rDone = (symbols == "" || symbols.locate("R") == uint(-1)); 
+            bool pDone = (ap_portal_gun_status.GetInt() == 1);
+            bool uDone = (ap_potatos_status.GetInt() == 1);
+            bool yDone = (ap_wheatley_status.GetInt() == 1);
+
+            int mStat = ap_map_status.GetInt();
+            bool mapDone = (mStat == 2);
+            bool isRD = (holoName.locate("rd") == 0 && holoName.locate("_holo") != uint(-1));
+            bool isPG = (holoName.locate("portal") != uint(-1) && holoName.locate("gun") != uint(-1));
+            bool isPotatos = (holoName.locate("potatos") != uint(-1) || holoName.locate("gla") != uint(-1));
+            bool isWheatley = (holoName.locate("wheatley") != uint(-1) || holoName.locate("monitor") != uint(-1));
+
+            if (isRD) {
+                finalSkin = (rDone || ap_ratman_status.GetInt() == 1 || mapDone) ? 4 : 0;
+            } else if (isPG) {
+                finalSkin = (pDone || mapDone) ? 4 : 0;
+            } else if (isPotatos) {
+                finalSkin = (uDone || mapDone) ? 4 : 0;
+            } else if (isWheatley) {
+                finalSkin = (yDone || mapDone) ? 4 : 0;
+            } else {
+                CBaseEntity@ parent = holo.GetMoveParent();
+                if (parent !is null) {
+                    Vector tPos; QAngle tAng; int tSkin; float tScale;
+                    GetHologramVisualOverrides(parent, tPos, tAng, tSkin, tScale);
+                    finalSkin = tSkin;
+                }
+            }
+
+            if (finalSkin != -1) {
+                holo.KeyValue("skin", "" + finalSkin);
+            }
+        }
+    }
+}
+
 void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&out targetAng, int&out targetSkin, float&out targetScale) {
     if (ent is null) return;
     UpdateInternalMapName();
@@ -9,12 +102,42 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     string classname = ent.GetClassname();
     string model = ent.GetModelName();
     string name = ent.GetEntityName();
-    
     // Default values
     targetPos = ent.GetAbsOrigin();
     targetAng = ent.GetAbsAngles();
     targetSkin = 0; 
     targetScale = 1.0f;
+
+    // 0. SPECIFIC NAMED ENTITIES (Elevators, Trains, Ratman Dens, Portal Gun)
+    bool isElevator = (name.locate("exit_lift_train") != uint(-1) || name.locate("departure_elavator") != uint(-1) || name.locate("departure_elevator") != uint(-1));
+    bool isRatmanDen = (name.locate("rd") == 0 && name.locate("_holo") != uint(-1));
+    bool isPortalGun = (name.locate("portal") != uint(-1) && name.locate("gun") != uint(-1));
+
+    if (isElevator || isRatmanDen || isPortalGun) {
+        targetPos = ent.GetAbsOrigin();
+        targetAng = ent.GetAbsAngles();
+        targetScale = 1.0f;
+        
+        string symbols = ap_map_symbols.GetString();
+        bool hasCheckmark = (symbols.locate("★") != uint(-1) || symbols.locate("✓") != uint(-1));
+        bool mapDone = (ap_map_status.GetInt() == 2);
+
+        if (isRatmanDen) {
+            bool rDone = (symbols.locate("R") == uint(-1)); 
+            targetSkin = (rDone || ap_ratman_status.GetInt() == 1 || mapDone) ? 4 : 0;
+        } else if (isPortalGun) {
+            bool pDone = (symbols.locate("ý") == uint(-1) && symbols.locate("þ") == uint(-1));
+            // Fallback for incinerator room and portal gun intro
+            if ((current_map == "sp_a1_intro3" || current_map == "sp_a2_intro") && hasCheckmark) pDone = true;
+            
+            targetSkin = (pDone || mapDone) ? 4 : 0;
+        } else {
+            // Elevators usually follow the map completion
+            targetSkin = (mapDone) ? 4 : 0;
+        }
+        
+        return;
+    }
 
     // 1. MAP-SPECIFIC OVERRIDES
     if (current_map == "sp_a1_intro1") {
@@ -497,6 +620,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
             targetAng = ent.GetAbsAngles();
         }
 
+        // Using .locate() so it catches ALL of them if there are multiple!
         // Using .locate() so it catches ALL of them if there are multiple!
         if (current_map == "sp_a3_portal_intro" && name.locate("intermediate_chamber_paint_sprayer") != uint(-1)) {
             targetPos = ent.

@@ -37,6 +37,15 @@ void CreateMapSpecificHolos(string current_map) {
         }
     }
     
+    // 2. Attached moving holograms (Trains, Elevators)
+    CBaseEntity@ tEnt = null;
+    while ((@tEnt = EntityList().FindByClassname(tEnt, "func_tracktrain")) !is null) {
+        string tName = tEnt.GetEntityName();
+        if (tName.locate("exit_lift_train") != uint(-1) || tName.locate("departure_elavator") != uint(-1) || tName.locate("departure_elevator") != uint(-1)) {
+            AttachHologramToEntity(tName, "", 1.0f, 0.0f, 4);
+        }
+    }
+
     // 3. Kill any legacy map-based triggers that try to call 'ppmod'
     DisarmLegacyLogic();
 }

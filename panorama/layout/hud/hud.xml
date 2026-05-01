@@ -3,8 +3,8 @@
 		<include src="file://{resources}/styles/main.scss" />
 	</styles>
 	<scripts>
-		<include src="file://{scripts}/util/archipelago-maps.ts" />
-		<include src="file://{scripts}/util/smart-warp.ts" />
+		<include src="file://{resources}/scripts/util/archipelago-maps.ts" />
+		<include src="file://{resources}/scripts/util/smart-warp.ts" />
 	</scripts>
 
 	<Hud hittest="false">

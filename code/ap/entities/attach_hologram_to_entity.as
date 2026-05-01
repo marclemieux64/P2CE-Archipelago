@@ -30,16 +30,9 @@ void AttachHologramToEntity(string entity_name, string attachment_point, float h
     for (uint i = 0; i < targets.length(); i++) {
         CBaseEntity@ t = targets[i];
         
-        string tName;
-        if (isBTS4Turret) {
-            // In BTS4, we MUST not rename turrets or we break choreography!
-            string originalName = t.GetEntityName();
-            tName = (originalName != "") ? originalName : (entity_name + "_" + t.GetEntityIndex());
-        } else {
-            // Legacy behavior for other maps/entities: Rename to ensure unique parenting by name
-            tName = entity_name + "_" + t.GetEntityIndex() + "_attached";
-            t.KeyValue("targetname", tName);
-        }
+        string tName = t.GetEntityName();
+        // If unnamed, generate a stable internal name for the hologram registry
+        if (tName == "") tName = entity_name + "_" + t.GetEntityIndex();
         
         string hName = tName + "_holo";
         
@@ -52,13 +45,7 @@ void AttachHologramToEntity(string entity_name, string attachment_point, float h
         // Crucial: We pull from our visual registry!
         GetHologramVisualOverrides(t, finalPos, finalAng, finalSkin, finalScale);
         
-        // 3. Create the Hologram
-        if (isBTS4Turret) {
-            // Pass handle 't' directly as parent to avoid renaming
-            CreateAPHologram(finalPos, finalAng, finalScale, "", attachment_point, finalSkin, hName, t);
-        } else {
-            // Search by name (Legacy)
-            CreateAPHologram(finalPos, finalAng, finalScale, tName, attachment_point, finalSkin, hName);
-        }
+        // 3. Create the Hologram using the handle 't' directly as parent
+        CreateAPHologram(finalPos, finalAng, finalScale, "", attachment_point, finalSkin, hName, t);
     }
 }

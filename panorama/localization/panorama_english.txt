@@ -128,7 +128,7 @@
 		"Archipelago_Settings_TransitionType_info" "Choose what happens after finishing a level."
 		"Archipelago_Settings_Transition_Menu"   "Return to Menu"
 		"Archipelago_Settings_Transition_Smart"  "Smart Transition"
-		"Archipelago_Settings_MapStatusHUD"     "Map Progress HUD"
+		"Archipelago_Settings_MapStatusHUD"     "Hide Map Progress HUD"
 		"Archipelago_Settings_MapStatusHUD_info" "Show current map checks status in the top-left corner when entering a level."
 		"Archipelago_Settings_Key_ShowStatus" "Show Map Progress HUD"
 		"Archipelago_Settings_WIP"              "Work in progress"

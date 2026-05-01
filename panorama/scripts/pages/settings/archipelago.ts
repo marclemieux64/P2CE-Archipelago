@@ -21,7 +21,7 @@ function UpdateMapStatusHUDKeyBinder() {
 (UiToolkitAPI.GetGlobalObject() as any).UpdateCompletionSymbolStatus = UpdateCompletionSymbolStatus;
 (UiToolkitAPI.GetGlobalObject() as any).UpdateMapStatusHUDKeyBinder = UpdateMapStatusHUDKeyBinder;
 
-(function() {
+(function () {
     $.RegisterEventHandler('PropertyTransitionEnd', $.GetContextPanel(), (panel, propertyName) => {
         if (propertyName === 'opacity' && !$.GetContextPanel().IsTransparent()) {
             UpdateCompletionSymbolStatus();

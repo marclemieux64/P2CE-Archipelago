@@ -128,8 +128,9 @@
 		"Archipelago_Settings_TransitionType_info" "Choisissez ce qu'il se passe après avoir terminé un niveau."
 		"Archipelago_Settings_Transition_Menu"   "Retour au menu"
 		"Archipelago_Settings_Transition_Smart"  "Transition intelligente"
-		"Archipelago_Settings_MapStatusHUD"     "HUD de progression du niveau"
+		"Archipelago_Settings_MapStatusHUD"     "Désactiver HUD de progression du niveau"
 		"Archipelago_Settings_MapStatusHUD_info" "Affiche le statut des validations du niveau actuel en haut à gauche lors de l'entrée."
+		"Archipelago_Settings_Key_ShowStatus"   "Afficher l'HUD de Progression"
 		"Archipelago_Settings_WIP"              "Travail en cours"
 
 		"COOP_PRESENCE_WAITING_DEFAULT"			"Waiting for Partner"
@@ -1384,8 +1385,8 @@ Please install and mount the above games first to access this campaign."
 		"MainMenu_Addons_Filtering_Sort_AddonTags_Ported"		"Game Port"
 
 		// General Actions
-		"Common_On"									"On"
-		"Common_Off"								"Off"
+		"Common_On"									"Activer"
+		"Common_Off"								"Désactiver"
 		"Common_Update"								"Update"
 		"Common_ComingSoon"							"Coming Soon!"
 		"Common_Gamemode"							"Gamemode"

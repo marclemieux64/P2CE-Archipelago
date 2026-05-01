@@ -17,6 +17,9 @@ void RunDelayedInitialization() {
     DoMapSpecificSetup(current_map);
     CreateCompleteLevelAlertHook(current_map);
     
+    // Automatic Hologram Spawning (Direct call for testing)
+    CreateMapSpecificHolos(current_map);
+    
     // 3. Flag as initialized
     last_initialized_map = current_map;
     

@@ -199,6 +199,13 @@ void APShowStatusCmd(const CommandArgs@ args) {
     CallVScript("SendToPanorama(\"AP_MapNameUpdated\", \"" + current_map + "|1\")");
 }
 
+[ServerCommand("ap_refresh_map_name", "Forces a map name update to Panorama")]
+void APRefreshMapNameCmd(const CommandArgs@ args) {
+    // Force reset the cached name to ensure the event fires
+    current_map = ""; 
+    UpdateInternalMapName();
+}
+
 [ServerCommand("ap_print_item", "Prints collected item")]
 void APPrintItemCmd(const CommandArgs@ args) {
     if (args is null) return;

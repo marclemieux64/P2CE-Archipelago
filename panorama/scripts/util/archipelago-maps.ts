@@ -109,6 +109,158 @@ class ArchipelagoMapStatus {
             fullyDoable: greenCount === statusIcons.length && statusIcons.length > 0
         };
     }
+
+    static m_CurrentMap: string = "";
+    static m_PollSchedule: any = null;
+
+    // Track last sent status to avoid spamming the console
+    static m_LastServerStatus: number = -1;
+    static m_LastRatmanStatus: number = -1;
+    static m_LastSymbols: string = "INITIAL_SYNC_PENDING";
+
+    static m_Initialized: boolean = false;
+
+    static initSync() {
+        $.Msg("[AP] ArchipelagoMapStatus.initSync() waking up...");
+
+        // ALWAYS register the event listener first. 
+        // Panorama handles duplicate listeners gracefully, and this ensures a working listener 
+        // even if a previous loop is already running in the background.
+        $.RegisterForUnhandledEvent("AP_MapNameUpdated", (payload: string) => {
+            $.Msg("[AP] Received AP_MapNameUpdated event with payload: " + payload);
+            const parts = payload.split('|');
+            const mapName = parts[0];
+            if (!mapName || mapName === "main_menu") return;
+            
+            this.m_LastSymbols = "MAP_CHANGE_DETECTED";
+            this.m_CurrentMap = mapName;
+            this.runSync(mapName);
+            
+            // Ensure polling is active
+            if (!this.m_PollSchedule) {
+                $.Msg("[AP] Starting background polling loop...");
+                this.startPolling();
+            }
+        });
+        
+        // Ask the mod to identify the map immediately
+        GameInterfaceAPI.ConsoleCommand("ap_refresh_map_name");
+
+        const global: any = UiToolkitAPI.GetGlobalObject();
+        if (global.ArchipelagoMapStatusInitialized) {
+            $.Msg("[AP] System already initialized. Handing over map request.");
+            return;
+        }
+        global.ArchipelagoMapStatusInitialized = true;
+
+        $.Msg("[AP] ArchipelagoMapStatus.initSync() master synchronization loop ACTIVATED.");
+    }
+
+    static startPolling() {
+        if (this.m_PollSchedule) $.CancelScheduled(this.m_PollSchedule);
+        this.m_PollSchedule = $.Schedule(2.0, () => {
+            if (this.m_CurrentMap && this.m_CurrentMap !== "main_menu") {
+                this.runSync(this.m_CurrentMap);
+                this.m_PollSchedule = null; // Reset so it can be scheduled again
+                this.startPolling();
+            }
+        });
+    }
+
+    static runSync(mapName: string) {
+        // $.Msg("[AP] runSync ticking for map: " + mapName);
+        const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
+        const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
+        if (!data) {
+            $.Msg("[AP] runSync ERROR: Could not load extras.txt");
+            return;
+        }
+
+        let currentMapData: any = null;
+        const chapters: any = {};
+
+        for (const key in data) {
+            if (key.toLowerCase().startsWith('chapter')) {
+                const majorId = key.match(/\d+/)?.[0];
+                if (majorId) {
+                    if (!chapters[majorId]) chapters[majorId] = { maps: [] };
+                    if (key.includes('.')) {
+                        const map = { id: key, ...data[key] };
+                        chapters[majorId].maps.push(map);
+                        
+                        // Resilient match: check if the map name is part of the command as a whole word
+                        const cmd = (map.command || "").toLowerCase();
+                        const search = mapName.toLowerCase();
+                        if (cmd.indexOf(search) !== -1) {
+                            currentMapData = map;
+                        }
+                    } else {
+                        Object.assign(chapters[majorId], data[key]);
+                    }
+                }
+            }
+        }
+
+        if (!currentMapData) {
+            // $.Msg("[AP] runSync: No data found for map " + mapName + " in extras.txt");
+            return;
+        }
+
+        const status = this.getMapStatus(currentMapData, chapters);
+        let serverStatus = 0; // Red
+        
+        // Map=2 (Checkmark) only if the entire map is fully complete
+        if (status.total > 0 && status.greenCount === status.total) {
+            serverStatus = 2; 
+        } else if (status.greenCount > 0 || status.fullyDoable) {
+            serverStatus = 1; // Green (Partial or Doable)
+        }
+        
+        // Ratman Specific Sync
+        let ratmanStatus = 0;
+        const rawTitleStr = currentMapData.title || "";
+        if (rawTitleStr.indexOf("R") !== -1 && rawTitleStr.indexOf(this.getCompletionSymbol()) !== -1) {
+            ratmanStatus = 1;
+        }
+
+        // Calculate Portal Gun Done state (þ, ý, or ✓)
+        let portalGunDone = 0;
+        if (currentMapData.title) {
+            const t = currentMapData.title;
+            // It's done if the symbols are missing OR if a checkmark is present
+            const isMissing = t.indexOf("þ") === -1 && t.indexOf("ý") === -1;
+            const hasCheck = t.indexOf(this.getCompletionSymbol()) !== -1;
+            
+            // Special case: If the map only has one check and it's the checkmark, it's done
+            if (isMissing || hasCheck) portalGunDone = 1;
+        }
+
+        // PotatOS Done (ù)
+        let potatosDone = 0;
+        if (currentMapData.title) {
+            const t = currentMapData.title;
+            if (t.indexOf("ù") === -1 || t.indexOf(this.getCompletionSymbol()) !== -1) potatosDone = 1;
+        }
+
+        // Wheatley Done (ÿ)
+        let wheatleyDone = 0;
+        if (currentMapData.title) {
+            const t = currentMapData.title;
+            if (t.indexOf("ÿ") === -1 || t.indexOf(this.getCompletionSymbol()) !== -1) wheatleyDone = 1;
+        }
+
+        const symbols = currentMapData.title || "";
+        const statusIcons = (symbols.length > 4 ? symbols.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
+        const mapTitle = symbols.replace(statusIcons, "").replace(/[~\-]/g, "").trim();
+
+        this.m_LastServerStatus = serverStatus;
+        this.m_LastRatmanStatus = ratmanStatus;
+        this.m_LastSymbols = symbols;
+
+        GameInterfaceAPI.ConsoleCommand("ap_set_map_status " + serverStatus + " " + ratmanStatus + " " + portalGunDone + " " + potatosDone + " " + wheatleyDone + " " + symbols);
+        $.Msg("[AP] Status Updated: Map=" + serverStatus + " Ratman=" + ratmanStatus + " PortalGun=" + portalGunDone + " PotatOS=" + potatosDone + " Wheatley=" + wheatleyDone + " Symbols=[" + statusIcons + "] MapName=[" + mapTitle + "]");
+    }
 }
 
+ArchipelagoMapStatus.initSync();
 (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus = ArchipelagoMapStatus;

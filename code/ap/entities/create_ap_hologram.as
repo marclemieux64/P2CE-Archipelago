@@ -10,7 +10,7 @@ void CreateAPHologram(Vector position, QAngle angles, float scale, string new_pa
             // Found existing by name, update it instead of spawning a new one
             h.SetAbsOrigin(position);
             h.SetAbsAngles(angles);
-            h.KeyValue("skin", skin);
+            h.KeyValue("skin", "" + skin);
             h.KeyValue("modelscale", "" + scale);
             return;
         }
@@ -28,7 +28,7 @@ void CreateAPHologram(Vector position, QAngle angles, float scale, string new_pa
             // We update its skin, scale, and POSITION to the new correct one.
             check.SetAbsOrigin(position);
             check.SetAbsAngles(angles);
-            check.KeyValue("skin", skin);
+            check.KeyValue("skin", "" + skin);
             check.KeyValue("modelscale", "" + scale);
 
             if (ap_hologram_freeze.GetBool()) {
@@ -48,7 +48,7 @@ void CreateAPHologram(Vector position, QAngle angles, float scale, string new_pa
 
     holo.KeyValue("model", "models/effects/ap/archipelago_hologram.mdl");
     holo.KeyValue("solid", "0");
-    holo.KeyValue("skin", skin);
+    holo.KeyValue("skin", "" + skin);
     holo.KeyValue("modelscale", "" + scale);
     holo.KeyValue("DefaultAnim", "idle");
 
@@ -67,7 +67,12 @@ void CreateAPHologram(Vector position, QAngle angles, float scale, string new_pa
         if (anim !is null) anim.SetPlaybackRate(0.0f);
     }
 
-    if (new_parent != "") {
+    if (parentEnt !is null) {
+        holo.SetParent(parentEnt, -1);
+        if (attachment != "") {
+            holo.SetParentAttachment(attachment);
+        }
+    } else if (new_parent != "") {
         CBaseEntity@ pEnt = EntityList().FindByName(null, new_parent);
         if (pEnt !is null) {
             holo.SetParent(pEnt, -1);

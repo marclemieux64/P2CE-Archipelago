@@ -2,18 +2,19 @@
  * RunDelayedInitialization - The "Heavy Lift" called once the engine is stable.
  */
 void RunDelayedInitialization() {
-    // Refresh map name
+    if (cv_ArchipelagoDebug.GetBool()) ArchipelagoLog("[AP DEBUG] RunDelayedInitialization STARTED");
     UpdateInternalMapName();
     
     if (current_map == "unknown" || current_map == "") return;
-    if (last_initialized_map == current_map) return;
+
+    // Force client to resync
+    RefreshMapNameCmd(null);
 
     // 1. Sanitize and Disarm
     ResetPersistentSystems();
     DisarmLegacyLogic();
 
     // 2. Setup map specific monitors and logic
-    AddWheatleyMonitorBreakCheck(current_map);
     DoMapSpecificSetup(current_map);
     CreateCompleteLevelAlertHook(current_map);
     

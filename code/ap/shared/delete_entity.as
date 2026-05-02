@@ -53,8 +53,8 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
             float hScale;
             GetHologramVisualOverrides(t, hPos, hAng, hSkin, hScale);
             
-            string hName = (tName != "") ? (tName + "_" + t.GetEntityIndex() + "_holo") : (classname + "_" + t.GetEntityIndex() + "_holo");
-            CreateAPHologram(hPos, hAng, hScale, "", "", hSkin, hName);
+            string hName = (tName != "") ? (tName + "_holo") : (classname + "_" + t.GetEntityIndex() + "_holo");
+            StableCreateAPHologram(hPos, hAng, hScale, "", "", hSkin, hName);
         }
 
         if (classname == "trigger_catapult") {

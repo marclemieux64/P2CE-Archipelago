@@ -1,5 +1,4 @@
 'use strict';
-$.Msg("[AP] archipelago-maps.ts loading...");
 
 class ArchipelagoMapStatus {
     // Toggle this to true to see status updates in the console
@@ -7,6 +6,37 @@ class ArchipelagoMapStatus {
 
     static getCompletionSymbol(): string {
         return ($.persistentStorage.getItem('ap_completion_symbol') ?? 0) === 1 ? "★" : "✓";
+    }
+
+    static parseExtras(data: any): any {
+        const chapters: any = {};
+        const infoBlocks: any = {};
+
+        for (const key in data) {
+            if (key.toLowerCase().endsWith('_info')) {
+                infoBlocks[key.substring(0, key.length - 5)] = data[key];
+            }
+        }
+
+        for (const key in data) {
+            const lowerKey = key.toLowerCase();
+            if (lowerKey.startsWith('chapter')) {
+                const majorId = key.match(/\d+/)?.[0];
+                if (majorId) {
+                    if (!chapters[majorId]) chapters[majorId] = { maps: [] };
+                    if (key.includes('.') && !lowerKey.endsWith('_info')) {
+                        const map = { id: key, ...data[key] };
+                        if (infoBlocks[key]) {
+                            map.statusIcons = infoBlocks[key].title;
+                        }
+                        chapters[majorId].maps.push(map);
+                    } else if (!key.includes('.')) {
+                        Object.assign(chapters[majorId], data[key]);
+                    }
+                }
+            }
+        }
+        return chapters;
     }
 
     static isMissingItem(char: string): boolean {
@@ -31,11 +61,16 @@ class ArchipelagoMapStatus {
     static getMapStatus(map: any, allData: any) {
         const rawTitle = map.title || "";
         const mapCmdName = map.command ? map.command.replace("map ", "").trim() : "";
-        const statusIcons = (rawTitle.length > 4 ? rawTitle.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
+
+        // Use map.statusIcons if provided by the new parsing logic, otherwise fallback to old title-prefix logic
+        let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
+        if (!statusIcons && rawTitle.length > 4 && (rawTitle.startsWith("~") || rawTitle.startsWith("-") || rawTitle.startsWith("═"))) {
+            statusIcons = rawTitle.substring(0, 4).replace(/[~\-]/g, "").trim();
+        }
+
         const mItems = map.subtitle || "";
 
-        const completionSymbol = this.getCompletionSymbol();
-        const isCompleted = statusIcons.length > 0 && statusIcons.replace(new RegExp(completionSymbol, 'g'), "").length === 0;
+        const isCompleted = statusIcons.length > 0 && (statusIcons.replace(/★/g, "").length === 0 || statusIcons.replace(/✓/g, "").length === 0);
 
         if (isCompleted) return { completed: true, greenCount: 0, total: statusIcons.length, doable: false, fullyDoable: false };
 
@@ -44,19 +79,21 @@ class ArchipelagoMapStatus {
             const char = statusIcons[i];
             let isGreen = false;
 
-            if (char === "M") {
+            if (char === "ã") {
                 isGreen = !(mItems && mItems.trim() !== "");
-            } else if (char === "þ") {
-                isGreen = (mItems.indexOf("þ") === -1);
-            } else if (char === "ý") {
-                isGreen = (mItems.indexOf("ý") === -1);
+            } else if (char === "þ" || char === "ý" || char === "ǫ") {
+                // Portal Gun checks: green if the specific required gun symbols aren't missing
+                isGreen = true;
+            } else if (char === "¢") {
+                // Vitrified Door checks: require the Portal Gun (û)
+                isGreen = (mItems.indexOf("û") === -1);
             } else if (char === "ù") {
                 if (mapCmdName === "sp_a3_transition01") {
                     isGreen = (mItems.indexOf("û") === -1);
                 } else {
                     isGreen = (mItems.indexOf("ù") === -1);
                 }
-            } else if (char === "R") {
+            } else if (char === "ø") {
                 if (mapCmdName === "sp_a1_intro4") {
                     isGreen = (mItems.indexOf("ç") === -1 && mItems.indexOf("æ") === -1);
                 } else if (mapCmdName === "sp_a2_dual_lasers") {
@@ -130,7 +167,19 @@ class ArchipelagoMapStatus {
 
     static m_Initialized: boolean = false;
 
+    private static m_Debug: boolean = false;
+
+    static init() {
+        $.RegisterForUnhandledEvent("ArchipelagoDebug", (state: string) => {
+            this.m_Debug = (state === "1");
+            $.Msg("[AP] Panorama Debug logging is now " + (this.m_Debug ? "ENABLED" : "DISABLED"));
+        });
+    }
+
     static initSync() {
+        this.init();
+        if (this.m_Debug) $.Msg("[AP] archipelago-maps.ts loading...");
+        if (this.m_Debug) $.Msg("[AP] ArchipelagoMapStatus.initSync() master synchronization loop ACTIVATED.");
         const global: any = UiToolkitAPI.GetGlobalObject();
 
         // Register this class as the authoritative instance
@@ -139,7 +188,6 @@ class ArchipelagoMapStatus {
 
         if (this.m_Initialized) return;
         this.m_Initialized = true;
-        $.Msg("[AP] ArchipelagoMapStatus.initSync() master synchronization loop ACTIVATED.");
 
         // Register the event listener ONCE on the singleton
         $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
@@ -149,7 +197,7 @@ class ArchipelagoMapStatus {
                 return;
             }
 
-            $.Msg("[AP] Received ArchipelagoMapNameUpdated event with payload: " + payload);
+            if (this.m_Debug) $.Msg("[AP] Received ArchipelagoMapNameUpdated event with payload: " + payload);
             const parts = payload.split('|');
             const mapName = parts[0];
             if (!mapName || mapName === "main_menu") return;
@@ -160,7 +208,7 @@ class ArchipelagoMapStatus {
 
             // Ensure polling is active
             if (!this.m_PollSchedule) {
-                $.Msg("[AP] Starting background polling loop...");
+                if (this.m_Debug) $.Msg("[AP] Starting background polling loop...");
                 this.startPolling();
             }
         });
@@ -177,7 +225,7 @@ class ArchipelagoMapStatus {
 
             // SELF-DESTRUCT: If we aren't the official instance anymore, stop polling!
             if (global.ArchipelagoMapStatusInstance && global.ArchipelagoMapStatusInstance !== ArchipelagoMapStatus) {
-                $.Msg("[AP] Legacy polling loop detected. SHUTTING DOWN.");
+                if (this.m_Debug) $.Msg("[AP] Legacy polling loop detected. SHUTTING DOWN.");
                 this.m_PollSchedule = null;
                 return;
             }
@@ -195,33 +243,25 @@ class ArchipelagoMapStatus {
         const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
         const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
         if (!data) {
-            $.Msg("[AP] runSync ERROR: Could not load extras.txt");
+            if (this.m_Debug) $.Msg("[AP] runSync ERROR: Could not load extras.txt");
             return;
         }
 
+        const chapters = this.parseExtras(data);
         let currentMapData: any = null;
-        const chapters: any = {};
 
-        for (const key in data) {
-            if (key.toLowerCase().startsWith('chapter')) {
-                const majorId = key.match(/\d+/)?.[0];
-                if (majorId) {
-                    if (!chapters[majorId]) chapters[majorId] = { maps: [] };
-                    if (key.includes('.')) {
-                        const map = { id: key, ...data[key] };
-                        chapters[majorId].maps.push(map);
-
-                        // Resilient match: check if the map name is part of the command as a whole word
-                        const cmd = (map.command || "").toLowerCase();
-                        const search = mapName.toLowerCase();
-                        if (cmd.indexOf(search) !== -1) {
-                            currentMapData = map;
-                        }
-                    } else {
-                        Object.assign(chapters[majorId], data[key]);
+        for (const chId in chapters) {
+            for (const map of chapters[chId].maps) {
+                if (map.command) {
+                    const cmdLower = map.command.toLowerCase();
+                    const search = mapName.toLowerCase();
+                    if (cmdLower.indexOf(search) !== -1) {
+                        currentMapData = map;
+                        break;
                     }
                 }
             }
+            if (currentMapData) break;
         }
 
         if (!currentMapData) {
@@ -239,41 +279,28 @@ class ArchipelagoMapStatus {
             serverStatus = 1; // Green (Partial or Doable)
         }
 
-        // Ratman Status (1 if R is missing, 0 if R is present)
+        // Calculate Ratman Status (1 if ø is missing, 0 if ø is present)
         let ratmanStatus = 0;
-        if (currentMapData.title) {
-            if (currentMapData.title.indexOf("R") === -1) ratmanStatus = 1;
-        }
+        const statusIconsStr = (currentMapData.statusIcons || "");
+        if (statusIconsStr.indexOf("ø") === -1) ratmanStatus = 1;
 
         // Calculate Portal Gun Done state (þ, ý, or ✓)
         let portalGunDone = 0;
-        if (currentMapData.title) {
-            const t = currentMapData.title;
-            // It's done if the symbols are missing OR if a checkmark is present
-            const isMissing = t.indexOf("þ") === -1 && t.indexOf("ý") === -1 && t.indexOf("ǫ") === -1;
-            const hasCheck = t.indexOf(this.getCompletionSymbol()) !== -1;
-
-            // Special case: If the map only has one check and it's the checkmark, it's done
-            if (isMissing || hasCheck) portalGunDone = 1;
-        }
+        // It's done if the symbols are missing OR if a checkmark is present
+        const isMissingPG = statusIconsStr.indexOf("þ") === -1 && statusIconsStr.indexOf("ý") === -1 && statusIconsStr.indexOf("ǫ") === -1;
+        const hasCheck = statusIconsStr.indexOf(this.getCompletionSymbol()) !== -1;
+        if (isMissingPG || hasCheck) portalGunDone = 1;
 
         // PotatOS Done (ù)
         let potatosDone = 0;
-        if (currentMapData.title) {
-            const t = currentMapData.title;
-            if (t.indexOf("ù") === -1 || t.indexOf(this.getCompletionSymbol()) !== -1) potatosDone = 1;
-        }
+        if (statusIconsStr.indexOf("ù") === -1 || hasCheck) potatosDone = 1;
 
-        // Wheatley Done (ÿ)
+        // Wheatley Done (ÿ) - Handled natively in AngelScript now
         let wheatleyDone = 0;
-        if (currentMapData.title) {
-            const t = currentMapData.title;
-            if (t.indexOf("ÿ") === -1 || t.indexOf(this.getCompletionSymbol()) !== -1) wheatleyDone = 1;
-        }
 
-        const symbols = currentMapData.title || "";
-        const statusIcons = (symbols.length > 4 ? symbols.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
-        const mapTitle = symbols.replace(statusIcons, "").replace(/[~\-]/g, "").trim();
+        const symbols = statusIconsStr || "";
+        const statusIcons = symbols.replace(/[~\-]/g, "").trim();
+        const mapTitle = (currentMapData.title || "").replace(/[~\-]/g, "").trim();
 
         // SPAM PREVENTION: Only send if something actually changed
         if (serverStatus === this.m_LastServerStatus &&
@@ -291,10 +318,12 @@ class ArchipelagoMapStatus {
         this.m_LastPotatosStatus = potatosDone;
         this.m_LastWheatleyStatus = wheatleyDone;
         this.m_LastSymbols = symbols;
+        $.persistentStorage.setItem("ArchipelagoLastSymbols", symbols);
+        $.persistentStorage.setItem("ArchipelagoLastMapStatus", serverStatus);
 
-        GameInterfaceAPI.ConsoleCommand(`SetMapStatus ${serverStatus} ${ratmanStatus} ${portalGunDone} ${potatosDone} ${wheatleyDone} "${symbols}"`);
+        GameInterfaceAPI.ConsoleCommand(`SetStatus ${serverStatus} ${ratmanStatus} ${portalGunDone} ${potatosDone} ${wheatleyDone} "${symbols}"`);
 
-        if (this.ENABLE_DEBUG) {
+        if (this.m_Debug) {
             $.Msg("[AP] Status Updated: Map=" + serverStatus + " Ratman=" + ratmanStatus + " PortalGun=" + portalGunDone + " PotatOS=" + potatosDone + " Wheatley=" + wheatleyDone + " Symbols=[" + statusIcons + "] MapName=[" + mapTitle + "]");
         }
     }

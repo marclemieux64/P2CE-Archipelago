@@ -5,6 +5,15 @@ string current_map = "unknown";
 string last_initialized_map = "";
 ConVarRef host_map("host_map");
 
+// Status Globals
+int g_map_status = 0;
+int g_ratman_status = 0;
+int g_portal_gun_status = 0;
+int g_potatos_status = 0;
+int g_wheatley_status = 0;
+string g_map_symbols = "";
+bool g_LastDebugState = false;
+
 /**
  * SafeAddOutput - Connects an entity output using KeyValue instead of FireInput('AddOutput').
  * This bypasses the engine's "Admin Command" security restrictions.
@@ -50,8 +59,10 @@ array<string> non_elevator_maps = {
 // =============================================================
 
 dictionary g_monitor_break_names;
+dictionary g_vitrified_door_names;
 
-void InitWheatleyMonitorRegistry() {
+void InitLocationRegistries() {
+    // Wheatley Monitors
     g_monitor_break_names.deleteAll();
     g_monitor_break_names["sp_a4_tb_intro:monitor1-relay_break"] = "sp_a4_tb_intro";
     g_monitor_break_names["sp_a4_tb_trust_drop:monitor1-relay_break"] = "sp_a4_tb_trust_drop";
@@ -65,6 +76,19 @@ void InitWheatleyMonitorRegistry() {
     g_monitor_break_names["sp_a4_speed_tb_catch:wheatley_monitor-relay_break"] = "sp_a4_speed_tb_catch";
     g_monitor_break_names["sp_a4_jump_polarity:wheatley_monitor_1-relay_break"] = "sp_a4_jump_polarity";
     g_monitor_break_names["sp_a4_finale3:wheatley_screen-relay_break"] = "sp_a4_finale3";
+
+    // Vitrified Doors
+    g_vitrified_door_names.deleteAll();
+    g_vitrified_door_names["sp_a3_03:dummy_chamber_button"] = "Vitrified Door 1";
+    g_vitrified_door_names["sp_a3_03:dummy_chamber_button2"] = "Vitrified Door 2";
+    g_vitrified_door_names["sp_a3_03:dummy_chamber_button3"] = "Vitrified Door 3";
+    g_vitrified_door_names["sp_a3_transition01:dummy_chamber_button"] = "Vitrified Door 4";
+    g_vitrified_door_names["sp_a3_transition01:dummy_chamber_button2"] = "Vitrified Door 5";
+    g_vitrified_door_names["sp_a3_transition01:dummy_chamber_button3"] = "Vitrified Door 6";
+}
+
+void InitWheatleyMonitorRegistry() {
+    InitLocationRegistries();
 }
 
 /**
@@ -103,8 +127,9 @@ void ArchipelagoLog(const string&in msg) {
     if (msg.locate("map_name:") == 0 || 
         msg.locate("monitor_break:") == 0 || 
             msg.locate("item_collected:") == 0 || 
-        msg.locate("button_check:") == 0 ||
-        msg.locate("map_complete:") == 0) {
+                msg.locate("button_check:") == 0 ||
+                    msg.locate("map_complete:") == 0 ||
+                        msg.locate("[AP DEBUG]") != uint(-1)) {
         Msg(msg + "\n");
         return;
     }

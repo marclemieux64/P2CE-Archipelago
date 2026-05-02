@@ -64,6 +64,7 @@ data/client/panorama.event
 data/client/ts.scope
 data/client/as.predefined
 data/server/as.predefined
+data/server/ts.scope
 data/cvars.json
 scripts/extras.txt
 extras.txt

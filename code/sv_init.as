@@ -16,6 +16,7 @@
 
 // 3. Locations (Randomizer Checks & Progression)
 #include "ap/locations/add_wheatley_monitor_break_check.as"
+#include "ap/locations/add_vitrified_door_check.as"
 #include "ap/locations/HandleMonitorWarp.as"
 #include "ap/locations/spawn_ap_button_logic.as"
 #include "ap/locations/create_complete_level_alert_hook.as"
@@ -80,6 +81,12 @@ bool InitializeArchipelago() {
         // Start background systems immediately.
         AttachDeathTrigger();
         StartGameStatusTimer();
+        
+        // --- NUCLEAR CLEANUP ---
+        // Force-delete legacy VScript functions that might be overriding us from VPKs
+        Variant vNuke;
+        vNuke.SetString("::CreateAPHologram <- null; ::AttachHologramToEntity <- null;");
+        cmd.FireInput("Command", vNuke, 0.0f, null, null, 0);
 
         // Schedule the one-time map setup to run exactly 1.0 second from now
         Variant vInit;

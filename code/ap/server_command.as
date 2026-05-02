@@ -159,6 +159,79 @@ void AddFloorButtonFrameCmd(const CommandArgs@ args) {
     AddFloorButtonFrame(args.Arg(1));
 }
 
+/**
+ * SplitString - Simple helper to split a string by a delimiter into an array.
+ */
+void SplitString(const string&in input, const string&in delimiter, array<string>& outArray) {
+    outArray.resize(0);
+    if (input.length() == 0) return;
+
+    int start = 0;
+    int delimLen = delimiter.length();
+    
+    for (int i = 0; i <= int(input.length() - delimLen); i++) {
+        if (input.substr(i, delimLen) == delimiter) {
+            string sub = input.substr(start, i - start);
+            outArray.insertLast(sub);
+            start = i + delimLen;
+            i = start - 1;
+        }
+    }
+    
+    outArray.insertLast(input.substr(start));
+}
+
+ConVar cv_ArchipelagoDebug("ArchipelagoDebug", "0", FCVAR_ARCHIVE);
+
+[ServerCommand("SetStatus", "Live refresh of all Archipelago visual states")]
+void SetStatusCmd(const CommandArgs@ args) {
+    if (args is null || args.ArgC() < 2) return;
+    
+    if (cv_ArchipelagoDebug.GetBool()) {
+        ArchipelagoLog("[Archipelago] SetStatus received: C=" + args.ArgC() + " 1=" + args.Arg(1) + " 2=" + args.Arg(2) + " 6=" + args.Arg(6));
+    }
+
+    g_map_status = args.Arg(1).toInt();
+    
+    if (args.ArgC() >= 3) {
+        g_ratman_status = args.Arg(2).toInt();
+    }
+
+    if (args.ArgC() >= 4) {
+        g_portal_gun_status = args.Arg(3).toInt();
+    }
+
+    if (args.ArgC() > 4) g_potatos_status = args.Arg(4).toInt();
+    
+    if (args.ArgC() >= 6) {
+        g_wheatley_status = args.Arg(5).toInt();
+    }
+    
+    if (args.ArgC() >= 7) {
+        g_map_symbols = args.Arg(6);
+    }
+    
+    RefreshAllAPHolograms();
+}
+
+[ServerCommand("ArchipelagoShowStatus", "Manually show the map status HUD")]
+void ArchipelagoShowStatusCmd(const CommandArgs@ args) {
+    RefreshAllAPHolograms();
+    // This command is primarily intercepted by Panorama
+}
+
+[ServerCommand("DisableEntityPhysics", "Freezes an entity in place")]
+void DisableEntityPhysicsCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    string target = args.Arg(1);
+    
+    CBaseEntity@ ent = null;
+    while ((@ent = EntityList().FindByName(ent, target)) !is null) {
+        ent.SetMoveType(MOVETYPE_NONE);
+        ArchipelagoLog("[Archipelago] Physics disabled for: " + target);
+    }
+}
+
 [ServerCommand("DisablePortalGun", "Disables specific portals on the player gun")]
 void DisablePortalGunCmd(const CommandArgs@ args) {
     if (args.ArgC() < 3) return;
@@ -206,7 +279,6 @@ void WarpToMenuCmd(const CommandArgs@ args) {
     WarpToMenu();
 }
 
-
 [ServerCommand("ShowStatus", "Toggle Archipelago Map Status HUD")]
 void ShowStatusCmd(const CommandArgs@ args) {
     UpdateInternalMapName();
@@ -247,6 +319,7 @@ void PrintMonitorCmd(const CommandArgs@ args) {
         g_reported_monitors.insertLast(check);
 
         ArchipelagoLog("monitor_break:" + check);
+        RefreshAllAPHolograms();
 
         // Map-Specific Monitor Teleports
         HandleMonitorWarp(check);
@@ -549,8 +622,7 @@ void CatapultEffectCheckCmd(const CommandArgs@ args) {
                 // but let's at least not hard-fail if we have a valid catapult entity
             }
         }
-        
-        
+
         CBaseEntity@ plate = null;
         while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
             if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
@@ -759,4 +831,28 @@ void CheckBridgeLockoutCmd(const CommandArgs@ args) {
         }
     }
 }
-
+[ServerCommand("SpawnHologramAtCrosshair", "Spawns a hologram at the crosshair")]
+void SpawnHologramAtCrosshairCmd(const CommandArgs@ args) {
+    CBaseEntity@ pEnt = EntityList().FindByClassname(null, "player");
+    if (pEnt is null) return;
+    CBasePlayer@ player = cast<CBasePlayer>(pEnt);
+    if (player is null) return;
+    
+    Vector start = player.EyePosition();
+    QAngle angles = player.EyeAngles();
+    Vector forward;
+    AngleVectors(angles, forward);
+    Vector end = start + (forward * 2000.0f);
+    
+    trace_t tr;
+    util::TraceLine(start, end, 0x1, pEnt, 0, tr);
+    
+    if (tr.fraction < 1.0f) {
+        int skin = (args.ArgC() > 1) ? args.Arg(1).toInt() : 0;
+        string name = (args.ArgC() > 2) ? args.Arg(2) : "manual_holo";
+        
+        Vector hitPos = start + (forward * 2000.0f * tr.fraction);
+        StableCreateAPHologram(hitPos, QAngle(0, 0, 0), 1.0f, "", "", skin, name);
+        ArchipelagoLog("Spawned hologram at crosshair. Skin: " + skin);
+    }
+}

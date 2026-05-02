@@ -46,6 +46,6 @@ void AttachHologramToEntity(string entity_name, string attachment_point, float h
         GetHologramVisualOverrides(t, finalPos, finalAng, finalSkin, finalScale);
         
         // 3. Create the Hologram using the handle 't' directly as parent
-        CreateAPHologram(finalPos, finalAng, finalScale, "", attachment_point, finalSkin, hName, t);
+        StableCreateAPHologram(finalPos, finalAng, finalScale, "", attachment_point, finalSkin, hName, t);
     }
 }

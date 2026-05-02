@@ -65,27 +65,9 @@ class ArchipelagoMapSelect {
         const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
         const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
 
+        const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
         if (data) {
-            const chapters: any = {};
-            for (const key in data) {
-                const lowerKey = key.toLowerCase();
-                if (lowerKey.startsWith('chapter')) {
-                    if (key.includes('.')) {
-                        const majorId = key.match(/\d+/)?.[0];
-                        if (majorId) {
-                            if (!chapters[majorId]) chapters[majorId] = { maps: [] };
-                            chapters[majorId].maps.push({ id: key, ...data[key] });
-                        }
-                    } else {
-                        const majorId = key.match(/\d+/)?.[0];
-                        if (majorId) {
-                            if (!chapters[majorId]) chapters[majorId] = { maps: [] };
-                            Object.assign(chapters[majorId], data[key]);
-                        }
-                    }
-                }
-            }
-            this.g_ChapterData = chapters;
+            this.g_ChapterData = mapStatusHelper ? mapStatusHelper.parseExtras(data) : {};
             this.generateList();
         }
     }
@@ -217,10 +199,10 @@ class ArchipelagoMapSelect {
 
         if (statusLabel) {
             let finalStatus = mapData.status || "";
-            if (finalStatus.indexOf("M") !== -1) {
+            if (finalStatus.indexOf("ã") !== -1) {
                 const isMissing = mapData.subtitle && mapData.subtitle.trim() !== "";
                 const mColor = isMissing ? "#ff4444" : "#44ff44";
-                finalStatus = finalStatus.replace(/M/g, `<font color="${mColor}">M</font>`);
+                finalStatus = finalStatus.replace(/ã/g, `<font color="${mColor}">ã</font>`);
             }
             if (finalStatus.indexOf("þ") !== -1) {
                 finalStatus = finalStatus.replace(/þ/g, `<font color="#44ff44">þ</font>`);
@@ -230,6 +212,11 @@ class ArchipelagoMapSelect {
             }
             if (finalStatus.indexOf("ǫ") !== -1) {
                 finalStatus = finalStatus.replace(/ǫ/g, `<font color="#44ff44">ǫ</font>`);
+            }
+            if (finalStatus.indexOf("¢") !== -1) {
+                const isMissing = mapData.subtitle && mapData.subtitle.indexOf("û") !== -1;
+                const vColor = isMissing ? "#ff4444" : "#44ff44";
+                finalStatus = finalStatus.replace(/¢/g, `<font color="${vColor}">¢</font>`);
             }
 
             if (finalStatus.indexOf("ù") !== -1) {
@@ -247,7 +234,7 @@ class ArchipelagoMapSelect {
                 }
             }
 
-            if (finalStatus.indexOf("R") !== -1) {
+            if (finalStatus.indexOf("ø") !== -1) {
                 let mapName = "";
                 if (mapData.command) {
                     const parts = mapData.command.split(" ");
@@ -275,7 +262,7 @@ class ArchipelagoMapSelect {
                 }
 
                 if (rColor !== "") {
-                    finalStatus = finalStatus.replace(/R/g, `<font color="${rColor}">R</font>`);
+                    finalStatus = finalStatus.replace(/ø/g, `<font color="${rColor}">ø</font>`);
                 }
             }
 
@@ -379,7 +366,10 @@ class ArchipelagoMapSelect {
             let starCount = 0;
             chapter.maps.forEach((map: any) => {
                 const rawTitle = map.title || "Unknown Map";
-                const statusIcons = (rawTitle.length > 4 ? rawTitle.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
+                let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
+                if (!statusIcons && rawTitle.length > 4 && (rawTitle.startsWith("~") || rawTitle.startsWith("-") || rawTitle.startsWith("═"))) {
+                    statusIcons = rawTitle.substring(0, 4).replace(/[~\-]/g, "").trim();
+                }
 
                 const symbol = ArchipelagoMapSelect.getCompletionSymbol();
                 const isAllStars = statusIcons.length > 0 && statusIcons.replace(new RegExp(symbol, 'g'), "").length === 0;
@@ -398,19 +388,21 @@ class ArchipelagoMapSelect {
 
                 for (let i = 0; i < statusIcons.length; i++) {
                     const char = statusIcons[i];
-                    let isGreen = false;
+                    let isGreen = (mItems.indexOf(char) === -1);
 
-                    if (char === "M") {
+                    if (char === "ã") {
                         isGreen = !(mItems && mItems.trim() !== "");
                     } else if (char === "þ" || char === "ý" || char === "ǫ") {
                         isGreen = true;
+                    } else if (char === "¢") {
+                        isGreen = (mItems.indexOf("û") === -1);
                     } else if (char === "ù") {
                         if (mapCmdName === "sp_a3_transition01") {
                             isGreen = (mItems.indexOf("û") === -1);
                         } else {
-                            isGreen = true;
+                            isGreen = (mItems.indexOf("ù") === -1);
                         }
-                    } else if (char === "R") {
+                    } else if (char === "ø") {
                         if (mapCmdName === "sp_a1_intro4") {
                             isGreen = (mItems.indexOf("ç") === -1 && mItems.indexOf("æ") === -1);
                         } else if (mapCmdName === "sp_a2_dual_lasers") {
@@ -512,8 +504,13 @@ class ArchipelagoMapSelect {
                 }
 
                 const rawTitle = map.title || "Unknown Map";
-                const statusIcons = (rawTitle.length > 4 ? rawTitle.substring(0, 4).trim() : "").replace(/[~\-]/g, "").trim();
-                const cleanName = rawTitle.length > 4 ? rawTitle.substring(4).trim() : rawTitle;
+                let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
+                let cleanName = rawTitle;
+
+                if (!statusIcons && rawTitle.length > 4 && (rawTitle.startsWith("~") || rawTitle.startsWith("-") || rawTitle.startsWith("═"))) {
+                    statusIcons = rawTitle.substring(0, 4).replace(/[~\-]/g, "").trim();
+                    cleanName = rawTitle.substring(4).trim();
+                }
 
                 let greenCount = 0;
                 let mapCmdName = "";
@@ -551,19 +548,21 @@ class ArchipelagoMapSelect {
 
                 for (let i = 0; i < statusIcons.length; i++) {
                     const char = statusIcons[i];
-                    let isGreen = false;
+                    let isGreen = (mItems.indexOf(char) === -1);
 
-                    if (char === "M") {
+                    if (char === "ã") {
                         isGreen = !(mItems && mItems.trim() !== "");
                     } else if (char === "þ" || char === "ý" || char === "ǫ") {
                         isGreen = true;
+                    } else if (char === "¢") {
+                        isGreen = (mItems.indexOf("û") === -1);
                     } else if (char === "ù") {
                         if (mapCmdName === "sp_a3_transition01") {
                             isGreen = (mItems.indexOf("û") === -1);
                         } else {
-                            isGreen = true;
+                            isGreen = (mItems.indexOf("ù") === -1);
                         }
-                    } else if (char === "R") {
+                    } else if (char === "ø") {
                         if (mapCmdName === "sp_a1_intro4") {
                             isGreen = (mItems.indexOf("ç") === -1 && mItems.indexOf("æ") === -1);
                         } else if (mapCmdName === "sp_a2_dual_lasers") {
@@ -622,7 +621,7 @@ class ArchipelagoMapSelect {
                     greenLabel.style.fontFamily = "APPortal-bold";
                     greenLabel.style.verticalAlign = "center";
                     greenLabel.style.marginRight = "10px";
-                } else if (statusIcons.length > 0 && statusIcons.replace(new RegExp(ArchipelagoMapSelect.getCompletionSymbol(), 'g'), "").length === 0) {
+                } else if (statusIcons.length > 0 && (statusIcons.replace(/★/g, "").length === 0 || statusIcons.replace(/✓/g, "").length === 0)) {
                     const starLabel = $.CreatePanel('Label', mapBtn, '');
                     starLabel.text = ArchipelagoMapSelect.getCompletionSymbol();
                     starLabel.style.color = "#ffff44";

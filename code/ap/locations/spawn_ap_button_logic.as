@@ -81,7 +81,7 @@ void SpawnAPButtonLogic(string name, Vector position, QAngle angle, float holo_s
 // Use our central visual override system
     GetHologramVisualOverrides(body, hPos, hAng, hSkin, hScale);
 
-// Create the hologram with the new name
-    CreateAPHologram(hPos, hAng, hScale, "", "", hSkin, scenarioName + "_holo");
+// Create the hologram with the new name and proper parent
+    StableCreateAPHologram(hPos, hAng, hScale, "", "", hSkin, scenarioName + "_holo", body);
 
 }

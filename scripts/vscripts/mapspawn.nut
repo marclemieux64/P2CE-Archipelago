@@ -10,6 +10,7 @@ IncludeScript("archipelago_notify");
 
 ::ap_queued_commands <- [];
 ::ap_player_connected <- false;
+if (!("ArchipelagoDebug" in getroottable())) ::ArchipelagoDebug <- false;
 
 function SafeSendToConsole(cmd) {
     if (::ap_player_connected) {
@@ -28,7 +29,7 @@ if ("Entities" in getroottable()) {
         
         if (Entities.FindByClassname(null, "player") != null) {
             ::ap_player_connected = true;
-            printl("[AP-VScript] Player detected! Flushing " + ::ap_queued_commands.len() + " buffered commands.");
+            if (::ArchipelagoDebug) printl("[AP-VScript] Player detected! Flushing " + ::ap_queued_commands.len() + " buffered commands.");
             foreach (cmd in ::ap_queued_commands) {
                 EntFire("InitCmd", "Command", cmd);
             }
@@ -116,7 +117,7 @@ class APPathProxy {
 // This minimal bridge allows legacy calls from the Python client
 // to be handled by the native AngelScript system.
 // =============================================================
-printl("[AP-VScript] " + Time() + " ARCHIPELAGO MAPSPAWN (VScript entry point)");
+if (::ArchipelagoDebug) printl("[AP-VScript] " + Time() + " ARCHIPELAGO MAPSPAWN (VScript entry point)");
 ::ppmod <- {
     // We use a large number of arguments to "catch" whatever the client sends
     function addscript(ent, output, scr = "", delay = 0, max = -1, a=0, b=0, c=0) {
@@ -132,7 +133,10 @@ printl("[AP-VScript] " + Time() + " ARCHIPELAGO MAPSPAWN (VScript entry point)")
     
     function disable_pickup(target) { SafeSendToConsole("DisableEntityPickup \"" + target + "\""); }
     function force_disable_pickup(target) { SafeSendToConsole("DisableEntityPickup \"" + target + "\""); }
-    function keyval(target, key, val) { EntFire(target, "AddOutput", key + " " + val); }
+    function keyval(target, key, val) { 
+        if (key == "origin" || key == "angles") return; // Block redundant transforms that cause "Pushing" errors
+        EntFire(target, "AddOutput", key + " " + val); 
+    }
 
     function get(arg1, arg2 = null, arg3 = null, arg4 = null) {
         return {
@@ -152,12 +156,17 @@ printl("[AP-VScript] " + Time() + " ARCHIPELAGO MAPSPAWN (VScript entry point)")
 //   script CreateAPButton("Name", Vector(x,y,z), Vector(r,p,y), scale)
 // This reconstructs the exact string that sv_init.as expects.
 // =============================================================
-function CreateAPButton(name, pos, rot, scale) {
+function CreateAPButton(name, pos, rot, scale, is_checked = 0) {
     local cmd = "CreateAPButton \"" + name + "\" " +
                 "Vector(" + pos.x + " " + pos.y + " " + pos.z + ") " +
                 "Vector(" + rot.x + " " + rot.y + " " + rot.z + ") " +
                 scale;
     SafeSendToConsole(cmd);
+    
+    if (is_checked) {
+        SafeSendToConsole("AddCheckedDen " + name);
+    }
+    
     return cmd;
 }
 
@@ -166,7 +175,7 @@ function CreateAPButton(name, pos, rot, scale) {
 // =============================================================
 ::scripted_fling_levels <- ["sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity"];
 
-function DeleteEntity(entity_name, create_holo = true, scale = 0.7) { 
+function DeleteEntity(entity_name = "", create_holo = true, scale = 0.7) { 
     local cmd = "DeleteEntity \"" + entity_name + "\" " + (create_holo ? "1" : "0") + " " + scale;
     SafeSendToConsole(cmd);
     return cmd; // Return string for nesting
@@ -177,19 +186,19 @@ function ty(entity_name, create_holo = true, scale = 0.7) {DeleteEntity(entity_n
 // ARCHIPELAGO PICKUP DISABLE BRIDGE
 // =============================================================
 
-function DisableEntityPickup(entity_name) {
+function DisableEntityPickup(entity_name = "") {
     local cmd = "DisableEntityPickup \"" + entity_name + "\"";
     SafeSendToConsole(cmd);
     return cmd;
 }
 
-function DeleteCoreOnOutput(core_name, target_name, output) {
+function DeleteCoreOnOutput(core_name = "", target_name = "", output = "") {
     local cmd = "DeleteCoreOnOutput \"" + core_name + "\" \"" + target_name + "\" \"" + output + "\"";
     SafeSendToConsole(cmd);
     return cmd;
 }
 
-function DisablePortalGun(blue, orange) {   
+function DisablePortalGun(blue = true, orange = true) {   
     local cmd = "DisablePortalGun " + (blue ? "1" : "0") + " " + (orange ? "1" : "0");
     SafeSendToConsole(cmd);
     return cmd;
@@ -202,13 +211,13 @@ function InciniratorDisablePortalGun() {
 }
 
 
-function DisableEntityPhysics(entity_name) {
+function DisableEntityPhysics(entity_name = "") {
     local cmd = "DisableEntityPhysics \"" + entity_name + "\"";
     SafeSendToConsole(cmd);
     return cmd;
 }
 
-function DisableEntity(entity_name) {
+function DisableEntity(entity_name = "") {
     local cmd = "DisableEntity \"" + entity_name + "\"";
     SafeSendToConsole(cmd);
     return cmd;
@@ -239,12 +248,12 @@ function ChangeLevel(next_map="") {
 // =============================================================
 
 
-function AddButtonFrame(search_term) {
+function AddButtonFrame(search_term = "") {
     local cmd = "AddButtonFrame \"" + search_term + "\"";
     SafeSendToConsole(cmd);
     return cmd;
 }
-function AddFloorButtonFrame(search_term) {
+function AddFloorButtonFrame(search_term = "") {
     local cmd = "AddFloorButtonFrame \"" + search_term + "\"";
     SafeSendToConsole(cmd);
     return cmd;
@@ -257,10 +266,30 @@ function AddFloorButtonFrame(search_term) {
 /**
  * AttachHologramToEntity - Bridge to AngelScript AttachHologramToEntity command.
  */
-function AttachHologramToEntity(entity_name, attachment, scale, offset, skin = 0) {
+function AttachHologramToEntity(entity_name = "", attachment = "", scale = 1.0, offset = 0.0, skin = 0) {
     local cmd = "AttachHologramToEntity \"" + entity_name + "\" \"" + attachment + "\" " + scale + " " + offset + " " + skin;
     SafeSendToConsole(cmd);
 }
+
+// =============================================================
+// ARCHIPELAGO MONITOR TRACKING
+// =============================================================
+
+function SetCheckedScreens(data = "") {
+    // Legacy bridge - no longer needed as we use SetStatus
+    SafeSendToConsole("SetStatus");
+}
+
+function AddWheatleyMonitorBreakCheck(entity_name = "", check_id = 0) {
+    local cmd = "AddWheatleyMonitorBreakCheck \"" + entity_name + "\" " + check_id;
+    SafeSendToConsole(cmd);
+}
+
+function SetCheckedDens(data = "") {
+    // Legacy bridge - no longer needed as we use SetStatus
+    SafeSendToConsole("SetStatus");
+}
+
 
 // =============================================================
 // ARCHIPELAGO TRAP BRIDGES

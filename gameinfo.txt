@@ -23,26 +23,12 @@
 		620
 		{
 			"required" "1"
-
-			// Priority is determined by the order in which folders are defined.
-			// For example, assets in "portal2" will be overridden by assets in "update" and higher mods.
-
-			// PeTI/Puzzlemaker (DLC 2)
-			"portal2_dlc2"
-			{
-				"vpk" "pak01"
-			}
-
-			// Peer Review (DLC 1)
-			"portal2_dlc1"
-			{
-				"vpk" "pak01"
-			}
 			
-			// Base Game (SP + Coop)
+			// Base Game
 			"portal2"
 			{
 				"vpk" "pak01"
+				"dir" "."
 			}
 		}
 	}
@@ -64,7 +50,7 @@
 			// This is the path used to load required P2:CE game libraries (client/server and coop matchmaking code)
 			gamebin									p2ce/bin
 			
-			// Custom content will get mounted to this directory FIRST and loaded on top of this mod's content.
+			// Custom content and VPK assets
 			game 									"|gameinfo_path|custom/*"
 			
 			// Mod core content will be mounted using this parameter, and all configuration files get written to this directory.
@@ -74,6 +60,7 @@
 			// because steam.inf and some other important files are pulled from the MOD path.
 			// MOD may have multiple directories on it, hence why this works.
 			game+mod								p2ce
+			game									portal2
 		}
 	}
 }

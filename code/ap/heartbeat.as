@@ -4,13 +4,15 @@
 
 [ServerCommand("DeathlinkTick", "Internal mod deathlink heartbeat")]
 void DeathLinkTickCmd(const CommandArgs@ args) {
-    // 1. Perform periodic health checks
     RunDeathLinkTick();
 }
 
 // =============================================================
 // ARCHIPELAGO GAME STATUS HEARTBEAT
 // =============================================================
+
+// Tracking list to ensure we only process an entity ONCE per map session
+array<int> g_processed_turret_indices;
 
 void StartGameStatusTimer() {
     CBaseEntity@ old = EntityList().FindByName(null, "GameStatusTimer");
@@ -19,7 +21,7 @@ void StartGameStatusTimer() {
     CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
     if (timer !is null) {
         timer.KeyValue("targetname", "GameStatusTimer");
-        timer.KeyValue("RefireTime", "0.1"); // Can be adjusted independently now
+        timer.KeyValue("RefireTime", "0.5"); // Slower refire for stability
         timer.KeyValue("StartDisabled", "1");
         timer.Spawn();
         
@@ -33,11 +35,20 @@ void StartGameStatusTimer() {
 
 [ServerCommand("GameStatusTick", "Internal mod game status heartbeat")]
 void GameStatusTickCmd(const CommandArgs@ args) {
-    // 1. Constant Suppression Loop (Force Stop marked entities)
+    // 0. Sync ArchipelagoDebug with Panorama
+    bool currentDebug = cv_ArchipelagoDebug.GetBool();
+    if (currentDebug != g_LastDebugState) {
+        g_LastDebugState = currentDebug;
+        CallVScript("SendToPanorama(\"ArchipelagoDebug\", \"" + (currentDebug ? "1" : "0") + "\")");
+        CallVScript("::ArchipelagoDebug <- " + (currentDebug ? "true" : "false"));
+        ArchipelagoLog("[AP] Debug logging " + (currentDebug ? "ENABLED" : "DISABLED"));
+    }
+
     CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
-    
-    // 1. Constant Suppression Loop (Force Stop marked entities)
-    if (cmd !is null && g_suppressed_entities.length() > 0) {
+    if (cmd is null) return;
+
+    // 1. Suppression Loop (Only if needed)
+    if (g_suppressed_entities.length() > 0) {
         for (uint i = 0; i < g_suppressed_entities.length(); i++) {
             Variant v;
             v.SetString("ent_fire " + g_suppressed_entities[i] + " Stop");
@@ -45,38 +56,38 @@ void GameStatusTickCmd(const CommandArgs@ args) {
         }
     }
 
-    // 2. Persistent Class Suppression (Handles dynamically spawned entities like factory turrets)
+    // 2. Persistent Class Suppression (Turrets)
     if (g_suppressed_classes.length() > 0) {
         for (uint i = 0; i < g_suppressed_classes.length(); i++) {
             string cls = g_suppressed_classes[i];
             
             CBaseEntity@ t = null;
             while ((@t = EntityList().FindByClassname(t, cls)) !is null) {
-                // Check if this specific turret already has a hologram
-                string hName = cls + "_" + t.GetEntityIndex() + "_attached_holo";
-                if (EntityList().FindByName(null, hName) !is null) continue;
-
-                // New or un-processed turret detected
-                DisableEntityPickup(cls);
-                AttachHologramToEntity(cls, "", 0.66f, 20.0f, 2);
-                break; // AttachHologramToEntity will handle all of them anyway, but we just need to trigger it once
-            }
-
-            // BTS4 Stale Hologram Cleanup
-            if (current_map == "sp_a2_bts4") {
-                CBaseEntity@ h = null;
-                while ((@h = EntityList().FindByClassname(h, "prop_dynamic")) !is null) {
-                    if (h.GetModelName().locate("archipelago_hologram") != uint(-1)) {
-                        string hName = h.GetEntityName();
-                        if (hName.locate("turret_conveyor_1_turret_") != uint(-1) || hName.locate("dummyshoot_conveyor_1_turret") == 0) {
-                            // Check if this hologram is 'stale' (not near any live turret)
-                            CBaseEntity@ nearbyTurret = EntityList().FindByClassnameWithin(null, "npc_portal_turret_floor", h.GetAbsOrigin(), 60.0f);
-                            if (nearbyTurret is null) {
-                                h.Remove();
-                            }
-                        }
+                int index = t.GetEntityIndex();
+                
+                // Have we already handled this specific turret?
+                bool alreadySeen = false;
+                for (uint j = 0; j < g_processed_turret_indices.length(); j++) {
+                    if (g_processed_turret_indices[j] == index) {
+                        alreadySeen = true;
+                        break;
                     }
                 }
+                
+                if (alreadySeen) {
+                    // ArchipelagoLog("[AP DEBUG] Heartbeat skipping turret " + index + " (Already seen)");
+                    continue;
+                }
+
+                // New turret! 
+                ArchipelagoLog("[AP DEBUG] Heartbeat FOUND NEW TURRET " + index + ". Triggering attachment.");
+                g_processed_turret_indices.insertLast(index);
+                
+                string tName = t.GetEntityName();
+                if (tName == "") tName = cls + "_" + index;
+                
+                DisableEntityPickup(cls);
+                AttachHologramToEntity(tName, "", 0.66f, 20.0f, 2);
             }
         }
     }

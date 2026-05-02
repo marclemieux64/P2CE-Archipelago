@@ -9,66 +9,102 @@
    }
   "chapter 1.0"
    {
-      "title"    "M---Container Ride"
-      "subtitle" "ç æ"
+      "title"    "═ Container Ride"
+      "subtitle" "çæ"
       "command"  "map sp_a1_intro1"
       "pic"      "vgui/chapters/chapter1"
    }
+   "chapter 1.0_info"
+   {
+      "title"    "ã"
+   }
   "chapter 1.1"
    {
-      "title"    "M---Portal Carousel"
-      "subtitle" "ñ ç æ"
+      "title"    "═ Portal Carousel"
+      "subtitle" "ñçæ"
       "command"  "map sp_a1_intro2"
       "pic"      "vgui/chapters/chapter1"
    }
+   "chapter 1.1_info"
+   {
+      "title"    "✓"
+   }
   "chapter 1.2"
    {
-      "title"    "M✓--Portal Gun"
+      "title"    "═ Portal Gun"
       "subtitle" ""
       "command"  "map sp_a1_intro3"
       "pic"      "vgui/chapters/chapter1"
    }
+   "chapter 1.2_info"
+   {
+      "title"    "ã✓"
+   }
   "chapter 1.3"
    {
-      "title"    "M✓--Smooth Jazz"
-      "subtitle" "ç æ"
+      "title"    "═ Smooth Jazz"
+      "subtitle" "çæ"
       "command"  "map sp_a1_intro4"
       "pic"      "vgui/chapters/chapter1"
    }
+   "chapter 1.3_info"
+   {
+      "title"    "ã✓"
+   }
   "chapter 1.4"
    {
-      "title"    "M---Cube Momentum"
-      "subtitle" "ñ ç æ"
+      "title"    "═ Cube Momentum"
+      "subtitle" "ñçæ"
       "command"  "map sp_a1_intro5"
       "pic"      "vgui/chapters/chapter1"
    }
+   "chapter 1.4_info"
+   {
+      "title"    "ã"
+   }
   "chapter 1.5"
    {
-      "title"    "M---Future Starter"
-      "subtitle" "ç æ"
+      "title"    "═ Future Starter"
+      "subtitle" "çæ"
       "command"  "map sp_a1_intro6"
       "pic"      "vgui/chapters/chapter1"
    }
+   "chapter 1.5_info"
+   {
+      "title"    "ã"
+   }
   "chapter 1.6"
    {
-      "title"    "✓---Secret Panel"
+      "title"    "═ Secret Panel"
       "subtitle" ""
       "command"  "map sp_a1_intro7"
       "pic"      "vgui/chapters/chapter1"
    }
+   "chapter 1.6_info"
+   {
+      "title"    "✓"
+   }
   "chapter 1.7"
    {
-      "title"    "M---Wake Up"
+      "title"    "═ Wake Up"
       "subtitle" ""
       "command"  "map sp_a1_wakeup"
       "pic"      "vgui/chapters/chapter1"
    }
+   "chapter 1.7_info"
+   {
+      "title"    "ã"
+   }
   "chapter 1.8"
    {
-      "title"    "Mþ--Incinerator"
-      "subtitle" "û"
+      "title"    "═ Incinerator"
+      "subtitle" ""
       "command"  "map sp_a2_intro"
       "pic"      "vgui/chapters/chapter1"
+   }
+   "chapter 1.8_info"
+   {
+      "title"    "✓✓"
    }
   "chapter2"
    {
@@ -79,59 +115,91 @@
    }
   "chapter 2.0"
    {
-      "title"    "M---Laser Intro"
-      "subtitle" "û í î"
+      "title"    "═ Laser Intro"
+      "subtitle" "î"
       "command"  "map sp_a2_laser_intro"
       "pic"      "vgui/chapters/chapter2"
    }
+   "chapter 2.0_info"
+   {
+      "title"    "ã"
+   }
   "chapter 2.1"
    {
-      "title"    "M---Laser Stairs"
-      "subtitle" "û ì æ í î"
+      "title"    "═ Laser Stairs"
+      "subtitle" "æî"
       "command"  "map sp_a2_laser_stairs"
       "pic"      "vgui/chapters/chapter2"
    }
+   "chapter 2.1_info"
+   {
+      "title"    "ã"
+   }
   "chapter 2.2"
    {
-      "title"    "MR--Dual Lasers"
-      "subtitle" "û ì í î"
+      "title"    "═ Dual Lasers"
+      "subtitle" "î"
       "command"  "map sp_a2_dual_lasers"
       "pic"      "vgui/chapters/chapter2"
    }
+   "chapter 2.2_info"
+   {
+      "title"    "ã✓"
+   }
   "chapter 2.3"
    {
-      "title"    "M---Laser Over Goo"
-      "subtitle" "ñ æ ç û í î"
+      "title"    "═ Laser Over Goo"
+      "subtitle" "ñæçî"
       "command"  "map sp_a2_laser_over_goo"
       "pic"      "vgui/chapters/chapter2"
    }
+   "chapter 2.3_info"
+   {
+      "title"    "ã"
+   }
   "chapter 2.4"
    {
-      "title"    "M---Catapult Intro"
-      "subtitle" "õ ñ ç æ"
+      "title"    "═ Catapult Intro"
+      "subtitle" "õñçæ"
       "command"  "map sp_a2_catapult_intro"
       "pic"      "vgui/chapters/chapter2"
    }
+   "chapter 2.4_info"
+   {
+      "title"    "ã"
+   }
   "chapter 2.5"
    {
-      "title"    "MR--Trust Fling"
-      "subtitle" "û õ ñ ç æ"
+      "title"    "═ Trust Fling"
+      "subtitle" "õñçæ"
       "command"  "map sp_a2_trust_fling"
       "pic"      "vgui/chapters/chapter2"
    }
+   "chapter 2.5_info"
+   {
+      "title"    "ãø"
+   }
   "chapter 2.6"
    {
-      "title"    "M---Pit Flings"
-      "subtitle" "û ç í î æ"
+      "title"    "═ Pit Flings"
+      "subtitle" "çîæ"
       "command"  "map sp_a2_pit_flings"
       "pic"      "vgui/chapters/chapter2"
    }
+   "chapter 2.6_info"
+   {
+      "title"    "ã"
+   }
   "chapter 2.7"
    {
-      "title"    "M---Fizzler Intro"
-      "subtitle" "û í ì î ñ"
+      "title"    "═ Fizzler Intro"
+      "subtitle" "îñ"
       "command"  "map sp_a2_fizzler_intro"
       "pic"      "vgui/chapters/chapter2"
+   }
+   "chapter 2.7_info"
+   {
+      "title"    "ã"
    }
   "chapter3"
    {
@@ -142,66 +210,102 @@
    }
   "chapter 3.0"
    {
-      "title"    "M---Ceiling Catapult"
-      "subtitle" "û õ ñ ì í î"
+      "title"    "═ Ceiling Catapult"
+      "subtitle" "õñî"
       "command"  "map sp_a2_sphere_peek"
       "pic"      "vgui/chapters/chapter3"
    }
+   "chapter 3.0_info"
+   {
+      "title"    "ã"
+   }
   "chapter 3.1"
    {
-      "title"    "M---Ricochet"
-      "subtitle" "û õ ç í î ì æ ñ"
+      "title"    "═ Ricochet"
+      "subtitle" "õçîæñ"
       "command"  "map sp_a2_ricochet"
       "pic"      "vgui/chapters/chapter3"
    }
+   "chapter 3.1_info"
+   {
+      "title"    "ã"
+   }
   "chapter 3.2"
    {
-      "title"    "M✓--Bridge Intro"
-      "subtitle" "û ¿ æ ñ ç"
+      "title"    "═ Bridge Intro"
+      "subtitle" "¿æñç"
       "command"  "map sp_a2_bridge_intro"
       "pic"      "vgui/chapters/chapter3"
    }
+   "chapter 3.2_info"
+   {
+      "title"    "ã✓"
+   }
   "chapter 3.3"
    {
-      "title"    "MR--Bridge the Gap"
-      "subtitle" "û ¿ æ ñ ç"
+      "title"    "═ Bridge the Gap"
+      "subtitle" "¿æñç"
       "command"  "map sp_a2_bridge_the_gap"
       "pic"      "vgui/chapters/chapter3"
    }
+   "chapter 3.3_info"
+   {
+      "title"    "ãø"
+   }
   "chapter 3.4"
    {
-      "title"    "M---Turret Intro"
-      "subtitle" "û ç æ ó"
+      "title"    "═ Turret Intro"
+      "subtitle" "çæ"
       "command"  "map sp_a2_turret_intro"
       "pic"      "vgui/chapters/chapter3"
    }
+   "chapter 3.4_info"
+   {
+      "title"    "ã"
+   }
   "chapter 3.5"
    {
-      "title"    "M---Laser Relays"
-      "subtitle" "û í ì ï"
+      "title"    "═ Laser Relays"
+      "subtitle" ""
       "command"  "map sp_a2_laser_relays"
       "pic"      "vgui/chapters/chapter3"
    }
+   "chapter 3.5_info"
+   {
+      "title"    "ã"
+   }
   "chapter 3.6"
    {
-      "title"    "M---Turret Blocker"
-      "subtitle" "û ¿ õ æ ç"
+      "title"    "═ Turret Blocker"
+      "subtitle" "¿õæç"
       "command"  "map sp_a2_turret_blocker"
       "pic"      "vgui/chapters/chapter3"
    }
+   "chapter 3.6_info"
+   {
+      "title"    "ã"
+   }
   "chapter 3.7"
    {
-      "title"    "M✓--Laser Vs. Turret"
-      "subtitle" "û í î ç ì æ"
+      "title"    "═ Laser Vs. Turret"
+      "subtitle" "îçæ"
       "command"  "map sp_a2_laser_vs_turret"
       "pic"      "vgui/chapters/chapter3"
    }
+   "chapter 3.7_info"
+   {
+      "title"    "ãø"
+   }
   "chapter 3.8"
    {
-      "title"    "MR--Pull The Rug"
-      "subtitle" "û ¿ ç æ í î"
+      "title"    "═ Pull The Rug"
+      "subtitle" "¿çæî"
       "command"  "map sp_a2_pull_the_rug"
       "pic"      "vgui/chapters/chapter3"
+   }
+   "chapter 3.8_info"
+   {
+      "title"    "ãø"
    }
   "chapter4"
    {
@@ -212,38 +316,58 @@
    }
   "chapter 4.0"
    {
-      "title"    "M---Column Blocker"
-      "subtitle" "û ¿ í î ï ñ ì õ"
+      "title"    "═ Column Blocker"
+      "subtitle" "¿îñõ"
       "command"  "map sp_a2_column_blocker"
       "pic"      "vgui/chapters/chapter4"
    }
+   "chapter 4.0_info"
+   {
+      "title"    "ã"
+   }
   "chapter 4.1"
    {
-      "title"    "M---Laser Chaining"
-      "subtitle" "û í î ï ì õ"
+      "title"    "═ Laser Chaining"
+      "subtitle" "îõ"
       "command"  "map sp_a2_laser_chaining"
       "pic"      "vgui/chapters/chapter4"
    }
+   "chapter 4.1_info"
+   {
+      "title"    "ã"
+   }
   "chapter 4.2"
    {
-      "title"    "M---Triple Laser"
-      "subtitle" "û í î ì"
+      "title"    "═ Triple Laser"
+      "subtitle" "î"
       "command"  "map sp_a2_triple_laser"
       "pic"      "vgui/chapters/chapter4"
    }
+   "chapter 4.2_info"
+   {
+      "title"    "ã"
+   }
   "chapter 4.3"
    {
-      "title"    "M---Jailbreak"
-      "subtitle" "û ¿ ñ ç"
+      "title"    "═ Jailbreak"
+      "subtitle" "¿ñç"
       "command"  "map sp_a2_bts1"
       "pic"      "vgui/chapters/chapter4"
    }
+   "chapter 4.3_info"
+   {
+      "title"    "ã"
+   }
   "chapter 4.4"
    {
-      "title"    "M---Escape"
-      "subtitle" "û"
+      "title"    "═ Escape"
+      "subtitle" ""
       "command"  "map sp_a2_bts2"
       "pic"      "vgui/chapters/chapter4"
+   }
+   "chapter 4.4_info"
+   {
+      "title"    "ã"
    }
   "chapter5"
    {
@@ -254,38 +378,58 @@
    }
   "chapter 5.0"
    {
-      "title"    "M---Turret Factory"
-      "subtitle" "û"
+      "title"    "═ Turret Factory"
+      "subtitle" ""
       "command"  "map sp_a2_bts3"
       "pic"      "vgui/chapters/chapter5"
    }
+   "chapter 5.0_info"
+   {
+      "title"    "ã"
+   }
   "chapter 5.1"
    {
-      "title"    "M---Turret Sabotage"
-      "subtitle" "û ó"
+      "title"    "═ Turret Sabotage"
+      "subtitle" ""
       "command"  "map sp_a2_bts4"
       "pic"      "vgui/chapters/chapter5"
    }
+   "chapter 5.1_info"
+   {
+      "title"    "ã"
+   }
   "chapter 5.2"
    {
-      "title"    "M---Neurotoxin Sabotage"
-      "subtitle" "û í"
+      "title"    "═ Neurotoxin Sabotage"
+      "subtitle" ""
       "command"  "map sp_a2_bts5"
       "pic"      "vgui/chapters/chapter5"
    }
+   "chapter 5.2_info"
+   {
+      "title"    "ã"
+   }
   "chapter 5.3"
    {
-      "title"    "M---Core"
-      "subtitle" "û ñ ó"
+      "title"    "═ Core"
+      "subtitle" "ñ"
       "command"  "map sp_a2_core"
       "pic"      "vgui/chapters/chapter5"
    }
+   "chapter 5.3_info"
+   {
+      "title"    "ã"
+   }
   "chapter 5.4"
    {
-      "title"    "M---Tube Ride"
+      "title"    "═ Tube Ride"
       "subtitle" ""
       "command"  "map sp_a2_bts6"
       "pic"      "vgui/chapters/chapter5"
+   }
+   "chapter 5.4_info"
+   {
+      "title"    "ã"
    }
   "chapter6"
    {
@@ -296,52 +440,80 @@
    }
   "chapter 6.0"
    {
-      "title"    "M---Long Fall"
+      "title"    "═ Long Fall"
       "subtitle" ""
       "command"  "map sp_a3_00"
       "pic"      "vgui/chapters/chapter6"
    }
+   "chapter 6.0_info"
+   {
+      "title"    "ã"
+   }
   "chapter 6.1"
    {
-      "title"    "M---Underground"
-      "subtitle" "û"
+      "title"    "═ Underground"
+      "subtitle" ""
       "command"  "map sp_a3_01"
       "pic"      "vgui/chapters/chapter6"
    }
+   "chapter 6.1_info"
+   {
+      "title"    "ã"
+   }
   "chapter 6.2"
    {
-      "title"    "M---Cave Johnson"
-      "subtitle" "û"
+      "title"    "═ Cave Johnson"
+      "subtitle" ""
       "command"  "map sp_a3_03"
       "pic"      "vgui/chapters/chapter6"
    }
+   "chapter 6.2_info"
+   {
+      "title"    "ã✓✓✓"
+   }
   "chapter 6.3"
    {
-      "title"    "M---Repulsion Intro"
-      "subtitle" "û ¢ ò è é"
+      "title"    "═ Repulsion Intro"
+      "subtitle" "àòè"
       "command"  "map sp_a3_jump_intro"
       "pic"      "vgui/chapters/chapter6"
    }
+   "chapter 6.3_info"
+   {
+      "title"    "ã"
+   }
   "chapter 6.4"
    {
-      "title"    "M---Bomb Flings"
-      "subtitle" "û ò ¢"
+      "title"    "═ Bomb Flings"
+      "subtitle" "òà"
       "command"  "map sp_a3_bomb_flings"
       "pic"      "vgui/chapters/chapter6"
    }
+   "chapter 6.4_info"
+   {
+      "title"    "ã"
+   }
   "chapter 6.5"
    {
-      "title"    "M---Crazy Box"
-      "subtitle" "û ò ¢ é è"
+      "title"    "═ Crazy Box"
+      "subtitle" "òàè"
       "command"  "map sp_a3_crazy_box"
       "pic"      "vgui/chapters/chapter6"
    }
+   "chapter 6.5_info"
+   {
+      "title"    "ã"
+   }
   "chapter 6.6"
    {
-      "title"    "Mù--PotatOS"
-      "subtitle" "û ù"
+      "title"    "═ PotatOS"
+      "subtitle" ""
       "command"  "map sp_a3_transition01"
       "pic"      "vgui/chapters/chapter6"
+   }
+   "chapter 6.6_info"
+   {
+      "title"    "✓✓✓✓¢"
    }
   "chapter7"
    {
@@ -352,31 +524,47 @@
    }
   "chapter 7.0"
    {
-      "title"    "M---Propulsion Intro"
-      "subtitle" "û ¢ é è ò"
+      "title"    "═ Propulsion Intro"
+      "subtitle" "àèò"
       "command"  "map sp_a3_speed_ramp"
       "pic"      "vgui/chapters/chapter7"
    }
+   "chapter 7.0_info"
+   {
+      "title"    "ã"
+   }
   "chapter 7.1"
    {
-      "title"    "M---Propulsion Flings"
-      "subtitle" "û ¢ é è"
+      "title"    "═ Propulsion Flings"
+      "subtitle" "àè"
       "command"  "map sp_a3_speed_flings"
       "pic"      "vgui/chapters/chapter7"
    }
+   "chapter 7.1_info"
+   {
+      "title"    "ã"
+   }
   "chapter 7.2"
    {
-      "title"    "M---Conversion Intro"
-      "subtitle" "û ¢"
+      "title"    "═ Conversion Intro"
+      "subtitle" "à"
       "command"  "map sp_a3_portal_intro"
       "pic"      "vgui/chapters/chapter7"
    }
+   "chapter 7.2_info"
+   {
+      "title"    "ã"
+   }
   "chapter 7.3"
    {
-      "title"    "M---Three Gels"
-      "subtitle" "û ¢"
+      "title"    "═ Three Gels"
+      "subtitle" "à"
       "command"  "map sp_a3_end"
       "pic"      "vgui/chapters/chapter7"
+   }
+   "chapter 7.3_info"
+   {
+      "title"    "ã"
    }
   "chapter8"
    {
@@ -387,80 +575,124 @@
    }
   "chapter 8.0"
    {
-      "title"    "M---Test"
-      "subtitle" "û ð æ ñ"
+      "title"    "═ Test"
+      "subtitle" "ðæñ"
       "command"  "map sp_a4_intro"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.0_info"
+   {
+      "title"    "ã"
+   }
   "chapter 8.1"
    {
-      "title"    "✓✓--Funnel Intro"
-      "subtitle" "û å ð æ"
+      "title"    "═ Funnel Intro"
+      "subtitle" "ðæ"
       "command"  "map sp_a4_tb_intro"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.1_info"
+   {
+      "title"    "ã✓"
+   }
   "chapter 8.2"
    {
-      "title"    "Mÿ--Ceiling Button"
-      "subtitle" "û å ð æ ñ"
+      "title"    "═ Ceiling Button"
+      "subtitle" "ðæñ"
       "command"  "map sp_a4_tb_trust_drop"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.2_info"
+   {
+      "title"    "ãÿ"
+   }
   "chapter 8.3"
    {
-      "title"    "Mÿ--Wall Button"
-      "subtitle" "û å ð æ ñ õ"
+      "title"    "═ Wall Button"
+      "subtitle" "ðæñõ"
       "command"  "map sp_a4_tb_wall_button"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.3_info"
+   {
+      "title"    "ã✓"
+   }
   "chapter 8.4"
    {
-      "title"    "Mÿ--Polarity"
-      "subtitle" "û å ð æ"
+      "title"    "═ Polarity"
+      "subtitle" "ðæ"
       "command"  "map sp_a4_tb_polarity"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.4_info"
+   {
+      "title"    "ã✓"
+   }
   "chapter 8.5"
    {
-      "title"    "Mÿÿ-Funnel Catch"
-      "subtitle" "û å ð æ ñ õ"
+      "title"    "═ Funnel Catch"
+      "subtitle" "ðæñõ"
       "command"  "map sp_a4_tb_catch"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.5_info"
+   {
+      "title"    "ã✓ÿ"
+   }
   "chapter 8.6"
    {
-      "title"    "Mÿ--Stop The Box"
-      "subtitle" "û ð æ ñ õ ¿"
+      "title"    "═ Stop The Box"
+      "subtitle" "ðæñõ¿"
       "command"  "map sp_a4_stop_the_box"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.6_info"
+   {
+      "title"    "ãÿ"
+   }
   "chapter 8.7"
    {
-      "title"    "Mÿ--Laser Catapult"
-      "subtitle" "û ð æ õ ì í î å"
+      "title"    "═ Laser Catapult"
+      "subtitle" "ðæõî"
       "command"  "map sp_a4_laser_catapult"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.7_info"
+   {
+      "title"    "ãÿ"
+   }
   "chapter 8.8"
    {
-      "title"    "Mÿ--Laser Platform"
-      "subtitle" "û ñ ì í î å"
+      "title"    "═ Laser Platform"
+      "subtitle" "ñî"
       "command"  "map sp_a4_laser_platform"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.8_info"
+   {
+      "title"    "ãÿ"
+   }
   "chapter 8.9"
    {
-      "title"    "Mÿ--Propulsion Catch"
-      "subtitle" "û æ å ñ ð ¢"
+      "title"    "═ Propulsion Catch"
+      "subtitle" "æñð"
       "command"  "map sp_a4_speed_tb_catch"
       "pic"      "vgui/chapters/chapter8"
    }
+   "chapter 8.9_info"
+   {
+      "title"    "ã✓"
+   }
   "chapter 8.10"
    {
-      "title"    "Mÿ--Repulsion Polarity"
-      "subtitle" "û ¢ å æ ñ"
+      "title"    "═ Repulsion Polarity"
+      "subtitle" "àæñ"
       "command"  "map sp_a4_jump_polarity"
       "pic"      "vgui/chapters/chapter8"
+   }
+   "chapter 8.10_info"
+   {
+      "title"    "ãÿ"
    }
   "chapter9"
    {
@@ -471,30 +703,46 @@
    }
   "chapter 9.0"
    {
-      "title"    "M---Finale 1"
-      "subtitle" "û õ å ¢"
+      "title"    "═ Finale 1"
+      "subtitle" "õ"
       "command"  "map sp_a4_finale1"
       "pic"      "vgui/chapters/chapter9"
    }
+   "chapter 9.0_info"
+   {
+      "title"    "ã"
+   }
   "chapter 9.1"
    {
-      "title"    "M---Finale 2"
-      "subtitle" "û å ¢ æ ó"
+      "title"    "═ Finale 2"
+      "subtitle" "àæ"
       "command"  "map sp_a4_finale2"
       "pic"      "vgui/chapters/chapter9"
    }
+   "chapter 9.1_info"
+   {
+      "title"    "ã"
+   }
   "chapter 9.2"
    {
-      "title"    "Mÿ--Finale 3"
-      "subtitle" "û ¢ å"
+      "title"    "═ Finale 3"
+      "subtitle" ""
       "command"  "map sp_a4_finale3"
       "pic"      "vgui/chapters/chapter9"
    }
+   "chapter 9.2_info"
+   {
+      "title"    "ãÿ"
+   }
   "chapter 9.3"
    {
-      "title"    "M---Finale 4"
-      "subtitle" "û ù ¢ S.ô F.ô"
+      "title"    "═ Finale 4"
+      "subtitle" "àA.ôS.ôF.ô"
       "command"  "map sp_a4_finale4"
       "pic"      "vgui/chapters/chapter9"
+   }
+   "chapter 9.3_info"
+   {
+      "title"    "ã"
    }
 }

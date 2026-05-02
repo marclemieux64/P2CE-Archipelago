@@ -14,6 +14,6 @@
 function AddToTextQueue(text, color = "success") {
     // Standardizing the JSON payload for the bridge
     local payload = "{\"title\":\"ARCHIPELAGO\", \"message\":\"" + text + "\", \"type\":\"" + color + "\"}";
-    SendToPanorama("AP_Notify", payload);
+    SendToPanorama("ArchipelagoNotify", payload);
     printl("[AP] Direct Panorama notification dispatched: " + text);
 }

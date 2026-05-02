@@ -1,4 +1,5 @@
 'use strict';
+if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 class AddonFilters {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

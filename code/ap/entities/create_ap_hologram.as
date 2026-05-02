@@ -1,7 +1,7 @@
-ConVar ap_hologram_freeze("ap_hologram_freeze", "0", FCVAR_CHEAT);
+ConVar hologram_freeze("ap_hologram_freeze", "0", FCVAR_CHEAT);
 
 void CreateAPHologram(Vector position, QAngle angles, float scale, string new_parent = "", string attachment = "", int skin = 0, string name = "", CBaseEntity@ parentEnt = null) {
-    // Msgl("[AP] CreateAPHologram executing: Pos(" + position.x + "," + position.y + "," + position.z + ") Name: " + name);
+    ArchipelagoLog("[Archipelago] CreateAPHologram executing: Pos(" + position.x + "," + position.y + "," + position.z + ") Name: " + name);
 
     // 0. IDEMPOTENCY CHECK - Avoid double spawning
     if (name != "") {
@@ -31,7 +31,7 @@ void CreateAPHologram(Vector position, QAngle angles, float scale, string new_pa
             check.KeyValue("skin", "" + skin);
             check.KeyValue("modelscale", "" + scale);
 
-            if (ap_hologram_freeze.GetBool()) {
+            if (hologram_freeze.GetBool()) {
                 CBaseAnimating@ anim = cast<CBaseAnimating>(check);
                 if (anim !is null) anim.SetPlaybackRate(0.0f);
             } else {
@@ -62,7 +62,7 @@ void CreateAPHologram(Vector position, QAngle angles, float scale, string new_pa
     // 2. Spawn
     holo.Spawn();
 
-    if (ap_hologram_freeze.GetBool()) {
+    if (hologram_freeze.GetBool()) {
         CBaseAnimating@ anim = cast<CBaseAnimating>(holo);
         if (anim !is null) anim.SetPlaybackRate(0.0f);
     }

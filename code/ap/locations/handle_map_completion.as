@@ -8,7 +8,7 @@ void PrintMapCompleteNoExit() {
     g_has_printed_map_complete = true;
 
     UpdateInternalMapName();
-    Msgl("map_complete:" + current_map);
+    ArchipelagoLog("map_complete:" + current_map);
 
     // --- L'EXCEPTION POUR LA FINALE ---
     // Si on est sur la map finale, on s'arrête ici !
@@ -25,7 +25,7 @@ void PrintMapCompleteNoExit() {
     }
     
     // Smooth 0.2s extremely fast snap to black without messing with timescale
-    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
+    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "InitCmd");
     if (cmdEnt !is null) {
         Variant vCmd;
         vCmd.SetString("fadeout 0.2");
@@ -37,12 +37,12 @@ void PrintMapCompleteNoExit() {
  * WaitExecute - Schedules a console command to run after a delay.
  */
 void WaitExecute(string command, float delay, string timerName = "") {
-    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
+    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "InitCmd");
     if (cmdEnt !is null) {
         Variant v;
         v.SetString(command);
         cmdEnt.FireInput("Command", v, delay, null, null, 0);
-        Msgl("[AP] Scheduled command in " + delay + "s: " + command + (timerName != "" ? " (" + timerName + ")" : ""));
+        ArchipelagoLog("[Archipelago] Scheduled command in " + delay + "s: " + command + (timerName != "" ? " (" + timerName + ")" : ""));
     }
 }
 
@@ -59,7 +59,7 @@ void PrintMapComplete() {
     
     // Normal 2.0s real time delay. The engine isn't slowed down anymore,
     // so this will execute perfectly on schedule.
-    WaitExecute("ap_warp_to_menu", 2.0f, "return_to_menu");
+    WaitExecute("WarpToMenu", 2.0f, "return_to_menu");
 }
 
 /**

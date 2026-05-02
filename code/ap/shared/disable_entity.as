@@ -95,5 +95,5 @@ void DisableEntity(string search_term) {
         }
     }
     
-    Msgl("[AP] Disabled entity: " + search_term);
+    ArchipelagoLog("[Archipelago] Disabled entity: " + search_term);
 }

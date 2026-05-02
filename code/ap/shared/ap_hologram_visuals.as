@@ -2,44 +2,43 @@
 // ARCHIPELAGO HOLOGRAM VISUAL REGISTRY
 // =============================================================
 
-ConVar ap_map_status("ap_map_status", "0", FCVAR_ARCHIVE);
-ConVar ap_ratman_status("ap_ratman_status", "0", FCVAR_ARCHIVE);
-ConVar ap_map_symbols("ap_map_symbols", "", FCVAR_ARCHIVE);
+ConVar map_status("ap_map_status", "0", FCVAR_ARCHIVE);
+ConVar ratman_status("ap_ratman_status", "0", FCVAR_ARCHIVE);
+ConVar map_symbols("ap_map_symbols", "", FCVAR_ARCHIVE);
 // 0: Red, 1: Green, 2: Checkmark
 
-ConVar ap_portal_gun_status("ap_portal_gun_status", "0", FCVAR_ARCHIVE);
-ConVar ap_potatos_status("ap_potatos_status", "0", FCVAR_ARCHIVE);
-ConVar ap_wheatley_status("ap_wheatley_status", "0", FCVAR_ARCHIVE);
+ConVar portal_gun_status("ap_portal_gun_status", "0", FCVAR_ARCHIVE);
+ConVar potatos_status("ap_potatos_status", "0", FCVAR_ARCHIVE);
+ConVar wheatley_status("ap_wheatley_status", "0", FCVAR_ARCHIVE);
 
-[ServerCommand("ap_set_map_status", "Live refresh of map progression")]
-void APSetMapStatusCmd(const CommandArgs@ args) {
+[ServerCommand("SetMapStatus", "Live refresh of map progression")]
+void SetMapStatusCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
     
+    // Debug spew to verify what Panorama is sending
+    ArchipelagoLog("[Archipelago] SetMapStatus received: C=" + args.ArgC() + " 1=" + args.Arg(1) + " 2=" + args.Arg(2) + " 6=" + args.Arg(6));
+
     int mapStatus = args.Arg(1).toInt();
-    ap_map_status.SetValue(mapStatus);
+    map_status.SetValue(mapStatus);
     
     if (args.ArgC() >= 3) {
-        ap_ratman_status.SetValue(args.Arg(2).toInt());
+        ratman_status.SetValue(args.Arg(2).toInt());
     }
 
     if (args.ArgC() >= 4) {
-        ap_portal_gun_status.SetValue(args.Arg(3).toInt());
+        portal_gun_status.SetValue(args.Arg(3).toInt());
     }
 
     if (args.ArgC() >= 5) {
-        ap_potatos_status.SetValue(args.Arg(4).toInt());
+        potatos_status.SetValue(args.Arg(4).toInt());
     }
 
     if (args.ArgC() >= 6) {
-        ap_wheatley_status.SetValue(args.Arg(5).toInt());
+        wheatley_status.SetValue(args.Arg(5).toInt());
     }
     
     if (args.ArgC() >= 7) {
-        string symbols = "";
-        for (int i = 6; i < args.ArgC(); i++) {
-            symbols += args.Arg(i) + (i == args.ArgC() - 1 ? "" : " ");
-        }
-        ap_map_symbols.SetValue(symbols);
+        map_symbols.SetValue(args.Arg(6));
     }
     
     UpdateInternalMapName();
@@ -57,24 +56,29 @@ void RefreshAllAPHolograms() {
         if (modelName.locate("archipelago_hologram") != uint(-1)) {
             int finalSkin = -1;
 
-            string symbols = ap_map_symbols.GetString();
+            string symbols = map_symbols.GetString();
             bool hasCheckmark = (symbols.locate("★") != uint(-1) || symbols.locate("✓") != uint(-1));
             bool rDone = (symbols == "" || symbols.locate("R") == uint(-1)); 
-            bool pDone = (ap_portal_gun_status.GetInt() == 1);
-            bool uDone = (ap_potatos_status.GetInt() == 1);
-            bool yDone = (ap_wheatley_status.GetInt() == 1);
+            bool pDone = (portal_gun_status.GetInt() == 1);
+            bool uDone = (potatos_status.GetInt() == 1);
+            bool yDone = (wheatley_status.GetInt() == 1);
 
-            int mStat = ap_map_status.GetInt();
+            int mStat = map_status.GetInt();
             bool mapDone = (mStat == 2);
-            bool isRD = (holoName.locate("rd") == 0 && holoName.locate("_holo") != uint(-1));
+            bool isRD = (holoName.locate("rd") == 0 || holoName.locate("Ratman Den") != uint(-1));
             bool isPG = (holoName.locate("portal") != uint(-1) && holoName.locate("gun") != uint(-1));
             bool isPotatos = (holoName.locate("potatos") != uint(-1) || holoName.locate("gla") != uint(-1));
             bool isWheatley = (holoName.locate("wheatley") != uint(-1) || holoName.locate("monitor") != uint(-1));
 
             if (isRD) {
-                finalSkin = (rDone || ap_ratman_status.GetInt() == 1 || mapDone) ? 4 : 0;
+                bool rFinished = (symbols.locate("R") == uint(-1));
+                finalSkin = (rFinished || ratman_status.GetInt() == 1 || mapDone) ? 4 : 0;
             } else if (isPG) {
                 finalSkin = (pDone || mapDone) ? 4 : 0;
+                // LOGGING: Figure out why this is turning green prematurely
+                if (current_map == "sp_a1_intro3" || current_map == "sp_a2_intro") {
+                    ArchipelagoLog("[AP] PG Holo Check: pDone=" + (pDone ? "TRUE" : "FALSE") + " mapDone=" + (mapDone ? "TRUE" : "FALSE") + " finalSkin=" + finalSkin + " (Symbols: " + symbols + ")");
+                }
             } else if (isPotatos) {
                 finalSkin = (uDone || mapDone) ? 4 : 0;
             } else if (isWheatley) {
@@ -82,7 +86,10 @@ void RefreshAllAPHolograms() {
             } else {
                 CBaseEntity@ parent = holo.GetMoveParent();
                 if (parent !is null) {
-                    Vector tPos; QAngle tAng; int tSkin; float tScale;
+                    Vector tPos;
+                    QAngle tAng;
+                    int tSkin;
+                    float tScale;
                     GetHologramVisualOverrides(parent, tPos, tAng, tSkin, tScale);
                     finalSkin = tSkin;
                 }
@@ -118,15 +125,15 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         targetAng = ent.GetAbsAngles();
         targetScale = 1.0f;
         
-        string symbols = ap_map_symbols.GetString();
+        string symbols = map_symbols.GetString();
         bool hasCheckmark = (symbols.locate("★") != uint(-1) || symbols.locate("✓") != uint(-1));
-        bool mapDone = (ap_map_status.GetInt() == 2);
+        bool mapDone = (map_status.GetInt() == 2);
 
         if (isRatmanDen) {
-            bool rDone = (symbols.locate("R") == uint(-1)); 
-            targetSkin = (rDone || ap_ratman_status.GetInt() == 1 || mapDone) ? 4 : 0;
+            bool rFinished = (symbols.locate("R") == uint(-1));
+            targetSkin = (rFinished || ratman_status.GetInt() == 1 || mapDone) ? 4 : 0;
         } else if (isPortalGun) {
-            bool pDone = (symbols.locate("ý") == uint(-1) && symbols.locate("þ") == uint(-1));
+            bool pDone = (symbols.locate("ý") == uint(-1) && symbols.locate("þ") == uint(-1) && symbols.locate("ǫ") == uint(-1));
             // Fallback for incinerator room and portal gun intro
             if ((current_map == "sp_a1_intro3" || current_map == "sp_a2_intro") && hasCheckmark) pDone = true;
             

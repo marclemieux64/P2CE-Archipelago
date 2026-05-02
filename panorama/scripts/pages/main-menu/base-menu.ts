@@ -1,5 +1,5 @@
 'use strict';
-
+if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg || ((m: string) => $.Msg(m)); }
 class BaseMenu {
     static buttons: MenuButton[] = [
         {
@@ -229,11 +229,11 @@ if ($.persistentStorage.getItem("ap_return_to_map_select") === "true") {
         contextPanel.style.opacity = "1";
     }
 
-    $.Msg("[Archipelago] Recovery active. Rendering black overlay during transition...");
+    $.Msg("[AP] Recovery active. Rendering black overlay during transition...");
 
     // Le délai de 0.05s permet au moteur d'instancier le contenu XML de map-select
     $.Schedule(0.05, () => {
-        $.Msg("[Archipelago] Dispatching nested page event...");
+        $.Msg("[AP] Dispatching nested page event...");
         $.DispatchEvent('MainMenuOpenNestedPage', 'mapselect', 'archipelago/map-select', undefined);
 
         // On attend que la transition soit finie (0.5s) pour retirer le fond noir

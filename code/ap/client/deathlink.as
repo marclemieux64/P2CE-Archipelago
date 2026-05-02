@@ -2,20 +2,22 @@
  * AttachDeathTrigger - Creates a logic_timer to monitor player health.
  */
 void AttachDeathTrigger() {
-    CBaseEntity@ old = EntityList().FindByName(null, "ap_deathlink_timer");
+    CBaseEntity@ old = EntityList().FindByName(null, "DeathlinkTimer");
     if (old !is null) old.Remove();
 
     CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
     if (timer !is null) {
-        timer.KeyValue("targetname", "ap_deathlink_timer");
-        timer.KeyValue("RefireTime", "1.0");
+        timer.KeyValue("targetname", "DeathlinkTimer");
+        timer.KeyValue("RefireTime", "0.1");
+        timer.KeyValue("StartDisabled", "1");
         timer.Spawn();
         
-        Variant v;
-        v.SetString("OnTimer ap_init_cmd:Command:ap_deathlink_tick:0.0:-1");
-        timer.FireInput("AddOutput", v, 0.0f, null, null, 0);
+        SafeAddOutput(timer, "OnTimer", "InitCmd", "Command", "DeathlinkTick", 0.0f, -1);
+
+        Variant vEnable;
+        timer.FireInput("Enable", vEnable, 1.0f, null, null, 0);
     }
-    Msgl("AP-Mod: DeathLink monitoring active.");
+    ArchipelagoLog("Archipelago-Mod: Deathlink monitoring active.");
 }
 
 /**
@@ -32,10 +34,10 @@ void RunDeathLinkTick() {
 
     if (hp <= 0 && !g_bSentDeathLink) {
         g_bSentDeathLink = true;
-        Msgl("send_deathlink");
+        ArchipelagoLog("send_deathlink");
         
         // Trigger a restart 
-        CBaseEntity@ cmd = EntityList().FindByName(null, "ap_init_cmd");
+        CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
         if (cmd !is null) {
             Variant v;
             v.SetString("restart");

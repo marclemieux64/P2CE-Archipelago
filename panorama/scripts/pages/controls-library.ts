@@ -1,4 +1,5 @@
 'use strict';
+if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 class ControlsLibrary {
 	static progressBar1 = $<ProgressBar>('#ProgressBar1');

@@ -6,7 +6,7 @@ void DisableEntityPhysics(string target) {
     for (uint i = 0; i < targets.length(); i++) {
         if (targets[i] !is null) {
             targets[i].KeyValue("movetype", "4"); 
-            Msgl("[AP] Disabled physics for: " + targets[i].GetClassname() + " (" + target + ")");
+            ArchipelagoLog("[Archipelago] Disabled physics for: " + targets[i].GetClassname() + " (" + target + ")");
         }
     }
 }

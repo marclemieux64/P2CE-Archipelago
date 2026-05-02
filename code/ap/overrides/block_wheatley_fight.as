@@ -5,7 +5,7 @@
 void BlockWheatleyFight() {
     CBaseEntity@ button = EntityList().FindByName(null, "breaker_socket_button");
     if (button is null) {
-        Msgl("[AP] BlockWheatleyFight: No breaker socket found, skipping.");
+        ArchipelagoLog("[Archipelago] BlockWheatleyFight: No breaker socket found, skipping.");
         return;
     }
     
@@ -32,7 +32,7 @@ void BlockWheatleyFight() {
     }
 
     // Trigger hint on cleanser touch
-    CBaseEntity@ cmd = EntityList().FindByName(null, "ap_init_cmd");
+    CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
     if (cmd !is null) {
         Variant v;
         v.SetString("ent_fire trigger_portal_cleanser AddOutput \"OnStartTouch hudhint_no_potatos:ShowHint:0:-1\"");
@@ -43,5 +43,5 @@ void BlockWheatleyFight() {
     DeleteEntity("breaker_socket_button", false);
     DeleteEntity("breaker_hint", false);
     
-    Msgl("[AP] Wheatley fight blocked. Hint target established.");
+    ArchipelagoLog("[Archipelago] Wheatley fight blocked. Hint target established.");
 }

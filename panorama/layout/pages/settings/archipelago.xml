@@ -41,16 +41,19 @@
 
 				<!-- Transition Type -->
 				<SettingsEnumDropDown
+					id="TransitionTypeSetting"
 					text="#Archipelago_Settings_TransitionType"
 					psvar="ap_smart_warp"
 					infomessage="#Archipelago_Settings_TransitionType_info"
+					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveSmartWarpSetting()"
 				>
-					<Label text="#Archipelago_Settings_Transition_Menu" value="0" />
-					<Label text="#Archipelago_Settings_Transition_Smart" value="1" />
+					<Label text="#Archipelago_Settings_Transition_Menu" value="0" id="ap_transition0" />
+					<Label text="#Archipelago_Settings_Transition_Smart" value="1" id="ap_transition1" />
 				</SettingsEnumDropDown>
 
 				<!-- Map Status HUD -->
 				<SettingsEnum
+					id="MapStatusHUDSetting"
 					text="#Archipelago_Settings_MapStatusHUD"
 					psvar="ap_show_map_status_hud"
 					infomessage="#Archipelago_Settings_MapStatusHUD_info"
@@ -62,13 +65,8 @@
 				<SettingsKeyBinder
 					id="MapStatusKeyBinder"
 					text="#Archipelago_Settings_Key_ShowStatus"
-					bind="ap_show_status"
+					bind="ShowStatus"
 				/>
-
-				<!-- Example Toggle -->
-				<SettingsEnum text="#Archipelago_Settings_WIP" convar="ap_enabled">
-
-				</SettingsEnum>
 			</Panel>
 
 		</Panel>

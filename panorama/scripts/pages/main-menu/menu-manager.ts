@@ -1,4 +1,5 @@
 'use strict';
+if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 class MenuPage {
 	name: string;
@@ -41,23 +42,23 @@ class MenuManager {
 
 	// Persistence for Archipelago notifications
 	static initAPPersistence() {
-		$.DefineEvent('AP_Notify', 1, "payload");
-		$.DefineEvent('AP_QueueUpdated', 0);
+		$.DefineEvent('ArchipelagoNotify', 1, "payload");
+		$.DefineEvent('ArchipelagoQueueUpdated', 0);
 
 		const global: any = UiToolkitAPI.GetGlobalObject();
-		if (!global.AP_MessageQueue) {
-			global.AP_MessageQueue = [];
+		if (!global.ArchipelagoMessageQueue) {
+			global.ArchipelagoMessageQueue = [];
 		}
 
-		$.RegisterForUnhandledEvent('AP_Notify', (payload: string) => {
+		$.RegisterForUnhandledEvent('ArchipelagoNotify', (payload: string) => {
 			$.Msg('[AP Persistence] Captured message in Main Menu: ' + payload);
-			global.AP_MessageQueue.push({
+			global.ArchipelagoMessageQueue.push({
 				payload: payload,
 				shown: false,
 				timestamp: Date.now()
 			});
 			// Notify the HUD to check the queue
-			$.DispatchEvent('AP_QueueUpdated');
+			$.DispatchEvent('ArchipelagoQueueUpdated');
 		});
 	}
 
@@ -178,7 +179,7 @@ class MenuManager {
 						rightDate.setFullYear(date.getFullYear());
 						if (WorkshopAPI.IsWorkshopToolsMode()) {
 							logo = 'file://{images}/logo_sdk.svg';
-						} else  {
+						} else {
 							logo = 'file://{images}/logo.png';
 						}
 					}

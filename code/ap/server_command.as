@@ -27,9 +27,9 @@ array<float> ExtractFloats(string raw) {
 /**
  * APDebugSprayersCmd - Prints diagnostic info for all gel dispensers.
  */
-[ServerCommand("ap_debug_sprayers", "Diagnostics for paint sprayers")]
-void APDebugSprayersCmd(const CommandArgs@ args) {
-    Msgl("[AP] --- SPRAYER DIAGNOSTICS ---");
+[ServerCommand("DebugSprayers", "Diagnostics for paint sprayers")]
+void DebugSprayersCmd(const CommandArgs@ args) {
+    ArchipelagoLog("[Archipelago] --- SPRAYER DIAGNOSTICS ---");
     CBaseEntity@ ent = EntityList().First();
     int count = 0;
     while (@ent !is null) {
@@ -38,7 +38,7 @@ void APDebugSprayersCmd(const CommandArgs@ args) {
         if (cls == "info_paint_sprayer" || cls == "paint_sphere" || name.locate("paint") != uint(-1) || name.locate("sprayer") != uint(-1)) {
             count++;
             Vector pos = ent.GetAbsOrigin();
-            Msgl("[AP] Sprayer [" + ent.GetEntityIndex() + "] Class: " + cls + " | Name: '" + name + "' | Pos: " + pos.x + " " + pos.y + " " + pos.z);
+            ArchipelagoLog("[Archipelago] Sprayer [" + ent.GetEntityIndex() + "] Class: " + cls + " | Name: '" + name + "' | Pos: " + pos.x + " " + pos.y + " " + pos.z);
             
             // Look for a nearby hologram
             bool hasHolo = false;
@@ -50,11 +50,11 @@ void APDebugSprayersCmd(const CommandArgs@ args) {
                 }
                 @h = EntityList().Next(h);
             }
-            Msgl("[AP]   -> Holo Detected: " + (hasHolo ? "YES" : "NO"));
+            ArchipelagoLog("[Archipelago]   -> Holo Detected: " + (hasHolo ? "YES" : "NO"));
         }
         @ent = EntityList().Next(ent);
     }
-    Msgl("[AP] Found " + count + " gel-related entities.");
+    ArchipelagoLog("[Archipelago] Found " + count + " gel-related entities.");
 }
 
 // -------------------------------------------------------------
@@ -102,36 +102,49 @@ void GlobalDeleteClassCmd(const CommandArgs@ args) {
     }
     
     g_suppressed_classes.insertLast(cls);
-    Msgl("[AP] Persistent suppression enabled for class: " + cls);
+    ArchipelagoLog("[Archipelago] Persistent suppression enabled for class: " + cls);
 }
 
-[ServerCommand("ap_dump_holos", "Prints all active Archipelago holograms in the map")]
+[ServerCommand("DumpHolos", "Prints all active Archipelago holograms in the map")]
 void DumpAPHolosCmd(const CommandArgs@ args) {
     CBaseEntity@ holo = null;
     int count = 0;
-    Msgl("============================================");
-    Msgl("   ARCHIPELAGO HOLOGRAM REGISTRY DUMP");
-    Msgl("============================================");
+    ArchipelagoLog("============================================");
+    ArchipelagoLog("   ARCHIPELAGO HOLOGRAM REGISTRY DUMP");
+    ArchipelagoLog("============================================");
     while ((@holo = EntityList().FindByClassname(holo, "prop_dynamic")) !is null) {
         if (holo.GetModelName().locate("archipelago_hologram") != uint(-1)) {
             string hName = holo.GetEntityName();
             Vector hPos = holo.GetAbsOrigin();
             QAngle hAng = holo.GetAbsAngles();
-            Msgl(" > Holo [" + count + "] Name: '" + hName + "'");
-            Msgl("   Pos: Vector(" + hPos.x + ", " + hPos.y + ", " + hPos.z + ")");
-            Msgl("   Ang: QAngle(" + hAng.x + ", " + hAng.y + ", " + hAng.z + ")");
+            ArchipelagoLog(" > Holo [" + count + "] Name: '" + hName + "'");
+            ArchipelagoLog("   Pos: Vector(" + hPos.x + ", " + hPos.y + ", " + hPos.z + ")");
+            ArchipelagoLog("   Ang: QAngle(" + hAng.x + ", " + hAng.y + ", " + hAng.z + ")");
             count++;
         }
     }
-    Msgl("============================================");
-    Msgl(" Total Holograms active: " + count);
-    Msgl("============================================");
+    ArchipelagoLog("============================================");
+    ArchipelagoLog(" Total Holograms active: " + count);
+    ArchipelagoLog("============================================");
 }
 
 [ServerCommand("DeleteCoreOnOutput", "Queues core deletion for a specific entity output")]
 void DeleteCoreOnOutputCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     DeleteCoreOnOutput(args.Arg(1), args.Arg(2), args.Arg(3));
+}
+
+[ServerCommand("AddScript", "Connects an entity output to a console script")]
+void AddScriptCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    AddEntityOutputScript(args.Arg(1), args.Arg(2), args.Arg(3), (args.ArgC() > 4 ? args.Arg(4).toFloat() : 0.0f), (args.ArgC() > 5 ? args.Arg(5).toInt() : -1));
+}
+
+[ServerCommand("AddScriptAtPos", "Connects an entity output to a console script by position")]
+void AddScriptAtPosCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 6) return;
+    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    AddEntityOutputScriptAtPos(pos, args.Arg(4), args.Arg(5), args.Arg(6), (args.ArgC() > 7 ? args.Arg(7).toFloat() : 0.0f), (args.ArgC() > 8 ? args.Arg(8).toInt() : -1));
 }
 
 [ServerCommand("AddButtonFrame", "Adds frame/hologram to a pedestal button")]
@@ -166,25 +179,25 @@ void AttachHologramToEntityCmd(const CommandArgs@ args) {
     AttachHologramToEntity(args.Arg(1), args.Arg(2), args.Arg(3).toFloat(), args.Arg(4).toFloat(), args.Arg(5).toInt());
 }
 
-[ServerCommand("ap_spawn_holos", "One-time map hologram initialization")]
-void APSpawnHolosCmd(const CommandArgs@ args) {
+[ServerCommand("SpawnHolos", "One-time map hologram initialization")]
+void SpawnHolosCmd(const CommandArgs@ args) {
     UpdateInternalMapName();
     CreateMapSpecificHolos(current_map);
 }
 
 [ServerCommand("FinishedMap", "Triggers map completion logic")]
-void APPrintCompleteCmd(const CommandArgs@ args) {
+void PrintCompleteCmd(const CommandArgs@ args) {
     PrintMapComplete();
 }
 
-[ServerCommand("ap_print_complete_no_exit", "Triggers map completion logic without exiting")]
-void APPrintCompleteNoExitCmd(const CommandArgs@ args) {
+[ServerCommand("PrintCompleteNoExit", "Triggers map completion logic without exiting")]
+void PrintCompleteNoExitCmd(const CommandArgs@ args) {
     PrintMapCompleteNoExit();
 }
 
-[ServerCommand("ap_warp_to_menu", "Internal - Warps back to menu")]
-void APWarpToMenuCmd(const CommandArgs@ args) {
-    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "ap_init_cmd");
+[ServerCommand("WarpToMenu", "Internal - Warps back to menu")]
+void WarpToMenuCmd(const CommandArgs@ args) {
+    CBaseEntity@ cmdEnt = EntityList().FindByName(null, "InitCmd");
     if (cmdEnt !is null) {
         Variant vCmd;
         vCmd.SetString("host_timescale 1.0");
@@ -193,32 +206,34 @@ void APWarpToMenuCmd(const CommandArgs@ args) {
     WarpToMenu();
 }
 
-[ServerCommand("ap_show_status", "Re-shows the Map Progress HUD")]
-void APShowStatusCmd(const CommandArgs@ args) {
+
+[ServerCommand("ShowStatus", "Toggle Archipelago Map Status HUD")]
+void ShowStatusCmd(const CommandArgs@ args) {
     UpdateInternalMapName();
-    CallVScript("SendToPanorama(\"AP_MapNameUpdated\", \"" + current_map + "|1\")");
+    CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + current_map + "|1\")");
 }
 
-[ServerCommand("ap_refresh_map_name", "Forces a map name update to Panorama")]
-void APRefreshMapNameCmd(const CommandArgs@ args) {
+[ServerCommand("RefreshMapName", "Forces a map name update to Panorama")]
+void RefreshMapNameCmd(const CommandArgs@ args) {
     // Force reset the cached name to ensure the event fires
     current_map = ""; 
     UpdateInternalMapName();
+    CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + current_map + "|1\")");
 }
 
-[ServerCommand("ap_print_item", "Prints collected item")]
-void APPrintItemCmd(const CommandArgs@ args) {
+[ServerCommand("PrintItem", "Prints collected item")]
+void PrintItemCmd(const CommandArgs@ args) {
     if (args is null) return;
     string raw = args.GetCommandString();
     uint spaceIdx = raw.locate(" ");
     if (spaceIdx != uint(-1)) {
         string item = raw.substr(int(spaceIdx) + 1).trim();
-        Msgl("item_collected:" + item);
+        ArchipelagoLog("item_collected:" + item);
     }
 }
 
-[ServerCommand("ap_print_monitor", "Internal - Prints monitor break check to console")]
-void APPrintMonitorCmd(const CommandArgs@ args) {
+[ServerCommand("PrintMonitor", "Internal - Prints monitor break check to console")]
+void PrintMonitorCmd(const CommandArgs@ args) {
     if (args is null) return;
     string raw = args.GetCommandString();
     
@@ -231,7 +246,7 @@ void APPrintMonitorCmd(const CommandArgs@ args) {
         if (g_reported_monitors.find(check) >= 0) return;
         g_reported_monitors.insertLast(check);
 
-        Msgl("monitor_break:" + check);
+        ArchipelagoLog("monitor_break:" + check);
 
         // Map-Specific Monitor Teleports
         HandleMonitorWarp(check);
@@ -291,32 +306,32 @@ void RunRainbowTick() {
     }
 }
 
-[ServerCommand("ap_rainbow_tick", "Internal master tick for rainbow effects")]
-void APRainbowTickCmd(const CommandArgs@ args) {
+[ServerCommand("RainbowTick", "Internal master tick for rainbow effects")]
+void RainbowTickCmd(const CommandArgs@ args) {
     RunRainbowTick();
 }
 
-[ServerCommand("ap_rainbow", "Toggles rainbow color swap effect for all entities")]
-void APRainbowCmd(const CommandArgs@ args) {
+[ServerCommand("Rainbow", "Toggles rainbow color swap effect for all entities")]
+void RainbowCmd(const CommandArgs@ args) {
     g_rainbow_active = !g_rainbow_active;
     
-    CBaseEntity@ oldTimer = EntityList().FindByName(null, "ap_rainbow_timer");
+    CBaseEntity@ oldTimer = EntityList().FindByName(null, "RainbowTimer");
     if (oldTimer !is null) oldTimer.Remove();
     
     if (g_rainbow_active) {
-        Msgl("[AP] Rainbow Mode Activated!");
+        ArchipelagoLog("[Archipelago] Rainbow Mode Activated!");
         CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
         if (timer !is null) {
-            timer.KeyValue("targetname", "ap_rainbow_timer");
+            timer.KeyValue("targetname", "RainbowTimer");
             timer.KeyValue("RefireTime", "0.015");
             timer.Spawn();
             
             Variant v;
-            v.SetString("OnTimer ap_init_cmd:Command:ap_rainbow_tick:0.0:-1");
+            v.SetString("OnTimer InitCmd:Command:RainbowTick:0.0:-1");
             timer.FireInput("AddOutput", v, 0.0f, null, null);
         }
     } else {
-        Msgl("[AP] Rainbow Mode Deactivated!");
+        ArchipelagoLog("[Archipelago] Rainbow Mode Deactivated!");
         Variant vDefault;
         vDefault.SetString("255 255 255");
         
@@ -336,18 +351,18 @@ void APRainbowCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("ap_rainbow_cubes", "Alias master command toggle")]
-void APRainbowCubesCmd(const CommandArgs@ args) {
-    APRainbowCmd(args);
+[ServerCommand("RainbowCubes", "Alias master command toggle")]
+void RainbowCubesCmd(const CommandArgs@ args) {
+    RainbowCmd(args);
 }
 
-[ServerCommand("ap_rainbow_lasers", "Alias master command toggle")]
-void APRainbowLasersCmd(const CommandArgs@ args) {
-    APRainbowCmd(args);
+[ServerCommand("RainbowLasers", "Alias master command toggle")]
+void RainbowLasersCmd(const CommandArgs@ args) {
+    RainbowCmd(args);
 }
 
 [ServerCommand("RemovePotatOS", "Removes PotatOS and establishes instructor hints")]
-void APRemovePotatOSCmd(const CommandArgs@ args) {
+void RemovePotatOSCmd(const CommandArgs@ args) {
     RemovePotatOS();
 }
 
@@ -357,12 +372,12 @@ void InciniratorDisablePortalGunCmd(const CommandArgs@ args) {
 }
 
 [ServerCommand("BlockWheatleyFight", "Blocks the Wheatley fight and establishes instructor hints")]
-void APBlockWheatleyFightCmd(const CommandArgs@ args) {
+void BlockWheatleyFightCmd(const CommandArgs@ args) {
     BlockWheatleyFight();
 }
 
-[ServerCommand("ap_hologram_offset", "Nudges the nearest hologram: ap_hologram_offset x y z")]
-void APHologramOffsetCmd(const CommandArgs@ args) {
+[ServerCommand("HologramOffset", "Nudges the nearest hologram: HologramOffset x y z")]
+void HologramOffsetCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     float x = args.Arg(1).toFloat();
     float y = args.Arg(2).toFloat();
@@ -375,7 +390,7 @@ void APHologramOffsetCmd(const CommandArgs@ args) {
     
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
     if (player is null) {
-        Msgl("[AP] Error: Could not find player to calculate nudge distance.");
+        ArchipelagoLog("[Archipelago] Error: Could not find player to calculate nudge distance.");
         return;
     }
     Vector pPos = player.GetAbsOrigin();
@@ -393,14 +408,14 @@ void APHologramOffsetCmd(const CommandArgs@ args) {
     if (nearest !is null && minDist < 300.0f) {
         Vector newPos = nearest.GetAbsOrigin() + Vector(x, y, z);
         nearest.SetAbsOrigin(newPos);
-        Msgl("[AP] Nudged '" + nearest.GetEntityName() + "' to: " + newPos.x + " " + newPos.y + " " + newPos.z);
+        ArchipelagoLog("[Archipelago] Nudged '" + nearest.GetEntityName() + "' to: " + newPos.x + " " + newPos.y + " " + newPos.z);
     } else {
-        Msgl("[AP] No hologram near enough to nudge (limit 300 units).");
+        ArchipelagoLog("[Archipelago] No hologram near enough to nudge (limit 300 units).");
     }
 }
 
-[ServerCommand("ap_hologram_rotate", "Rotates the nearest hologram: ap_hologram_rotate p y r")]
-void APHologramRotateCmd(const CommandArgs@ args) {
+[ServerCommand("HologramRotate", "Rotates the nearest hologram: HologramRotate p y r")]
+void HologramRotateCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     float p = args.Arg(1).toFloat();
     float y = args.Arg(2).toFloat();
@@ -411,7 +426,7 @@ void APHologramRotateCmd(const CommandArgs@ args) {
     CBaseEntity@ ent = null;
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
     if (player is null) {
-        Msgl("[AP] Error: Rotate tool could not find player.");
+        ArchipelagoLog("[Archipelago] Error: Rotate tool could not find player.");
         return;
     }
     Vector pPos = player.GetAbsOrigin();
@@ -434,9 +449,9 @@ void APHologramRotateCmd(const CommandArgs@ args) {
         angles.y += y;
         angles.z += r;
         nearest.SetAbsAngles(angles);
-        Msgl("[AP] Rotated '" + nearest.GetEntityName() + "' to: " + angles.x + " " + angles.y + " " + angles.z);
+        ArchipelagoLog("[Archipelago] Rotated '" + nearest.GetEntityName() + "' to: " + angles.x + " " + angles.y + " " + angles.z);
     } else {
-        Msgl("[AP] No hologram near enough to rotate (Evaluated " + foundCount + " candidates). Distance: " + (nearest !is null ? string(minDist) : "N/A"));
+        ArchipelagoLog("[Archipelago] No hologram near enough to rotate (Evaluated " + foundCount + " candidates). Distance: " + (nearest !is null ? string(minDist) : "N/A"));
     }
 }
 
@@ -507,8 +522,8 @@ void RestoreCatapultsCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("ap_catapult_effect_check", "Plays sound and sets skin to 1 if player is near a disabled catapult")]
-void APCatapultEffectCheckCmd(const CommandArgs@ args) {
+[ServerCommand("CatapultEffectCheck", "Plays sound and sets skin to 1 if player is near a disabled catapult")]
+void CatapultEffectCheckCmd(const CommandArgs@ args) {
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
     if (player is null) return;
     
@@ -521,20 +536,27 @@ void APCatapultEffectCheckCmd(const CommandArgs@ args) {
         if (catName == "") holoName = "trigger_catapult_holo";
         CBaseEntity@ holo = EntityList().FindByName(null, holoName);
         if (holo is null) {
+            // Try indexed name too
+            holoName = catName + "_" + catapult.GetEntityIndex() + "_holo";
+            @holo = EntityList().FindByName(null, holoName);
+        }
+
+        if (holo is null) {
             if (current_map == "sp_a2_sphere_peek" && catName == "catapult2_up") {
-                // Keep checking even without the hologram!
+                // Known exception
             } else {
-                continue;
+                // If it's a catapult, we should probably still check proximity even if holo is missing
+                // but let's at least not hard-fail if we have a valid catapult entity
             }
         }
         
-        float distToPlayer = (catapult.GetAbsOrigin() - pPos).Length();
         
         CBaseEntity@ plate = null;
         while ((@plate = EntityList().FindByClassname(plate, "prop_dynamic")) !is null) {
             if (plate.GetModelName().locate("faith_plate") != uint(-1)) {
                 float distToPlate = (plate.GetAbsOrigin() - catapult.GetAbsOrigin()).Length();
                 if (distToPlate < 128.0f) {
+                    float distToPlayer = (plate.GetAbsOrigin() - pPos).Length();
                     Vector pMins, pMaxs;
                     player.ComputeWorldSpaceSurroundingBox(pMins, pMaxs);
                     
@@ -549,12 +571,10 @@ void APCatapultEffectCheckCmd(const CommandArgs@ args) {
                     catMaxs.y += 5.0f;
                     catMaxs.z += 5.0f;
                     
-                    bool isTouching = (distToPlayer < 80.0f) &&
-                        (pMins.x <= catMaxs.x && pMaxs.x >= catMins.x) &&
-                            (pMins.y <= catMaxs.y && pMaxs.y >= catMins.y) &&
-                                (pMins.z <= catMaxs.z && pMaxs.z >= catMins.z);
+                    bool isTouching = (distToPlayer < 120.0f);
 
                     if (isTouching) {
+                        ArchipelagoLog("[Archipelago] Catapult proximity detected for " + plate.GetEntityName());
                         Variant vSkin1;
                         vSkin1.SetString("1");
                         plate.FireInput("Skin", vSkin1, 0.0f, null, null, 0);
@@ -572,18 +592,18 @@ void APCatapultEffectCheckCmd(const CommandArgs@ args) {
                         if (hint !is null) {
                             hint.FireInput("ShowHint", Variant(), 0.0f, null, null, 0);
                         }
-                        ap_last_hinted_catapult = plate.GetEntityName();
+                        last_hinted_catapult = plate.GetEntityName();
                     } else {
                         Variant vSkin;
                         vSkin.SetString("0");
                         plate.FireInput("Skin", vSkin, 0.0f, null, null, 0);
                         
-                        if (ap_last_hinted_catapult == plate.GetEntityName()) {
+                        if (last_hinted_catapult == plate.GetEntityName()) {
                             CBaseEntity@ hint = EntityList().FindByName(null, "ap_hint_" + plate.GetEntityName());
                             if (hint !is null) {
                                 hint.FireInput("EndHint", Variant(), 2.0f, null, null, 0);
                             }
-                            ap_last_hinted_catapult = "";
+                            last_hinted_catapult = "";
                         }
                     }
                     break;
@@ -593,16 +613,16 @@ void APCatapultEffectCheckCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("ap_restore_catapults", "Alias for RestoreCatapults")]
-void APRestoreCatapultsCmd(const CommandArgs@ args) {
+[ServerCommand("RestoreCatapultsAlias", "Alias for RestoreCatapults")]
+void RestoreCatapultsAliasCmd(const CommandArgs@ args) {
     RestoreCatapultsCmd(args);
 }
 
-[ServerCommand("ap_debug_scanall", "Scans for all Archipelago-relevant checks in the map")]
-void APDebugScanAllCmd(const CommandArgs@ args) {
+[ServerCommand("DebugScanAll", "Scans for all Archipelago-relevant checks in the map")]
+void DebugScanAllCmd(const CommandArgs@ args) {
     int count = 0;
     CBaseEntity@ ent = null;
-    Msgl("[AP] Scanning for all items (lasers, bridges, turrets, sprayers, etc)...");
+    ArchipelagoLog("[Archipelago] Scanning for all items (lasers, bridges, turrets, sprayers, etc)...");
     
     while ((@ent = EntityList().Next(ent)) !is null) {
         string cls = ent.GetClassname();
@@ -620,32 +640,32 @@ void APDebugScanAllCmd(const CommandArgs@ args) {
         if (isCheck) {
             count++;
             Vector pos = ent.GetAbsOrigin();
-            Msgl("  > [" + count + "] [" + cls + "] " + (name == "" ? "(unnamed)" : name));
-            Msgl("    - Pos: " + pos.x + " " + pos.y + " " + pos.z);
-            if (model != "") Msgl("    - Model: " + model);
+            ArchipelagoLog("  > [" + count + "] [" + cls + "] " + (name == "" ? "(unnamed)" : name));
+            ArchipelagoLog("    - Pos: " + pos.x + " " + pos.y + " " + pos.z);
+            if (model != "") ArchipelagoLog("    - Model: " + model);
         }
     }
     
-    Msgl("[AP] Scan complete. Found " + count + " relevant entities.");
+    ArchipelagoLog("[Archipelago] Scan complete. Found " + count + " relevant entities.");
 }
 
-[ServerCommand("ap_debug_find", "Tests the FindEntities function")]
-void APDebugFindCmd(const CommandArgs@ args) {
+[ServerCommand("DebugFind", "Tests the FindEntities function")]
+void DebugFindCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) {
-        Msgl("Usage: ap_debug_find <search_string>");
+        ArchipelagoLog("Usage: DebugFind <search_string>");
         return;
     }
     
     string search = args.Arg(1);
-    Msgl("[AP] Testing FindEntities for: " + search);
+    ArchipelagoLog("[Archipelago] Testing FindEntities for: " + search);
     
     array<CBaseEntity@> targets = FindEntities(search);
-    Msgl("Found " + targets.length() + " result(s):");
+    ArchipelagoLog("Found " + targets.length() + " result(s):");
     
     for (uint i = 0; i < targets.length(); i++) {
         CBaseEntity@ t = targets[i];
-        Msgl("  > [" + (i + 1) + "] [" + t.GetClassname() + "] " + t.GetEntityName());
-        Msgl("    - Pos: " + t.GetAbsOrigin().x + " " + t.GetAbsOrigin().y + " " + t.GetAbsOrigin().z);
+        ArchipelagoLog("  > [" + (i + 1) + "] [" + t.GetClassname() + "] " + t.GetEntityName());
+        ArchipelagoLog("    - Pos: " + t.GetAbsOrigin().x + " " + t.GetAbsOrigin().y + " " + t.GetAbsOrigin().z);
     }
 }
 
@@ -683,12 +703,12 @@ void ButterFingersTrapCmd(const CommandArgs@ args) {
     TriggerButterFingersTrap();
 }
 
-[ServerCommand("ap_butterfingers_tick", "Internal")]
-void APButterFingersTickCmd(const CommandArgs@ args) {
+[ServerCommand("ButterfingersTick", "Internal")]
+void ButterFingersTickCmd(const CommandArgs@ args) {
     RunButterFingersTick();
 }
-[ServerCommand("ap_check_bridge_lockout", "Checks if the bridge is present and locks the ratman door accordingly")]
-void APCheckBridgeLockoutCmd(const CommandArgs@ args) {
+[ServerCommand("CheckBridgeLockout", "Checks if the bridge is present and locks the ratman door accordingly")]
+void CheckBridgeLockoutCmd(const CommandArgs@ args) {
     if (current_map != "sp_a2_pull_the_rug") return;
     
     CBaseEntity@ door = EntityList().FindByName(null, "ratman_lockoff_door");
@@ -739,3 +759,4 @@ void APCheckBridgeLockoutCmd(const CommandArgs@ args) {
         }
     }
 }
+

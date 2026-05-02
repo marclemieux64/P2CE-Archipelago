@@ -27,10 +27,10 @@ void AddWheatleyMonitorBreakCheck(string map_name) {
                 
                 string safe_id = locationID.replace(" ", "."); // Use period for safe engine transfer
                 Variant v;
-                v.SetString(output + " ap_init_cmd:Command:ap_print_monitor " + safe_id + ":0.0:-1");
+                v.SetString(output + " InitCmd:Command:PrintMonitor " + safe_id + ":0.0:-1");
                 ent.FireInput("AddOutput", v, 0.0f, null, null, 0);
 
-                Msgl("[AP DEBUG] Hooked EXACT entity: " + entName + " (" + cls + ") using signal: " + output);
+                ArchipelagoLog("[AP DEBUG] Hooked EXACT entity: " + entName + " (" + cls + ") using signal: " + output);
 
                 // B. VISUALS & HOLOGRAM
                 // Spawn exactly ONE hologram at this entity's location

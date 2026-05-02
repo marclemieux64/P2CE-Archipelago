@@ -1,4 +1,5 @@
 'use strict';
+if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 class LoadingScreenController {
 	static lastLoadedMapName = '';

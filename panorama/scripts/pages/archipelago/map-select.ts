@@ -225,6 +225,12 @@ class ArchipelagoMapSelect {
             if (finalStatus.indexOf("þ") !== -1) {
                 finalStatus = finalStatus.replace(/þ/g, `<font color="#44ff44">þ</font>`);
             }
+            if (finalStatus.indexOf("ý") !== -1) {
+                finalStatus = finalStatus.replace(/ý/g, `<font color="#44ff44">ý</font>`);
+            }
+            if (finalStatus.indexOf("ǫ") !== -1) {
+                finalStatus = finalStatus.replace(/ǫ/g, `<font color="#44ff44">ǫ</font>`);
+            }
 
             if (finalStatus.indexOf("ù") !== -1) {
                 let mapName = "";
@@ -396,7 +402,7 @@ class ArchipelagoMapSelect {
 
                     if (char === "M") {
                         isGreen = !(mItems && mItems.trim() !== "");
-                    } else if (char === "þ") {
+                    } else if (char === "þ" || char === "ý" || char === "ǫ") {
                         isGreen = true;
                     } else if (char === "ù") {
                         if (mapCmdName === "sp_a3_transition01") {
@@ -549,7 +555,7 @@ class ArchipelagoMapSelect {
 
                     if (char === "M") {
                         isGreen = !(mItems && mItems.trim() !== "");
-                    } else if (char === "þ") {
+                    } else if (char === "þ" || char === "ý" || char === "ǫ") {
                         isGreen = true;
                     } else if (char === "ù") {
                         if (mapCmdName === "sp_a3_transition01") {

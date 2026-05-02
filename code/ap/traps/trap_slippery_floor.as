@@ -5,7 +5,7 @@ void TriggerSlipperyFloorTrap() {
         player.KeyValue("friction", "0.01");
     }
 
-    CBaseEntity@ cmd = EntityList().FindByName(null, "ap_init_cmd");
+    CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
     if (cmd !is null) {
         Variant v;
         // Set world friction low for a real slippery feel
@@ -16,11 +16,16 @@ void TriggerSlipperyFloorTrap() {
         v.SetString("sv_friction 4");
         cmd.FireInput("Command", v, 15.00f, null, null, 0);
         
-        // Reset player-specific friction
-        v.SetString("ent_fire !player AddOutput \"friction 1\"");
-        cmd.FireInput("Command", v, 15.01f, null, null, 0);
+        // Reset player-specific friction using a relay for the delay
+        CBaseEntity@ relay = util::CreateEntityByName("logic_relay");
+        if (relay !is null) {
+            relay.Spawn();
+            SafeAddOutput(relay, "OnTrigger", "!player", "AddOutput", "friction 1", 15.01f, 1);
+            relay.FireInput("Trigger", Variant(), 0.0f, null, null, 0);
+            SafeAddOutput(relay, "OnTrigger", "!self", "Kill", "", 16.0f, 1);
+        }
         
-        v.SetString("say [AP] A slippery floor trap has been activated!");
+        v.SetString("say [Archipelago] A slippery floor trap has been activated!");
         cmd.FireInput("Command", v, 0.0f, null, null, 0);
     }
 }

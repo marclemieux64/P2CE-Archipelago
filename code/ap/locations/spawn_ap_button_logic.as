@@ -9,7 +9,7 @@ void SpawnAPButtonLogic(string name, Vector position, QAngle angle, float holo_s
         
         // If an AP-named model already exists, we skip spawning entirely to prevent 'two buttons'
         if (entName == scenarioName + "_model" || entName.locate("ap_") == 0) {
-            Msgl("[AP] Button already exists here. Skipping spawn.");
+            ArchipelagoLog("[Archipelago] Button already exists here. Skipping spawn.");
             return; 
         }
 
@@ -58,17 +58,11 @@ void SpawnAPButtonLogic(string name, Vector position, QAngle angle, float holo_s
         brain.PrecacheScriptSound("Portal.button_down");
         brain.PrecacheScriptSound("Portal.button_up");
         string trigger = "ReportAPButton " + scenarioName;
-        Variant vOut;
-        vOut.SetString("OnPressed " + uid + "_cmd:Command:" + trigger + ":0.1:-1");
-        brain.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
-        vOut.SetString("OnPressed !parent:SetAnimation:down:0.0:-1");
-        brain.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
-        vOut.SetString("OnPressed !parent:SetAnimation:up:0.5:-1");
-        brain.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
-        vOut.SetString("OnPressed " + uid + "_dn:PlaySound::0.0:-1");
-        brain.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
-        vOut.SetString("OnPressed " + uid + "_up:PlaySound::0.5:-1");
-        brain.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
+        SafeAddOutput(brain, "OnPressed", uid + "_cmd", "Command", trigger, 0.1f, -1);
+        SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "down", 0.0f, -1);
+        SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "up", 0.5f, -1);
+        SafeAddOutput(brain, "OnPressed", uid + "_dn", "PlaySound", "", 0.0f, -1);
+        SafeAddOutput(brain, "OnPressed", uid + "_up", "PlaySound", "", 0.5f, -1);
         brain.Spawn();
         brain.SetParent(body, -1);
         brain.SetLocalOrigin(Vector(0, 0, 40)); 

@@ -13,7 +13,7 @@ void ResetPersistentSystems() {
 
 
     // 2. Reset Engine ConVars and Player Attributes via ServerCommand
-    CBaseEntity@ cmd = EntityList().FindByName(null, "ap_init_cmd");
+    CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
     if (cmd !is null) {
         Variant v;
         
@@ -38,6 +38,6 @@ void ResetPersistentSystems() {
         v.SetString("snd_setmixer gladosVO vol 0.7");
         cmd.FireInput("Command", v, 0.0f, null, null, 0);
         
-        Msgl("[AP] Persistent systems have been sanitized for the new session.");
+        ArchipelagoLog("[Archipelago] Persistent systems have been sanitized for the new session.");
     }
 }

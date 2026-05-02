@@ -1,4 +1,5 @@
 'use strict';
+if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 // caption helper class. current implementation does **not** require this
 // but obviously we need to reimplement standard caption behavior
@@ -182,7 +183,7 @@ class CloseCaptioning {
 			this.getVars();
 		});
 
-		$.RegisterForUnhandledEvent('AP_MutePotatos', (active: string) => {
+		$.RegisterForUnhandledEvent('ArchipelagoMutePotatos', (active: string) => {
 			this.bPotatosMuted = (active === '1');
 			if (this.bPotatosMuted) {
 				this.wipeCaptions();

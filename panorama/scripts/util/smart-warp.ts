@@ -1,4 +1,5 @@
 'use strict';
+if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 function SmartWarpNextMap(currentMapName: string) {
     $.Msg("[AP] Smart Warp triggered for map: " + currentMapName + ". Searching for best next map...");

@@ -22,7 +22,7 @@
 
 		<!-- HUD anchored to top-left corner of screen, laid out vertically top-to-bottom -->
 		<Panel id="HudTopLeft" hittest="false" hittestchildren="false">
-			<Frame id="AP_MapStatusHUD" src="file://{resources}/layout/components/archipelago/map-status.xml" />
+			<Frame id="ArchipelagoMapStatusHUD" src="file://{resources}/layout/components/archipelago/map-status.xml" />
 		</Panel>
 
 		<!-- Anchored to below the center of the screen, laid out from top to bottom -->
@@ -50,7 +50,7 @@
 		<Panel id="HudTopRight" hittest="false" hittestchildren="false">
 			<HudShowPos />
 			<HudBoneCounts />
-			<Frame id="AP_NotificationFrame" src="file://{resources}/layout/components/archipelago/notification.xml" />
+			<Frame id="ArchipelagoNotificationFrame" src="file://{resources}/layout/components/archipelago/notification.xml" />
 		</Panel>
 
 		<!-- HUD anchored to top center of screen, laid out vertically top-to-bottom

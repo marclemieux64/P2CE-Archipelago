@@ -1,4 +1,4 @@
-void AddButtonFrame(string search_term) {
+void AddCustomFrame(string search_term, string model_path, bool use_vphysics) {
     array<CBaseEntity@> targets = FindEntities(search_term);
 
     // Process targets
@@ -9,16 +9,24 @@ void AddButtonFrame(string search_term) {
         
         CBaseEntity@ box = util::CreateEntityByName("prop_dynamic");
         if (box !is null) {
-            box.SetModel("models/props/archipelago/ap_buttonframe.mdl");
+            box.SetModel(model_path);
             box.SetAbsOrigin(position);
             box.SetAbsAngles(angles);
             box.KeyValue("solid", "6");
             box.Spawn();
+            
+            if (use_vphysics) {
+                box.SetSolid(SOLID_VPHYSICS);
+            }
         }
         // Lock and disable the original button to prevent interaction
         target.FireInput("Lock", Variant(), 0.0f, null, null, 0);
     }
 
-    // Call bridge for hologram (1.0 scale, 40px vertical offset, skin 4)
+    // Call bridge for hologram (1.0 scale, 80px vertical offset, skin 4)
     AttachHologramToEntity(search_term, "", 1.0f, 80.0f, 4);
+}
+
+void AddButtonFrame(string search_term) {
+    AddCustomFrame(search_term, "models/props/archipelago/ap_buttonframe.mdl", false);
 }

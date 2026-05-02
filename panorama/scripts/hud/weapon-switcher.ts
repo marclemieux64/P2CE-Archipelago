@@ -36,7 +36,7 @@ class WeaponSwitcher {
 	// similar to hl2 behavior
 	static MIN_NUM_BUCKETS = 6;
 
-	static onLoad() {}
+	static onLoad() { }
 
 	static onLevelInit() {
 		// force refresh, for saved games

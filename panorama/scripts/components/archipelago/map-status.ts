@@ -7,10 +7,11 @@ class ArchipelagoMapStatusHUD {
         $.Msg("[AP] MapStatusHUD initialized.");
         
         // Listen for map change event from AngelScript
-        $.RegisterForUnhandledEvent("AP_MapNameUpdated", (payload: string) => {
+        $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
+            $.Msg("[AP] MapStatusHUD: Received event with payload: " + payload);
             const parts = payload.split('|');
             const mapName = parts[0];
-            const isManual = parts[1] || "0";
+            const isManual = parts[1] === "1";
 
             $.Msg("[AP] MapStatusHUD: Map name updated to " + mapName + " (Manual: " + isManual + ")");
             // Cancel any pending hide
@@ -19,28 +20,46 @@ class ArchipelagoMapStatusHUD {
                 this.m_HideSchedule = null;
             }
             
-            if (isManual === "1") {
-                // Instant show for manual keypress
-                this.updateStatus(mapName);
+            if (isManual) {
+                // Manual override: show regardless of settings
+                this.updateStatus(mapName, true);
             } else {
                 // Small delay to ensure extras.txt has been updated by the client on map load
-                $.Schedule(1.5, () => this.updateStatus(mapName));
+                $.Schedule(1.5, () => this.updateStatus(mapName, false));
             }
         });
     }
 
-    static updateStatus(currentMapName: string) {
-        const enabled = ($.persistentStorage.getItem('ap_show_map_status_hud') ?? 1) === 1;
-        if (!enabled) return;
+    static updateStatus(currentMapName: string, isManual: boolean) {
+        const psValue = $.persistentStorage.getItem('ap_show_map_status_hud');
+        // If it's manual, we ignore the 'enabled' check
+        const enabled = (psValue ?? 1) == 1;
+        
+        $.Msg("[AP] MapStatusHUD: updateStatus called for map: " + currentMapName);
+        $.Msg("[AP] MapStatusHUD: Enabled setting: " + enabled + " (Raw PS value: " + psValue + ") Manual: " + isManual);
+
+        if (!enabled && !isManual) {
+            $.Msg("[AP] MapStatusHUD: Returning because HUD is disabled in settings and this was an automatic update.");
+            return;
+        }
 
         const container = $.GetContextPanel();
-        if (!container) return;
+        if (!container) {
+            $.Msg("[AP] MapStatusHUD: ERROR - No context panel found!");
+            return;
+        }
 
-        if (!currentMapName || currentMapName === "main_menu") return;
+        if (!currentMapName || currentMapName === "main_menu" || currentMapName === "unknown") {
+            $.Msg("[AP] MapStatusHUD: Returning because map name is invalid or main menu: " + currentMapName);
+            return;
+        }
 
         const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
         const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
-        if (!data) return;
+        if (!data) {
+            $.Msg("[AP] MapStatusHUD: ERROR - Could not load extras.txt");
+            return;
+        }
 
         // Parse chapters to use the helper
         const chapters: any = {};
@@ -70,9 +89,16 @@ class ArchipelagoMapStatusHUD {
             }
         }
 
-        if (!currentMapData) return;
+        if (!currentMapData) {
+            $.Msg("[AP] MapStatusHUD ERROR: No map data found for " + currentMapName + " in extras.txt");
+            return;
+        }
 
         const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
+        if (!mapStatusHelper) {
+            $.Msg("[AP] MapStatusHUD ERROR: ArchipelagoMapStatus helper not found!");
+            return;
+        }
         const status = mapStatusHelper.getMapStatus(currentMapData, chapters);
 
         // Update UI
@@ -162,11 +188,13 @@ class ArchipelagoMapStatusHUD {
         $.Msg("[AP] MapStatusHUD: Total missing items shown: " + redCount);
 
         // Show the panel
+        $.Msg("[AP] MapStatusHUD: Setting visibility to TRUE");
         container.AddClass('visible');
         container.RemoveClass('collapse');
 
         // Hide after 5 seconds
         this.m_HideSchedule = $.Schedule(5.0, () => {
+            $.Msg("[AP] MapStatusHUD: Timer expired, hiding panel.");
             container.RemoveClass('visible');
             this.m_HideSchedule = null;
         });

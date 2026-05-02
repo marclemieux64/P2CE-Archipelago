@@ -1,24 +1,42 @@
 // =============================================================
-// ARCHIPELAGO MASTER HEARTBEAT
+// ARCHIPELAGO DEATHLINK HEARTBEAT
 // =============================================================
 
-/**
- * APDeathLinkTickCmd - The 1-second pulse that drives the mod.
- * We register this last so it can see both the Bootstrap and the Client.
- */
-[ServerCommand("ap_deathlink_tick", "Internal mod heartbeat")]
-void APDeathLinkTickCmd(const CommandArgs@ args) {
-    // 1. Ensure map is initialized (Self-Healing)
-    RunDelayedInitialization();
-    
-    // 2. Perform periodic health checks
+[ServerCommand("DeathlinkTick", "Internal mod deathlink heartbeat")]
+void DeathLinkTickCmd(const CommandArgs@ args) {
+    // 1. Perform periodic health checks
     RunDeathLinkTick();
+}
 
-    // 3. DEBUG: Heartbeat Pulse (Check console with ~)
-    // Msgl("[AP] Heartbeat Pulse..."); 
+// =============================================================
+// ARCHIPELAGO GAME STATUS HEARTBEAT
+// =============================================================
 
-    // 4. Constant Suppression Loop (Force Stop marked entities)
-    CBaseEntity@ cmd = EntityList().FindByName(null, "ap_init_cmd");
+void StartGameStatusTimer() {
+    CBaseEntity@ old = EntityList().FindByName(null, "GameStatusTimer");
+    if (old !is null) old.Remove();
+
+    CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
+    if (timer !is null) {
+        timer.KeyValue("targetname", "GameStatusTimer");
+        timer.KeyValue("RefireTime", "0.1"); // Can be adjusted independently now
+        timer.KeyValue("StartDisabled", "1");
+        timer.Spawn();
+        
+        SafeAddOutput(timer, "OnTimer", "InitCmd", "Command", "GameStatusTick", 0.0f, -1);
+
+        Variant vEnable;
+        timer.FireInput("Enable", vEnable, 1.0f, null, null, 0);
+    }
+    ArchipelagoLog("Archipelago-Mod: Game Status monitoring active.");
+}
+
+[ServerCommand("GameStatusTick", "Internal mod game status heartbeat")]
+void GameStatusTickCmd(const CommandArgs@ args) {
+    // 1. Constant Suppression Loop (Force Stop marked entities)
+    CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
+    
+    // 1. Constant Suppression Loop (Force Stop marked entities)
     if (cmd !is null && g_suppressed_entities.length() > 0) {
         for (uint i = 0; i < g_suppressed_entities.length(); i++) {
             Variant v;
@@ -27,7 +45,7 @@ void APDeathLinkTickCmd(const CommandArgs@ args) {
         }
     }
 
-    // 5. Persistent Class Suppression (Handles dynamically spawned entities like factory turrets)
+    // 2. Persistent Class Suppression (Handles dynamically spawned entities like factory turrets)
     if (g_suppressed_classes.length() > 0) {
         for (uint i = 0; i < g_suppressed_classes.length(); i++) {
             string cls = g_suppressed_classes[i];

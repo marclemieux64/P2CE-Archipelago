@@ -22,8 +22,8 @@ function GetHudRoot(): Panel | null {
 })();
 
 // 1. DEFINITIONS: Ensure the engine understands these event types before we register listeners
-$.DefineEvent("AP_QueueUpdated", 0);
-$.DefineEvent("AP_Notify", 1, "payload");
+$.DefineEvent("ArchipelagoQueueUpdated", 0);
+$.DefineEvent("ArchipelagoNotify", 1, "payload");
 
 // Only define this one if it hasn't been defined by another panel (avoids console warnings)
 try {
@@ -64,10 +64,9 @@ function ProcessQueue() {
             // Save the bookmark so the Base Menu script sees it after the world is destroyed
             $.persistentStorage.setItem("ap_return_to_map_select", "true");
 
-            // Final short delay so the player can actually see the "all clear" state in the black
             $.Schedule(0.5, () => {
-                const useSmartWarp = ($.persistentStorage.getItem('ap_smart_warp') ?? 0) === 1;
-                if (useSmartWarp) {
+                const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
+                if (useSmartWarp == 1) {
                     (UiToolkitAPI.GetGlobalObject() as any).SmartWarpNextMap(pendingWarpMapName);
                 } else {
                     GameInterfaceAPI.ConsoleCommand("disconnect");
@@ -114,7 +113,7 @@ function ProcessQueue() {
     });
 }
 
-function OnAPNotify(payload: string) {
+function OnArchipelagoNotify(payload: string) {
     const container = $.GetContextPanel();
     if (!container) return;
 
@@ -141,9 +140,9 @@ function OnAPNotify(payload: string) {
         titleLabel.text = data.title || "ARCHIPELAGO";
 
         // 5. Create and populate the Message label
-        const msgLabel = $.CreatePanel('Label', content, 'Message');
-        msgLabel.AddClass('body');
-        msgLabel.text = data.message || "";
+        const Msgabel = $.CreatePanel('Label', content, 'Message');
+        Msgabel.AddClass('body');
+        Msgabel.text = data.message || "";
 
         // Handle the RGB string ("255 100 0")
         if (data.type && data.type.includes(" ")) {
@@ -165,15 +164,15 @@ function OnAPNotify(payload: string) {
     }
 }
 
-$.RegisterForUnhandledEvent("AP_QueueUpdated", CheckQueue);
+$.RegisterForUnhandledEvent("ArchipelagoQueueUpdated", CheckQueue);
 
 function CheckQueue() {
     const global: any = UiToolkitAPI.GetGlobalObject();
-    if (!global || !global.AP_MessageQueue) return;
-    const pending = global.AP_MessageQueue.filter((msg: any) => !msg.shown);
+    if (!global || !global.ArchipelagoMessageQueue) return;
+    const pending = global.ArchipelagoMessageQueue.filter((msg: any) => !msg.shown);
     for (const msg of pending) {
         msg.shown = true;
-        OnAPNotify(msg.payload);
+        OnArchipelagoNotify(msg.payload);
     }
 }
 CheckQueue();

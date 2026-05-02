@@ -5,13 +5,24 @@ string current_map = "unknown";
 string last_initialized_map = "";
 ConVarRef host_map("host_map");
 
+/**
+ * SafeAddOutput - Connects an entity output using KeyValue instead of FireInput('AddOutput').
+ * This bypasses the engine's "Admin Command" security restrictions.
+ */
+void SafeAddOutput(CBaseEntity@ ent, string output, string target, string input, string param = "", float delay = 0.0f, int maxTimes = -1) {
+    if (ent is null) return;
+    // Format: "target,input,parameter,delay,maxTimes"
+    string value = target + "," + input + "," + param + "," + delay + "," + maxTimes;
+    ent.KeyValue(output, value);
+}
+
 // Traps Globals
 array<string> trap_colors = { "255 0 0", "0 255 0", "0 0 255", "255 255 0", "255 0 255", "0 255 255" };
 
 // Fling Levels
 array<string> scripted_fling_levels = { "sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity" };
-bool ap_catapult_skin_toggle = false;
-string ap_last_hinted_catapult = "";
+bool catapult_skin_toggle = false;
+string last_hinted_catapult = "";
 
 // Butter Fingers Globals
 int g_ButterFingersTicks = 0;
@@ -76,5 +87,32 @@ string TranslateButtonName(string originalName) {
  */
 void RunButtonScenarioCheck(string buttonName) {
     buttonName = buttonName.trim();
-    if (buttonName == "rd1") Msgl("button_check:Ratman Den 1"); else if (buttonName == "rd2") Msgl("button_check:Ratman Den 2"); else if (buttonName == "rd3") Msgl("button_check:Ratman Den 3"); else if (buttonName == "rd4") Msgl("button_check:Ratman Den 4"); else if (buttonName == "rd5") Msgl("button_check:Ratman Den 5"); else if (buttonName == "rd6") Msgl("button_check:Ratman Den 6"); else if (buttonName == "rd7") Msgl("button_check:Ratman Den 7"); else Msgl("button_check:unknown_" + buttonName);
+    if (buttonName == "rd1") ArchipelagoLog("button_check:Ratman Den 1"); else if (buttonName == "rd2") ArchipelagoLog("button_check:Ratman Den 2"); else if (buttonName == "rd3") ArchipelagoLog("button_check:Ratman Den 3"); else if (buttonName == "rd4") ArchipelagoLog("button_check:Ratman Den 4"); else if (buttonName == "rd5") ArchipelagoLog("button_check:Ratman Den 5"); else if (buttonName == "rd6") ArchipelagoLog("button_check:Ratman Den 6"); else if (buttonName == "rd7") ArchipelagoLog("button_check:Ratman Den 7"); else ArchipelagoLog("button_check:unknown_" + buttonName);
+}
+// =============================================================
+// DEBUGGING & LOGGING
+// =============================================================
+
+ConVar ArchipelagoDebug("ArchipelagoDebug", "0", FCVAR_ARCHIVE);
+
+/**
+ * APLog - Toggable console output that bypasses the "silent" point_servercommand behavior.
+ */
+void ArchipelagoLog(const string&in msg) {
+    // Critical tracking messages must always be printed for the Archipelago client to see
+    if (msg.locate("map_name:") == 0 || 
+        msg.locate("monitor_break:") == 0 || 
+            msg.locate("item_collected:") == 0 || 
+        msg.locate("button_check:") == 0 ||
+        msg.locate("map_complete:") == 0) {
+        Msg(msg + "\n");
+        return;
+    }
+
+    // Use a reference to check the toggle safely during early initialization
+    ConVarRef debug("ArchipelagoDebug");
+    if (debug.IsValid() && debug.GetBool()) {
+        string prefix = (msg.locate("[Archipelago]") == 0) ? "" : "[Archipelago] ";
+        Msg(prefix + msg + "\n");
+    }
 }

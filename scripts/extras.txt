@@ -10,14 +10,14 @@
   "chapter 1.0"
    {
       "title"    "M---Container Ride"
-      "subtitle" "ç"
+      "subtitle" "ç æ"
       "command"  "map sp_a1_intro1"
       "pic"      "vgui/chapters/chapter1"
    }
   "chapter 1.1"
    {
       "title"    "M---Portal Carousel"
-      "subtitle" "ñ ç"
+      "subtitle" "ñ ç æ"
       "command"  "map sp_a1_intro2"
       "pic"      "vgui/chapters/chapter1"
    }
@@ -30,28 +30,28 @@
    }
   "chapter 1.3"
    {
-      "title"    "✓✓--Smooth Jazz"
-      "subtitle" "ç"
+      "title"    "M✓--Smooth Jazz"
+      "subtitle" "ç æ"
       "command"  "map sp_a1_intro4"
       "pic"      "vgui/chapters/chapter1"
    }
   "chapter 1.4"
    {
       "title"    "M---Cube Momentum"
-      "subtitle" "ñ ç"
+      "subtitle" "ñ ç æ"
       "command"  "map sp_a1_intro5"
       "pic"      "vgui/chapters/chapter1"
    }
   "chapter 1.5"
    {
       "title"    "M---Future Starter"
-      "subtitle" "ç"
+      "subtitle" "ç æ"
       "command"  "map sp_a1_intro6"
       "pic"      "vgui/chapters/chapter1"
    }
   "chapter 1.6"
    {
-      "title"    "M---Secret Panel"
+      "title"    "✓---Secret Panel"
       "subtitle" ""
       "command"  "map sp_a1_intro7"
       "pic"      "vgui/chapters/chapter1"
@@ -65,8 +65,8 @@
    }
   "chapter 1.8"
    {
-      "title"    "M✓--Incinerator"
-      "subtitle" ""
+      "title"    "Mþ--Incinerator"
+      "subtitle" "û"
       "command"  "map sp_a2_intro"
       "pic"      "vgui/chapters/chapter1"
    }
@@ -80,56 +80,56 @@
   "chapter 2.0"
    {
       "title"    "M---Laser Intro"
-      "subtitle" "í î"
+      "subtitle" "û í î"
       "command"  "map sp_a2_laser_intro"
       "pic"      "vgui/chapters/chapter2"
    }
   "chapter 2.1"
    {
       "title"    "M---Laser Stairs"
-      "subtitle" "ì í î"
+      "subtitle" "û ì æ í î"
       "command"  "map sp_a2_laser_stairs"
       "pic"      "vgui/chapters/chapter2"
    }
   "chapter 2.2"
    {
-      "title"    "M✓--Dual Lasers"
-      "subtitle" "ì í î"
+      "title"    "MR--Dual Lasers"
+      "subtitle" "û ì í î"
       "command"  "map sp_a2_dual_lasers"
       "pic"      "vgui/chapters/chapter2"
    }
   "chapter 2.3"
    {
       "title"    "M---Laser Over Goo"
-      "subtitle" "ñ ç í î"
+      "subtitle" "ñ æ ç û í î"
       "command"  "map sp_a2_laser_over_goo"
       "pic"      "vgui/chapters/chapter2"
    }
   "chapter 2.4"
    {
       "title"    "M---Catapult Intro"
-      "subtitle" "õ ñ ç"
+      "subtitle" "õ ñ ç æ"
       "command"  "map sp_a2_catapult_intro"
       "pic"      "vgui/chapters/chapter2"
    }
   "chapter 2.5"
    {
       "title"    "MR--Trust Fling"
-      "subtitle" "õ ñ ç"
+      "subtitle" "û õ ñ ç æ"
       "command"  "map sp_a2_trust_fling"
       "pic"      "vgui/chapters/chapter2"
    }
   "chapter 2.6"
    {
       "title"    "M---Pit Flings"
-      "subtitle" "ç í î"
+      "subtitle" "û ç í î æ"
       "command"  "map sp_a2_pit_flings"
       "pic"      "vgui/chapters/chapter2"
    }
   "chapter 2.7"
    {
       "title"    "M---Fizzler Intro"
-      "subtitle" "í ì î ñ"
+      "subtitle" "û í ì î ñ"
       "command"  "map sp_a2_fizzler_intro"
       "pic"      "vgui/chapters/chapter2"
    }
@@ -143,63 +143,63 @@
   "chapter 3.0"
    {
       "title"    "M---Ceiling Catapult"
-      "subtitle" "õ ñ ì í î"
+      "subtitle" "û õ ñ ì í î"
       "command"  "map sp_a2_sphere_peek"
       "pic"      "vgui/chapters/chapter3"
    }
   "chapter 3.1"
    {
       "title"    "M---Ricochet"
-      "subtitle" "õ ç í î ì ñ"
+      "subtitle" "û õ ç í î ì æ ñ"
       "command"  "map sp_a2_ricochet"
       "pic"      "vgui/chapters/chapter3"
    }
   "chapter 3.2"
    {
       "title"    "M✓--Bridge Intro"
-      "subtitle" "¿ ñ ç"
+      "subtitle" "û ¿ æ ñ ç"
       "command"  "map sp_a2_bridge_intro"
       "pic"      "vgui/chapters/chapter3"
    }
   "chapter 3.3"
    {
       "title"    "MR--Bridge the Gap"
-      "subtitle" "¿ ñ ç"
+      "subtitle" "û ¿ æ ñ ç"
       "command"  "map sp_a2_bridge_the_gap"
       "pic"      "vgui/chapters/chapter3"
    }
   "chapter 3.4"
    {
       "title"    "M---Turret Intro"
-      "subtitle" "ç ó"
+      "subtitle" "û ç æ ó"
       "command"  "map sp_a2_turret_intro"
       "pic"      "vgui/chapters/chapter3"
    }
   "chapter 3.5"
    {
       "title"    "M---Laser Relays"
-      "subtitle" "í ì"
+      "subtitle" "û í ì ï"
       "command"  "map sp_a2_laser_relays"
       "pic"      "vgui/chapters/chapter3"
    }
   "chapter 3.6"
    {
       "title"    "M---Turret Blocker"
-      "subtitle" "¿ õ ç"
+      "subtitle" "û ¿ õ æ ç"
       "command"  "map sp_a2_turret_blocker"
       "pic"      "vgui/chapters/chapter3"
    }
   "chapter 3.7"
    {
-      "title"    "MR--Laser Vs. Turret"
-      "subtitle" "í î ç ì"
+      "title"    "M✓--Laser Vs. Turret"
+      "subtitle" "û í î ç ì æ"
       "command"  "map sp_a2_laser_vs_turret"
       "pic"      "vgui/chapters/chapter3"
    }
   "chapter 3.8"
    {
       "title"    "MR--Pull The Rug"
-      "subtitle" "¿ ç í î"
+      "subtitle" "û ¿ ç æ í î"
       "command"  "map sp_a2_pull_the_rug"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -213,35 +213,35 @@
   "chapter 4.0"
    {
       "title"    "M---Column Blocker"
-      "subtitle" "¿ í î ñ ì õ"
+      "subtitle" "û ¿ í î ï ñ ì õ"
       "command"  "map sp_a2_column_blocker"
       "pic"      "vgui/chapters/chapter4"
    }
   "chapter 4.1"
    {
       "title"    "M---Laser Chaining"
-      "subtitle" "í î ì õ"
+      "subtitle" "û í î ï ì õ"
       "command"  "map sp_a2_laser_chaining"
       "pic"      "vgui/chapters/chapter4"
    }
   "chapter 4.2"
    {
       "title"    "M---Triple Laser"
-      "subtitle" "í î ì"
+      "subtitle" "û í î ì"
       "command"  "map sp_a2_triple_laser"
       "pic"      "vgui/chapters/chapter4"
    }
   "chapter 4.3"
    {
       "title"    "M---Jailbreak"
-      "subtitle" "¿ ñ ç"
+      "subtitle" "û ¿ ñ ç"
       "command"  "map sp_a2_bts1"
       "pic"      "vgui/chapters/chapter4"
    }
   "chapter 4.4"
    {
       "title"    "M---Escape"
-      "subtitle" ""
+      "subtitle" "û"
       "command"  "map sp_a2_bts2"
       "pic"      "vgui/chapters/chapter4"
    }
@@ -255,34 +255,34 @@
   "chapter 5.0"
    {
       "title"    "M---Turret Factory"
-      "subtitle" ""
+      "subtitle" "û"
       "command"  "map sp_a2_bts3"
       "pic"      "vgui/chapters/chapter5"
    }
   "chapter 5.1"
    {
       "title"    "M---Turret Sabotage"
-      "subtitle" "ó"
+      "subtitle" "û ó"
       "command"  "map sp_a2_bts4"
       "pic"      "vgui/chapters/chapter5"
    }
   "chapter 5.2"
    {
       "title"    "M---Neurotoxin Sabotage"
-      "subtitle" "í"
+      "subtitle" "û í"
       "command"  "map sp_a2_bts5"
       "pic"      "vgui/chapters/chapter5"
    }
   "chapter 5.3"
    {
       "title"    "M---Core"
-      "subtitle" "ñ ó"
+      "subtitle" "û ñ ó"
       "command"  "map sp_a2_core"
       "pic"      "vgui/chapters/chapter5"
    }
   "chapter 5.4"
    {
-      "title"    "✓---Tube Ride"
+      "title"    "M---Tube Ride"
       "subtitle" ""
       "command"  "map sp_a2_bts6"
       "pic"      "vgui/chapters/chapter5"
@@ -304,42 +304,42 @@
   "chapter 6.1"
    {
       "title"    "M---Underground"
-      "subtitle" ""
+      "subtitle" "û"
       "command"  "map sp_a3_01"
       "pic"      "vgui/chapters/chapter6"
    }
   "chapter 6.2"
    {
       "title"    "M---Cave Johnson"
-      "subtitle" ""
+      "subtitle" "û"
       "command"  "map sp_a3_03"
       "pic"      "vgui/chapters/chapter6"
    }
   "chapter 6.3"
    {
       "title"    "M---Repulsion Intro"
-      "subtitle" "¢ è é"
+      "subtitle" "û ¢ ò è é"
       "command"  "map sp_a3_jump_intro"
       "pic"      "vgui/chapters/chapter6"
    }
   "chapter 6.4"
    {
       "title"    "M---Bomb Flings"
-      "subtitle" "¢"
+      "subtitle" "û ò ¢"
       "command"  "map sp_a3_bomb_flings"
       "pic"      "vgui/chapters/chapter6"
    }
   "chapter 6.5"
    {
       "title"    "M---Crazy Box"
-      "subtitle" "¢ é è"
+      "subtitle" "û ò ¢ é è"
       "command"  "map sp_a3_crazy_box"
       "pic"      "vgui/chapters/chapter6"
    }
   "chapter 6.6"
    {
-      "title"    "M✓--PotatOS"
-      "subtitle" "ù"
+      "title"    "Mù--PotatOS"
+      "subtitle" "û ù"
       "command"  "map sp_a3_transition01"
       "pic"      "vgui/chapters/chapter6"
    }
@@ -347,34 +347,34 @@
    {
       "title"    "Chapter 7"
       "subtitle" ""
-      "command"  "map sp_a3_speed_flings"
+      "command"  "map sp_a3_speed_ramp"
       "pic"      "vgui/chapters/chapter7"
    }
   "chapter 7.0"
    {
-      "title"    "✓---Propulsion Intro"
-      "subtitle" "¢ é è"
+      "title"    "M---Propulsion Intro"
+      "subtitle" "û ¢ é è ò"
       "command"  "map sp_a3_speed_ramp"
       "pic"      "vgui/chapters/chapter7"
    }
   "chapter 7.1"
    {
       "title"    "M---Propulsion Flings"
-      "subtitle" "¢ é è"
+      "subtitle" "û ¢ é è"
       "command"  "map sp_a3_speed_flings"
       "pic"      "vgui/chapters/chapter7"
    }
   "chapter 7.2"
    {
       "title"    "M---Conversion Intro"
-      "subtitle" "¢"
+      "subtitle" "û ¢"
       "command"  "map sp_a3_portal_intro"
       "pic"      "vgui/chapters/chapter7"
    }
   "chapter 7.3"
    {
       "title"    "M---Three Gels"
-      "subtitle" "¢"
+      "subtitle" "û ¢"
       "command"  "map sp_a3_end"
       "pic"      "vgui/chapters/chapter7"
    }
@@ -388,77 +388,77 @@
   "chapter 8.0"
    {
       "title"    "M---Test"
-      "subtitle" "ð ñ"
+      "subtitle" "û ð æ ñ"
       "command"  "map sp_a4_intro"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.1"
    {
-      "title"    "M✓--Funnel Intro"
-      "subtitle" "å ð"
+      "title"    "✓✓--Funnel Intro"
+      "subtitle" "û å ð æ"
       "command"  "map sp_a4_tb_intro"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.2"
    {
       "title"    "Mÿ--Ceiling Button"
-      "subtitle" "å ð ñ"
+      "subtitle" "û å ð æ ñ"
       "command"  "map sp_a4_tb_trust_drop"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.3"
    {
       "title"    "Mÿ--Wall Button"
-      "subtitle" "å ð ñ õ"
+      "subtitle" "û å ð æ ñ õ"
       "command"  "map sp_a4_tb_wall_button"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.4"
    {
       "title"    "Mÿ--Polarity"
-      "subtitle" "å ð"
+      "subtitle" "û å ð æ"
       "command"  "map sp_a4_tb_polarity"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.5"
    {
       "title"    "Mÿÿ-Funnel Catch"
-      "subtitle" "å ð ñ õ"
+      "subtitle" "û å ð æ ñ õ"
       "command"  "map sp_a4_tb_catch"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.6"
    {
       "title"    "Mÿ--Stop The Box"
-      "subtitle" "ð ñ õ ¿"
+      "subtitle" "û ð æ ñ õ ¿"
       "command"  "map sp_a4_stop_the_box"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.7"
    {
       "title"    "Mÿ--Laser Catapult"
-      "subtitle" "ð õ ì í î å"
+      "subtitle" "û ð æ õ ì í î å"
       "command"  "map sp_a4_laser_catapult"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.8"
    {
       "title"    "Mÿ--Laser Platform"
-      "subtitle" "ñ ì í î å"
+      "subtitle" "û ñ ì í î å"
       "command"  "map sp_a4_laser_platform"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.9"
    {
       "title"    "Mÿ--Propulsion Catch"
-      "subtitle" "å ñ ð ¢"
+      "subtitle" "û æ å ñ ð ¢"
       "command"  "map sp_a4_speed_tb_catch"
       "pic"      "vgui/chapters/chapter8"
    }
   "chapter 8.10"
    {
       "title"    "Mÿ--Repulsion Polarity"
-      "subtitle" "¢ å ñ"
+      "subtitle" "û ¢ å æ ñ"
       "command"  "map sp_a4_jump_polarity"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -472,28 +472,28 @@
   "chapter 9.0"
    {
       "title"    "M---Finale 1"
-      "subtitle" "õ å ¢"
+      "subtitle" "û õ å ¢"
       "command"  "map sp_a4_finale1"
       "pic"      "vgui/chapters/chapter9"
    }
   "chapter 9.1"
    {
       "title"    "M---Finale 2"
-      "subtitle" "å ¢ ó"
+      "subtitle" "û å ¢ æ ó"
       "command"  "map sp_a4_finale2"
       "pic"      "vgui/chapters/chapter9"
    }
   "chapter 9.2"
    {
       "title"    "Mÿ--Finale 3"
-      "subtitle" "¢ å"
+      "subtitle" "û ¢ å"
       "command"  "map sp_a4_finale3"
       "pic"      "vgui/chapters/chapter9"
    }
   "chapter 9.3"
    {
       "title"    "M---Finale 4"
-      "subtitle" "ù ¢ A.ô S.ô F.ô"
+      "subtitle" "û ù ¢ S.ô F.ô"
       "command"  "map sp_a4_finale4"
       "pic"      "vgui/chapters/chapter9"
    }

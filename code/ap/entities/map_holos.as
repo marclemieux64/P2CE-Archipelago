@@ -9,7 +9,7 @@ void CreateMapSpecificHolos(string current_map) {
             pos.z += 32.0f;
             CreateAPHologram(pos, QAngle(0, 0, 0), 0.66f, "", "", 0, "player_near_portalgun_holo");
         } else {
-            Msgl("AP-Mod: Warning - Could not find 'player_near_portalgun' to spawn hologram.");
+            ArchipelagoLog("Archipelago-Mod: Warning - Could not find 'player_near_portalgun' to spawn hologram.");
         }
     } else if (current_map == "sp_a3_transition01") {
         CBaseEntity@ potato_button = EntityList().FindByName(null, "sphere_entrance_potatos_button");
@@ -18,7 +18,7 @@ void CreateMapSpecificHolos(string current_map) {
             pos.z += 32.0f;
             CreateAPHologram(pos, QAngle(0, 0, 0), 0.66f, "", "", 0, "sphere_entrance_potatos_button_holo");
         } else {
-            Msgl("AP-Mod: Warning - Could not find 'sphere_entrance_potatos_button' to spawn hologram.");
+            ArchipelagoLog("Archipelago-Mod: Warning - Could not find 'sphere_entrance_potatos_button' to spawn hologram.");
         }
     } else if (current_map == "sp_a1_intro7") {
         CBaseEntity@ ent = null;

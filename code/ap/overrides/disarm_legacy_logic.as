@@ -17,6 +17,6 @@ void DisarmLegacyLogic() {
     }
     
     if (count > 0) {
-        Msgl("[AP] Legacy Cleanup: Removed " + count + " hazardous map-based entities.");
+        ArchipelagoLog("[Archipelago] Legacy Cleanup: Removed " + count + " hazardous map-based entities.");
     }
 }

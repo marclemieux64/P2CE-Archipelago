@@ -18,6 +18,6 @@ void CallVScript(string code) {
         Variant vKill;
         scriptEnt.FireInput("Kill", vKill, 0.1f, null, null, 0);
     } else {
-        Msgl("[AP] Error: CallVScript failed to create logic_script");
+        ArchipelagoLog("[Archipelago] Error: CallVScript failed to create logic_script");
     }
 }

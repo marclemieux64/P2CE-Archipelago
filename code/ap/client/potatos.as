@@ -24,7 +24,7 @@ void RemovePotatOS() {
         }
                 // 3. Force the button to show the hint when pressed and remove the potatOS again
         Fire("ent_fire sphere_entrance_potatos_button AddOutput \"OnPressed hudhint_no_potatos:ShowHint:0:-1\"");
-        Fire("ent_fire sphere_entrance_potatos_button AddOutput \"OnPressed ap_init_cmd:Command:RemovePotatosFromGun:1.0:-1\"");
+        Fire("ent_fire sphere_entrance_potatos_button AddOutput \"OnPressed InitCmd:Command:RemovePotatosFromGun:1.0:-1\"");
     }
     
     // 4. Remove the relay so the player can't progress
@@ -35,11 +35,11 @@ void RemovePotatOS() {
     // 5. Ensure she is removed from the gun itself
     RemovePotatosFromGun();
     
-    Msgl("[AP] PotatOS removal logic applied (with instructor hints).");
+    ArchipelagoLog("[Archipelago] PotatOS removal logic applied (with instructor hints).");
 }
 
 void Fire(string cmd, float d = 0.0f) { 
-    CBaseEntity@ c = EntityList().FindByName(null, "ap_init_cmd");
+    CBaseEntity@ c = EntityList().FindByName(null, "InitCmd");
     if (c !is null) { Variant v; v.SetString(cmd); c.FireInput("Command", v, d, null, null, 0); }
 }
 

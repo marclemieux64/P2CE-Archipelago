@@ -21,7 +21,7 @@ void CreateCompleteLevelAlertHook(string map) {
 
             if (is_target) {
                 Variant v;
-                v.SetString("OnStartTouch ap_init_cmd:Command:FinishedMap:0.0:-1");
+                v.SetString("OnStartTouch InitCmd:Command:FinishedMap:0.0:-1");
                 tr.FireInput("AddOutput", v, 0.0f, null, null, 0);
             }
         }
@@ -32,7 +32,7 @@ void CreateCompleteLevelAlertHook(string map) {
         array<CBaseEntity@> relays = FindEntities("ending_relay");
         for (uint i = 0; i < relays.length(); i++) {
             Variant v;
-            v.SetString("OnTrigger ap_init_cmd:Command:ap_print_complete_no_exit:0.0:-1");
+            v.SetString("OnTrigger InitCmd:Command:PrintCompleteNoExit:0.0:-1");
             relays[i].FireInput("AddOutput", v, 0.0f, null, null, 0);
         }
     } 
@@ -63,9 +63,9 @@ void CreateCompleteLevelAlertHook(string map) {
         for (uint s = 0; s < targets.length(); s++) {
             CBaseEntity@ ent = null;
             while ((@ent = EntityList().FindByName(ent, targets[s])) != null) {
-                Variant v; v.SetString("OnStartTouch ap_init_cmd:Command:FinishedMap:0.0:-1");
+                Variant v; v.SetString("OnStartTouch InitCmd:Command:FinishedMap:0.0:-1");
                 ent.FireInput("AddOutput", v, 0.0f, null, null, 0);
-                Variant v2; v2.SetString("OnTrigger ap_init_cmd:Command:FinishedMap:0.0:-1");
+                Variant v2; v2.SetString("OnTrigger InitCmd:Command:FinishedMap:0.0:-1");
                 ent.FireInput("AddOutput", v2, 0.0f, null, null, 0);
             }
         }
@@ -76,7 +76,7 @@ void CreateCompleteLevelAlertHook(string map) {
         if (cls.length() > 0) {
             for (uint i = 0; i < cls.length(); i++) {
                 Variant v;
-                v.SetString("OnTrigger ap_init_cmd:Command:FinishedMap:0.0:-1");
+                v.SetString("OnTrigger InitCmd:Command:FinishedMap:0.0:-1");
                 cls[i].FireInput("AddOutput", v, 0.0f, null, null, 0);
             }
         }

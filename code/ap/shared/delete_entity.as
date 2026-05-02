@@ -2,10 +2,10 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
     UpdateInternalMapName();
     
     // 1. Get our targets (The finding logic handles the 'universal monster' complexity)
-    Msgl("[AP] DeleteEntity called for: '" + target + "'");
+    ArchipelagoLog("[Archipelago] DeleteEntity called for: '" + target + "'");
     
     array<CBaseEntity@> targets = FindEntities(target);
-    Msgl("[AP] FindEntities returned " + targets.length() + " result(s).");
+    ArchipelagoLog("[Archipelago] FindEntities returned " + targets.length() + " result(s).");
 
     for (uint i = 0; i < targets.length(); i++) {
         CBaseEntity@ t = targets[i];
@@ -13,7 +13,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
         
         string classname = t.GetClassname();
         string tName = t.GetEntityName();
-        // Msgl("[AP] Processing deletion for: [" + classname + "] " + tName);
+        ArchipelagoLog("[Archipelago] Processing deletion for: [" + classname + "] " + tName);
 
         // Disable blockade teleport on sp_a2_ricochet when deleting lasers
         if (current_map == "sp_a2_ricochet" && (classname == "prop_laser_catcher" || classname == "env_portal_laser")) {
@@ -70,9 +70,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
                     proxTimer.KeyValue("RefireTime", "1.5");
                     proxTimer.Spawn();
                     
-                    Variant vProx;
-                    vProx.SetString("OnTimer ap_init_cmd:Command:ap_catapult_effect_check:0.0:-1");
-                    proxTimer.FireInput("AddOutput", vProx, 0.0f, null, null, 0);
+                    proxTimer.KeyValue("OnTimer", "InitCmd,Command,CatapultEffectCheck,0,-1");
                 }
             }
 
@@ -124,7 +122,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
                             if (hint !is null) {
                                 hint.KeyValue("targetname", hintUid);
                                 hint.KeyValue("hint_target", targetUid);
-                                hint.KeyValue("hint_static", "0");
+                                hint.KeyValue("hint_static", "1");
                                 hint.KeyValue("hint_caption", "You don't have the Aerial Faith Plates");
                                 hint.KeyValue("hint_icon_onscreen", "icon_alert");
                                 hint.KeyValue("hint_color", "255 50 50");
@@ -155,7 +153,7 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
                 // Check if it's a paint bomb template (handles global and instanced names like prefix-paint_bomb_template)
                 if (tempName.locate("paint_bomb_template") != uint(-1) && tempName.locate("_disabled") == uint(-1)) {
                     template.KeyValue("targetname", tempName + "_disabled");
-                    // Msgl("[AP] Disabled point_template: " + tempName);
+                    // ArchipelagoLog("[Archipelago] Disabled point_template: " + tempName);
                 }
             }
             
@@ -196,36 +194,35 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
                     }
                 }
 
-                Variant vHook;
-                vHook.SetString("OnUseLocked " + hintName + ":ShowHint::0:-1");
+                string hookStr = "OnUseLocked " + hintName + ",ShowHint,,0,-1";
 
                 CBaseEntity@ btnBlue = EntityList().FindByName(null, "pump_machine_blue_button");
                 if (btnBlue !is null) {
                     btnBlue.FireInput("Lock", vEmpty, 0.0f, null, null, 0);
-                    btnBlue.FireInput("AddOutput", vHook, 0.0f, null, null, 0);
+                    btnBlue.KeyValue("OnUseLocked", hintName + ",ShowHint,,0,-1");
                 }
                 
                 // Handling both just in case the trailing underscore you typed was a typo from Hammer!
                 CBaseEntity@ btnOrange = EntityList().FindByName(null, "pump_machine_orange_button");
                 if (btnOrange !is null) {
                     btnOrange.FireInput("Lock", vEmpty, 0.0f, null, null, 0);
-                    btnOrange.FireInput("AddOutput", vHook, 0.0f, null, null, 0);
+                    btnOrange.KeyValue("OnUseLocked", hintName + ",ShowHint,,0,-1");
                 }
                 CBaseEntity@ btnOrangeTypo = EntityList().FindByName(null, "pump_machine_orange_button_");
                 if (btnOrangeTypo !is null) {
                     btnOrangeTypo.FireInput("Lock", vEmpty, 0.0f, null, null, 0);
-                    btnOrangeTypo.FireInput("AddOutput", vHook, 0.0f, null, null, 0);
+                    btnOrange.KeyValue("OnUseLocked", hintName + ",ShowHint,,0,-1");
                 }
                 
                 CBaseEntity@ btnWhite = EntityList().FindByName(null, "pump_machine_white_button");
                 if (btnWhite !is null) {
                     btnWhite.FireInput("Lock", vEmpty, 0.0f, null, null, 0);
-                    btnWhite.FireInput("AddOutput", vHook, 0.0f, null, null, 0);
+                    btnWhite.KeyValue("OnUseLocked", hintName + ",ShowHint,,0,-1");
                 }
             }
             
             // 4. Scrub existing gel messes after a safe delay to catch any pre-load spills
-            CBaseEntity@ cmd = EntityList().FindByName(null, "ap_init_cmd");
+            CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
             if (cmd !is null) {
                 Variant vRelay;
                 vRelay.SetString("removeallpaint");
@@ -250,10 +247,8 @@ void DeleteEntity(string target, bool create_holo = true, float scale = 0.7f, bo
                 // 2. ONLY hook the dynamic spawner if Archipelago specifically asked us to delete them!
                 CBaseEntity@ trigger = EntityList().FindByClassnameNearest("trigger_once", Vector(-816, 64, 320), 10.0f);
                 if (trigger !is null) {
-                    Variant vOut;
-                    // Delete the dynamic box 1s after trigger touch
-                    vOut.SetString("OnStartTouch ap_init_cmd:Command:DeleteEntity prop_monster_box 1 0.7:1.0:-1");
-                    trigger.FireInput("AddOutput", vOut, 0.0f, null, null, 0);
+                    string vOut = "DeleteEntity prop_monster_box 1 0.7";
+                    SafeAddOutput(trigger, "OnStartTouch", "InitCmd", "Command", vOut, 1.0f, -1);
                 }
             }
             

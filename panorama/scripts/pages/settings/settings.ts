@@ -1,4 +1,5 @@
 'use strict';
+if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 class MainMenuSettings {
 	static activeTab: string | null = null;
@@ -281,7 +282,7 @@ class MainMenuSettings {
 			if (
 				(child.actualyoffset / containerHeight <= proportionScrolled &&
 					proportionScrolled <=
-						(child.actualyoffset + child.actuallayoutheight + this.spacerHeight) / containerHeight) ||
+					(child.actualyoffset + child.actuallayoutheight + this.spacerHeight) / containerHeight) ||
 				scrollOffset === 0
 			) {
 				const navChild = this.subNavRadios.get(child.id);
@@ -498,8 +499,8 @@ class MainMenuSettings {
 			this.showInfo(
 				// If a panel has a specific title use that, if not use the panel's name. Child ID names vary between panel types, blame Valve
 				panel.GetAttributeString('infotitle', '') ||
-					panel.FindChildTraverse('Title')?.text ||
-					panel.FindChildTraverse('title')?.text,
+				panel.FindChildTraverse('Title')?.text ||
+				panel.FindChildTraverse('title')?.text,
 				message,
 				panel.convar ?? panel.bind,
 				hasDocs,
@@ -538,9 +539,8 @@ class MainMenuSettings {
 			}
 
 			if (showConvar) {
-				this.panels.infoConvar.text = `<i>${
-					isKeybinder ? $.Localize('#Settings_General_Command') : $.Localize('#Settings_General_Convar')
-				}: <b>${convar}</b></i>`;
+				this.panels.infoConvar.text = `<i>${isKeybinder ? $.Localize('#Settings_General_Command') : $.Localize('#Settings_General_Convar')
+					}: <b>${convar}</b></i>`;
 				this.panels.infoConvar.RemoveClass('hide');
 				//this.panels.infoDocsButton.SetHasClass('hide', !hasDocs || isKeybinder);
 				// Shouldn't need to clear the panel event here as it's hidden or gets overwritten

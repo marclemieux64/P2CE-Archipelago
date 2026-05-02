@@ -10,7 +10,7 @@ void AttachHologramToEntity(string entity_name, string attachment_point, float h
         }
         if (!alreadySuppressed) {
             g_suppressed_classes.insertLast(entity_name);
-            Msgl("[AP] Persistent Class Attachment activated for: " + entity_name);
+            ArchipelagoLog("[Archipelago] Persistent Class Attachment activated for: " + entity_name);
         }
     }
 

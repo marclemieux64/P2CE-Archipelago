@@ -58,10 +58,10 @@
  * InitializeArchipelago - Atomic setup of core bridge entities.
  */
 bool InitializeArchipelago() {
-    Msgl("[AP] INITIALIZING CORE...");
+    ArchipelagoLog("[Archipelago] INITIALIZING CORE...");
     CBaseEntity@ cmd = util::CreateEntityByName("point_servercommand");
     if (cmd !is null) {
-        cmd.KeyValue("targetname", "ap_init_cmd");
+        cmd.KeyValue("targetname", "InitCmd");
         cmd.Spawn();
         
         // --- PRECACHE ARCHIPELAGO ASSETS ---
@@ -79,11 +79,18 @@ bool InitializeArchipelago() {
         
         // Start background systems immediately.
         AttachDeathTrigger();
-        Msgl("[AP] SUCCESS: Core Ready & Assets Precached.");
+        StartGameStatusTimer();
+
+        // Schedule the one-time map setup to run exactly 1.0 second from now
+        Variant vInit;
+        vInit.SetString("RunDelayedInit");
+        cmd.FireInput("Command", vInit, 1.0f, null, null, 0);
+
+        ArchipelagoLog("[Archipelago] SUCCESS: Core Ready & Assets Precached.");
     }
     
     return true; 
 }
 
 // Global bootstrap trigger
-bool g_InitHandler = InitializeArchipelago();
+bool Init = InitializeArchipelago();

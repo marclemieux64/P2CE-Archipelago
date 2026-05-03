@@ -1,2 +1,0 @@
-void Test() { array<CBaseEntity@> t = FindEntities(\\
-prop_laser_catcher\\); }

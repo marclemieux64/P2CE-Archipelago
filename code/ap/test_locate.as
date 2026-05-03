@@ -1,6 +1,0 @@
-void Test() { ArchipelagoLog(\\
-LOCATE
-EMPTY:
-\\ + \\\\.locate(\\prop_laser_catcher\\)); ArchipelagoLog(\\LOCATE
-MODEL:
-\\ + \\\\.locate(\\prop_laser_catcher\\)); }

@@ -1,60 +1,85 @@
 // =============================================================
-// ARCHIPELAGO INITIALIZATION BOOTSTRAP
+// ARCHIPELAGO SV INIT (ENTRY POINT)
 // =============================================================
 
-// 1. Foundation (Global Memory)
-#include "ap/shared/tracking_globals.as"
+// 1. Core & Debug
 
-// 2. Entities (Visual Foundation)
-#include "ap/entities/create_ap_hologram.as"
-#include "ap/entities/attach_hologram_to_entity.as"
-#include "ap/entities/remove_all_button_frames.as"
-#include "ap/entities/remove_all_floor_button_frames.as"
-#include "ap/entities/frame_logic_pedestal.as"
-#include "ap/entities/frame_logic_floor.as"
-#include "ap/entities/map_holos.as"
-#include "ap/entities/remove_gel.as"
+#include "Archipelago/Core/Globals.as"
+#include "Archipelago/Core/ResetPersistantSystems.as"
+#include "Archipelago/Core/StartGameStatusTimer.as"
+#include "Archipelago/Core/UpdatesInternalMapName.as"
+#include "Archipelago/Core/RunGameStatusTickCommand.as"
+#include "Archipelago/Debug/ArchipelagoLog.as"
 
-// 3. Locations (Randomizer Checks & Progression)
-#include "ap/locations/add_wheatley_monitor_break_check.as"
-#include "ap/locations/add_vitrified_door_check.as"
-#include "ap/locations/HandleMonitorWarp.as"
-#include "ap/locations/spawn_ap_button_logic.as"
-#include "ap/locations/create_complete_level_alert_hook.as"
-#include "ap/locations/handle_map_completion.as"
+// 2. Tools
+#include "Archipelago/Tools/ParseMath.as"
+#include "Archipelago/Tools/ExtractFloats.as"
+#include "Archipelago/Tools/SplitString.as"
 
-// 4. Client (Player Systems)
-#include "ap/client/deathlink.as"
-#include "ap/client/potatos.as"
+// 3. Helpers & Shared
+#include "Archipelago/Helpers/CallVScript.as"
+#include "Archipelago/Helpers/DisableEntity.as"
+#include "Archipelago/Helpers/DisarmLegacyLogic.as"
+#include "Archipelago/Helpers/FindEntities.as"
+#include "Archipelago/Helpers/GetHologramVisualOverrides.as"
+#include "Archipelago/Helpers/HandleMonitorWarp.as"
+#include "Archipelago/Helpers/PrintAllEntities.as"
+#include "Archipelago/Helpers/RefreshAllAPHolograms.as"
+#include "Archipelago/Helpers/RunDeathLinkTick.as"
+#include "Archipelago/function/Check/WarpToMenu.as"
 
-// 5. Overrides (Map Fixes)
-#include "ap/overrides/do_map_specific_setup.as"
-#include "ap/overrides/disarm_legacy_logic.as"
-#include "ap/overrides/block_wheatley_fight.as"
+// 4. Restore
+#include "Archipelago/Restore/RemoveAllButtonFrames.as"
+#include "Archipelago/Restore/RemoveAllFloorButtonFrames.as"
+#include "Archipelago/Restore/RestoreCatapults.as"
 
-// 6. Shared Library
-#include "ap/shared/update_internal_map_name.as"
-#include "ap/shared/ap_hologram_visuals.as"
-#include "ap/shared/add_entity_output_script.as"
-#include "ap/shared/add_entity_output_script_at_pos.as"
-#include "ap/shared/call_vscript.as"
-#include "ap/shared/delete_core_on_output.as"
-#include "ap/shared/delete_entity.as"
-//#include "ap/shared/get_entities.as"
-#include "ap/shared/disable_entity.as"
-#include "ap/shared/disable_entity_physics.as"
+// 5. Functions
+#include "Archipelago/function/AddEntityOutputScript.as"
+#include "Archipelago/function/AddEntityOutputScriptAtPos.as"
+#include "Archipelago/function/AttachDeathTrigger.as"
+#include "Archipelago/function/BlockWheatleyFight.as"
+#include "Archipelago/function/DeleteCoreOnOutput.as"
+#include "Archipelago/function/DeleteEntity.as"
+#include "Archipelago/function/DisableEntityPhysics.as"
+#include "Archipelago/function/DisableEntityPickup.as"
+#include "Archipelago/function/DoMapSpecificSetup.as"
 
-#include "ap/shared/disable_entity_pickup.as"
-#include "ap/shared/disable_portal_gun.as"
-#include "ap/shared/find_entities.as"
-#include "ap/shared/warp_to_menu.as"
+// 6. Function Categories
+#include "Archipelago/function/Button/AddButtonFrame.as"
+#include "Archipelago/function/Button/AddCustomFrame.as"
+#include "Archipelago/function/Button/AddFloorButtonFrame.as"
+#include "Archipelago/function/Button/CreateAPButton.as"
+
+#include "Archipelago/function/Check/AddVitrifiedDoorCheck.as"
+#include "Archipelago/function/Check/AddWheatleyMonitorBreakCheck.as"
+#include "Archipelago/function/Check/CreateCompleteLevelAlertHook.as"
+#include "Archipelago/function/Check/HandleMapCompletion.as"
+
+#include "Archipelago/function/Gel/CreateClearGel.as"
+#include "Archipelago/function/Gel/RemoveGel.as"
+
+#include "Archipelago/function/Hologram/AttachHologramToEntity.as"
+#include "Archipelago/function/Hologram/CreateAPHologram.as"
+#include "Archipelago/function/Hologram/CreateMapSpecificHolos.as"
+
+#include "Archipelago/function/PortalGun/DisablePortalGun.as"
+#include "Archipelago/function/PortalGun/IncineratorDisablePortalGun.as"
+
+#include "Archipelago/function/PotatOS/RemovePotatOS.as"
+#include "Archipelago/function/PotatOS/RemovePotatosFromGun.as"
+#include "Archipelago/Restore/RestorePotatosToGun.as"
+
+#include "Archipelago/function/Trap/ButterFingerTrap.as"
+#include "Archipelago/function/Trap/CubeConfettiTrap.as"
+#include "Archipelago/function/Trap/DialogTrap.as"
+#include "Archipelago/function/Trap/FizzlePortalTrap.as"
+#include "Archipelago/function/Trap/MotionBlurTrap.as"
+#include "Archipelago/function/Trap/SlipperyFloorTrap.as"
 
 // 7. Interfaces & Startup
-#include "ap/traps/traps_hub.as"
-#include "ap/server_command.as"
-#include "ap/bootstrap/delayed_init.as"
-#include "ap/bootstrap/reset_persistent_systems.as"
-#include "ap/heartbeat.as"
+#include "Archipelago/Core/RunDelayedInitialization.as"
+#include "Archipelago/Core/ServerCommand.as"
+
 
 /**
  * InitializeArchipelago - Atomic setup of core bridge entities.

@@ -54,7 +54,7 @@
                         <!-- REQUIREMENTS -->
                         <Panel id="RequirementsColumn" class="info_column">
                             <Label class="info_header" text="#Archipelago_Map_MissingItems" />
-                            <Label id="MapSubtitleLabel_Secondary" class="map_subtitle_label" text="" />
+                            <Label id="MapSubtitleLabel_Secondary" class="map_subtitle_label" text="" html="true" />
                         </Panel>
                     </Panel>
 

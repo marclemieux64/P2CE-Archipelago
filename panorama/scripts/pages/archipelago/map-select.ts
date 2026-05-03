@@ -183,11 +183,22 @@ class ArchipelagoMapSelect {
         const previewImage = $('#PreviewImage') as ImagePanel;
         const statusLabel = $('#MapStatusIconsPreview') as LabelPanel;
         const mapSubtitleLabel = $('#MapSubtitleLabel') as LabelPanel;
-        const mapSubtitleLabelSecondary = $('#MapSubtitleLabel_Secondary') as LabelPanel;
-        const playButton = $('#PlayButton');
+        const subtitle_secondary = $('#MapSubtitleLabel_Secondary') as LabelPanel;
+        if (subtitle_secondary) {
+            let sub = mapData.subtitle || "";
+            // Format colors for cores (3-character sequences)
+            sub = sub.replace(/S.ô/g, "<font color='#ffc904'>S.ô</font>"); // Space
+            sub = sub.replace(/A.ô/g, "<font color='#e790c2'>A.ô</font>"); // Rick
+            sub = sub.replace(/F.ô/g, "<font color='#1ec10d'>F.ô</font>"); // Fact
+            sub = sub.replace(/à/g, "<font color='#00a5ff'>à</font>"); // Blue Gel
+            sub = sub.replace(/á/g, "<font color='#ff6a00'>á</font>"); // Orange Gel
+            sub = sub.replace(/â/g, "<font color='#fafafa'>â</font>"); // White Gel
+            subtitle_secondary.text = sub;
+        }
 
         const checks = $('#ChecksColumn');
         const reqs = $('#RequirementsColumn');
+        const playButton = $('#PlayButton');
 
         if (previewImage) {
             let picPath = mapData.pic || "menu/p2ce-generic";
@@ -198,119 +209,39 @@ class ArchipelagoMapSelect {
         }
 
         if (statusLabel) {
-            let finalStatus = mapData.status || "";
-            if (finalStatus.indexOf("ã") !== -1) {
-                const isMissing = mapData.subtitle && mapData.subtitle.trim() !== "";
-                const mColor = isMissing ? "#ff4444" : "#44ff44";
-                finalStatus = finalStatus.replace(/ã/g, `<font color="${mColor}">ã</font>`);
+            const rawStatus = mapData.status || "";
+            let finalStatus = "";
+            let mapCmdName = "";
+            if (mapData.command) {
+                const parts = mapData.command.split(" ");
+                if (parts.length >= 2) mapCmdName = parts[1].trim().toLowerCase();
             }
-            if (finalStatus.indexOf("þ") !== -1) {
-                finalStatus = finalStatus.replace(/þ/g, `<font color="#44ff44">þ</font>`);
-            }
-            if (finalStatus.indexOf("ý") !== -1) {
-                finalStatus = finalStatus.replace(/ý/g, `<font color="#44ff44">ý</font>`);
-            }
-            if (finalStatus.indexOf("ǫ") !== -1) {
-                finalStatus = finalStatus.replace(/ǫ/g, `<font color="#44ff44">ǫ</font>`);
-            }
-            if (finalStatus.indexOf("¢") !== -1) {
-                const isMissing = mapData.subtitle && mapData.subtitle.indexOf("û") !== -1;
-                const vColor = isMissing ? "#ff4444" : "#44ff44";
-                finalStatus = finalStatus.replace(/¢/g, `<font color="${vColor}">¢</font>`);
-            }
+            const mItems = mapData.subtitle || "";
 
-            if (finalStatus.indexOf("ù") !== -1) {
-                let mapName = "";
-                if (mapData.command) {
-                    const parts = mapData.command.split(" ");
-                    if (parts.length >= 2) {
-                        mapName = parts[1].trim().toLowerCase();
-                    }
-                }
-                if (mapName === "sp_a3_transition01") {
-                    const missingItems = mapData.subtitle || "";
-                    const uColor = (missingItems.indexOf("û") !== -1) ? "#ff4444" : "#44ff44";
-                    finalStatus = finalStatus.replace(/ù/g, `<font color="${uColor}">ù</font>`);
-                }
-            }
+            const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
 
-            if (finalStatus.indexOf("ø") !== -1) {
-                let mapName = "";
-                if (mapData.command) {
-                    const parts = mapData.command.split(" ");
-                    if (parts.length >= 2) {
-                        mapName = parts[1].trim().toLowerCase();
-                    }
-                }
-                const missingItems = mapData.subtitle || "";
-                let rColor = "";
-
-                if (mapName === "sp_a1_intro4") {
-                    rColor = (missingItems.indexOf("ç") !== -1 || missingItems.indexOf("æ") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a2_dual_lasers") {
-                    rColor = "#44ff44";
-                } else if (mapName === "sp_a2_trust_fling") {
-                    rColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("õ") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a2_bridge_intro") {
-                    rColor = "#44ff44";
-                } else if (mapName === "sp_a2_bridge_the_gap") {
-                    rColor = (missingItems.indexOf("û") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a2_laser_vs_turret") {
-                    rColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("í") !== -1 || missingItems.indexOf("æ") !== -1 || missingItems.indexOf("ì") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a2_pull_the_rug") {
-                    rColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("¿") !== -1) ? "#ff4444" : "#44ff44";
+            const charCounts: { [key: string]: number } = {};
+            for (let i = 0; i < rawStatus.length; i++) {
+                const char = rawStatus[i];
+                if (char === " ") {
+                    finalStatus += " ";
+                    continue;
                 }
 
-                if (rColor !== "") {
-                    finalStatus = finalStatus.replace(/ø/g, `<font color="${rColor}">ø</font>`);
-                }
+                if (!charCounts[char]) charCounts[char] = 0;
+                const index = charCounts[char]++;
+
+                const status = mapStatusHelper ? mapStatusHelper.getIndicatorStatus(char, mapCmdName, mItems, index) : { isCompleted: false, isAvailable: true };
+                
+                let color = status.isCompleted ? "#ffff44" : (status.isAvailable ? "#44ff44" : "#ff4444");
+                
+                finalStatus += `<font color="${color}">${char}</font>`;
             }
-
-            if (finalStatus.indexOf("ÿ") !== -1) {
-                let mapName = "";
-                if (mapData.command) {
-                    const parts = mapData.command.split(" ");
-                    if (parts.length >= 2) {
-                        mapName = parts[1].trim().toLowerCase();
-                    }
-                }
-                const missingItems = mapData.subtitle || "";
-                let yColor = "";
-
-                if (mapName === "sp_a4_tb_intro") {
-                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("ð") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_tb_trust_drop") {
-                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("ñ") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("ð") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_tb_wall_button") {
-                    yColor = (missingItems.indexOf("û") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_tb_polarity") {
-                    yColor = this.isSymbolMissingGlobally("ó") ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_tb_catch") {
-                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("ð") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("õ") !== -1 || missingItems.indexOf("ñ") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_stop_the_box") {
-                    yColor = (missingItems.indexOf("õ") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_laser_catapult") {
-                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("ð") !== -1 || missingItems.indexOf("õ") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("ì") !== -1 || missingItems.indexOf("í") !== -1 || missingItems.indexOf("î") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_laser_platform") {
-                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("í") !== -1 || missingItems.indexOf("î") !== -1 || missingItems.indexOf("ì") !== -1 || missingItems.indexOf("ñ") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_speed_tb_catch") {
-                    yColor = (missingItems.indexOf("û") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_jump_polarity") {
-                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("¢") !== -1 || missingItems.indexOf("å") !== -1 || missingItems.indexOf("ó") !== -1 || missingItems.indexOf("æ") !== -1 || missingItems.indexOf("ñ") !== -1) ? "#ff4444" : "#44ff44";
-                } else if (mapName === "sp_a4_finale3") {
-                    yColor = (missingItems.indexOf("û") !== -1 || missingItems.indexOf("¢") !== -1) ? "#ff4444" : "#44ff44";
-                }
-
-                if (yColor !== "") {
-                    finalStatus = finalStatus.replace(/ÿ/g, `<font color="${yColor}">ÿ</font>`);
-                }
-            }
-
             statusLabel.text = finalStatus;
             statusLabel.style.color = "#eeeeee";
         }
         if (mapSubtitleLabel) mapSubtitleLabel.text = mapData.title || "";
-        if (mapSubtitleLabelSecondary) mapSubtitleLabelSecondary.text = mapData.subtitle || "";
+        // Subtitle secondary is handled above with color formatting
 
         // SELECTIVE VISIBILITY: Hide details for root chapter selections
         const showDetails = !mapData.is_chapter;
@@ -341,6 +272,11 @@ class ArchipelagoMapSelect {
         if (!container) return;
         container.RemoveAndDeleteChildren();
 
+        const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
+        if (!mapStatusHelper) {
+            $.Msg("[AP] ERROR: ArchipelagoMapStatus helper not found in MapSelect!");
+        }
+
         const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));
 
         for (const chId of sortedKeys) {
@@ -362,7 +298,23 @@ class ArchipelagoMapSelect {
                 });
             });
 
+            // Deduplicate maps in the same chapter to avoid double-counting/double-rendering
+            const uniqueMaps: any[] = [];
+            const seenCmds = new Set();
+            if (chapter.maps) {
+                chapter.maps.forEach((m: any) => {
+                    if (m.command && !seenCmds.has(m.command)) {
+                        seenCmds.add(m.command);
+                        uniqueMaps.push(m);
+                    } else if (!m.command) {
+                        uniqueMaps.push(m);
+                    }
+                });
+                chapter.maps = uniqueMaps;
+            }
+
             let chapterGreenCount = 0;
+            let chapterTotalCount = 0;
             let starCount = 0;
             chapter.maps.forEach((map: any) => {
                 const rawTitle = map.title || "Unknown Map";
@@ -386,71 +338,16 @@ class ArchipelagoMapSelect {
                 }
                 const mItems = map.subtitle || "";
 
+                const charCounts: { [key: string]: number } = {};
                 for (let i = 0; i < statusIcons.length; i++) {
                     const char = statusIcons[i];
-                    let isGreen = (mItems.indexOf(char) === -1);
+                    if (!charCounts[char]) charCounts[char] = 0;
+                    const index = charCounts[char]++;
 
-                    if (char === "ã") {
-                        isGreen = !(mItems && mItems.trim() !== "");
-                    } else if (char === "þ" || char === "ý" || char === "ǫ") {
-                        isGreen = true;
-                    } else if (char === "¢") {
-                        isGreen = (mItems.indexOf("û") === -1);
-                    } else if (char === "ù") {
-                        if (mapCmdName === "sp_a3_transition01") {
-                            isGreen = (mItems.indexOf("û") === -1);
-                        } else {
-                            isGreen = (mItems.indexOf("ù") === -1);
-                        }
-                    } else if (char === "ø") {
-                        if (mapCmdName === "sp_a1_intro4") {
-                            isGreen = (mItems.indexOf("ç") === -1 && mItems.indexOf("æ") === -1);
-                        } else if (mapCmdName === "sp_a2_dual_lasers") {
-                            isGreen = true;
-                        } else if (mapCmdName === "sp_a2_trust_fling") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("õ") === -1);
-                        } else if (mapCmdName === "sp_a2_bridge_intro") {
-                            isGreen = true;
-                        } else if (mapCmdName === "sp_a2_bridge_the_gap") {
-                            isGreen = (mItems.indexOf("û") === -1);
-                        } else if (mapCmdName === "sp_a2_laser_vs_turret") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("æ") === -1 && mItems.indexOf("ì") === -1);
-                        } else if (mapCmdName === "sp_a2_pull_the_rug") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¿") === -1);
-                        } else {
-                            isGreen = true;
-                        }
-                    } else if (char === "ÿ") {
-                        if (mapCmdName === "sp_a4_tb_intro") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ð") === -1);
-                        } else if (mapCmdName === "sp_a4_tb_trust_drop") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ñ") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ð") === -1);
-                        } else if (mapCmdName === "sp_a4_tb_wall_button") {
-                            isGreen = (mItems.indexOf("û") === -1);
-                        } else if (mapCmdName === "sp_a4_tb_polarity") {
-                            isGreen = !ArchipelagoMapSelect.isSymbolMissingGlobally("ó");
-                        } else if (mapCmdName === "sp_a4_tb_catch") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("ñ") === -1);
-                        } else if (mapCmdName === "sp_a4_stop_the_box") {
-                            isGreen = (mItems.indexOf("õ") === -1);
-                        } else if (mapCmdName === "sp_a4_laser_catapult") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ì") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("î") === -1);
-                        } else if (mapCmdName === "sp_a4_laser_platform") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("î") === -1 && mItems.indexOf("ì") === -1 && mItems.indexOf("ñ") === -1);
-                        } else if (mapCmdName === "sp_a4_speed_tb_catch") {
-                            isGreen = (mItems.indexOf("û") === -1);
-                        } else if (mapCmdName === "sp_a4_jump_polarity") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¢") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ó") === -1 && mItems.indexOf("æ") === -1 && mItems.indexOf("ñ") === -1);
-                        } else if (mapCmdName === "sp_a4_finale3") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¢") === -1);
-                        } else {
-                            isGreen = true;
-                        }
-                    }
-
-                    if (isGreen) {
-                        chapterGreenCount++;
-                    }
+                    const status = mapStatusHelper ? mapStatusHelper.getIndicatorStatus(char, mapCmdName, mItems, index) : { isCompleted: false, isAvailable: true };
+                    
+                    if (status.isAvailable && !status.isCompleted) chapterGreenCount++;
+                    if (!status.isCompleted) chapterTotalCount++;
                 }
             });
 
@@ -463,11 +360,18 @@ class ArchipelagoMapSelect {
                 chStarLabel.style.verticalAlign = "center";
                 chStarLabel.style.horizontalAlign = "right";
                 chStarLabel.style.marginRight = "15px";
-            } else if (chapterGreenCount > 0 && ($.persistentStorage.getItem('ap_hide_location_counts') ?? 0) === 0) {
+            } else if (chapterTotalCount > 0 && ($.persistentStorage.getItem('HideLocationCounts') ?? 0) === 0) {
                 const chGreenLabel = $.CreatePanel('Label', entry, '');
-                chGreenLabel.text = chapterGreenCount.toString();
-                chGreenLabel.style.color = "#44ff44";
-                chGreenLabel.style.fontSize = "26px";
+                chGreenLabel.text = `${chapterGreenCount}/${chapterTotalCount}`;
+
+                let color = "#ff4444"; // Red (0 available)
+                if (chapterGreenCount === chapterTotalCount) {
+                    color = "#44ff44"; // Green (All pending are available)
+                } else if (chapterGreenCount > 0) {
+                    color = "#ffff44"; // Yellow (Some available, some blocked)
+                }
+                chGreenLabel.style.color = color;
+                chGreenLabel.style.fontSize = "22px";
                 chGreenLabel.style.fontFamily = "APPortal-bold";
                 chGreenLabel.style.verticalAlign = "center";
                 chGreenLabel.style.horizontalAlign = "right";
@@ -493,6 +397,7 @@ class ArchipelagoMapSelect {
             mapList.AddClass('hide');
 
             chapter.maps.forEach((map: any) => {
+
                 const mapBtn = $.CreatePanel('Panel', mapList, '');
                 mapBtn.AddClass('map_button');
                 (mapBtn as any).canfocus = true;
@@ -512,7 +417,6 @@ class ArchipelagoMapSelect {
                     cleanName = rawTitle.substring(4).trim();
                 }
 
-                let greenCount = 0;
                 let mapCmdName = "";
                 if (map.command) {
                     const parts = map.command.split(" ");
@@ -546,81 +450,35 @@ class ArchipelagoMapSelect {
                 nameLabel.text = finalMapName;
                 nameLabel.AddClass('MapPrimaryName');
 
+                let mapGreenCount = 0;
+                let mapTotalLeft = 0;
+                const charCounts: { [key: string]: number } = {};
                 for (let i = 0; i < statusIcons.length; i++) {
                     const char = statusIcons[i];
-                    let isGreen = (mItems.indexOf(char) === -1);
+                    if (!charCounts[char]) charCounts[char] = 0;
+                    const index = charCounts[char]++;
 
-                    if (char === "ã") {
-                        isGreen = !(mItems && mItems.trim() !== "");
-                    } else if (char === "þ" || char === "ý" || char === "ǫ") {
-                        isGreen = true;
-                    } else if (char === "¢") {
-                        isGreen = (mItems.indexOf("û") === -1);
-                    } else if (char === "ù") {
-                        if (mapCmdName === "sp_a3_transition01") {
-                            isGreen = (mItems.indexOf("û") === -1);
-                        } else {
-                            isGreen = (mItems.indexOf("ù") === -1);
-                        }
-                    } else if (char === "ø") {
-                        if (mapCmdName === "sp_a1_intro4") {
-                            isGreen = (mItems.indexOf("ç") === -1 && mItems.indexOf("æ") === -1);
-                        } else if (mapCmdName === "sp_a2_dual_lasers") {
-                            isGreen = true;
-                        } else if (mapCmdName === "sp_a2_trust_fling") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("õ") === -1);
-                        } else if (mapCmdName === "sp_a2_bridge_intro") {
-                            isGreen = true;
-                        } else if (mapCmdName === "sp_a2_bridge_the_gap") {
-                            isGreen = (mItems.indexOf("û") === -1);
-                        } else if (mapCmdName === "sp_a2_laser_vs_turret") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("æ") === -1 && mItems.indexOf("ì") === -1);
-                        } else if (mapCmdName === "sp_a2_pull_the_rug") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¿") === -1);
-                        } else {
-                            isGreen = true;
-                        }
-                    } else if (char === "ÿ") {
-                        if (mapCmdName === "sp_a4_tb_intro") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ð") === -1);
-                        } else if (mapCmdName === "sp_a4_tb_trust_drop") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ñ") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ð") === -1);
-                        } else if (mapCmdName === "sp_a4_tb_wall_button") {
-                            isGreen = (mItems.indexOf("û") === -1);
-                        } else if (mapCmdName === "sp_a4_tb_polarity") {
-                            isGreen = !ArchipelagoMapSelect.isSymbolMissingGlobally("ó");
-                        } else if (mapCmdName === "sp_a4_tb_catch") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("ñ") === -1);
-                        } else if (mapCmdName === "sp_a4_stop_the_box") {
-                            isGreen = (mItems.indexOf("õ") === -1);
-                        } else if (mapCmdName === "sp_a4_laser_catapult") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("ð") === -1 && mItems.indexOf("õ") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ì") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("î") === -1);
-                        } else if (mapCmdName === "sp_a4_laser_platform") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("í") === -1 && mItems.indexOf("î") === -1 && mItems.indexOf("ì") === -1 && mItems.indexOf("ñ") === -1);
-                        } else if (mapCmdName === "sp_a4_speed_tb_catch") {
-                            isGreen = (mItems.indexOf("û") === -1);
-                        } else if (mapCmdName === "sp_a4_jump_polarity") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¢") === -1 && mItems.indexOf("å") === -1 && mItems.indexOf("ó") === -1 && mItems.indexOf("æ") === -1 && mItems.indexOf("ñ") === -1);
-                        } else if (mapCmdName === "sp_a4_finale3") {
-                            isGreen = (mItems.indexOf("û") === -1 && mItems.indexOf("¢") === -1);
-                        } else {
-                            isGreen = true;
-                        }
-                    }
-
-                    if (isGreen) {
-                        greenCount++;
-                    }
+                    const status = mapStatusHelper ? mapStatusHelper.getIndicatorStatus(char, mapCmdName, mItems, index) : { isCompleted: false, isAvailable: true };
+                    
+                    if (status.isAvailable && !status.isCompleted) mapGreenCount++;
+                    if (!status.isCompleted) mapTotalLeft++;
                 }
 
-                if (greenCount > 0 && ($.persistentStorage.getItem('ap_hide_location_counts') ?? 0) === 0) {
-                    const greenLabel = $.CreatePanel('Label', mapBtn, '');
-                    greenLabel.text = greenCount.toString();
-                    greenLabel.style.color = "#44ff44";
-                    greenLabel.style.fontSize = "26px";
-                    greenLabel.style.fontFamily = "APPortal-bold";
-                    greenLabel.style.verticalAlign = "center";
-                    greenLabel.style.marginRight = "10px";
+                if (mapTotalLeft > 0 && ($.persistentStorage.getItem('HideLocationCounts') ?? 0) === 0) {
+                    const progressLabel = $.CreatePanel('Label', mapBtn, '');
+                    progressLabel.text = `${mapGreenCount}/${mapTotalLeft}`;
+                    
+                    let color = "#ff4444"; // Red (0 available)
+                    if (mapGreenCount === mapTotalLeft) {
+                        color = "#44ff44"; // Green (All pending are available)
+                    } else if (mapGreenCount > 0) {
+                        color = "#ffff44"; // Yellow (Some available, some blocked)
+                    }
+                    progressLabel.style.color = color;
+                    progressLabel.style.fontSize = "22px";
+                    progressLabel.style.fontFamily = "APPortal-bold";
+                    progressLabel.style.verticalAlign = "center";
+                    progressLabel.style.marginRight = "10px";
                 } else if (statusIcons.length > 0 && (statusIcons.replace(/★/g, "").length === 0 || statusIcons.replace(/✓/g, "").length === 0)) {
                     const starLabel = $.CreatePanel('Label', mapBtn, '');
                     starLabel.text = ArchipelagoMapSelect.getCompletionSymbol();

@@ -11,9 +11,6 @@ void DeathLinkTickCmd(const CommandArgs@ args) {
 // ARCHIPELAGO GAME STATUS HEARTBEAT
 // =============================================================
 
-// Tracking list to ensure we only process an entity ONCE per map session
-array<int> g_processed_turret_indices;
-
 void StartGameStatusTimer() {
     CBaseEntity@ old = EntityList().FindByName(null, "GameStatusTimer");
     if (old !is null) old.Remove();
@@ -63,28 +60,17 @@ void GameStatusTickCmd(const CommandArgs@ args) {
             
             CBaseEntity@ t = null;
             while ((@t = EntityList().FindByClassname(t, cls)) !is null) {
-                int index = t.GetEntityIndex();
-                
-                // Have we already handled this specific turret?
-                bool alreadySeen = false;
-                for (uint j = 0; j < g_processed_turret_indices.length(); j++) {
-                    if (g_processed_turret_indices[j] == index) {
-                        alreadySeen = true;
-                        break;
-                    }
+                string tName = t.GetEntityName();
+                if (tName == "") {
+                    tName = cls + "_" + t.GetEntityIndex();
+                    t.KeyValue("targetname", tName);
                 }
                 
-                if (alreadySeen) {
-                    // ArchipelagoLog("[AP DEBUG] Heartbeat skipping turret " + index + " (Already seen)");
-                    continue;
-                }
+                string hName = tName + "_holo";
+                if (EntityList().FindByName(null, hName) !is null) continue;
 
                 // New turret! 
-                ArchipelagoLog("[AP DEBUG] Heartbeat FOUND NEW TURRET " + index + ". Triggering attachment.");
-                g_processed_turret_indices.insertLast(index);
-                
-                string tName = t.GetEntityName();
-                if (tName == "") tName = cls + "_" + index;
+                if (cv_ArchipelagoDebug.GetBool()) ArchipelagoLog("[AP DEBUG] Heartbeat FOUND NEW TURRET " + tName + ". Triggering attachment.");
                 
                 DisableEntityPickup(cls);
                 AttachHologramToEntity(tName, "", 0.66f, 20.0f, 2);

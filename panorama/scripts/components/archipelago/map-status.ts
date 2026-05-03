@@ -121,28 +121,24 @@ class ArchipelagoMapStatusHUD {
         const symbolsFromEngine = $.persistentStorage.getItem("ArchipelagoLastSymbols") || "";
         const mapStatusFromEngine = $.persistentStorage.getItem("ArchipelagoLastMapStatus") || 0;
 
+        const charCounts: { [key: string]: number } = {};
         for (let i = 0; i < statusIcons.length; i++) {
             const char = statusIcons[i];
             const icon = $.CreatePanel('Label', iconsContainer, '');
             icon.text = char;
             icon.AddClass('status-icon');
 
-            if (char === "★" || char === "✓") {
+            if (!charCounts[char]) charCounts[char] = 0;
+            const index = charCounts[char]++;
+
+            const status = mapStatusHelper.getIndicatorStatus(char, currentMapName, mItems, index);
+
+            if (status.isCompleted) {
                 icon.AddClass('status-icon--completed');
                 continue;
             }
 
-            let isGreen = true;
-            if (char === "ã") {
-                // Map is green if server says it's playable (1) or done (2)
-                isGreen = (mapStatusFromEngine >= 1);
-            } else if (symbolsFromEngine !== "") {
-                isGreen = (symbolsFromEngine.indexOf(char) === -1);
-            } else {
-                isGreen = (mItems.indexOf(char) === -1);
-            }
-
-            icon.AddClass(isGreen ? 'status-icon--green' : 'status-icon--red');
+            icon.AddClass(status.isAvailable ? 'status-icon--green' : 'status-icon--red');
         }
 
         // 2. MISSING ITEMS
@@ -153,11 +149,38 @@ class ArchipelagoMapStatusHUD {
         for (let j = 0; j < mItems.length; j++) {
             const char = mItems[j];
             if (mapStatusHelper.isMissingItem(char)) {
-                if (this.m_Debug) $.Msg("[AP] MapStatusHUD: Found missing item: " + char);
+                // Check for 3-character core sequences (A.ô, S.ô, F.ô)
+                let text = char;
+                let color = "";
+                
+                if (char === "A" && mItems[j+1] === "." && mItems[j+2] === "ô") {
+                    text = "A.ô";
+                    color = "rgb(231, 144, 194)";
+                    j += 2;
+                } else if (char === "S" && mItems[j+1] === "." && mItems[j+2] === "ô") {
+                    text = "S.ô";
+                    color = "rgb(255, 201, 4)";
+                    j += 2;
+                } else if (char === "F" && mItems[j+1] === "." && mItems[j+2] === "ô") {
+                    text = "F.ô";
+                    color = "rgb(30, 193, 13)";
+                    j += 2;
+                } else if (char === "à") { // Blue Gel
+                    color = "rgb(0, 165, 255)";
+                } else if (char === "á") { // Orange Gel
+                    color = "rgb(255, 106, 0)";
+                } else if (char === "â") { // White Gel
+                    color = "rgb(250, 250, 250)";
+                }
+
                 const icon = $.CreatePanel('Label', missingContainer, '');
                 icon.AddClass('status-icon');
-                icon.AddClass('status-icon--white');
-                icon.text = char;
+                if (color) {
+                    icon.style.color = color;
+                } else {
+                    icon.AddClass('status-icon--white');
+                }
+                icon.text = text;
                 redCount++;
             }
         }

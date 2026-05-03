@@ -48,9 +48,12 @@ void CreateMapSpecificHolos(string current_map) {
         }
     }
 
-    // 3. Final visual refresh to ensure all new holos have correct skins
+    // 3. Persistent Turret Handling
+    AttachHologramToEntity("npc_portal_turret_floor", "", 0.66f, 20.0f, 2);
+
+    // 4. Final visual refresh to ensure all new holos have correct skins
     RefreshAllAPHolograms();
 
-    // 4. Kill any legacy map-based triggers that try to call 'ppmod'
+    // 5. Kill any legacy map-based triggers that try to call 'ppmod'
     DisarmLegacyLogic();
 }

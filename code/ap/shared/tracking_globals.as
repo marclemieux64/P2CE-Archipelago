@@ -13,6 +13,7 @@ int g_potatos_status = 0;
 int g_wheatley_status = 0;
 string g_map_symbols = "";
 bool g_LastDebugState = false;
+array<int> g_processed_turret_indices;
 
 /**
  * SafeAddOutput - Connects an entity output using KeyValue instead of FireInput('AddOutput').

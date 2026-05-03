@@ -43,7 +43,7 @@ class MenuManager {
 	// Persistence for Archipelago notifications
 	static initAPPersistence() {
 		$.DefineEvent('ArchipelagoNotify', 1, "payload");
-		$.DefineEvent('ArchipelagoQueueUpdated', 0);
+		$.DefineEvent('ArchipelagoQueueUpdated', 1, "payload");
 
 		const global: any = UiToolkitAPI.GetGlobalObject();
 		if (!global.ArchipelagoMessageQueue) {
@@ -58,7 +58,7 @@ class MenuManager {
 				timestamp: Date.now()
 			});
 			// Notify the HUD to check the queue
-			$.DispatchEvent('ArchipelagoQueueUpdated');
+			$.DispatchEvent('ArchipelagoQueueUpdated', "");
 		});
 	}
 

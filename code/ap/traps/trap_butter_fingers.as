@@ -1,4 +1,5 @@
-void TriggerButterFingersTrap() {
+void TriggerButterFingersTrap(float duration = 30.0f) {
+    CallVScript("SendToPanorama(\"ArchipelagoTrapTriggered\", \"ButterFingers|" + duration + "\")");
     CBaseEntity@ oldTimer = EntityList().FindByName(null, "ap_bf_timer");
     if (oldTimer !is null) oldTimer.Remove();
     CBaseEntity@ oldRelay = EntityList().FindByName(null, "ap_bf_relay");
@@ -17,7 +18,7 @@ void TriggerButterFingersTrap() {
         relay.KeyValue("targetname", "ap_bf_relay");
         relay.Spawn();
         
-        SafeAddOutput(relay, "OnTrigger", "ap_bf_timer", "Kill", "", 30.0f, 1);
+        SafeAddOutput(relay, "OnTrigger", "ap_bf_timer", "Kill", "", duration, 1);
         SafeAddOutput(relay, "OnTrigger", "InitCmd", "Command", "say [Archipelago] Butter Fingers Trap Activated!", 0.0f, -1);
         
         relay.FireInput("Trigger", Variant(), 0.0f, null, null);

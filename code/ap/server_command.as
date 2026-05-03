@@ -91,6 +91,24 @@ void DeleteEntityCmd(const CommandArgs@ args) {
     DeleteEntity(target, create_holo, scale);
 }
 
+[ServerCommand("RemoveGel", "Removes gel sprayer/entity and clears floor: RemoveGel x y z [type] [name] [create_holo]")]
+void RemoveGelCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    string type = (args.ArgC() > 4) ? args.Arg(4) : "";
+    string name = (args.ArgC() > 5) ? args.Arg(5) : "";
+    bool createHolo = (args.ArgC() > 6) ? (args.Arg(6).toInt() != 0) : true;
+    RemoveGel(pos, type, name, createHolo);
+}
+
+[ServerCommand("CreateClearGel", "Spawns a water paint bomb to clear gel: CreateClearGel x y z [offset]")]
+void CreateClearGelCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    float offset = (args.ArgC() > 4) ? args.Arg(4).toFloat() : -100.0f;
+    CreateClearGel(pos, offset);
+}
+
 [ServerCommand("GlobalDeleteClass", "Mark a class for persistent deletion/hologram replacement")]
 void GlobalDeleteClassCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
@@ -752,12 +770,14 @@ void CubeConfettiTrapCmd(const CommandArgs@ args) {
 
 [ServerCommand("MotionBlurTrap", "Triggers motion blur trap")]
 void MotionBlurTrapCmd(const CommandArgs@ args) {
-    TriggerMotionBlurTrap();
+    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 20.0f;
+    TriggerMotionBlurTrap(duration);
 }
 
 [ServerCommand("SlipperyFloorTrap", "Triggers slippery floor trap")]
 void SlipperyFloorTrapCmd(const CommandArgs@ args) {
-    TriggerSlipperyFloorTrap();
+    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 15.0f;
+    TriggerSlipperyFloorTrap(duration);
 }
 
 [ServerCommand("FizzlePortalTrap", "Triggers fizzle portal trap")]
@@ -767,12 +787,15 @@ void FizzlePortalTrapCmd(const CommandArgs@ args) {
 
 [ServerCommand("DialogTrap", "Triggers dialog trap")]
 void DialogTrapCmd(const CommandArgs@ args) {
-    if (args !is null && args.ArgC() >= 2) TriggerDialogTrap(args.Arg(1)); else TriggerDialogTrap();
+    string scene = (args !is null && args.ArgC() >= 2) ? args.Arg(1) : "";
+    float duration = (args !is null && args.ArgC() >= 3) ? args.Arg(2).toFloat() : 15.0f;
+    TriggerDialogTrap(scene, duration);
 }
 
 [ServerCommand("ButterFingersTrap", "Triggers butter fingers trap")]
 void ButterFingersTrapCmd(const CommandArgs@ args) {
-    TriggerButterFingersTrap();
+    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 30.0f;
+    TriggerButterFingersTrap(duration);
 }
 
 [ServerCommand("ButterfingersTick", "Internal")]

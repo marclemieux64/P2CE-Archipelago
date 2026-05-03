@@ -11,7 +11,7 @@ void UpdateInternalMapName() {
             // Standardizing the current_map check to avoid null-access on boot
             if (current_map != detected) {
                 current_map = detected; 
-                if (cv_ArchipelagoDebug.GetBool()) ArchipelagoLog("map_name:" + current_map);
+                ArchipelagoLog("map_name:" + current_map);
                 CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + current_map + "|0\")");
             }
         }

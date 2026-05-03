@@ -344,4 +344,15 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         targetScale = 0.7f;
         return;
     }
+
+    // 14. PAINT SPRAYERS
+    if (classname == "info_paint_sprayer") {
+        targetSkin = 4;
+        // 120.0f is the ideal distance to reach the nozzle from the internal origin
+        targetPos = ent.GetAbsOrigin() + (ent.Forward() * 120.0f);
+        targetAng = ent.GetAbsAngles();
+        targetAng.x += 90.0f; 
+        targetScale = 1.0f;
+        return;
+    }
 }

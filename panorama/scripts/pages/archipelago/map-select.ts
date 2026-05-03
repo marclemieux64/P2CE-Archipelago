@@ -65,9 +65,10 @@ class ArchipelagoMapSelect {
         const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
         const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
 
-        const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
+        const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
+        if (syncHelper && syncHelper.ENABLE_DEBUG) $.Msg("[AP] MapSelect using helper v" + syncHelper.VERSION);
         if (data) {
-            this.g_ChapterData = mapStatusHelper ? mapStatusHelper.parseExtras(data) : {};
+            this.g_ChapterData = syncHelper ? syncHelper.parseExtras(data) : {};
             this.generateList();
         }
     }
@@ -184,16 +185,15 @@ class ArchipelagoMapSelect {
         const statusLabel = $('#MapStatusIconsPreview') as LabelPanel;
         const mapSubtitleLabel = $('#MapSubtitleLabel') as LabelPanel;
         const subtitle_secondary = $('#MapSubtitleLabel_Secondary') as LabelPanel;
+
+        const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
+
+        // Fetch custom logic and colors once from the central hub
+        const logicHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoLogic;
+        const ICON_COLORS = logicHelper ? logicHelper.getColorMap() : {};
+
         if (subtitle_secondary) {
-            let sub = mapData.subtitle || "";
-            // Format colors for cores (3-character sequences)
-            sub = sub.replace(/S.ô/g, "<font color='#ffc904'>S.ô</font>"); // Space
-            sub = sub.replace(/A.ô/g, "<font color='#e790c2'>A.ô</font>"); // Rick
-            sub = sub.replace(/F.ô/g, "<font color='#1ec10d'>F.ô</font>"); // Fact
-            sub = sub.replace(/à/g, "<font color='#00a5ff'>à</font>"); // Blue Gel
-            sub = sub.replace(/á/g, "<font color='#ff6a00'>á</font>"); // Orange Gel
-            sub = sub.replace(/â/g, "<font color='#fafafa'>â</font>"); // White Gel
-            subtitle_secondary.text = sub;
+            subtitle_secondary.text = logicHelper ? logicHelper.formatSubtitle(mapData.subtitle || "") : (mapData.subtitle || "");
         }
 
         const checks = $('#ChecksColumn');
@@ -218,24 +218,9 @@ class ArchipelagoMapSelect {
             }
             const mItems = mapData.subtitle || "";
 
-            const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
-
-            const charCounts: { [key: string]: number } = {};
-            for (let i = 0; i < rawStatus.length; i++) {
-                const char = rawStatus[i];
-                if (char === " ") {
-                    finalStatus += " ";
-                    continue;
-                }
-
-                if (!charCounts[char]) charCounts[char] = 0;
-                const index = charCounts[char]++;
-
-                const status = mapStatusHelper ? mapStatusHelper.getIndicatorStatus(char, mapCmdName, mItems, index) : { isCompleted: false, isAvailable: true };
-                
-                let color = status.isCompleted ? "#ffff44" : (status.isAvailable ? "#44ff44" : "#ff4444");
-                
-                finalStatus += `<font color="${color}">${char}</font>`;
+            const formattedIcons = logicHelper ? logicHelper.getFormattedIcons(rawStatus, mapCmdName, mItems) : [];
+            for (const iconData of formattedIcons) {
+                finalStatus += `<font color="${iconData.color}">${iconData.char}</font>`;
             }
             statusLabel.text = finalStatus;
             statusLabel.style.color = "#eeeeee";
@@ -272,9 +257,9 @@ class ArchipelagoMapSelect {
         if (!container) return;
         container.RemoveAndDeleteChildren();
 
-        const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
-        if (!mapStatusHelper) {
-            $.Msg("[AP] ERROR: ArchipelagoMapStatus helper not found in MapSelect!");
+        const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
+        if (!syncHelper) {
+            $.Msg("[AP] ERROR: ArchipelagoSync helper not found in MapSelect!");
         }
 
         const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));
@@ -344,7 +329,7 @@ class ArchipelagoMapSelect {
                     if (!charCounts[char]) charCounts[char] = 0;
                     const index = charCounts[char]++;
 
-                    const status = mapStatusHelper ? mapStatusHelper.getIndicatorStatus(char, mapCmdName, mItems, index) : { isCompleted: false, isAvailable: true };
+                    const status = syncHelper ? syncHelper.getIndicatorStatus(char, mapCmdName, mItems, index) : { isCompleted: false, isAvailable: true };
                     
                     if (status.isAvailable && !status.isCompleted) chapterGreenCount++;
                     if (!status.isCompleted) chapterTotalCount++;
@@ -458,7 +443,7 @@ class ArchipelagoMapSelect {
                     if (!charCounts[char]) charCounts[char] = 0;
                     const index = charCounts[char]++;
 
-                    const status = mapStatusHelper ? mapStatusHelper.getIndicatorStatus(char, mapCmdName, mItems, index) : { isCompleted: false, isAvailable: true };
+                    const status = syncHelper ? syncHelper.getIndicatorStatus(char, mapCmdName, mItems, index) : { isCompleted: false, isAvailable: true };
                     
                     if (status.isAvailable && !status.isCompleted) mapGreenCount++;
                     if (!status.isCompleted) mapTotalLeft++;

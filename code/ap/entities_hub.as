@@ -9,3 +9,4 @@
 #include "entities/frame_logic_pedestal.as"
 #include "entities/frame_logic_floor.as"
 #include "entities/map_holos.as"
+#include "entities/remove_gel.as"

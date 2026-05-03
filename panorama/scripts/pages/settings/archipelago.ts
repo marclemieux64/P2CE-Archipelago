@@ -2,11 +2,9 @@
 if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 function UpdateCompletionSymbolStatus() {
-    const hideCounts = $.persistentStorage.getItem('ap_hide_location_counts') ?? 0;
     const dropdown = $('#CompletionSymbolSetting');
     if (dropdown) {
-        // Use loose equality to handle string/number mismatch from PS
-        dropdown.enabled = (hideCounts == 0);
+        dropdown.enabled = true;
     }
 }
 

@@ -2,21 +2,12 @@
 
 declare var GameInterfaceAPI: any;
 
-class ArchipelagoMapStatus {
-    static VERSION: string = "1.0.3";
+class ArchipelagoSync {
+    static VERSION: string = "1.0.5";
     static ENABLE_DEBUG: boolean = true;
 
     static getCompletionSymbol(): string {
         return ($.persistentStorage.getItem('CompletionSymbol') ?? 0) === 1 ? "★" : "✓";
-    }
-
-    /**
-     * Determines if an item is missing based on the current map's subtitle.
-     * This is a legacy helper for components still using isMissingItem.
-     */
-    static isMissingItem(itemChar: string): boolean {
-        // This is now mostly used as a simple check for empty/space
-        return (itemChar && itemChar !== " ");
     }
 
     /**
@@ -28,6 +19,13 @@ class ArchipelagoMapStatus {
             return logicHelper.getIndicatorStatus(char, mapCmdName, mItems, charIndexInStatus);
         }
         return { isCompleted: false, isAvailable: true };
+    }
+
+    /**
+     * Determines if an item is missing based on the current map's subtitle.
+     */
+    static isMissingItem(itemChar: string): boolean {
+        return (itemChar && itemChar !== " ");
     }
 
     static parseExtras(data: any): any {
@@ -66,7 +64,8 @@ class ArchipelagoMapStatus {
         let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
         const mItems = map.subtitle || "";
 
-        const isCompleted = statusIcons.length > 0 && (statusIcons.replace(/★/g, "").length === 0 || statusIcons.replace(/✓/g, "").length === 0);
+        const symbol = this.getCompletionSymbol();
+        const isCompleted = statusIcons.length > 0 && statusIcons.replace(new RegExp(symbol, 'g'), "").length === 0;
         if (isCompleted) return { completed: true, greenCount: 0, total: statusIcons.length, doable: false, fullyDoable: false };
 
         let greenCount = 0;
@@ -103,21 +102,21 @@ class ArchipelagoMapStatus {
     private static m_Debug: boolean = false;
 
     static initSync() {
-        if (this.ENABLE_DEBUG) $.Msg("[AP] Exposed ArchipelagoMapStatus v" + this.VERSION);
+        if (this.ENABLE_DEBUG) $.Msg("[AP] Exposed ArchipelagoSync v" + this.VERSION);
         
         $.RegisterForUnhandledEvent("ArchipelagoDebug", (state: string) => {
             this.m_Debug = (state === "1");
-            $.Msg("[AP] Panorama Debug logging is now " + (this.m_Debug ? "ENABLED" : "DISABLED"));
+            $.Msg("[AP] Panorama Sync Debug logging is now " + (this.m_Debug ? "ENABLED" : "DISABLED"));
         });
 
         const global: any = UiToolkitAPI.GetGlobalObject();
-        global.ArchipelagoMapStatusInstance = ArchipelagoMapStatus;
+        global.ArchipelagoSyncInstance = ArchipelagoSync;
 
         if (this.m_Initialized) return;
         this.m_Initialized = true;
 
         $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
-            if (global.ArchipelagoMapStatusInstance !== ArchipelagoMapStatus) return;
+            if (global.ArchipelagoSyncInstance !== ArchipelagoSync) return;
 
             const parts = payload.split('|');
             const mapName = parts[0];
@@ -139,7 +138,7 @@ class ArchipelagoMapStatus {
         }
         this.m_PollSchedule = $.Schedule(2.0, () => {
             const global: any = UiToolkitAPI.GetGlobalObject();
-            if (global.ArchipelagoMapStatusInstance && global.ArchipelagoMapStatusInstance !== ArchipelagoMapStatus) {
+            if (global.ArchipelagoSyncInstance && global.ArchipelagoSyncInstance !== ArchipelagoSync) {
                 this.m_PollSchedule = null;
                 return;
             }
@@ -214,5 +213,5 @@ class ArchipelagoMapStatus {
     }
 }
 
-(UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus = ArchipelagoMapStatus;
-ArchipelagoMapStatus.initSync();
+(UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync = ArchipelagoSync;
+ArchipelagoSync.initSync();

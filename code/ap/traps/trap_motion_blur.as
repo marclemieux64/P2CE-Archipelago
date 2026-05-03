@@ -1,4 +1,5 @@
-void TriggerMotionBlurTrap() {
+void TriggerMotionBlurTrap(float duration = 20.0f) {
+    CallVScript("SendToPanorama(\"ArchipelagoTrapTriggered\", \"MotionBlur|" + duration + "\")");
     // 1. Find or create logic_playerproxy
     CBaseEntity@ lpp = EntityList().FindByClassname(null, "logic_playerproxy");
     if (lpp is null) {
@@ -13,9 +14,9 @@ void TriggerMotionBlurTrap() {
         v.SetFloat(1.0f);
         lpp.FireInput("SetMotionBlurAmount", v, 0.0f, null, null);
 
-        // 3. Set up timed reset (20 seconds)
+        // 3. Set up timed reset
         v.SetFloat(0.0f);
-        lpp.FireInput("SetMotionBlurAmount", v, 20.0f, null, null);
+        lpp.FireInput("SetMotionBlurAmount", v, duration, null, null);
     }
 }
 

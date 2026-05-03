@@ -34,7 +34,7 @@ function SmartWarpNextMap(currentMapName: string) {
 
     const currentMapCmd = "map " + currentMapName;
 
-    const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
+    const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
     const fullyDoableMaps: any[] = [];
     const partiallyDoableMaps: any[] = [];
 
@@ -47,7 +47,7 @@ function SmartWarpNextMap(currentMapName: string) {
                 // CRITICAL: Skip the map we are currently on to avoid infinite loops
                 if (map.command.trim() === currentMapCmd.trim()) continue;
 
-                const status = mapStatusHelper.getMapStatus(map, chapters);
+                const status = syncHelper ? syncHelper.getMapStatus(map, chapters) : { completed: false, doable: false, fullyDoable: false };
                 if (status.completed) continue;
 
                 if (status.fullyDoable) {

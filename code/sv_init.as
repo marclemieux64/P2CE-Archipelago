@@ -13,6 +13,7 @@
 #include "ap/entities/frame_logic_pedestal.as"
 #include "ap/entities/frame_logic_floor.as"
 #include "ap/entities/map_holos.as"
+#include "ap/entities/remove_gel.as"
 
 // 3. Locations (Randomizer Checks & Progression)
 #include "ap/locations/add_wheatley_monitor_break_check.as"

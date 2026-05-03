@@ -1,4 +1,5 @@
-void TriggerDialogTrap(string scene = "") {
+void TriggerDialogTrap(string scene = "", float duration = 15.0f) {
+    CallVScript("SendToPanorama(\"ArchipelagoTrapTriggered\", \"Dialog|" + duration + "\")");
     CBaseEntity@ text = EntityList().FindByName(null, "ap_dialog_trap");
     if (text is null) {
         @text = util::CreateEntityByName("game_text");
@@ -8,7 +9,7 @@ void TriggerDialogTrap(string scene = "") {
             text.KeyValue("color", "250 0 0");
             text.KeyValue("fadein", "0.1");
             text.KeyValue("fadeout", "0.1");
-            text.KeyValue("holdtime", "15.0");
+            text.KeyValue("holdtime", "" + duration);
             text.KeyValue("spawnflags", "1");
             text.KeyValue("channel", "1");
             text.KeyValue("y", "-1");

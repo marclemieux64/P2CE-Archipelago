@@ -65,3 +65,5 @@ $.DefineEvent('ArchipelagoDebug', 1, 'state', 'Toggles debug logging in Panorama
 
 // Dans scripts/util/event-definition.ts
 $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch");
+$.DefineEvent("ArchipelagoTrapTriggered", 2, "trapName, duration", "Triggered when an Archipelago trap is activated");
+$.DefineEvent("ArchipelagoQueueUpdated", 1, "payload", "Triggered when the Archipelago item queue changes");

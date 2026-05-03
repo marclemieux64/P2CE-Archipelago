@@ -223,6 +223,19 @@ function DisableEntity(entity_name = "") {
     return cmd;
 }
 
+function RemoveGel(x, y, z, object_type = null, object_name = null, create_holo = 1) {
+    local cmd = "RemoveGel " + x + " " + y + " " + z;
+    if (object_type != null) cmd += " \"" + object_type + "\"";
+    if (object_name != null) cmd += " \"" + object_name + "\"";
+    cmd += " " + create_holo;
+    SafeSendToConsole(cmd);
+}
+
+function CreateClearGel(pos, offset = -100) {
+    local cmd = "CreateClearGel " + pos.x + " " + pos.y + " " + pos.z + " " + offset;
+    SafeSendToConsole(cmd);
+}
+
 
 // =============================================================
 // ARCHIPELAGO MAP COMPLETION INTERCEPT

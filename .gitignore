@@ -38,6 +38,7 @@ panorama_storage.db
 thumb*.jpg
 workshop_log.txt
 
+#
 imgui.ini
 GameConfig.txt
 albedo.tga
@@ -74,3 +75,5 @@ run test todo.txt
 Doxyfile
 docs/
 
+# Mod Configuration
+gameinfo.txt

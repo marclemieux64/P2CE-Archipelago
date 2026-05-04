@@ -469,7 +469,7 @@
    }
    "chapter 6.2_info"
    {
-      "title"    "ã¢¢¢"
+      "title"    "ã✓✓¢"
    }
   "chapter 6.3"
    {
@@ -507,13 +507,13 @@
   "chapter 6.6"
    {
       "title"    "═ PotatOS"
-      "subtitle" "ûù"
+      "subtitle" "û"
       "command"  "map sp_a3_transition01"
       "pic"      "vgui/chapters/chapter6"
    }
    "chapter 6.6_info"
    {
-      "title"    "ãù¢¢¢"
+      "title"    "ãù✓¢¢"
    }
   "chapter7"
    {
@@ -587,7 +587,7 @@
   "chapter 8.1"
    {
       "title"    "═ Funnel Intro"
-      "subtitle" "ûåðæ"
+      "subtitle" "ûðæ"
       "command"  "map sp_a4_tb_intro"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -598,7 +598,7 @@
   "chapter 8.2"
    {
       "title"    "═ Ceiling Button"
-      "subtitle" "ûåðæñ"
+      "subtitle" "ûðæñ"
       "command"  "map sp_a4_tb_trust_drop"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -609,7 +609,7 @@
   "chapter 8.3"
    {
       "title"    "═ Wall Button"
-      "subtitle" "ûåðæñõ"
+      "subtitle" "ûðæñõ"
       "command"  "map sp_a4_tb_wall_button"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -620,7 +620,7 @@
   "chapter 8.4"
    {
       "title"    "═ Polarity"
-      "subtitle" "ûåðæ"
+      "subtitle" "ûðæ"
       "command"  "map sp_a4_tb_polarity"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -631,7 +631,7 @@
   "chapter 8.5"
    {
       "title"    "═ Funnel Catch"
-      "subtitle" "ûåðæñõ"
+      "subtitle" "ûðæñõ"
       "command"  "map sp_a4_tb_catch"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -653,7 +653,7 @@
   "chapter 8.7"
    {
       "title"    "═ Laser Catapult"
-      "subtitle" "ûðæõìíîå"
+      "subtitle" "ûðæõìíî"
       "command"  "map sp_a4_laser_catapult"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -664,7 +664,7 @@
   "chapter 8.8"
    {
       "title"    "═ Laser Platform"
-      "subtitle" "ûñìíîå"
+      "subtitle" "ûñìíî"
       "command"  "map sp_a4_laser_platform"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -675,7 +675,7 @@
   "chapter 8.9"
    {
       "title"    "═ Propulsion Catch"
-      "subtitle" "ûæåñðá"
+      "subtitle" "ûæñðá"
       "command"  "map sp_a4_speed_tb_catch"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -686,7 +686,7 @@
   "chapter 8.10"
    {
       "title"    "═ Repulsion Polarity"
-      "subtitle" "ûàâåæñ"
+      "subtitle" "ûàâæñ"
       "command"  "map sp_a4_jump_polarity"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -704,7 +704,7 @@
   "chapter 9.0"
    {
       "title"    "═ Finale 1"
-      "subtitle" "ûõåâ"
+      "subtitle" "ûõâ"
       "command"  "map sp_a4_finale1"
       "pic"      "vgui/chapters/chapter9"
    }
@@ -715,7 +715,7 @@
   "chapter 9.1"
    {
       "title"    "═ Finale 2"
-      "subtitle" "ûåàæó"
+      "subtitle" "ûàæó"
       "command"  "map sp_a4_finale2"
       "pic"      "vgui/chapters/chapter9"
    }
@@ -726,7 +726,7 @@
   "chapter 9.2"
    {
       "title"    "═ Finale 3"
-      "subtitle" "ûáâå"
+      "subtitle" "ûáâ"
       "command"  "map sp_a4_finale3"
       "pic"      "vgui/chapters/chapter9"
    }
@@ -737,7 +737,7 @@
   "chapter 9.3"
    {
       "title"    "═ Finale 4"
-      "subtitle" "ûùàáâA.ôS.ôF.ô"
+      "subtitle" "ûàáâA.ôS.ôF.ô"
       "command"  "map sp_a4_finale4"
       "pic"      "vgui/chapters/chapter9"
    }

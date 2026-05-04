@@ -183,20 +183,6 @@ class LoadingScreenController {
 
 		const isWidescreen = ($.GetContextPanel().actuallayoutwidth / $.GetContextPanel().actuallayoutheight) > 1.5;
 		const suffix = isWidescreen ? '_widescreen' : '';
-
-		// If we are on the initial loading screen (no map name yet) or a background map, 
-		// use the randomized "Product" images provided by the user.
-		if (!mapName || mapName === "" || mapName.includes('background') || mapName.includes('intro')) {
-			const rand = Math.random() > 0.5 ? '1' : '2';
-			const productImg = `file://{images}/loading_screens/portal2_product_${rand}${suffix}.png`;
-			return {
-				img1: productImg,
-				img2: productImg,
-				img3: productImg,
-				img4: productImg
-			};
-		}
-
 		const finalPrefix = isTransit ? `default_${transit}` : prefix;
 
 		// a5 only has layer 1

@@ -4,6 +4,7 @@
 
 // --- CONVARS & REFS ---
 ConVar cv_ArchipelagoDebug("ArchipelagoDebug", "0", FCVAR_ARCHIVE);
+ConVar cv_ArchipelagoVitrifiedStatus("ArchipelagoVitrifiedStatus", "000000", FCVAR_ARCHIVE); // Bitmask for 6 doors
 ConVarRef host_map("host_map");
 
 // --- BOOLEANS ---
@@ -52,7 +53,6 @@ array<string> non_elevator_maps = {
 dictionary g_monitor_break_names;
 dictionary g_vitrified_door_names;
 
-
 // =============================================================
 // UTILITY FUNCTIONS
 // =============================================================
@@ -91,7 +91,6 @@ void RunButtonScenarioCheck(string buttonName) {
     if (buttonName == "rd1") ArchipelagoLog("button_check:Ratman Den 1"); else if (buttonName == "rd2") ArchipelagoLog("button_check:Ratman Den 2"); else if (buttonName == "rd3") ArchipelagoLog("button_check:Ratman Den 3"); else if (buttonName == "rd4") ArchipelagoLog("button_check:Ratman Den 4"); else if (buttonName == "rd5") ArchipelagoLog("button_check:Ratman Den 5"); else if (buttonName == "rd6") ArchipelagoLog("button_check:Ratman Den 6"); else if (buttonName == "rd7") ArchipelagoLog("button_check:Ratman Den 7"); else ArchipelagoLog("button_check:unknown_" + buttonName);
 }
 
-
 // =============================================================
 // REGISTRY INITIALIZATION
 // =============================================================
@@ -125,7 +124,6 @@ void InitLocationRegistries() {
 void InitWheatleyMonitorRegistry() {
     InitLocationRegistries();
 }
-
 
 // =============================================================
 // RAINBOW SYSTEM (DYNAMICS)

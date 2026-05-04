@@ -2,8 +2,6 @@
 // ARCHIPELAGO SERVER COMMAND
 // =============================================================
 
-
-
 /**
  * APDebugSprayersCmd - Prints diagnostic info for all gel dispensers.
  */
@@ -159,10 +157,6 @@ void AddFloorButtonFrameCmd(const CommandArgs@ args) {
     AddFloorButtonFrame(args.Arg(1));
 }
 
-
-
-
-
 [ServerCommand("SetStatus", "Live refresh of all Archipelago visual states")]
 void SetStatusCmd(const CommandArgs@ args) {
     if (args is null || args.ArgC() < 2) return;
@@ -311,8 +305,6 @@ void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
     UpdateInternalMapName();
     AddWheatleyMonitorBreakCheck(current_map);
 }
-
-
 
 [ServerCommand("RainbowTick", "Internal master tick for rainbow effects")]
 void RainbowTickCmd(const CommandArgs@ args) {
@@ -762,4 +754,21 @@ void SpawnHologramAtCrosshairCmd(const CommandArgs@ args) {
         StableCreateAPHologram(hitPos, QAngle(0, 0, 0), 1.0f, "", "", skin, name);
         ArchipelagoLog("Spawned hologram at crosshair. Skin: " + skin);
     }
+}
+[ServerCommand("ArchipelagoVitrifiedFound", "Internal - Updates the local vitrified door bitmask")]
+void ArchipelagoVitrifiedFoundCmd(const CommandArgs@ args) {
+    if (args is null || args.ArgC() < 2) return;
+    int index = args.Arg(1).toInt();
+    if (index < 1 || index > 6) return;
+
+    string bitmask = cv_ArchipelagoVitrifiedStatus.GetString();
+    if (bitmask.length() < 6) bitmask = "000000";
+
+    // Update the character at index-1
+    string newBitmask = "";
+    for (int i = 1; i <= 6; i++) {
+        if (i == index) newBitmask += "1"; else if (bitmask.length() >= uint(i)) newBitmask += bitmask.substr(i - 1, 1); else newBitmask += "0";
+    }
+
+    cv_ArchipelagoVitrifiedStatus.SetValue(newBitmask);
 }

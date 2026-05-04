@@ -13,6 +13,8 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     string classname = ent.GetClassname();
     string model = ent.GetModelName().tolower();
     string name = ent.GetEntityName();
+    string lowerName = name.tolower();
+    string lowerClass = classname.tolower();
 
     // Default values
     targetPos = ent.GetAbsOrigin();
@@ -22,16 +24,49 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     shouldParent = true;
 
     // 0. SHARED LOGIC FLAGS
-    bool isCore = (classname.locate("core") != uint(-1) || name.locate("core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
-    bool isElevator = (name.locate("exit_lift_train") != uint(-1) || name.locate("departure_elavator") != uint(-1) || name.locate("departure_elevator") != uint(-1));
-    bool isRatmanDen = (name.locate("rd") == 0);
-    bool isPortalGun = (name.locate("portal") != uint(-1) && name.locate("gun") != uint(-1));
+    bool isCore = (lowerClass.locate("core") != uint(-1) || lowerName.locate("core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
+    bool isElevator = (lowerName.locate("exit_lift_train") != uint(-1) || lowerName.locate("departure_elavator") != uint(-1) || lowerName.locate("departure_elevator") != uint(-1));
+    bool isRatmanDen = (lowerName.locate("rd") == 0);
+    bool isPortalGun = (lowerName.locate("portal") != uint(-1) && lowerName.locate("gun") != uint(-1));
     bool isTurret = (model.locate("npcs/turret/turret.mdl") != uint(-1));
-    bool isCube = (model.locate("box") != uint(-1) || model.locate("cube") != uint(-1) || model.locate("mp_ball") != uint(-1) || classname.locate("cube") != uint(-1));
-    bool isAntique = (model.locate("underground") != uint(-1) || model.locate("antique") != uint(-1));
+    bool isCube = (model.locate("box") != uint(-1) || model.locate("cube") != uint(-1) || model.locate("mp_ball") != uint(-1) || lowerClass.locate("cube") != uint(-1));
+    bool isAntique = (model.locate("underground") != uint(-1) || model.locate("antique") != uint(-1) || model.locate("vitrified") != uint(-1));
+    bool isVitrified = (isAntique || lowerName.locate("vitrified") != uint(-1) || lowerName.locate("dummy_chamber") != uint(-1));
+    
+    // Fallback: check dictionary for any map if the name is unique to vitrified doors
+    if (!isVitrified) {
+        array<string>@ keys = g_vitrified_door_names.getKeys();
+        for (uint i = 0; i < keys.length(); i++) {
+            if (keys[i].locate(":" + name) != uint(-1)) {
+                isVitrified = true;
+                break;
+            }
+        }
+    }
+    
+    if (lowerName.locate("dummy_chamber") != uint(-1)) {
+        ArchipelagoLog("[AP DEBUG] Found Vitrified Door Candidate: " + name + " (isVitrified: " + isVitrified + ")");
+    }
 
     // 1. GLOBAL BASE RULES (Model/Class based)
     
+    // X. VITRIFIED & SPECIAL CHECKS (Must come first to avoid generic class overrides)
+    if (isElevator || isRatmanDen || isPortalGun || isVitrified) {
+        if (isRatmanDen) targetPos = targetPos + (ent.Up() * 75.0f); else if (isPortalGun) targetPos = targetPos + (ent.Up() * 32.0f);
+
+        string symbols = g_map_symbols;
+        bool mapDone = (symbols != "" && symbols.locate("ã") == uint(-1));
+        bool rDone = (symbols == "" || symbols.locate("ø") == uint(-1)); 
+        bool pDone = (symbols == "" || (symbols.locate("þ") == uint(-1) && symbols.locate("ý") == uint(-1) && symbols.locate("ǫ") == uint(-1)));
+        bool vDone = (symbols == "" || symbols.locate("¢") == uint(-1));
+
+        if (isRatmanDen) targetSkin = (rDone || g_ratman_status == 1 || mapDone) ? 4 : 0; 
+        else if (isPortalGun) targetSkin = (pDone || mapDone) ? 4 : 0; 
+        else if (isVitrified) targetSkin = (vDone || mapDone) ? 4 : 0;
+        else targetSkin = mapDone ? 4 : 0;
+        return;
+    }
+
     // A. TURRETS (Red Skin 2, Fixed height)
     if (isTurret) {
         targetSkin = 2;
@@ -118,16 +153,4 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     }
 
-    // 2. MAP-SPECIFIC OR SPECIAL SYSTEM RULES (Elevators, Dens, Gun)
-    if (isElevator || isRatmanDen || isPortalGun) {
-        if (isRatmanDen) targetPos = targetPos + (ent.Up() * 75.0f); else if (isPortalGun) targetPos = targetPos + (ent.Up() * 32.0f);
-
-        string symbols = g_map_symbols;
-        bool mapDone = (symbols != "" && symbols.locate("ã") == uint(-1));
-        bool rDone = (symbols == "" || symbols.locate("ø") == uint(-1)); 
-        bool pDone = (symbols == "" || (symbols.locate("þ") == uint(-1) && symbols.locate("ý") == uint(-1) && symbols.locate("ǫ") == uint(-1)));
-
-        if (isRatmanDen) targetSkin = (rDone || g_ratman_status == 1 || mapDone) ? 4 : 0; else if (isPortalGun) targetSkin = (pDone || mapDone) ? 4 : 0; else targetSkin = mapDone ? 4 : 0;
-        return;
-    }
 }

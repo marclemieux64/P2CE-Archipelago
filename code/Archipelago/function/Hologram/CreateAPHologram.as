@@ -6,7 +6,7 @@
  * StableCreateAPHologram - Factory function that ensures a hologram exists for 
  * a specific location without creating duplicates.
  */
-CBaseEntity@ StableCreateAPHologram(Vector position, QAngle angles, float scale, string attachment = "", string bone = "", int skin = 0, string name = "", CBaseEntity@ parent = null) {
+CBaseEntity@ StableCreateAPHologram(Vector position, QAngle angles, float scale, string attachment = "", string bone = "", int skin = 0, string name = "", CBaseEntity@ parent = null, string animation = "idle") {
     CBaseEntity@ h = null;
 
     if (name != "") {
@@ -47,7 +47,12 @@ CBaseEntity@ StableCreateAPHologram(Vector position, QAngle angles, float scale,
         h.KeyValue("modelscale", "" + scale);
         
         // Use KeyValue for animation to avoid unstable FireInput calls during init
-        h.KeyValue("DefaultAnim", "idle");
+        if (animation != "") {
+            h.KeyValue("DefaultAnim", animation);
+        } else {
+            h.KeyValue("DefaultAnim", "idle");
+            h.KeyValue("playbackrate", "0.0");
+        }
         
         h.SetAbsOrigin(position);
         h.SetAbsAngles(angles);

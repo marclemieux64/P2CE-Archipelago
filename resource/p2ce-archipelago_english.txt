@@ -1,8 +1,0 @@
-"lang"
-{
-	"Language" "English"
-	"Tokens"
-	{
-		"AP_Item_AerialFaithPlate_Hint" "You don't have the Aerial Faith Plates"
-	}
-}

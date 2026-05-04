@@ -1,133 +1,114 @@
 'use strict';
-if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
-// caption helper class. current implementation does **not** require this
-// but obviously we need to reimplement standard caption behavior
-//
-// sourcemods can do fancier stuff for themselves, though, like in-world
-// captions...
+$.Msg("CC: Loading cc.ts...");
+
+const CCSetting = {
+	BG_OPACITY: 'cc.bg_opacity',
+	FONT_SIZE: 'cc.font_size',
+	FONT_TYPE: 'cc.font',
+	TEXT_ALIGN: 'cc.text_align',
+	BOX_WIDTH: 'cc.box_width'
+};
+
+interface Caption {
+	bLowPriority: boolean;
+	bSFX: boolean;
+	nNoRepeat: number;
+	nDelay: number;
+	flLifetimeOverride: number;
+	text: string;
+	options: Map<string, string>;
+}
+
 class CaptionEntry {
-	// this is not how long the caption should live for, but
-	// when the caption should die out in server time
 	lifetime: number;
-	// the belonging text panel
 	panel: Label;
 	dummy: Panel;
-	// fade once
 	bMarkedForDeletion: boolean = false;
 	bReadyToPurge: boolean = false;
 	height: number;
 	token: string;
 
-	constructor(token: string, caption: Caption, lifetime: number) {
+	constructor(token: string, caption: any, lifetime: number) {
 		this.lifetime = lifetime;
-
 		this.token = token;
 
 		let style = `font-size: ${CloseCaptioning.settings.fontSize}px;`;
 		switch (CloseCaptioning.settings.textAlign) {
 			default:
-			case 0:
-				style += 'text-align: left;';
-				break;
-
-			case 1:
-				style += 'text-align: center;';
-				break;
-
-			case 2:
-				style += 'text-align: right;';
-				break;
+			case 0: style += 'text-align: left;'; break;
+			case 1: style += 'text-align: center;'; break;
+			case 2: style += 'text-align: right;'; break;
 		}
+
 		switch (CloseCaptioning.settings.fontType) {
-			default:
-			case 0:
-				style += "font-family: 'Lexend';transform: translateY(-1px);";
-				break;
-
-			case 1:
-				style += "font-family: 'Univers LT Std 47 Cn Lt';";
-				break;
-
-			case 2:
-				style += "font-family: 'GorDIN';";
-				break;
-
-			case 3:
-				style += "font-family: 'Verdana';";
-				break;
-
-			case 4:
-				style += "font-family: 'Noto Sans';";
-				break;
-
-			case 5:
-				style += "font-family: 'Stratum2';";
-				break;
+			case 0: style += "font-family: 'Lexend';transform: translateY(-1px);"; break;
+			case 1: style += "font-family: 'Univers LT Std 47 Cn Lt';"; break;
+			case 2: style += "font-family: 'GorDIN';"; break;
+			case 3: style += "font-family: 'Verdana';"; break;
+			case 4: style += "font-family: 'Noto Sans';"; break;
+			case 5: style += "font-family: 'Stratum2';"; break;
+			default: style += "font-family: 'Lexend';"; break;
 		}
+
 		if (CloseCaptioning.settings.bgOpacity === 0.0) {
 			style += 'text-shadow: 2px 2px 1px 2 rgb(0,0,0);';
 		}
 
-		// create the text
-		this.panel = $.CreatePanel('Label', $<Panel>('#CaptionsBox')!, token, {
+		const parent = CloseCaptioning.box || $<Panel>('#CaptionsBox');
+		const bgParent = CloseCaptioning.bg || $<Panel>('#CaptionsBg');
+
+		if (!parent || !bgParent) {
+			$.Msg("CC: ERROR: Panels not found during CaptionEntry creation!");
+			return;
+		}
+
+		this.panel = $.CreatePanel('Label', parent, '', {
 			class: 'closecaptions__text',
 			style: style,
-			// marked to process as html to
-			// support bold & italicization tags
 			html: true,
 			text: caption.text
 		});
 
-		this.dummy = $.CreatePanel('Panel', $<Panel>('#CaptionsBg')!, `Dummy_${token}`, {
+		this.dummy = $.CreatePanel('Panel', bgParent, '', {
 			class: 'closecaptions__dummy'
 		});
 
 		this.panel.style.width = `${CloseCaptioning.CAPTION_WIDTH}px`;
 		this.dummy.style.width = `${CloseCaptioning.CAPTION_WIDTH}px`;
 
-		// we use the panel text here because it stripped out all the tags
-		// the width would be incorrect if we used the caption text directly since
-		// it would factor those in!
-		this.height = this.panel.GetHeightForText(CloseCaptioning.CAPTION_WIDTH, this.panel.text);
+		const rawText = (caption && caption.text) ? caption.text : '';
+		const localizedText = (rawText.indexOf('cheaptitles') !== -1 && rawText.indexOf('#') === -1) ? $.Localize('#' + rawText) : $.Localize(rawText);
+		const textToMeasure = this.panel.text || localizedText.replace(/<[^>]*>?/gm, '');
+		this.height = this.panel.GetHeightForText(CloseCaptioning.CAPTION_WIDTH, textToMeasure);
+		if (this.height <= 0) this.height = 24;
 
-		// show the text
 		this.panel.style.opacity = 1;
 		this.panel.style.height = `${this.height}px`;
-		// 4 comes from text margins
 		this.dummy.style.height = `${this.height + 4}px`;
 
 		$.RegisterEventHandler('PropertyTransitionEnd', this.panel, (s: string, prop: keyof Style) => {
-			// when the text has fully faded out, animate the height to 0
 			if (prop === 'opacity' && this.panel.IsTransparent()) {
 				this.dummy.style.height = '0px';
 				$.RegisterEventHandler('PropertyTransitionEnd', this.dummy, (s: string, prop: keyof Style) => {
-					// when the height has reached 0, mark this caption
-					// as ready to be deleted, the next tick should
-					// clean it up
-					if (prop === 'height') {
-						// assume it's 0
-						this.bReadyToPurge = true;
-					}
+					if (prop === 'height') { this.bReadyToPurge = true; }
 				});
 			}
 		});
 	}
 
 	FadeOut() {
-		if (!this.panel.IsValid() || this.bMarkedForDeletion) return;
+		if (!this.panel || !this.panel.IsValid() || this.bMarkedForDeletion) return;
 		this.panel.style.opacity = 0;
 		this.bMarkedForDeletion = true;
 	}
 }
 
-// there's still some TODO stuff but it's pretty much functional i think...
 class CloseCaptioning {
 	static captions: Array<CaptionEntry> = [];
-	static box = $<Panel>('#CaptionsBox')!;
-	static bg = $<Panel>('#CaptionsBg')!;
+	static box: Panel;
+	static bg: Panel;
 	static CAPTION_WIDTH = 1102;
-
 	static settings = {
 		bgOpacity: 0.75,
 		fontSize: 20,
@@ -137,248 +118,116 @@ class CloseCaptioning {
 	};
 
 	static bPotatosMuted: boolean = false;
-
-	static captionRecord: Map<string, number> = new Map<string, number>();
-	static textCooldowns: Map<string, number> = new Map<string, number>();
-
-
+	static captionRecord: Map<string, number> = new Map();
+	static textCooldowns: Map<string, number> = new Map();
 
 	static getVars() {
-		// FIX SETTING SLIDERS BEFORE TURNING THIS ON
-		//const bgOpacity = $.persistentStorage.getItem(CCSetting.BG_OPACITY);
-		//if (bgOpacity === null) {
-		//	$.persistentStorage.setItem(CCSetting.BG_OPACITY, this.settings.bgOpacity);
-		//} else {
-		//	this.settings.bgOpacity = Number(bgOpacity);
-		//}
-		//this.bg.style.backgroundColor = `rgba(0,0,0,${bgOpacity})`;
-
-		//const fontSize = $.persistentStorage.getItem(CCSetting.FONT_SIZE);
-		//if (fontSize === null) {
-		//	$.persistentStorage.setItem(CCSetting.FONT_SIZE, this.settings.fontSize);
-		//} else {
-		//	this.settings.fontSize = Number(fontSize);
-		//}
-
 		const fontType = $.persistentStorage.getItem(CCSetting.FONT_TYPE);
-		if (fontType === null) {
-			$.persistentStorage.setItem(CCSetting.FONT_TYPE, this.settings.fontType);
-		} else {
-			this.settings.fontType = Number(fontType);
-		}
-
+		if (fontType !== null) this.settings.fontType = Number(fontType);
 		const textAlign = $.persistentStorage.getItem(CCSetting.TEXT_ALIGN);
-		if (textAlign === null) {
-			$.persistentStorage.setItem(CCSetting.TEXT_ALIGN, this.settings.textAlign);
-		} else {
-			this.settings.textAlign = Number(textAlign);
-		}
+		if (textAlign !== null) this.settings.textAlign = Number(textAlign);
 	}
 
-	static {
+	static init() {
+		$.Msg("CC: Initializing CloseCaptioning system...");
+		this.box = $<Panel>('#CaptionsBox')!;
+		this.bg = $<Panel>('#CaptionsBg')!;
 		this.getVars();
 
-		$.RegisterForUnhandledEvent('ReloadCCSettings', () => {
-			this.wipeCaptions();
-			this.getVars();
+		// Helper for absolute time conversion
+		const getAbsoluteTime = (lifetime: number, eventTime?: number) => {
+			const engineTime = ($.GetContextPanel() as any).GetEngineTime ? ($.GetContextPanel() as any).GetEngineTime() : 0;
+			const current = (eventTime !== undefined) ? eventTime : engineTime;
+			if (lifetime > 0 && lifetime < 10000) return current + lifetime;
+			return (lifetime <= 0) ? current + 5.0 : lifetime;
+		};
+
+		const onDisplay = (token: string, caption: any, lifetime: number, time: number) => {
+			try {
+				if (!caption) return;
+				if (this.bPotatosMuted && (token.toLowerCase().includes('glados.') || token.toLowerCase().includes('potatos.'))) return;
+				if (this.captionRecord.has(token)) return;
+
+				const rawText = caption.text || '';
+				const locText = (rawText.indexOf('cheaptitles') !== -1 && rawText.indexOf('#') === -1) ? $.Localize('#' + rawText) : $.Localize(rawText);
+				if (this.textCooldowns.has(locText) && (time - this.textCooldowns.get(locText)!) < 0.1) return;
+
+				this.textCooldowns.set(locText, time);
+				this.captionRecord.set(token, time + Math.max(0.5, caption.nNoRepeat || 0));
+
+				let absLife = getAbsoluteTime(lifetime, time);
+				if (token.toLowerCase().includes('cheaptitles')) {
+					absLife = Math.min(absLife, time + 7.0);
+				}
+
+				this.captions.push(new CaptionEntry(token, caption, absLife));
+				this.showBox();
+			} catch (e) { $.Msg("CC: Error in DisplayCaption (" + token + "): " + e); }
+		};
+
+		const onBad = (token: string, lifetime: number, time?: number) => {
+			try {
+				const absLife = getAbsoluteTime(lifetime, time);
+				this.captions.push(new CaptionEntry(token, { text: `[MISSING] ${token}` }, absLife));
+				this.showBox();
+			} catch (e) { $.Msg("CC: Error in BadCaption: " + e); }
+		};
+
+		// Registry with fallbacks
+		try { $.RegisterForUnhandledEvent('DisplayCaption', onDisplay); } catch (e) { }
+		try { $.RegisterForUnhandledEvent('DisplayCaptionRequest', onDisplay); } catch (e) { }
+		try { $.RegisterForUnhandledEvent('BadCaption', onBad); } catch (e) { }
+		try { $.RegisterForUnhandledEvent('BadCaptionRequest', onBad); } catch (e) { }
+		try {
+			$.RegisterForUnhandledEvent('EndCaption', (token: string) => {
+				for (const c of this.captions) if (c.token === token) c.FadeOut();
+			});
+		} catch (e) { }
+
+		$.RegisterEventHandler('CaptionTick', $.GetContextPanel(), (time: number) => {
+			if (this.captions.length === 0) return;
+			for (let i = this.captions.length - 1; i >= 0; i--) {
+				const c = this.captions[i];
+				if (time >= c.lifetime) {
+					if (c.bReadyToPurge) {
+						if (c.panel.IsValid()) c.panel.DeleteAsync(0);
+						if (c.dummy.IsValid()) c.dummy.DeleteAsync(0);
+						if (!c.panel.IsValid() && !c.dummy.IsValid()) this.captions.splice(i, 1);
+					} else { c.FadeOut(); }
+				}
+			}
+			if (this.captions.length === 0) this.hideBox();
+			for (const [tok, life] of this.captionRecord) if (time >= life) this.captionRecord.delete(tok);
+			for (const [txt, life] of this.textCooldowns) if (time >= life) this.textCooldowns.delete(txt);
 		});
 
 		$.RegisterForUnhandledEvent('ArchipelagoMutePotatos', (active: string) => {
 			this.bPotatosMuted = (active === '1');
-			if (this.bPotatosMuted) {
-				this.wipeCaptions();
-				$.Msg("CC: PotatOS/GLaDOS Subtitles are now MUTED.");
-			} else {
-				$.Msg("CC: PotatOS/GLaDOS Subtitles are now UNMUTED.");
-			}
+			if (this.bPotatosMuted) this.wipeCaptions();
 		});
 
-		$.RegisterForUnhandledEvent('GameUIStateChanged', (old: GameUIState, newS: GameUIState) => {
-
-			this.updateStyle();
-		});
-
-		// cc_emit_raw - allows users to display their own arbitrary text
-		// preprocessing not supported
-		$.RegisterEventHandler('DisplayRawCaptionRequest', $.GetContextPanel(), (text: string, lifetime: number) => {
-			this.captions.push(
-				new CaptionEntry(
-					'RAW_CAPTION',
-					{
-						bLowPriority: false,
-						bSFX: false,
-						nNoRepeat: 0,
-						nDelay: 0,
-						flLifetimeOverride: -1.0,
-						text: text,
-						options: new Map<string, string>()
-					},
-					lifetime
-				)
-			);
-			this.showBox();
-		});
-
-		// check for captions that finished and delete them
-		$.RegisterEventHandler('CaptionTick', $.GetContextPanel(), (time: number) => {
-			for (const caption of this.captions) {
-				// caption has expired
-				if (time >= caption.lifetime) {
-					if (caption.bReadyToPurge) {
-						// try to delete the text
-						if (caption.panel.IsValid()) {
-							caption.panel.DeleteAsync(0);
-						}
-						// try to delete the height reserved space in bg
-						if (caption.dummy.IsValid()) {
-							caption.dummy.DeleteAsync(0);
-						}
-						// when both are deleted, shift the caption out
-						//
-						// assuming the panels are deleted is unreliable
-						// there have been cases where panels are left orphaned
-						// and permanently stuck. probably because we are doing this
-						// every tick. so we're going to keep slamming for them to be
-						// deleted and wait for them to finish dying.
-						if (!caption.panel.IsValid() && !caption.dummy.IsValid()) {
-							this.captions.shift();
-							if (this.captions.length <= 0) {
-								this.hideBox();
-							}
-						}
-					} else {
-						// animate the text out
-						caption.FadeOut();
-					}
-				} else {
-					// seems like the original behavior removed captions top down
-					// and stopped when a caption was still playing. so when we
-					// get to a caption still living, we will stop checking this tick
-					break;
-				}
-			}
-
-			for (const [token, life] of this.captionRecord) {
-				if (time >= life) {
-					this.captionRecord.delete(token);
-				}
-			}
-
-			// Clean up text history (keep for 1s just in case)
-			for (const [txt, life] of this.textCooldowns) {
-				if (time >= life) {
-					this.textCooldowns.delete(txt);
-				}
-			}
-		});
-
-
-		// when a caption is missing. must have cc_captiontrace
-		$.RegisterEventHandler('BadCaptionRequest', $.GetContextPanel(), (token: string, lifetime: number) => {
-			this.captions.push(
-				new CaptionEntry(
-					token,
-					{
-						bLowPriority: false,
-						bSFX: false,
-						nNoRepeat: 0,
-						nDelay: 0,
-						flLifetimeOverride: -1.0,
-						text: `[MISSING] ${token}`,
-						options: new Map<string, string>()
-					},
-					lifetime
-				)
-			);
-
-			// display the caption box
-			this.showBox();
-		});
-
-		// display standard captions via token, usually from scenes
-		$.RegisterEventHandler(
-			'DisplayCaptionRequest',
-			$.GetContextPanel(),
-			(token: string, caption: Caption, lifetime: number, time: number) => {
-				// Block GLaDOS/PotatOS if muted
-				if (this.bPotatosMuted) {
-					const t = token.toLowerCase();
-					if (t.indexOf('glados.') !== -1 || t.indexOf('potatos.') !== -1) {
-						$.Msg("CC: Blocking muted caption: " + token);
-						return;
-					}
-				}
-
-				// do not display multiple of the same
-
-				// TODO: include norepeat field instead of blatantly disregarding refires
-				//if (this.captions.has(token)) {
-				//	const showmissing = GameInterfaceAPI.GetSettingInt('cc_captiontrace');
-				//	if (showmissing > 0) {
-				//		$.Warning(`Ignoring refire for caption '${token}'`);
-				//	}
-				//	return;
-				//}
-
-				if (this.captionRecord.has(token)) {
-					return;
-				}
-
-				// SAFETY: Check if this EXACT text was played recently (within 0.1s)
-				// This catches engine bugs where the same scene fires multiple times in one frame
-				const localizedText = $.Localize(caption.text);
-				const lastTime = this.textCooldowns.get(localizedText);
-				if (lastTime !== undefined && (time - lastTime) < 0.1) {
-					return;
-				}
-
-				// Record this line in the cooldown map
-				this.textCooldowns.set(localizedText, time);
-
-				// record caption with an enforced minimum cooldown of 0.5s
-				const cooldown = (caption.nNoRepeat > 0.5) ? caption.nNoRepeat : 0.5;
-				this.captionRecord.set(token, time + cooldown);
-
-				this.captions.push(new CaptionEntry(token, caption, lifetime));
-				this.showBox();
-			}
-		);
-
-		// clear captions
-		$.RegisterForUnhandledEvent('MapUnloaded', () => {
-			this.wipeCaptions();
-		});
-		$.RegisterForUnhandledEvent('MapLoaded', () => {
-			this.wipeCaptions();
-		});
+		$.RegisterForUnhandledEvent('MapUnloaded', () => this.wipeCaptions());
+		$.RegisterForUnhandledEvent('MapLoaded', () => this.wipeCaptions());
+		$.RegisterForUnhandledEvent('GameUIStateChanged', () => this.updateStyle());
 
 		this.updateStyle();
 	}
 
 	static updateStyle() {
-		$.GetContextPanel().SetHasClass('MainMenu', GameInterfaceAPI.GetGameUIState() === GameUIState.MAINMENU);
+		$.GetContextPanel().SetHasClass('MainMenu', GameInterfaceAPI.GetGameUIState() === 1); // 1 is MAINMENU
 	}
 
-	// hide caption box when no more captions are being displayed
-	// need to make this a bit better
-	static updateVisibility() {
-		if (this.captions.length - 1 <= 0) {
-			this.hideBox();
-		}
-	}
-
-	static showBox() {
-		this.bg.style.opacity = 1;
-	}
-
-	static hideBox() {
-		this.bg.style.opacity = 0;
-	}
-
+	static showBox() { if (this.bg) this.bg.style.opacity = 1; }
+	static hideBox() { if (this.bg) this.bg.style.opacity = 0; }
 	static wipeCaptions() {
 		this.captions = [];
-		this.box.RemoveAndDeleteChildren();
-		this.bg.RemoveAndDeleteChildren();
+		if (this.box) this.box.RemoveAndDeleteChildren();
+		if (this.bg) this.bg.RemoveAndDeleteChildren();
 		this.hideBox();
 	}
 }
+
+// Global scope initialization
+(function () {
+	CloseCaptioning.init();
+})();

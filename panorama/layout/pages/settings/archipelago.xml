@@ -39,16 +39,15 @@
 					<Label text="#Archipelago_Settings_Symbol_Star" value="1" id="ap_symbol1" html="true" />
 				</SettingsEnumDropDown>
 
-				<!-- Transition Type -->
 				<SettingsEnumDropDown
-					id="TransitionTypeSetting"
 					text="#Archipelago_Settings_TransitionType"
-					psvar="ap_smart_warp"
 					infomessage="#Archipelago_Settings_TransitionType_info"
 					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveSmartWarpSetting()"
+					id="TransitionTypeSetting"
+					psvar="ap_smart_warp"
 				>
-					<Label text="#Archipelago_Settings_Transition_Menu" value="0" id="ap_transition0" />
-					<Label text="#Archipelago_Settings_Transition_Smart" value="1" id="ap_transition1" />
+					<Label text="#Archipelago_Settings_Transition_Menu" value="0" id="ap_transition_menu" />
+					<Label text="#Archipelago_Settings_Transition_Smart" value="1" id="ap_transition_smart" />
 				</SettingsEnumDropDown>
 
 				<!-- Map Status HUD -->

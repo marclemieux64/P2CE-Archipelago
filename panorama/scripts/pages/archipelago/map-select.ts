@@ -271,7 +271,11 @@ class ArchipelagoMapSelect {
             entry.AddClass('chapter_entry');
             (entry as any).canfocus = true;
 
-            entry.SetPanelEvent('onactivate', () => this.toggleChapter(chId));
+            entry.SetPanelEvent('onmouseover', () => $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus'));
+            entry.SetPanelEvent('onactivate', () => {
+                $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
+                this.toggleChapter(chId);
+            });
             entry.SetPanelEvent('onfocus', () => {
                 this.selectMap({
                     pic: chapter.pic,
@@ -419,7 +423,9 @@ class ArchipelagoMapSelect {
                     this.selectMap({ ...map, title: finalMapName, subtitle: map.subtitle || "", status: statusIcons, is_chapter: false });
                 };
 
+                mapBtn.SetPanelEvent('onmouseover', () => $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus'));
                 mapBtn.SetPanelEvent('onactivate', () => {
+                    $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
                     onSelect();
 
                     if (this.isController()) {

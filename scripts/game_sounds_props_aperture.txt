@@ -65,7 +65,7 @@
 	"channel"		"CHAN_BODY"
 	"soundlevel"		"SNDLVL_NORM"
 	"volume"		"0.85"
-	"wave"		"player/object_use_failure_01.wav"
+	"wave"		"buttons/button2.wav"
 
 	"soundentry_version" "2"
 	"operator_stacks"

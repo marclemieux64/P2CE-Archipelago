@@ -1,189 +1,103 @@
 {
-	// campaigns.kv3 is a file used to define your custom campaigns.
-	// Each campaign has a subset of metadata that all dictate your story, how your chapters are ordered and unlocked, and what art assets are used.
-	// Campaign saves are stored separately by P2:CE's save management system and will not conflict with other campaigns (e.g.: the Portal 2 base game, Half-Life 2, et cetera).
-	// 
-	// You can specify multiple campaigns in this file, stored in your add-on's scripts directory.
-	// See the Half-Life 2 campaigns.kv3 file in the P2:CE addons repo for an example.
-	//
-	// Addons with valid campaign KeyValue3 entry files can co-exist with one another, and will be detected by the campaign system in P2:CE.
-	
-	// This is the metadata block. All information surrounding the campaign itself is displayed to the user at runtime.
-	// 
-	// Campaigns MUST specify the following metadata to function and be published to the Steam Workshop:
-	// 		- A title (specified above)
-	// 		- A description
-	//		- Box art
-	//		- A cover image
-	//		- A full logo
-	//
-	// Box art and cover images must be SPECIFICALLY be sized at 600x900 (2:3 aspect ratio) and 920x430 RESPECTIVELY, conforming with the Steamworks
-	// library asset guidelines located at the following URL: https://partner.steamgames.com/doc/store/assets/libraryassets
-	//
-	// For simplicity's sake, the library assets you create in this mod can be repurposed for appid-facing Steam store and library assets
-	// that are visible to all end-users.
-	//
-	// Panorama supports loading JPEG, PNG and SVG graphics resources for campaign art assets. The campaign system will
-	// attempt to pull relevant resources from the .assets directory located at the root of your addon.
-	//
-	// Some of this metadata can be overridden by individual campaigns, chapters and maps. Refer to the chapters block
-	// and the second example campaign in this file for a real-world example.
-	meta = {
-		// Uses addon's author field if not provided.
-		author = "Addon Author Name"
-		
-		// Description as specified in the selector UI. Can be optionally localized.
-		// desc = "Global Campaign Description Goes Here"
-		
-		// ===========
-		// Art assets
-		// ===========
-		
-		// Box art (600x900px)
-		box_art = "{campaign_art}/template/boxart.png"
-		
-		// Cover image
-		selector_cover = "{campaign_art}/template/campaign_cover.png"
-		
-		// Small logo (at least 48x48px large).
-		square_logo = "{campaign_art}/template/logo.png"
-		
-		// Full campaign logo, as displayed in the campaign's main menu.
-		full_logo = "{campaign_art}/template/full_logo.png"
-		
-		// Logos can be made larger in your mod's main menu. Available parameters are "standard" and "large".
-		full_logo_size_preset = "standard"
-		
-		// Background for campaign entry, as displayed in selection UI
-		selector_button_background = "{campaign_art}/template/campaign_btn_bg.png"
-	}
-	
-	// All campaigns live in this block.
 	"campaigns" = {
-		// This is your campaign. It dictates the entirety of your story, and is used internally by P2:CE to enable campaign-specific features,
-		// such as progression tracking, save data isolation and chapter state control.
-		// 
-		// You can adjust the campaign_default ConVar to always force a specific campaign. This is ideal for mods that only utilize one campaign - see
-		// cfg/autoexec.cfg to see how this can be easily achieved.
-		"P2CE_Mod_Template" = {
-			// Define your campaign's title here. This is displayed by the UI, and additionally supports localization tokens as specified in "panorama_{LANGUAGE}.txt".
-			// This is required for publishing to either the Workshop or as a whole standalone mod.
-			title = "Portal 2: Community Edition - Mod Template"
-			
-			// Set this to false to lock all chapters except for chapter 1.
+		"Archipelago" = {
+			title = "Archipelago"
 			unlock_all = true
-			
-			// Campaign-specific info overrides are defined by a separate meta block defined within your campaign. This reduces asset duplication.
 			meta = {
-				// Campaign description
-				desc = "Campaign Description Goes Here"
-				
-				// Fallback background resources
-				background_music = "UIPanorama.Music.P2.Menu1"
-				background_image = "{campaign_art}/template/campaign_bg.png"
+				full_logo = "file://{images}/archipelago/portalpelago_v2.png"
+				square_logo = "file://{images}/archipelago/portalpelago_v2.png"
 			}
-			
-			// This is the chapters array. Each chapter can have a title, metadata (thumbnail, background images/videos/maps, music), and an array of associated maps.
-			// Failing to specify this data will cause the Panorama UI to failsafe and resort to placeholders.
-			//
-			// Any map can override this data by specifying a metadata block in its entry. A pre-defined localization token for your title and save comment
-			// can also be specified.
-			//
-			// Placeholder transition screens for individual maps can also be specified as is the case for Portal 2,
-			// which uses multiple transition screens for individual maps (see p2ce/scripts/campaign.kv3 for examples).
-			//
-			// Entering any map within a given chapter will automatically unlock that chapter.
-			
 			chapters = [
 				{
-					// This is the (localizable) name of your chapter.
-					title = "Mechanics Sample"
-					
-					// This is the title of your chapter as displayed by saverestore.
-					save_comment = "Mechanics Sample Save Comment"
-					
-					// Specify chapter metadata here.
+					title = "#portal2_Chapter1"
+					maps = [ { name = "sp_a1_intro*" }, { name = "sp_a1_wakeup" }, { name = "sp_a2_intro" } ]
 					meta = {
-						// The chapter thumbnail image. This is displayed in the chapter selection screen and the campaign settings menu.
-						thumbnail = "{campaign_art}/template/chapters/chapter1.png"
-						
-						// Menu background assets. Chapters can have a static background image and a map or background video. Optional music can also play throughout the UI.
-						// Due to internal limitations, it is not possible to specify both a background movie AND a map at the same time.
-						// Should either the background map or video fail to load, background_image is displayed by the UI as a last resort.
-						
-						background_map = "sdk_template_background"
-						background_music = "UIPanorama.Music.P2CE.Menu3"
-						background_image = "{campaign_art}/template/ch1_background_map.png"
-						
-						// Background images as displayed by the loading screen UI. This can be overridden by maps.
-						loading_screen = "{campaign_art}/template/loading/loadingscreen_sample_ch1.png"
-						transition_screen = "{campaign_art}/template/loading/loadingscreen_sample_ch1.png"
+						background_movie = "backgrounds/menu_act01.webm"
+						background_music = "UIPanorama.Music.P2.Menu1"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
 					}
-					
-					// This is the list of maps associated with the chapter. Map-specific overrides can influence how the UI appears to the player.
-					maps = [
-						{
-							name = "sdk_template_mechanics"
-							meta = {
-								name = "Mechanics Sample"
-							}
-						},
-					]
 				},
-			]
-		}
-		
-		// A second example campaign with specific overrides. Useful if a mod has multiple campaigns present.
-		// Uncomment and type "campaign_reload" in console to enable.
-		/*
-		"P2CE_Mod_Template_2" = {
-			// Campaign title
-			title = "Portal 2: Community Edition - Mod Template: Episode Two"
-			
-			unlock_all = false
-
-			// Campaign-specific meta overrides
-			meta = {
-				// Campaign description
-				desc = ":3c"
-				
-				// ===========
-				// Art assets
-				// ===========
-				
-				// Box art (600x900px)
-				box_art = "{campaign_art}/template/boxart.png"
-				
-				// Small logo (at least 48x48px large).
-				square_logo = "{campaign_art}/template/logo.png"
-				
-				// Full campaign logo, as displayed in the campaign's main menu.
-				full_logo = "{campaign_art}/template/full_logo.png"
-			}
-
-			chapters = [
 				{
-					title = "#episodic_Chapter1_Title"
-					save_comment = "#episodic_Chapter1_Title"
-					
+					title = "#portal2_Chapter2"
+					maps = [ { name = "sp_a2_laser_intro" }, { name = "sp_a2_laser_stairs" }, { name = "sp_a2_dual_lasers" }, { name = "sp_a2_laser_over_goo" }, { name = "sp_a2_catapult_intro" }, { name = "sp_a2_trust_fling" }, { name = "sp_a2_pit_flings" }, { name = "sp_a2_fizzler_intro" } ]
 					meta = {
-						thumbnail = "{campaign_art}/template/chapters/chapter1.png"
-						background_map = "sdk_template_background"
-						background_image = "{campaign_art}/template/campaign_bg.png"
+						background_movie = "backgrounds/menu_act02.webm"
+						background_music = "UIPanorama.Music.P2.Menu2"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
 					}
-					
-					// This is the list of maps associated with the chapter. Map-specific overrides (like the one specified in SDK_VEHICLES) can influence how the UI appears to the player.
-					maps = [
-						{
-							name = "sdk_template_mechanics"
-							meta = {
-								name = "Mechanics Sample"
-							}
-						},
-					]
 				},
+				{
+					title = "#portal2_Chapter3"
+					maps = [ { name = "sp_a2_sphere_peek" }, { name = "sp_a2_ricochet" }, { name = "sp_a2_bridge_intro" }, { name = "sp_a2_bridge_the_gap" }, { name = "sp_a2_turret_intro" }, { name = "sp_a2_laser_relays" }, { name = "sp_a2_turret_blocker" }, { name = "sp_a2_laser_vs_turret" }, { name = "sp_a2_pull_the_rug" } ]
+					meta = {
+						background_movie = "backgrounds/menu_act02.webm"
+						background_music = "UIPanorama.Music.P2.Menu2"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
+					}
+				},
+				{
+					title = "#portal2_Chapter4"
+					maps = [ { name = "sp_a2_column_blocker" }, { name = "sp_a2_laser_chaining" }, { name = "sp_a2_triple_laser" }, { name = "sp_a2_bts1" }, { name = "sp_a2_bts2" } ]
+					meta = {
+						background_movie = "backgrounds/menu_act02.webm"
+						background_music = "UIPanorama.Music.P2.Menu2"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
+					}
+				},
+				{
+					title = "#portal2_Chapter5"
+					maps = [ { name = "sp_a2_bts3" }, { name = "sp_a2_bts4" }, { name = "sp_a2_bts5" }, { name = "sp_a2_bts6" }, { name = "sp_a2_core" } ]
+					meta = {
+						background_movie = "backgrounds/menu_act02.webm"
+						background_music = "UIPanorama.Music.P2.Menu2"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
+					}
+				},
+				{
+					title = "#portal2_Chapter6"
+					maps = [ { name = "sp_a3_00" }, { name = "sp_a3_01" }, { name = "sp_a3_03" }, { name = "sp_a3_jump_intro" }, { name = "sp_a3_bomb_flings" }, { name = "sp_a3_crazy_box" }, { name = "sp_a3_transition01" } ]
+					meta = {
+						background_movie = "backgrounds/menu_act03.webm"
+						background_music = "UIPanorama.Music.P2.Menu3"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
+					}
+				},
+				{
+					title = "#portal2_Chapter7"
+					maps = [ { name = "sp_a3_speed_ramp" }, { name = "sp_a3_speed_flings" }, { name = "sp_a3_portal_intro" }, { name = "sp_a3_end" } ]
+					meta = {
+						background_movie = "backgrounds/menu_act03.webm"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
+					}
+				},
+				{
+					title = "#portal2_Chapter8"
+					maps = [ { name = "sp_a4_intro" }, { name = "sp_a4_tb_intro" }, { name = "sp_a4_tb_trust_drop" }, { name = "sp_a4_tb_wall_button" }, { name = "sp_a4_tb_polarity" }, { name = "sp_a4_tb_catch" }, { name = "sp_a4_stop_the_box" }, { name = "sp_a4_laser_catapult" }, { name = "sp_a4_laser_platform" }, { name = "sp_a4_speed_catch" }, { name = "sp_a4_jump_polarity" } ]
+					meta = {
+						background_movie = "backgrounds/menu_act04.webm"
+						background_music = "UIPanorama.Music.P2.Menu4"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
+					}
+				},
+				{
+					title = "#portal2_Chapter9"
+					maps = [ { name = "sp_a4_finale*" } ]
+					meta = {
+						background_movie = "backgrounds/menu_act04.webm"
+						background_music = "UIPanorama.Music.P2.Menu4"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
+					}
+				},
+				{
+					title = "#portal2_Chapter10"
+					maps = [ { name = "sp_a5_credits" } ]
+					meta = {
+						background_movie = "backgrounds/menu_act05.webm"
+						background_music = "UIPanorama.Music.P2.Menu5"
+						loading_screen = "file://{resources}/layout/pages/loading-screen.xml"
+					}
+				}
 			]
 		}
-		*/
 	}
 }

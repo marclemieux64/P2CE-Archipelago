@@ -54,7 +54,8 @@
 			</Button>
 		</Panel>
 
-		<!-- Background author -->
+		<!-- Background author removed -->
+		<!--
 		<Panel id="BgCredit" class="mainmenu__featured-bg MainMenuModeOnly NoCampaignSelectedOnly">
 			<Panel class="flow-down vertical-align-center">
 				<Label class="mainmenu__featured-bg__text" text="#MainMenu_Home_BackgroundCredit" />
@@ -62,6 +63,7 @@
 			</Panel>
 			<AvatarImage id="BgAvatar" class="mainmenu__featured-bg__avatar" />
 		</Panel>
+		-->
 
 		<Panel class="ControllerOnly fancy-orange p-3 flow-down vertical-align-bottom m-3" style="max-width: 512px;">
 			<Label class="text-l text-weight-bold horizontal-align-center" text="#MainMenu_ControllerUI_Note_Title" />

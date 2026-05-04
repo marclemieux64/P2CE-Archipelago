@@ -7,9 +7,6 @@
 	GameLogo	1
 	icon		"resource/icon"
 	
-	// FGD file used by Hammer vbsp to automatically apply correct KVs
-	GameData	"p2ce.fgd"
-	
 	// Set this to 1 to enable Workshop addon integration
 	// This is disabled by default to prevent WS addons from being mounted in mods
 	WorkshopEnabled 0
@@ -23,27 +20,20 @@
 		620
 		{
 			"required" "1"
-			
-			// Base Game
-			"portal2"
-			{
-				"vpk" "pak01"
-				"dir" "."
-			}
 
-			// Localized Voices (Auto-detected)
-			"portal2_|language|"
-			{
-				"vpk" "pak01"
-				"dir" "."
-				"optional" "1"
-			}
+			// Uncomment the language you want to use for voices:
+			//	"portal2_french"  { "vpk" "pak01" "optional" "1" }
+			// "portal2_german"  { "vpk" "pak01" "optional" "1" }
+			// "portal2_spanish" { "vpk" "pak01" "optional" "1" }
+			// "portal2_russian" { "vpk" "pak01" "optional" "1" }
+
+			"portal2"         { "vpk" "pak01" }
 		}
 	}
 
 	FileSystem
 	{
-		SteamAppId				440000		// Required to identify as a P2CE mod. Replace this with your own AppID if you are publishing a mod on Steam.
+		SteamAppId				440000		// Required to identify as a P2CE mod. Replace this with your own AppID if you are publishing a mod on Steam
 		
 		// If the user has a non-English language selected, for each "Game" path and mounted folder, another path with _<language>
 		// at the end is automatically added. For example, 'p2ce' on a French-localized machine would have
@@ -57,9 +47,6 @@
 		{
 			// This is the path used to load required P2:CE game libraries (client/server and coop matchmaking code)
 			gamebin									p2ce/bin
-			
-			// Custom content and VPK assets
-			game 									"|gameinfo_path|custom/*"
 			
 			// Mod core content will be mounted using this parameter, and all configuration files get written to this directory.
 			game+mod+default_write_path				|gameinfo_path|.

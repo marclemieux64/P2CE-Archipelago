@@ -68,7 +68,13 @@ class BaseMenu {
             this.showPrereleaseWarning();
             if (GameStateAPI.IsPlaytest()) this.showPlaytestConsentPopup();
 
-            const music = `UIPanorama.Music.P2CE.Menu${Math.floor(Math.random() * 7) + 1}`;
+            // ARCHIPELAGO: Sync music with the act-specific background video
+            const lastMap = $.persistentStorage.getItem('ArchipelagoLastMap') as string || 'sp_a1_intro1';
+            const act = this.getActForMap(lastMap);
+            const musicIndex = parseInt(act);
+            
+            const music = `UIPanorama.Music.P2.Menu${musicIndex}`;
+            $.Msg(`BASE MENU: Playing sync'd music: ${music}`);
             this.music = $.PlaySoundEvent(music);
         });
 
@@ -109,9 +115,6 @@ class BaseMenu {
         p.LoadLayoutSnippet('MenuBackgroundLayer');
         $.DispatchEvent('MainMenuAddBgPanel', p);
 
-        // Continue system removed — no logo lookup, no errors
-        $.DispatchEvent('MainMenuHideBackgroundMovie');
-
         // Load background
         this.loadBackground();
     }
@@ -139,10 +142,37 @@ class BaseMenu {
         this.loadStaticBg();
     }
 
-    static loadBackground() {
-        this.rerollMap();
-        this.loadNoRoll();
-    }
+	static getActForMap(mapName: string): string {
+		const map = mapName.toLowerCase();
+		if (map.includes('sp_a1') || map === 'sp_a2_intro') return '01';
+		if (map.includes('sp_a2')) return '02';
+		if (map.includes('sp_a3')) return '03';
+		if (map.includes('sp_a4')) return '04';
+		if (map.includes('sp_a5')) return '05';
+		return '01'; // Default
+	}
+
+	static loadBackground() {
+		const lastMap = $.persistentStorage.getItem('ArchipelagoLastMap') as string;
+		if (lastMap) {
+			const act = this.getActForMap(lastMap);
+			const videoPath = `file://{resources}/videos/backgrounds/menu_act${act}.webm`;
+			$.Msg(`BASE MENU: Forcing background video for map ${lastMap} -> ${videoPath}`);
+			
+			$.DispatchEvent('MainMenuSwitchReverse', false);
+			$.DispatchEvent('MainMenuHideBackgroundImage', true);
+			$.DispatchEvent('MainMenuShowBackgroundMovie', videoPath);
+			$.DispatchEvent('MainBackgroundLoaded');
+		} else {
+			const videoPath = `file://{resources}/videos/backgrounds/menu_act01.webm`;
+			$.Msg(`BASE MENU: No last map found, defaulting to ${videoPath}`);
+			
+			$.DispatchEvent('MainMenuSwitchReverse', false);
+			$.DispatchEvent('MainMenuHideBackgroundImage', true);
+			$.DispatchEvent('MainMenuShowBackgroundMovie', videoPath);
+			$.DispatchEvent('MainBackgroundLoaded');
+		}
+	}
 
     static loadStaticBg() {
         $.DispatchEvent('MainMenuShowBackgroundImage', undefined, true);

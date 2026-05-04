@@ -7,7 +7,7 @@
  * Used by the client to identify items to delete or modify.
  */
 void PrintAllEntities() {
-    //ArchipelagoLog("--- BEGIN ENTITY LIST ---");
+    ArchipelagoLog("--- BEGIN ENTITY LIST ---");
     CBaseEntity@ ent = EntityList().First();
     uint count = 0;
     
@@ -17,11 +17,16 @@ void PrintAllEntities() {
         string model = ent.GetModelName();
         
         // Format: [CLASS] NAME | MODEL
-        //ArchipelagoLog("ENT: [" + cls + "] " + (name == "" ? "(unnamed)" : name) + " | " + (model == "" ? "(no model)" : model));
+        ArchipelagoLog("ENT: [" + cls + "] " + (name == "" ? "(unnamed)" : name) + " | " + (model == "" ? "(no model)" : model));
         
         count++;
         @ent = EntityList().Next(ent);
     }
     
-    //ArchipelagoLog("--- END ENTITY LIST (Total: " + count + ") ---");
+    ArchipelagoLog("--- END ENTITY LIST (Total: " + count + ") ---");
+}
+
+[ServerCommand("PrintAllEntities", "Prints all entities in the map to console")]
+void PrintAllEntitiesCmd(const CommandArgs@ args) {
+    PrintAllEntities();
 }

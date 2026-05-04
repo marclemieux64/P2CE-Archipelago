@@ -34,6 +34,7 @@ string last_hinted_catapult = "";
 
 // --- ARRAYS ---
 array<int> g_processed_turret_indices;
+array<int> g_processed_entity_indices;
 array<string> trap_colors = { "255 0 0", "0 255 0", "0 0 255", "255 255 0", "255 0 255", "0 255 255" };
 array<string> scripted_fling_levels = { "sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity" };
 array<string> g_reported_monitors;

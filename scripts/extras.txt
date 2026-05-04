@@ -38,7 +38,7 @@
    }
    "chapter 1.2_info"
    {
-      "title"    "✓✓"
+      "title"    "ãý"
    }
   "chapter 1.3"
    {
@@ -82,7 +82,7 @@
    }
    "chapter 1.6_info"
    {
-      "title"    "✓"
+      "title"    "ã"
    }
   "chapter 1.7"
    {
@@ -98,7 +98,7 @@
   "chapter 1.8"
    {
       "title"    "═ Incinerator"
-      "subtitle" ""
+      "subtitle" "û"
       "command"  "map sp_a2_intro"
       "pic"      "vgui/chapters/chapter1"
    }
@@ -116,7 +116,7 @@
   "chapter 2.0"
    {
       "title"    "═ Laser Intro"
-      "subtitle" "î"
+      "subtitle" "ûíî"
       "command"  "map sp_a2_laser_intro"
       "pic"      "vgui/chapters/chapter2"
    }
@@ -127,7 +127,7 @@
   "chapter 2.1"
    {
       "title"    "═ Laser Stairs"
-      "subtitle" "ìæî"
+      "subtitle" "ûìæíî"
       "command"  "map sp_a2_laser_stairs"
       "pic"      "vgui/chapters/chapter2"
    }
@@ -138,7 +138,7 @@
   "chapter 2.2"
    {
       "title"    "═ Dual Lasers"
-      "subtitle" "ìî"
+      "subtitle" "ûìíî"
       "command"  "map sp_a2_dual_lasers"
       "pic"      "vgui/chapters/chapter2"
    }
@@ -149,7 +149,7 @@
   "chapter 2.3"
    {
       "title"    "═ Laser Over Goo"
-      "subtitle" "ñæçî"
+      "subtitle" "ñæçûíî"
       "command"  "map sp_a2_laser_over_goo"
       "pic"      "vgui/chapters/chapter2"
    }
@@ -171,7 +171,7 @@
   "chapter 2.5"
    {
       "title"    "═ Trust Fling"
-      "subtitle" "õñçæ"
+      "subtitle" "ûõñçæ"
       "command"  "map sp_a2_trust_fling"
       "pic"      "vgui/chapters/chapter2"
    }
@@ -182,7 +182,7 @@
   "chapter 2.6"
    {
       "title"    "═ Pit Flings"
-      "subtitle" "çîæ"
+      "subtitle" "ûçíîæ"
       "command"  "map sp_a2_pit_flings"
       "pic"      "vgui/chapters/chapter2"
    }
@@ -193,7 +193,7 @@
   "chapter 2.7"
    {
       "title"    "═ Fizzler Intro"
-      "subtitle" "ìîñ"
+      "subtitle" "ûíìîñ"
       "command"  "map sp_a2_fizzler_intro"
       "pic"      "vgui/chapters/chapter2"
    }
@@ -211,7 +211,7 @@
   "chapter 3.0"
    {
       "title"    "═ Ceiling Catapult"
-      "subtitle" "õñìî"
+      "subtitle" "ûõñìíî"
       "command"  "map sp_a2_sphere_peek"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -222,7 +222,7 @@
   "chapter 3.1"
    {
       "title"    "═ Ricochet"
-      "subtitle" "õçîìæñ"
+      "subtitle" "ûõçíîìæñ"
       "command"  "map sp_a2_ricochet"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -233,7 +233,7 @@
   "chapter 3.2"
    {
       "title"    "═ Bridge Intro"
-      "subtitle" "¿æñç"
+      "subtitle" "û¿æñç"
       "command"  "map sp_a2_bridge_intro"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -244,7 +244,7 @@
   "chapter 3.3"
    {
       "title"    "═ Bridge the Gap"
-      "subtitle" "¿æñç"
+      "subtitle" "û¿æñç"
       "command"  "map sp_a2_bridge_the_gap"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -255,7 +255,7 @@
   "chapter 3.4"
    {
       "title"    "═ Turret Intro"
-      "subtitle" "çæó"
+      "subtitle" "ûçæó"
       "command"  "map sp_a2_turret_intro"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -266,7 +266,7 @@
   "chapter 3.5"
    {
       "title"    "═ Laser Relays"
-      "subtitle" "ìï"
+      "subtitle" "ûíìï"
       "command"  "map sp_a2_laser_relays"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -277,7 +277,7 @@
   "chapter 3.6"
    {
       "title"    "═ Turret Blocker"
-      "subtitle" "¿õæç"
+      "subtitle" "û¿õæç"
       "command"  "map sp_a2_turret_blocker"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -288,7 +288,7 @@
   "chapter 3.7"
    {
       "title"    "═ Laser Vs. Turret"
-      "subtitle" "îçìæ"
+      "subtitle" "ûíîçìæ"
       "command"  "map sp_a2_laser_vs_turret"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -299,7 +299,7 @@
   "chapter 3.8"
    {
       "title"    "═ Pull The Rug"
-      "subtitle" "¿çæî"
+      "subtitle" "û¿çæíî"
       "command"  "map sp_a2_pull_the_rug"
       "pic"      "vgui/chapters/chapter3"
    }
@@ -317,7 +317,7 @@
   "chapter 4.0"
    {
       "title"    "═ Column Blocker"
-      "subtitle" "¿îïñìõ"
+      "subtitle" "û¿íîïñìõ"
       "command"  "map sp_a2_column_blocker"
       "pic"      "vgui/chapters/chapter4"
    }
@@ -328,7 +328,7 @@
   "chapter 4.1"
    {
       "title"    "═ Laser Chaining"
-      "subtitle" "îïìõ"
+      "subtitle" "ûíîïìõ"
       "command"  "map sp_a2_laser_chaining"
       "pic"      "vgui/chapters/chapter4"
    }
@@ -339,7 +339,7 @@
   "chapter 4.2"
    {
       "title"    "═ Triple Laser"
-      "subtitle" "îì"
+      "subtitle" "ûíîì"
       "command"  "map sp_a2_triple_laser"
       "pic"      "vgui/chapters/chapter4"
    }
@@ -350,7 +350,7 @@
   "chapter 4.3"
    {
       "title"    "═ Jailbreak"
-      "subtitle" "¿ñç"
+      "subtitle" "û¿ñç"
       "command"  "map sp_a2_bts1"
       "pic"      "vgui/chapters/chapter4"
    }
@@ -361,7 +361,7 @@
   "chapter 4.4"
    {
       "title"    "═ Escape"
-      "subtitle" "ó"
+      "subtitle" "ûó"
       "command"  "map sp_a2_bts2"
       "pic"      "vgui/chapters/chapter4"
    }
@@ -379,7 +379,7 @@
   "chapter 5.0"
    {
       "title"    "═ Turret Factory"
-      "subtitle" ""
+      "subtitle" "û"
       "command"  "map sp_a2_bts3"
       "pic"      "vgui/chapters/chapter5"
    }
@@ -390,7 +390,7 @@
   "chapter 5.1"
    {
       "title"    "═ Turret Sabotage"
-      "subtitle" "ó"
+      "subtitle" "ûó"
       "command"  "map sp_a2_bts4"
       "pic"      "vgui/chapters/chapter5"
    }
@@ -401,7 +401,7 @@
   "chapter 5.2"
    {
       "title"    "═ Neurotoxin Sabotage"
-      "subtitle" ""
+      "subtitle" "ûí"
       "command"  "map sp_a2_bts5"
       "pic"      "vgui/chapters/chapter5"
    }
@@ -412,7 +412,7 @@
   "chapter 5.3"
    {
       "title"    "═ Core"
-      "subtitle" "ñó"
+      "subtitle" "ûñó"
       "command"  "map sp_a2_core"
       "pic"      "vgui/chapters/chapter5"
    }
@@ -452,7 +452,7 @@
   "chapter 6.1"
    {
       "title"    "═ Underground"
-      "subtitle" ""
+      "subtitle" "û"
       "command"  "map sp_a3_01"
       "pic"      "vgui/chapters/chapter6"
    }
@@ -463,7 +463,7 @@
   "chapter 6.2"
    {
       "title"    "═ Cave Johnson"
-      "subtitle" ""
+      "subtitle" "û"
       "command"  "map sp_a3_03"
       "pic"      "vgui/chapters/chapter6"
    }
@@ -474,7 +474,7 @@
   "chapter 6.3"
    {
       "title"    "═ Repulsion Intro"
-      "subtitle" "àòé"
+      "subtitle" "ûàòèé"
       "command"  "map sp_a3_jump_intro"
       "pic"      "vgui/chapters/chapter6"
    }
@@ -485,7 +485,7 @@
   "chapter 6.4"
    {
       "title"    "═ Bomb Flings"
-      "subtitle" "òà"
+      "subtitle" "ûòà"
       "command"  "map sp_a3_bomb_flings"
       "pic"      "vgui/chapters/chapter6"
    }
@@ -496,7 +496,7 @@
   "chapter 6.5"
    {
       "title"    "═ Crazy Box"
-      "subtitle" "òàé"
+      "subtitle" "ûòàéè"
       "command"  "map sp_a3_crazy_box"
       "pic"      "vgui/chapters/chapter6"
    }
@@ -507,7 +507,7 @@
   "chapter 6.6"
    {
       "title"    "═ PotatOS"
-      "subtitle" "ù"
+      "subtitle" "ûù"
       "command"  "map sp_a3_transition01"
       "pic"      "vgui/chapters/chapter6"
    }
@@ -525,7 +525,7 @@
   "chapter 7.0"
    {
       "title"    "═ Propulsion Intro"
-      "subtitle" "àáéò"
+      "subtitle" "ûàáéèò"
       "command"  "map sp_a3_speed_ramp"
       "pic"      "vgui/chapters/chapter7"
    }
@@ -536,7 +536,7 @@
   "chapter 7.1"
    {
       "title"    "═ Propulsion Flings"
-      "subtitle" "àáé"
+      "subtitle" "ûàáéè"
       "command"  "map sp_a3_speed_flings"
       "pic"      "vgui/chapters/chapter7"
    }
@@ -547,7 +547,7 @@
   "chapter 7.2"
    {
       "title"    "═ Conversion Intro"
-      "subtitle" "àáâ"
+      "subtitle" "ûàáâ"
       "command"  "map sp_a3_portal_intro"
       "pic"      "vgui/chapters/chapter7"
    }
@@ -558,7 +558,7 @@
   "chapter 7.3"
    {
       "title"    "═ Three Gels"
-      "subtitle" "àáâ"
+      "subtitle" "ûàáâ"
       "command"  "map sp_a3_end"
       "pic"      "vgui/chapters/chapter7"
    }
@@ -576,7 +576,7 @@
   "chapter 8.0"
    {
       "title"    "═ Test"
-      "subtitle" "ðæñ"
+      "subtitle" "ûðæñ"
       "command"  "map sp_a4_intro"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -587,7 +587,7 @@
   "chapter 8.1"
    {
       "title"    "═ Funnel Intro"
-      "subtitle" "åðæ"
+      "subtitle" "ûåðæ"
       "command"  "map sp_a4_tb_intro"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -598,7 +598,7 @@
   "chapter 8.2"
    {
       "title"    "═ Ceiling Button"
-      "subtitle" "åðæñ"
+      "subtitle" "ûåðæñ"
       "command"  "map sp_a4_tb_trust_drop"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -609,7 +609,7 @@
   "chapter 8.3"
    {
       "title"    "═ Wall Button"
-      "subtitle" "åðæñõ"
+      "subtitle" "ûåðæñõ"
       "command"  "map sp_a4_tb_wall_button"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -620,7 +620,7 @@
   "chapter 8.4"
    {
       "title"    "═ Polarity"
-      "subtitle" "åðæ"
+      "subtitle" "ûåðæ"
       "command"  "map sp_a4_tb_polarity"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -631,7 +631,7 @@
   "chapter 8.5"
    {
       "title"    "═ Funnel Catch"
-      "subtitle" "åðæñõ"
+      "subtitle" "ûåðæñõ"
       "command"  "map sp_a4_tb_catch"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -642,7 +642,7 @@
   "chapter 8.6"
    {
       "title"    "═ Stop The Box"
-      "subtitle" "ðæñõ¿"
+      "subtitle" "ûðæñõ¿"
       "command"  "map sp_a4_stop_the_box"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -653,7 +653,7 @@
   "chapter 8.7"
    {
       "title"    "═ Laser Catapult"
-      "subtitle" "ðæõìîå"
+      "subtitle" "ûðæõìíîå"
       "command"  "map sp_a4_laser_catapult"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -664,7 +664,7 @@
   "chapter 8.8"
    {
       "title"    "═ Laser Platform"
-      "subtitle" "ñìîå"
+      "subtitle" "ûñìíîå"
       "command"  "map sp_a4_laser_platform"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -675,7 +675,7 @@
   "chapter 8.9"
    {
       "title"    "═ Propulsion Catch"
-      "subtitle" "æåñðá"
+      "subtitle" "ûæåñðá"
       "command"  "map sp_a4_speed_tb_catch"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -686,7 +686,7 @@
   "chapter 8.10"
    {
       "title"    "═ Repulsion Polarity"
-      "subtitle" "àâåæñ"
+      "subtitle" "ûàâåæñ"
       "command"  "map sp_a4_jump_polarity"
       "pic"      "vgui/chapters/chapter8"
    }
@@ -704,7 +704,7 @@
   "chapter 9.0"
    {
       "title"    "═ Finale 1"
-      "subtitle" "õåâ"
+      "subtitle" "ûõåâ"
       "command"  "map sp_a4_finale1"
       "pic"      "vgui/chapters/chapter9"
    }
@@ -715,7 +715,7 @@
   "chapter 9.1"
    {
       "title"    "═ Finale 2"
-      "subtitle" "åàæó"
+      "subtitle" "ûåàæó"
       "command"  "map sp_a4_finale2"
       "pic"      "vgui/chapters/chapter9"
    }
@@ -726,7 +726,7 @@
   "chapter 9.2"
    {
       "title"    "═ Finale 3"
-      "subtitle" "áâå"
+      "subtitle" "ûáâå"
       "command"  "map sp_a4_finale3"
       "pic"      "vgui/chapters/chapter9"
    }
@@ -737,7 +737,7 @@
   "chapter 9.3"
    {
       "title"    "═ Finale 4"
-      "subtitle" "ùàáâA.ôS.ôF.ô"
+      "subtitle" "ûùàáâA.ôS.ôF.ô"
       "command"  "map sp_a4_finale4"
       "pic"      "vgui/chapters/chapter9"
    }

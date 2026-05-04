@@ -15,6 +15,7 @@ void ResetPersistentSystems() {
     g_suppressed_classes.resize(0);
     g_reported_monitors.resize(0);
     g_processed_turret_indices.resize(0);
+    g_processed_entity_indices.resize(0);
 
 
     // 2. Reset Engine ConVars and Player Attributes via ServerCommand

@@ -1,7 +1,6 @@
 // =============================================================
 // ARCHIPELAGO RUN GAME STATUS TICK COMMAND
 // =============================================================
-
 void RunGameStatusTickCommand(const CommandArgs@ args) {
     // 0. Sync ArchipelagoDebug with Panorama
     bool currentDebug = cv_ArchipelagoDebug.GetBool();
@@ -24,28 +23,27 @@ void RunGameStatusTickCommand(const CommandArgs@ args) {
         }
     }
 
-    // 2. Persistent Class Suppression (Turrets)
-    if (g_suppressed_classes.length() > 0) {
-        for (uint i = 0; i < g_suppressed_classes.length(); i++) {
-            string cls = g_suppressed_classes[i];
-            
-            CBaseEntity@ t = null;
-            while ((@t = EntityList().FindByClassname(t, cls)) !is null) {
-                string tName = t.GetEntityName();
-                if (tName == "") {
-                    tName = cls + "_" + t.GetEntityIndex();
-                    t.KeyValue("targetname", tName);
-                }
-                
-                string hName = tName + "_holo";
-                if (EntityList().FindByName(null, hName) !is null) continue;
+    // 2. Persistent Turret Monitoring
+    // We ONLY scan the NPC class for the exact floor turret model.
+    CBaseEntity@ t = null;
+    while ((@t = EntityList().FindByClassname(t, "npc_portal_turret_floor")) !is null) {
+        // STRICT MODEL FILTER: Only floor turrets are Archipelago items
+        if (t.GetModelName().tolower().locate("npcs/turret/turret.mdl") == uint(-1)) continue;
 
-                // New turret! 
-                if (cv_ArchipelagoDebug.GetBool()) ArchipelagoLog("[AP DEBUG] Heartbeat FOUND NEW TURRET " + tName + ". Triggering attachment.");
-                
-                DisableEntityPickup(cls);
-                AttachHologramToEntity(tName, "", 0.66f, 20.0f, 2);
-            }
+        string tName = t.GetEntityName();
+        if (tName == "") {
+            tName = "npc_portal_turret_floor_" + t.GetEntityIndex();
+            t.KeyValue("targetname", tName);
         }
+        
+        string hName = tName + "_holo";
+        if (EntityList().FindByName(null, hName) !is null) continue;
+
+        // New turret discovered in the world! 
+        if (cv_ArchipelagoDebug.GetBool()) ArchipelagoLog("[AP DEBUG] Tick FOUND NEW TURRET " + tName + ". Attaching.");
+        
+        // Disable interaction and stick the red hologram to it
+        DisableEntityPickup(tName);
+        AttachHologramToEntity(tName, "", 0.66f, 20.0f, 2);
     }
 }

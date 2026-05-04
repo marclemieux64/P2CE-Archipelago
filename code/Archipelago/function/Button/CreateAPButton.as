@@ -1,4 +1,4 @@
-﻿// =============================================================
+// =============================================================
 // ARCHIPELAGO CREATE A P BUTTON
 // =============================================================
 void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale) {
@@ -80,12 +80,11 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
     QAngle hAng;
     int hSkin;
     float hScale = holo_scale;
+    bool shouldParent;
 
-// Use our central visual override system
-    GetHologramVisualOverrides(body, hPos, hAng, hSkin, hScale);
+    // Use our central visual override system
+    GetHologramVisualOverrides(body, hPos, hAng, hSkin, hScale, shouldParent);
 
-// Create the hologram with the new name and proper parent
-    StableCreateAPHologram(hPos, hAng, hScale, "", "", hSkin, scenarioName + "_holo", body);
-
+    // Create the hologram with the new name and proper parent
+    StableCreateAPHologram(hPos, hAng, hScale, "", "", hSkin, scenarioName + "_holo", shouldParent ? body : null);
 }
-

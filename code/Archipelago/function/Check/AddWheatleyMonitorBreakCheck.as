@@ -1,4 +1,4 @@
-﻿// =============================================================
+// =============================================================
 // ARCHIPELAGO ADD WHEATLEY MONITOR BREAK CHECK
 // =============================================================
 void AddWheatleyMonitorBreakCheck(string map_name) {
@@ -50,12 +50,12 @@ void AddWheatleyMonitorBreakCheck(string map_name) {
                 QAngle hAng;
                 int hSkin;
                 float hScale;
-                GetHologramVisualOverrides(anchor, hPos, hAng, hSkin, hScale);
+                bool shouldParent;
+                GetHologramVisualOverrides(anchor, hPos, hAng, hSkin, hScale, shouldParent);
 
-                CreateAPHologram(hPos, hAng, hScale, "", "", hSkin, holo_name);
+                StableCreateAPHologram(hPos, hAng, hScale, "", "", hSkin, holo_name, shouldParent ? anchor : null);
             }
         }
     }
 
 } // End of function
-

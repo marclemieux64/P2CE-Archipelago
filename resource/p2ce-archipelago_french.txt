@@ -1,0 +1,8 @@
+"lang"
+{
+	"Language" "French"
+	"Tokens"
+	{
+		"AP_Item_AerialFaithPlate_Hint" "Il vous manque les Plaques de Foi Aériennes"
+	}
+}

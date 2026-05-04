@@ -106,12 +106,13 @@
 		"portal2_MapName_sp_a4_speed_tb_catch"  "Propulsion Catch"
 		"portal2_MapName_sp_a4_jump_polarity"   "Repulsion Polarity"
 
-	// Chapter 9 Maps
+		// Chapter 9 Maps
 		"portal2_MapName_sp_a4_finale1"         "Finale 1"
 		"portal2_MapName_sp_a4_finale2"         "Finale 2"
 		"portal2_MapName_sp_a4_finale3"         "Finale 3"
 		"portal2_MapName_sp_a4_finale4"         "Finale 4"
 
+		//Archipelago
 		"Archipelago_Map_Checks"                "CHECKS"
 		"Archipelago_Map_MissingItems"          "MISSING ITEMS"
 		"Archipelago_Maps_Title"                "Archipelago Maps"
@@ -132,6 +133,12 @@
 		"Archipelago_Settings_MapStatusHUD_info" "Show current map checks status in the top-left corner when entering a level."
 		"Archipelago_Settings_Key_ShowStatus" "Show Map Progress HUD"
 		"Archipelago_Settings_WIP"              "Work in progress"
+		"AP_Item_AerialFaithPlate_Hint"         "You don't have the Aerial Faith Plates"
+		"MainMenu_Navigation_Play_Archipelago"			"Play P2CE Archipelago"
+		"MainMenu_Navigation_Play_Archipelago_Tagline"	"Start an archipelago P2CE game"
+		"PauseMenu_Navigation_Archipelago" "Change Map"
+		"PauseMenu_Navigation_Archipelago_Tagline"	"Change the map you are playing"
+		
 
 		"COOP_PRESENCE_WAITING_DEFAULT"			"Waiting for Partner"
 		"COOP_PRESENCE_WAITING_SPLITSCREEN"		"Splitscreen"
@@ -972,10 +979,6 @@
 		"MainMenu_Navigation_Home"						"Home"
 		"MainMenu_Navigation_Play"						"Play"
 		"MainMenu_Navigation_Play_Tagline"				"Begin testing"
-		"MainMenu_Navigation_Play_Archipelago"			"Play P2CE Archipelago"
-		"MainMenu_Navigation_Play_Archipelago_Tagline"	"Start an archipelago P2CE game"
-		"PauseMenu_Navigation_Archipelago" "Change Map"
-		"PauseMenu_Navigation_Archipelago_Tagline"	"Change the map you are playing"
 		"PauseMenu_Navigation_Reload" "Reload"
 		"PauseMenu_Navigation_Reload_Tagline" "Reload the current map"
 		"MainMenu_Navigation_Play_Modes"				"Choose what to play"

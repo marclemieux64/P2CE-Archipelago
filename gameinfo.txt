@@ -30,6 +30,14 @@
 				"vpk" "pak01"
 				"dir" "."
 			}
+
+			// Localized Voices (Auto-detected)
+			"portal2_|language|"
+			{
+				"vpk" "pak01"
+				"dir" "."
+				"optional" "1"
+			}
 		}
 	}
 

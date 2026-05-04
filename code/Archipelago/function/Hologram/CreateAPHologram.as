@@ -1,95 +1,78 @@
-﻿// =============================================================
-// ARCHIPELAGO CREATE A P HOLOGRAM
 // =============================================================
-ConVar hologram_freeze("ap_hologram_freeze", "0", FCVAR_CHEAT);
+// ARCHIPELAGO STABLE CREATE AP HOLOGRAM
+// =============================================================
 
-// THE GHOST TRAP: Any script calling this is using legacy/broken logic
-void CreateAPHologram(Vector position, QAngle angles, float scale, string new_parent = "", string attachment = "", int skin = 0, string name = "", CBaseEntity@ parentEnt = null) {
-    ArchipelagoLog("[AP WARNING] !!! LEGACY CreateAPHologram CALL DETECTED !!! Name: " + name);
-    // Forward it to the stable version so the game doesn't break, but we know it happened.
-    StableCreateAPHologram(position, angles, scale, new_parent, attachment, skin, name, parentEnt);
-}
-
-void StableCreateAPHologram(Vector position, QAngle angles, float scale, string new_parent = "", string attachment = "", int skin = 0, string name = "", CBaseEntity@ parentEnt = null) {
-    // 0. IDEMPOTENCY CHECK (VITAL)
+/**
+ * StableCreateAPHologram - Factory function that ensures a hologram exists for 
+ * a specific location without creating duplicates.
+ */
+CBaseEntity@ StableCreateAPHologram(Vector position, QAngle angles, float scale, string attachment = "", string bone = "", int skin = 0, string name = "", CBaseEntity@ parent = null) {
     CBaseEntity@ h = null;
 
-    // Check by name first
-    if (name != "" && name.locate("(null") == uint(-1)) {
+    if (name != "") {
         @h = EntityList().FindByName(null, name);
     }
 
-    // Check by parent relationship (BEST WAY for moving turrets)
-    if (h is null && parentEnt !is null) {
-        CBaseEntity@ child = null;
-        while ((@child = EntityList().FindByClassname(child, "prop_dynamic")) !is null) {
-            if (child.GetMoveParent() !is null && child.GetMoveParent() is parentEnt) {
-                if (child.GetModelName().locate("archipelago_hologram") != uint(-1)) {
-                    @h = child;
-                    break;
-                }
-            }
-        }
-    }
-
-    // Proximity fallback (for unparented holos)
-    if (h is null) {
-        CBaseEntity@ check = null;
-        while ((@check = EntityList().FindByClassnameWithin(check, "prop_dynamic", position, 32.0f)) !is null) {
-            if (check.GetModelName().locate("archipelago_hologram") != uint(-1)) {
-                @h = check;
-                break;
-            }
-        }
-    }
-
+    // Name collision / Type check
     if (h !is null) {
-        // Already exists, update and BAIL
-        h.KeyValue("skin", "" + skin);
-        if (name != "" && name.locate("(null") == uint(-1) && h.GetEntityName() == "") {
-            h.KeyValue("targetname", name);
-        }
-        return;
-    }
-
-    // 1. Setup the entity
-    CBaseEntity@ holo = util::CreateEntityByName("prop_dynamic");
-    if (holo is null) return;
-
-    holo.KeyValue("model", "models/effects/ap/archipelago_hologram.mdl");
-    holo.KeyValue("solid", "0");
-    holo.KeyValue("skin", "" + skin);
-    holo.KeyValue("modelscale", "" + scale);
-    holo.KeyValue("DefaultAnim", "idle");
-
-    if (name != "" && name.locate("(null") == uint(-1)) holo.KeyValue("targetname", name);
-    
-    holo.SetAbsOrigin(position);
-    holo.SetAbsAngles(angles);
-
-    // 2. Spawn
-    holo.Spawn();
-    holo.KeyValue("movetype", "0"); // Force MOVETYPE_NONE
-
-    // 3. Parenting
-    string finalAttachment = attachment;
-    if (finalAttachment.locate("(null") != uint(-1)) finalAttachment = "";
-
-    if (parentEnt !is null) {
-        holo.SetParent(parentEnt, -1);
-        if (finalAttachment.length() > 1 && finalAttachment != "null" && finalAttachment != "none") {
-            holo.SetParentAttachment(finalAttachment);
-        }
-    } else if (new_parent != "" && new_parent.locate("(null") == uint(-1)) {
-        CBaseEntity@ pEnt = EntityList().FindByName(null, new_parent);
-        if (pEnt !is null) {
-            holo.SetParent(pEnt, -1);
-            if (finalAttachment.length() > 1 && finalAttachment != "null" && finalAttachment != "none") {
-                holo.SetParentAttachment(finalAttachment);
-            }
+        if (h.GetModelName().locate("archipelago_hologram") != uint(-1)) {
+            // Already exists - RE-SYNC visuals
+            h.SetAbsOrigin(position);
+            h.SetAbsAngles(angles);
+            h.KeyValue("skin", "" + skin);
+            h.KeyValue("modelscale", "" + scale);
+            return h;
         } else {
-            holo.KeyValue("parentname", new_parent);
+            name = name + "_ap_holo";
+            @h = null; // Reset h to force creation
         }
     }
+
+    // Proximity check to prevent overlapping identical holograms
+    CBaseEntity@ nearby = EntityList().FindByClassnameNearest("prop_dynamic", position, 5.0f);
+    if (nearby !is null && nearby.GetModelName().locate("archipelago_hologram") != uint(-1)) {
+        if (name == "" || nearby.GetEntityName() == name) {
+            nearby.SetAbsOrigin(position);
+            nearby.KeyValue("skin", "" + skin);
+            return nearby;
+        }
+    }
+
+    // Create the entity
+    @h = util::CreateEntityByName("prop_dynamic");
+    if (h !is null) {
+        h.KeyValue("model", "models/effects/ap/archipelago_hologram.mdl");
+        if (name != "") h.KeyValue("targetname", name);
+        h.KeyValue("skin", "" + skin);
+        h.KeyValue("modelscale", "" + scale);
+        
+        // Use KeyValue for animation to avoid unstable FireInput calls during init
+        h.KeyValue("DefaultAnim", "idle");
+        
+        h.SetAbsOrigin(position);
+        h.SetAbsAngles(angles);
+        h.Spawn();
+
+        // Holograms should be non-solid by default to avoid blocking players
+        h.SetSolid(SOLID_NONE);
+        h.SetMoveType(MOVETYPE_NONE);
+
+        if (parent !is null) {
+            h.SetParent(parent, -1);
+            if (attachment != "") {
+                Variant v;
+                v.SetString(attachment);
+                h.FireInput("SetParentAttachment", v, 0.01f, null, null, 0);
+            }
+        }
+    }
+
+    return h;
 }
 
+/**
+ * CreateAPHologram - Backward compatibility wrapper.
+ */
+CBaseEntity@ CreateAPHologram(Vector position, QAngle angles, float scale, string attachment = "", string bone = "", int skin = 0, string name = "", CBaseEntity@ parent = null) {
+    return StableCreateAPHologram(position, angles, scale, attachment, bone, skin, name, parent);
+}

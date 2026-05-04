@@ -1,4 +1,4 @@
-﻿// =============================================================
+// =============================================================
 // ARCHIPELAGO REMOVE GEL
 // =============================================================
 /**
@@ -45,12 +45,13 @@ void RemoveGel(Vector pos, string object_type = "", string object_name = "", boo
             QAngle hAng;
             int hSkin;
             float hScale;
+            bool shouldParent;
             
             // Fetch correct visuals (pitch, offset, scale) for this specific entity type
-            GetHologramVisualOverrides(nearest, hPos, hAng, hSkin, hScale);
+            GetHologramVisualOverrides(nearest, hPos, hAng, hSkin, hScale, shouldParent);
             
             string hName = nearest.GetEntityName() + "_holo";
-            StableCreateAPHologram(hPos, hAng, hScale, "", "", 1, hName);
+            StableCreateAPHologram(hPos, hAng, hScale, "", "", 1, hName, shouldParent ? nearest : null);
         }
         
         nearest.Remove();
@@ -59,4 +60,3 @@ void RemoveGel(Vector pos, string object_type = "", string object_name = "", boo
     // Always attempt to clear floor gel at this position
     CreateClearGel(pos, 0.0f);
 }
-

@@ -26,7 +26,7 @@
 #include "Archipelago/Helpers/PrintAllEntities.as"
 #include "Archipelago/Helpers/RefreshAllAPHolograms.as"
 #include "Archipelago/Helpers/RunDeathLinkTick.as"
-#include "Archipelago/function/Check/WarpToMenu.as"
+#include "Archipelago/Function/Check/WarpToMenu.as"
 
 // 4. Restore
 #include "Archipelago/Restore/RemoveAllButtonFrames.as"
@@ -34,49 +34,52 @@
 #include "Archipelago/Restore/RestoreCatapults.as"
 
 // 5. Functions
-#include "Archipelago/function/AddEntityOutputScript.as"
-#include "Archipelago/function/AddEntityOutputScriptAtPos.as"
-#include "Archipelago/function/AttachDeathTrigger.as"
-#include "Archipelago/function/BlockWheatleyFight.as"
-#include "Archipelago/function/DeleteCoreOnOutput.as"
-#include "Archipelago/function/DeleteEntity.as"
-#include "Archipelago/function/DisableEntityPhysics.as"
-#include "Archipelago/function/DisableEntityPickup.as"
-#include "Archipelago/function/DoMapSpecificSetup.as"
+#include "Archipelago/Function/AddEntityOutputScript.as"
+#include "Archipelago/Function/AddEntityOutputScriptAtPos.as"
+#include "Archipelago/Function/AttachDeathTrigger.as"
+#include "Archipelago/Function/BlockWheatleyFight.as"
+#include "Archipelago/Function/DeleteCoreOnOutput.as"
+#include "Archipelago/Function/DeleteEntity.as"
+#include "Archipelago/Function/DisableEntityPhysics.as"
+#include "Archipelago/Function/DisableEntityPickup.as"
+#include "Archipelago/Function/DoMapSpecificSetup.as"
 
-// 6. Function Categories
-#include "Archipelago/function/Button/AddButtonFrame.as"
-#include "Archipelago/function/Button/AddCustomFrame.as"
-#include "Archipelago/function/Button/AddFloorButtonFrame.as"
-#include "Archipelago/function/Button/CreateAPButton.as"
+// 6. Items
+#include "Archipelago/Items/AerialFaithPlate.as"
 
-#include "Archipelago/function/Check/AddVitrifiedDoorCheck.as"
-#include "Archipelago/function/Check/AddWheatleyMonitorBreakCheck.as"
-#include "Archipelago/function/Check/CreateCompleteLevelAlertHook.as"
-#include "Archipelago/function/Check/HandleMapCompletion.as"
+// 7. Function Categories
+#include "Archipelago/Function/Button/AddButtonFrame.as"
+#include "Archipelago/Function/Button/AddCustomFrame.as"
+#include "Archipelago/Function/Button/AddFloorButtonFrame.as"
+#include "Archipelago/Function/Button/CreateAPButton.as"
 
-#include "Archipelago/function/Gel/CreateClearGel.as"
-#include "Archipelago/function/Gel/RemoveGel.as"
+#include "Archipelago/Function/Check/AddVitrifiedDoorCheck.as"
+#include "Archipelago/Function/Check/AddWheatleyMonitorBreakCheck.as"
+#include "Archipelago/Function/Check/CreateCompleteLevelAlertHook.as"
+#include "Archipelago/Function/Check/HandleMapCompletion.as"
 
-#include "Archipelago/function/Hologram/AttachHologramToEntity.as"
-#include "Archipelago/function/Hologram/CreateAPHologram.as"
-#include "Archipelago/function/Hologram/CreateMapSpecificHolos.as"
+#include "Archipelago/Function/Gel/CreateClearGel.as"
+#include "Archipelago/Function/Gel/RemoveGel.as"
 
-#include "Archipelago/function/PortalGun/DisablePortalGun.as"
-#include "Archipelago/function/PortalGun/IncineratorDisablePortalGun.as"
+#include "Archipelago/Function/Hologram/AttachHologramToEntity.as"
+#include "Archipelago/Function/Hologram/CreateAPHologram.as"
+#include "Archipelago/Function/Hologram/CreateMapSpecificHolos.as"
 
-#include "Archipelago/function/PotatOS/RemovePotatOS.as"
-#include "Archipelago/function/PotatOS/RemovePotatosFromGun.as"
+#include "Archipelago/Function/PortalGun/DisablePortalGun.as"
+#include "Archipelago/Function/PortalGun/IncineratorDisablePortalGun.as"
+
+#include "Archipelago/Function/PotatOS/RemovePotatOS.as"
+#include "Archipelago/Function/PotatOS/RemovePotatosFromGun.as"
 #include "Archipelago/Restore/RestorePotatosToGun.as"
 
-#include "Archipelago/function/Trap/ButterFingerTrap.as"
-#include "Archipelago/function/Trap/CubeConfettiTrap.as"
-#include "Archipelago/function/Trap/DialogTrap.as"
-#include "Archipelago/function/Trap/FizzlePortalTrap.as"
-#include "Archipelago/function/Trap/MotionBlurTrap.as"
-#include "Archipelago/function/Trap/SlipperyFloorTrap.as"
+#include "Archipelago/Function/Trap/ButterFingerTrap.as"
+#include "Archipelago/Function/Trap/CubeConfettiTrap.as"
+#include "Archipelago/Function/Trap/DialogTrap.as"
+#include "Archipelago/Function/Trap/FizzlePortalTrap.as"
+#include "Archipelago/Function/Trap/MotionBlurTrap.as"
+#include "Archipelago/Function/Trap/SlipperyFloorTrap.as"
 
-// 7. Interfaces & Startup
+// 8. Interfaces & Startup
 #include "Archipelago/Core/RunDelayedInitialization.as"
 #include "Archipelago/Core/ServerCommand.as"
 

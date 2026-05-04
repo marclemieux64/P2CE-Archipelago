@@ -69,6 +69,7 @@ void DeleteEntityCmd(const CommandArgs@ args) {
     bool create_holo = (args.ArgC() > 2) ? (args.Arg(2) == "1") : true;
     float scale = (args.ArgC() > 3) ? args.Arg(3).toFloat() : 0.7f;
     DeleteEntity(target, create_holo, scale);
+    RefreshAllAPHolograms();
 }
 
 [ServerCommand("RemoveGel", "Removes gel sprayer/entity and clears floor: RemoveGel x y z [type] [name] [create_holo]")]
@@ -130,6 +131,7 @@ void DumpAPHolosCmd(const CommandArgs@ args) {
 void DeleteCoreOnOutputCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     DeleteCoreOnOutput(args.Arg(1), args.Arg(2), args.Arg(3));
+    RefreshAllAPHolograms();
 }
 
 [ServerCommand("AddScript", "Connects an entity output to a console script")]

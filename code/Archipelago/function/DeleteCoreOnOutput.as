@@ -1,4 +1,4 @@
-﻿// =============================================================
+// =============================================================
 // ARCHIPELAGO DELETE CORE ON OUTPUT
 // =============================================================
 /**
@@ -15,11 +15,11 @@ void DeleteCoreOnOutput(string core_name, string target_name, string output) {
 
     Variant v;
     // Command format: DeleteEntity <name> <holo> <scale>
-    v.SetString(output + " InitCmd:Command:DeleteEntity " + core_name + " 0 0.7:5.0:-1");
+    // Changed holo flag to 1 to ensure cores hitting Wheatley get holograms
+    v.SetString(output + " InitCmd:Command:DeleteEntity " + core_name + " 1 0.7:5.0:-1");
 
     for (uint i = 0; i < targets.length(); i++) {
         targets[i].FireInput("AddOutput", v, 0.0f, null, null, 0);
     }
     ArchipelagoLog("[Archipelago] Hooked output '" + output + "' on '" + targets.length() + "' entities matched by '" + target_name + "' to delete '" + core_name + "' in 5s");
 }
-

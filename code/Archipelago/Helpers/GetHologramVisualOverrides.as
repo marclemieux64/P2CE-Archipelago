@@ -2,255 +2,70 @@
 // ARCHIPELAGO GET HOLOGRAM VISUAL OVERRIDES
 // =============================================================
 
-void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&out targetAng, int&out targetSkin, float&out targetScale) {
+/**
+ * GetHologramVisualOverrides - The single source of truth for all hologram rules.
+ * Determines position, orientation, skin, scale, and parenting behavior.
+ */
+void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&out targetAng, int&out targetSkin, float&out targetScale, bool&out shouldParent) {
     if (ent is null) return;
     UpdateInternalMapName();
 
     string classname = ent.GetClassname();
-    string model = ent.GetModelName();
+    string model = ent.GetModelName().tolower();
     string name = ent.GetEntityName();
+
     // Default values
     targetPos = ent.GetAbsOrigin();
     targetAng = ent.GetAbsAngles();
-    targetSkin = 0; 
-    targetScale = 1.0f;
+    targetSkin = 1; // Default to Green (Skin 1) for found checks
+    targetScale = 0.7f;
+    shouldParent = true;
 
-    // 0. SPECIFIC NAMED ENTITIES (Elevators, Trains, Ratman Dens, Portal Gun)
+    // 0. SHARED LOGIC FLAGS
+    bool isCore = (classname.locate("core") != uint(-1) || name.locate("core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
     bool isElevator = (name.locate("exit_lift_train") != uint(-1) || name.locate("departure_elavator") != uint(-1) || name.locate("departure_elevator") != uint(-1));
     bool isRatmanDen = (name.locate("rd") == 0);
     bool isPortalGun = (name.locate("portal") != uint(-1) && name.locate("gun") != uint(-1));
+    bool isTurret = (model.locate("npcs/turret/turret.mdl") != uint(-1));
+    bool isCube = (model.locate("box") != uint(-1) || model.locate("cube") != uint(-1) || model.locate("mp_ball") != uint(-1) || classname.locate("cube") != uint(-1));
+    bool isAntique = (model.locate("underground") != uint(-1) || model.locate("antique") != uint(-1));
 
-    if (isElevator || isRatmanDen || isPortalGun) {
-        targetPos = ent.GetAbsOrigin();
-        
-        // Add a vertical offset so it floats above the button/den
-        if (isRatmanDen) {
-            targetPos = targetPos + (ent.Up() * 75.0f);
-        } else if (isPortalGun) {
-            targetPos = targetPos + (ent.Up() * 32.0f);
-        }
-
-        targetAng = ent.GetAbsAngles();
-        targetScale = 1.0f;
-        
-        string symbols = g_map_symbols;
-        bool mapDone = (symbols != "" && symbols.locate("ã") == uint(-1));
-        bool mapPlayable = (g_map_status >= 1);
-        bool rDone = (symbols == "" || symbols.locate("ø") == uint(-1)); 
-        bool pDone = (symbols == "" || (symbols.locate("þ") == uint(-1) && symbols.locate("ý") == uint(-1) && symbols.locate("ǫ") == uint(-1)));
-
-        if (isRatmanDen) {
-            targetSkin = (rDone || g_ratman_status == 1 || mapDone) ? 4 : 0;
-        } else if (isPortalGun) {
-            targetSkin = (pDone || mapDone) ? 4 : 0;
-        } else if (name.locate("chamber_button") != uint(-1)) {
-            int missingCount = 0;
-            int startIdx = 0;
-            while ((startIdx = symbols.locate("¢", startIdx)) != -1) {
-                missingCount++;
-                startIdx += 2; // "¢" is 2 bytes in UTF-8
-            }
-            int doorIdx = 1;
-            if (name.locate("button2") != uint(-1)) doorIdx = 2; else if (name.locate("button3") != uint(-1)) doorIdx = 3;
-            targetSkin = (mapDone || missingCount <= (3 - doorIdx)) ? 4 : 0;
-        } else {
-            targetSkin = mapDone ? 4 : 0;
-        }
-        
-        return;
-    }
-
-    // 1. MAP-SPECIFIC OVERRIDES
-    if (current_map == "sp_a1_intro1") {
-        if (name.locate("dropper") != uint(-1) || model.locate("dropper") != uint(-1) || classname == "env_entity_maker") {
-            targetPos = ent.GetAbsOrigin() + (ent.Up() * -175.0f);
-            targetSkin = 4;
-            return;
-        }
-    }
-
-    if (current_map == "sp_a1_intro2") {
-        if (name.locate("box") != uint(-1)) {
-            targetPos = ent.GetAbsOrigin() + (ent.Up() * -30.0f);
-            targetAng.x = 0.0f;
-            targetAng.y = 0.0f;
-            targetAng.z = 0.0f;
-            targetSkin = 4;
-            targetScale = 0.66f;
-            return;
-        }
-    }
+    // 1. GLOBAL BASE RULES (Model/Class based)
     
-    if (current_map == "sp_a1_intro4") {
-        if (name.locate("box_dropper-cube_dropper_box") != uint(-1) || classname == "env_entity_maker") {
-            targetPos = ent.GetAbsOrigin() + (ent.Up() * -330.0f);
-            targetSkin = 4;
-            return;
-        }
-        if (name.locate("section_2_box_2") != uint(-1) || classname == "prop_weighted_cube") {
-            targetPos = ent.GetAbsOrigin();
-            targetSkin = 4;
-            targetScale = 0.66f;
-            return;
-        }
-    }
-
-    if (current_map == "sp_a1_intro7") {
-        Vector pos = ent.GetAbsOrigin();
-        targetAng = QAngle(0.0f, 0.0f, 0.0f);
-        
-        if ((pos - Vector(-2801.72f, 213.41f, 1522.55f)).Length() < 10.0f) {
-            targetPos = Vector(-2801.72f, 213.41f, 1522.55f); 
-            targetAng = QAngle(-70.74f, 349.67f, 0.0f);
-            targetSkin = 2; 
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2768.0f, -146.0f, 1512.0f)).Length() < 10.0f) {
-            targetPos = Vector(-2768.0f, -146.0f, 1512.0f);
-            targetAng = QAngle(-90.0f, 0.0f, 0.0f);
-            targetSkin = 2;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2860.0f, 304.0f, 1266.0f)).Length() < 10.0f) {
-            targetPos = Vector(-2860.0f, 304.0f, 1266.0f);
-            targetAng = QAngle(-60.0f, 0.0f, 0.0f);
-            targetSkin = 2;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2838.0f, -256.0f, 1268.0f)).Length() < 10.0f) {
-            targetPos = Vector(-2838.0f, -256.0f, 1268.0f);
-            targetAng = QAngle(-64.31f, 182.29f, 31.14f);
-            targetSkin = 2;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2943.43f, 37.41f, 1426.5f)).Length() < 10.0f) {
-            targetPos = Vector(-2943.43f, 37.41f, 1426.5f);
-            targetAng = QAngle(-84.78f, 319.40f, 30.71f);
-            targetSkin = 5;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2802.90f, 101.77f, 1520.28f)).Length() < 10.0f) {
-            targetPos = Vector(-2802.90f, 101.77f, 1520.28f);
-            targetAng = QAngle(-75.0f, 0.0f, 0.0f);
-            targetSkin = 2;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2951.71f, -74.22f, 1442.0f)).Length() < 10.0f) {
-            targetPos = Vector(-2951.71f, -74.22f, 1442.0f);
-            targetAng = QAngle(-60.0f, 0.0f, 0.0f);
-            targetSkin = 3;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2851.05f, -66.81f, 1264.59f)).Length() < 10.0f) {
-            targetPos = Vector(-2851.05f, -66.81f, 1264.59f);
-            targetAng = QAngle(-82.38f, 173.60f, 109.29f);
-            targetSkin = 2;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2857.17f, -112.81f, 1264.47f)).Length() < 10.0f) {
-            targetPos = Vector(-2857.17f, -112.81f, 1264.47f);
-            targetAng = QAngle(-82.51f, 6.50f, -83.49f);
-            targetSkin = 2;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2983.71f, 256.0f, 1146.0f)).Length() < 10.0f) {
-            targetPos = Vector(-2983.71f, 256.0f, 1146.0f);
-            targetAng = QAngle(-60.0f, 0.0f, 0.0f);
-            targetSkin = 2;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2912.0f, -238.47f, 1141.86f)).Length() < 10.0f) {
-            targetPos = Vector(-2940.0f, -238.47f, 1141.86f);
-            targetAng = QAngle(-64.31f, 182.29f, 31.14f);
-            targetSkin = 2;
-            targetScale = 0.7f;
-            return;
-        }
-        if ((pos - Vector(-2824.36f, -395.82f, 1297.38f)).Length() < 10.0f) {
-            targetPos = Vector(-2824.36f, -395.82f, 1297.38f);
-            targetAng = QAngle(2.08f, 4.29f, 68.86f);
-            targetSkin = 2;
-            targetScale = 0.7f;
-            return;
-        }
-    }
-
-    if (current_map == "sp_a2_fizzler_intro") {
-        if (name.locate("cube_dropper-cube_dropper_box") != uint(-1)) {
-            CBaseEntity@ maker = null;
-            while ((@maker = EntityList().FindByClassname(maker, "env_entity_maker")) !is null) {
-                if (maker.GetEntityName().locate("cube_dropper") != uint(-1)) {
-                    targetPos = maker.GetAbsOrigin() + (maker.Up() * -420.0f);
-                    break;
-                }
-            }
-            targetSkin = 4;
-            return;
-        }
-    }
-
-    // 2. WHEATLEY MONITORS
-    if (model.locate("wheatley_monitor") != uint(-1) || name.locate("monitor") != uint(-1) || name.locate("tv_crack") != uint(-1)) {
-        targetPos = ent.GetAbsOrigin() + (ent.Up() * 140.0f) + (ent.Left() * 40.0f);
-        targetAng = ent.GetAbsAngles(); 
-        targetScale = 0.9f;
-        return;
-    }
-
-    // 5. FRANKENTURRETS
-    if (classname == "prop_monster_box" || model.locate("monster") != uint(-1)) {
-        targetSkin = 4;
-        targetPos = ent.GetAbsOrigin() + (ent.Up() * 24.0f);
-        return;
-    }
-
-    // 6. TRACTOR BEAMS / FUNNELS
-    if (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel") {
-        targetSkin = 4;
-        targetPos = ent.GetAbsOrigin() + (ent.Forward() * 95.0f);
-        targetAng.x += 90.0f; 
-        return;
-    }
-
-    // 7. CUBES
-    if (classname.locate("cube") != uint(-1) || model.locate("metal_box") != uint(-1)) {
-        targetSkin = 4;
-        targetPos = ent.GetAbsOrigin() + (ent.Up() * 32.0f);
-        return;
-    }
-
-    // 9. STANDARD PEDESTAL BUTTONS
-    if (classname == "prop_button" || classname == "prop_under_button") {
-        targetSkin = 4;
-        targetPos = ent.GetAbsOrigin() + (ent.Up() * 70.0f);
+    // A. TURRETS (Red Skin 2, Fixed height)
+    if (isTurret) {
+        targetSkin = 2;
+        targetPos = ent.GetAbsOrigin() + (ent.Up() * 80.0f);
         targetScale = 0.66f;
         return;
     }
 
-    // 10. FLOOR BUTTONS
-    if (classname == "prop_floor_button" || classname == "prop_floor_cube_button" || classname == "prop_floor_ball_button" || classname == "prop_under_floor_button") {
-        targetSkin = 4;
+    // B. CUBES (Weighted, Reflection, Antique, Ball)
+    if (isCube) {
         targetPos = ent.GetAbsOrigin() + (ent.Up() * 40.0f);
-        targetScale = 1.0f;
+        targetScale = 0.66f;
+        
+        // ALL CUBES get absolute downward orientation (90.0f) and no parenting
+        targetAng = QAngle(0.0f, 0.0f, 0.0f);
+        shouldParent = false;
         return;
     }
 
-    // 11. LASER DEVICES
-    bool isLaser = (classname.locate("laser") != uint(-1) || name.locate("laser") != uint(-1) || classname.locate("catcher") != uint(-1));
-    if (isLaser) {
+    // C. BUTTONS (Pedestal & Floor)
+    if (classname.locate("button") != uint(-1)) {
+        if (classname.locate("floor") != uint(-1)) {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 40.0f);
+            targetScale = 1.0f;
+        } else {
+            targetPos = ent.GetAbsOrigin() + (ent.Up() * 70.0f);
+            targetScale = 0.66f;
+        }
+        return;
+    }
+
+    // D. LASER DEVICES (Projectors, Catchers, Relays)
+    if (classname.locate("laser") != uint(-1) || classname.locate("catcher") != uint(-1) || name.locate("laser") != uint(-1)) {
         targetSkin = 4;
-        targetScale = 0.7f;
-        targetAng = ent.GetAbsAngles();
         if (classname.locate("relay") != uint(-1) || name.locate("relay") != uint(-1)) {
             targetPos = ent.GetAbsOrigin() + (ent.Up() * 40.0f);
             targetScale = 0.66f;
@@ -262,22 +77,57 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     }
 
-    // 13. TURRETS
-    if (classname == "npc_portal_turret_floor" || classname == "npc_rocket_turret" || model.locate("turret") != uint(-1)) {
-        targetSkin = 2;
-        targetPos = ent.GetAbsOrigin() + (ent.Up() * 80.0f);
-        targetScale = 0.7f;
+    // E. FUNNELS & BRIDGES (Special Orientation)
+    if (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel" || classname == "prop_wall_projector") {
+        targetSkin = 4;
+        if (classname == "prop_wall_projector") {
+            targetPos = ent.GetAbsOrigin() + (ent.Forward() * 32.0f);
+            targetAng.x += 90.0f;
+            targetScale = 0.8f;
+        } else {
+            targetPos = ent.GetAbsOrigin() + Vector(0, 0, -50.0f);
+            targetAng = QAngle(0, 0, 0);
+            targetScale = 0.7f;
+        }
         return;
     }
 
-    // 14. PAINT SPRAYERS
+    // F. CORES
+    if (isCore) {
+        if (name.locate("1") != uint(-1)) targetSkin = 6; else if (name.locate("2") != uint(-1)) targetSkin = 5; else if (name.locate("3") != uint(-1)) targetSkin = 3; else targetSkin = 4;
+        targetPos = ent.GetAbsOrigin() + Vector(0, 0, 10.0f);
+        targetAng = QAngle(0, 0, 0); 
+        return;
+    }
+
+    // G. VARIOUS (Frankenturrets, Monitors, Sprayers)
+    if (classname == "prop_monster_box" || model.locate("monster") != uint(-1)) {
+        targetSkin = 4;
+        targetPos = ent.GetAbsOrigin() + (ent.Up() * 24.0f);
+        return;
+    }
     if (classname == "info_paint_sprayer") {
         targetSkin = 4;
-        // 120.0f is the ideal distance to reach the nozzle from the internal origin
         targetPos = ent.GetAbsOrigin() + (ent.Forward() * 120.0f);
-        targetAng = ent.GetAbsAngles();
-        targetAng.x += 90.0f; 
-        targetScale = 1.0f;
+        targetAng.x += 90.0f;
+        return;
+    }
+    if (model.locate("wheatley_monitor") != uint(-1) || name.locate("monitor") != uint(-1)) {
+        targetPos = ent.GetAbsOrigin() + (ent.Up() * 140.0f) + (ent.Left() * 40.0f);
+        targetScale = 0.9f;
+        return;
+    }
+
+    // 2. MAP-SPECIFIC OR SPECIAL SYSTEM RULES (Elevators, Dens, Gun)
+    if (isElevator || isRatmanDen || isPortalGun) {
+        if (isRatmanDen) targetPos = targetPos + (ent.Up() * 75.0f); else if (isPortalGun) targetPos = targetPos + (ent.Up() * 32.0f);
+
+        string symbols = g_map_symbols;
+        bool mapDone = (symbols != "" && symbols.locate("ã") == uint(-1));
+        bool rDone = (symbols == "" || symbols.locate("ø") == uint(-1)); 
+        bool pDone = (symbols == "" || (symbols.locate("þ") == uint(-1) && symbols.locate("ý") == uint(-1) && symbols.locate("ǫ") == uint(-1)));
+
+        if (isRatmanDen) targetSkin = (rDone || g_ratman_status == 1 || mapDone) ? 4 : 0; else if (isPortalGun) targetSkin = (pDone || mapDone) ? 4 : 0; else targetSkin = mapDone ? 4 : 0;
         return;
     }
 }

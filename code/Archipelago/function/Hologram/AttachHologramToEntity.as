@@ -1,55 +1,40 @@
-﻿// =============================================================
+// =============================================================
 // ARCHIPELAGO ATTACH HOLOGRAM TO ENTITY
 // =============================================================
+
+/**
+ * AttachHologramToEntity - Tool to attach holograms to map objects.
+ * This is a pure tool: it fetches rules from the registry and applies them.
+ */
 void AttachHologramToEntity(string entity_name, string attachment_point, float holo_scale, float offset, int skin = 0) {
-    array<CBaseEntity@> targets;
-    CBaseEntity@ ent = null;
+    // 1. Collect targets via the central search engine
+    array<CBaseEntity@> targets = FindEntities(entity_name);
     
-    // 0. Auto-Class Suppression for dynamic NPCs (Turrets)
-    if (entity_name == "npc_portal_turret_floor") {
-        bool alreadySuppressed = false;
-        for (uint j = 0; j < g_suppressed_classes.length(); j++) {
-            if (g_suppressed_classes[j] == entity_name) { alreadySuppressed = true; break; }
-        }
-        if (!alreadySuppressed) {
-            g_suppressed_classes.insertLast(entity_name);
-            ArchipelagoLog("[Archipelago] Persistent Class Attachment activated for: " + entity_name);
-        }
-    }
-
-    // 1. Collect targets
-    while ((@ent = EntityList().FindByName(ent, entity_name)) !is null) targets.insertLast(ent);
-    @ent = null;
-    while ((@ent = EntityList().FindByClassname(ent, entity_name)) !is null) {
-        bool isDuplicate = false;
-        for (uint i = 0; i < targets.length(); i++) {
-            if (targets[i] is ent) { isDuplicate = true; break; }
-        }
-        if (!isDuplicate) targets.insertLast(ent);
-    }
-    
-    bool isBTS4Turret = (current_map == "sp_a2_bts4" && entity_name == "npc_portal_turret_floor");
-
+    // 2. Process all collected targets
     for (uint i = 0; i < targets.length(); i++) {
         CBaseEntity@ t = targets[i];
-        
+        if (t is null) continue;
+
         string tName = t.GetEntityName();
         // If unnamed, generate a stable internal name for the hologram registry
         if (tName == "") tName = entity_name + "_" + t.GetEntityIndex();
         
         string hName = tName + "_holo";
         
-        // 2. Fetch Registry Overrides (Unified Logic)
+        // 3. Fetch Unified Rules (Single Source of Truth)
         Vector finalPos;
         QAngle finalAng;
-        int finalSkin = skin;
-        float finalScale = holo_scale;
+        int finalSkin;
+        float finalScale;
+        bool shouldParent;
         
-        // Crucial: We pull from our visual registry!
-        GetHologramVisualOverrides(t, finalPos, finalAng, finalSkin, finalScale);
+        GetHologramVisualOverrides(t, finalPos, finalAng, finalSkin, finalScale, shouldParent);
         
-        // 3. Create the Hologram using the handle 't' directly as parent
-        StableCreateAPHologram(finalPos, finalAng, finalScale, "", attachment_point, finalSkin, hName, t);
+        // Manual skin override if specified in the tool call
+        if (skin != 0) finalSkin = skin;
+        
+        // 4. Execute the creation via the stable tool
+        CBaseEntity@ parent = shouldParent ? t : null;
+        StableCreateAPHologram(finalPos, finalAng, finalScale, "", attachment_point, finalSkin, hName, parent);
     }
 }
-

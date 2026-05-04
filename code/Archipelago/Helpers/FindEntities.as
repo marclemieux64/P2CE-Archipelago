@@ -7,119 +7,116 @@
  * Keyword-based fallback for complex items like Frankenturrets.
  */
 array<CBaseEntity@> FindEntities(string search) {
+    // 1. STRIP WHITESPACE & QUOTES
+    while (search.length() > 0 && (search[0] == 34 || search[0] == 39 || search[0] == 32)) search = search.substr(1);
+    while (search.length() > 0 && (search[search.length()-1] == 34 || search[search.length()-1] == 39 || search[search.length()-1] == 32)) search = search.substr(0, search.length()-1);
+
+    // 1.0 FINALE 4 NAME MAPPING
+    if (current_map == "sp_a4_finale4") {
+        if (search == "@core01") search = "core1_display";
+        else if (search == "@core02") search = "core2_display";
+        else if (search == "@core03") search = "core3_display";
+        else if (search == "core3") search = "core3_display";
+        else if (search == "core1") search = "core1_display";
+        else if (search == "core2") search = "core2_display";
+    }
+
     array<CBaseEntity@> targets;
     CBaseEntity@ ent = null;
     
-    // 1. PRIMARY SEARCH PASSES (Standard engine methods)
-    while ((@ent = EntityList().FindByName(ent, search)) !is null) targets.insertLast(ent);
-    @ent = null;
-    while ((@ent = EntityList().FindByClassname(ent, search)) !is null) targets.insertLast(ent);
-    @ent = null;
-    while ((@ent = EntityList().FindByTarget(ent, search)) !is null) targets.insertLast(ent);
-    @ent = null;
-    while ((@ent = EntityList().FindByModel(ent, search)) !is null) targets.insertLast(ent);
+    if (search == "") return targets;
+    string lowerSearch = search.tolower();
     
-    // 1.1. MAP-SPECIFIC EXCEPTIONS (Catch targets that the engine's model/name search might miss)
-    if (current_map == "sp_a2_triple_laser" && search.locate("reflection_cube") != uint(-1)) {
-        CBaseEntity@ box = EntityList().FindByName(null, "new_box1");
-        if (box !is null) {
-            bool alreadyIn = false;
-            for (uint j = 0; j < targets.length(); j++) { if (@targets[j] == @box) alreadyIn = true; }
-            if (!alreadyIn) targets.insertLast(box);
+    // GLOBAL EXCLUSION: factory_target and its variants must never be processed
+    if (lowerSearch.locate("factory_target") != uint(-1)) return targets;
+
+    // 1.1 PRIMARY PASS (Exact Match / Name)
+    while ((@ent = EntityList().FindByName(ent, search)) !is null) {
+        // Only exclude holograms if we are NOT specifically searching for them
+        if (lowerSearch.locate("archipelago_hologram") != uint(-1) || ent.GetEntityName().locate("_holo") == uint(-1)) {
+            targets.insertLast(ent);
         }
     }
+    
+    if (targets.length() > 0) return targets;
 
-    // 2. KEYWORD & MODEL SEARCHES (Pass 2 - For monster boxes, cubes, lasers, sprayers, and turrets)
-    bool isReflectionCubeRequest = (search.locate("reflection_cube") != uint(-1));
-    bool isSprayerRequest = (search.locate("paint") != uint(-1) || search.locate("sprayer") != uint(-1));
-    bool isTurretRequest = (search.locate("turret") != uint(-1));
-
-    if (search == "monster" || search == "cube" || search == "laser" || search == "paint" || search == "sprayer" || 
-        isTurretRequest || isReflectionCubeRequest) {
-        
+    // 1.2 MODEL PATH PASS (If it looks like a path)
+    if (search.locate("/") != uint(-1) || search.locate("\\") != uint(-1) || search.locate(".mdl") != uint(-1)) {
         @ent = EntityList().First();
         while (@ent !is null) {
-            string cls = ent.GetClassname();
-            string model = ent.GetModelName();
-            string name = ent.GetEntityName();
-
-            // We look at physical props, NPCs, and critical environmental triggers/emitters
-            if (cls.locate("prop") != uint(-1) || cls.locate("npc") != uint(-1) || cls.locate("env_") != uint(-1) || 
-                cls == "info_paint_sprayer" || cls == "paint_sphere") {
-                
-                bool isSprayerCls = (cls == "info_paint_sprayer" || cls == "paint_sphere");
-                bool isFakeTurret = (isTurretRequest && model.locate("turret_01.mdl") != uint(-1));
-                bool isChainingBox = (current_map == "sp_a2_laser_chaining" && name.locate("box") != uint(-1));
-
-                if (cls.locate(search) != uint(-1) || model.locate(search) != uint(-1) || name.locate(search) != uint(-1) || 
-                    isFakeTurret || (isSprayerRequest && isSprayerCls) || (isReflectionCubeRequest && isChainingBox)) {
-                    
-                    bool alreadyIn = false;
-                    for (uint j = 0; j < targets.length(); j++) { if (@targets[j] == @ent) alreadyIn = true; }
-                    if (!alreadyIn) targets.insertLast(ent);
-                }
+            if (ent.GetModelName().tolower() == lowerSearch) {
+                targets.insertLast(ent);
             }
             @ent = EntityList().Next(ent);
         }
+        if (targets.length() > 0) return targets;
+    }
+
+    // 1.3 CLASSNAME PASS
+    @ent = null;
+    while ((@ent = EntityList().FindByClassname(ent, search)) !is null) {
+        // SPECIAL CASE: Floor Turrets must match the model
+        if (search == "npc_portal_turret_floor") {
+            if (ent.GetModelName().tolower().locate("npcs/turret/turret.mdl") == uint(-1)) continue;
+        }
+        targets.insertLast(ent);
     }
     
-    // 3. INSTANCE SUFFIX FALLBACK (Pass 3)
-    if (targets.length() == 0) {
-        @ent = EntityList().First();
-        while (@ent !is null) {
-            string name = ent.GetEntityName();
-            int nLen = int(name.length());
-            int sLen = int(search.length());
-            if (nLen > sLen && sLen > 0) {
-                uint8 d1 = name[nLen - sLen - 1]; // Delimiter check (- or :)
-                if ((d1 == 45 || d1 == 58) && name.substr(nLen - sLen) == search) {
-                    targets.insertLast(ent);
-                }
+    // Fallback: If we search for turrets, also check prop_dynamic for sabotaged turrets
+    if (search == "npc_portal_turret_floor") {
+        @ent = null;
+        while ((@ent = EntityList().FindByClassname(ent, "prop_dynamic")) !is null) {
+            if (ent.GetModelName().tolower().locate("npcs/turret/turret.mdl") != uint(-1)) {
+                targets.insertLast(ent);
             }
-            @ent = EntityList().Next(ent);
         }
     }
-    
-    return targets;
-}
 
-/**
- * ppmod_get - AngelScript equivalent of legacy VScript ppmod.get
- */
-CBaseEntity@ ppmod_get(string arg1) {
-    CBaseEntity@ ent = null;
-    @ent = EntityList().FindByName(null, arg1);
-    if (ent !is null) return ent;
-    @ent = EntityList().FindByClassname(null, arg1);
-    if (ent !is null) return ent;
-    @ent = EntityList().FindByModel(null, arg1);
-    return ent;
-}
+    if (targets.length() > 0) return targets;
 
-CBaseEntity@ ppmod_get(Vector pos, float radius = 32.0f, string filter = "") {
-    CBaseEntity@ ent = null;
-    float radiusSqr = radius * radius;
+    // 2. KEYWORD & CORES FALLBACK
+    bool isCoreRequest = (lowerSearch.locate("core") != uint(-1) || lowerSearch.locate("fact") != uint(-1) || lowerSearch.locate("faulty") != uint(-1));
+    bool isHologramRequest = (lowerSearch.locate("archipelago_hologram") != uint(-1));
     
+    string coreDigit = "";
+    if (isCoreRequest) {
+        if (lowerSearch.locate("1") != uint(-1)) coreDigit = "1";
+        else if (lowerSearch.locate("2") != uint(-1)) coreDigit = "2";
+        else if (lowerSearch.locate("3") != uint(-1)) coreDigit = "3";
+    }
+
     @ent = EntityList().First();
     while (@ent !is null) {
-        Vector ePos = ent.GetAbsOrigin();
-        float dist = (ePos - pos).LengthSqr();
-        if (dist <= radiusSqr) {
-            if (filter == "" || ent.GetEntityName() == filter || ent.GetClassname() == filter || ent.GetModelName() == filter) {
-                return ent;
+        string name = ent.GetEntityName().tolower();
+        string cls = ent.GetClassname().tolower();
+        string model = ent.GetModelName().tolower();
+        
+        // Skip holograms unless we are explicitly looking for them
+        if (!isHologramRequest && name.locate("_holo") != uint(-1)) { @ent = EntityList().Next(ent); continue; }
+
+        if (isCoreRequest) {
+            bool nameMatch = (name.locate("core") != uint(-1) || name.locate("fact") != uint(-1));
+            bool modelMatch = (model.locate("personality_core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
+
+            if (nameMatch || modelMatch) {
+                if (coreDigit != "" && name.locate(coreDigit) != uint(-1)) targets.insertLast(ent);
+                else if (coreDigit == "") targets.insertLast(ent);
             }
+        } else if (isHologramRequest) {
+            if (model.locate("archipelago_hologram") != uint(-1)) {
+                targets.insertLast(ent);
+            }
+        } else {
+            bool match = false;
+            if (lowerSearch == "cube" && (cls.locate("cube") != uint(-1) || model.locate("metal_box") != uint(-1) || model.locate("box") != uint(-1))) match = true;
+            else if (lowerSearch == "button" && (cls.locate("button") != uint(-1))) match = true;
+            else if (lowerSearch == "monster" && (cls.locate("monster_box") != uint(-1))) match = true;
+            
+            if (match) targets.insertLast(ent);
         }
+
         @ent = EntityList().Next(ent);
     }
-    return null;
-}
 
-CBaseEntity@ ppmod_get(int arg1) {
-    CBaseEntity@ ent = EntityList().First();
-    while (@ent !is null) {
-        if (ent.GetEntityIndex() == arg1) return ent;
-        @ent = EntityList().Next(ent);
-    }
-    return null;
+    return targets;
 }
-

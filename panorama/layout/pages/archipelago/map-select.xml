@@ -38,7 +38,21 @@
             <Panel id="FullWidthFooter" class="preview_bottom_row">
                 
                 <!-- ALIGNMENT SPACER -->
-                <Panel id="FooterAlignmentSpacer" class="footer_alignment_spacer" />
+                <Panel id="FooterAlignmentSpacer" class="footer_alignment_spacer">
+                    <Panel class="help_button_wrapper">
+                        <Panel id="ManualHelpTooltip" class="manual_tooltip">
+                            <Label text="#Archipelago_Help_Tooltip" />
+                            <Panel class="manual_tooltip_arrow" />
+                        </Panel>
+                        <Button id="HelpButton"
+                                class="help_button"
+                                onmouseover="$( '#ManualHelpTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
+                                onmouseout="$( '#ManualHelpTooltip' ).RemoveClass('visible')"
+                                onactivate="$.PlaySoundEvent('UIPanorama.P2CE.MenuAccept'); ArchipelagoMapSelect.showHelp()">
+                            <Label class="help_button_text" text="?" />
+                        </Button>
+                    </Panel>
+                </Panel>
 
                 <!-- CONTENT STARTING UNDER PICTURE -->
                 <Panel id="FooterContent" class="footer_content">

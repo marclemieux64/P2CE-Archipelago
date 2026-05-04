@@ -494,6 +494,10 @@ class ArchipelagoMapSelect {
             });
         }
     }
+
+    static showHelp() {
+        UiToolkitAPI.ShowCustomLayoutPopup('', 'file://{resources}/layout/modals/archipelago/help-popup.xml');
+    }
 }
 
 Object.assign($.GetContextPanel(), { ArchipelagoMapSelect });

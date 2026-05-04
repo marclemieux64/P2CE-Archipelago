@@ -1,0 +1,228 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/main.scss" />
+		<include src="file://{resources}/styles/modals/archipelago/help-popup.scss" />
+	</styles>
+
+	<Panel class="help-popup" popupbackground="blur">
+		<Panel class="help-popup__header">
+			<Label class="help-popup__title" text="#Archipelago_Help_Title" />
+			<Button id="CloseButton" class="help-popup__close-x" onactivate="UiToolkitAPI.CloseAllVisiblePopups()">
+				<Label text="X" />
+			</Button>
+		</Panel>
+
+		<Panel class="help-popup__scroll">
+			<Panel class="help-popup__content">
+				
+				<!-- LEFT COLUMN: STATUS & CHECKS -->
+				<Panel class="help-popup__column">
+					
+					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Access" />
+
+					<Panel class="help-popup__row">
+						<Panel class="help-popup__icon">
+							<Image class="help-popup__icon-img" src="file://{images}/archipelago/lock-solid.tga" style="wash-color: #ff4444;" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_Status_Locked" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Panel class="help-popup__icon">
+							<Image class="help-popup__icon-img" src="file://{images}/archipelago/unlock-solid.tga" style="wash-color: #44ff44;" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_Status_Unlocked" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="✓" style="color: #ffff44;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Status_Goal" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Panel class="help-popup__icon-container">
+							<Label class="help-popup__icon help-popup__icon--stacked" text="★" style="color: #ffff44;" />
+							<Label class="help-popup__icon help-popup__icon--stacked" text="✓" style="color: #ffff44;" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_Status_Full" />
+					</Panel>
+
+					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Availability" />
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ý" style="color: #44ff44;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Avail_Yes" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ý" style="color: #ff4444;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Avail_No" />
+					</Panel>
+
+					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Checks" />
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ã" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_Generic" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ý" style="color: #00a5ff;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_PGunBlue" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="þ" style="color: #ff6a00;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_PGunOrange" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ø" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_Ratman" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ù" style="color: #b79268;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_Potatos" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="¢" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_Door" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ÿ" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_Wheatley" />
+					</Panel>
+				</Panel>
+
+				<!-- RIGHT COLUMN: INVENTORY ITEMS -->
+				<Panel class="help-popup__column">
+					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Items" />
+					
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="û" style="color: #ff6a00;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_PGun" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="à" style="color: #00a5ff;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelBlue" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="á" style="color: #ff6a00;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelOrange" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="â" style="color: #fafafa;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelWhite" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="S.ô" style="color: #ffc904;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_CoreSpace" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="A.ô" style="color: #e790c2;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_CoreAdv" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="F.ô" style="color: #1ec10d;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_CoreFact" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ç" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeWeighted" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ì" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeReflect" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ë" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeSphere" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="é" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeAntique" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ñ" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_Button" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ò" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_ButtonOld" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="æ" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_ButtonFloor" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="è" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_ButtonFloorOld" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="í" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_Laser" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="î" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_LaserCatcher" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ï" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_LaserRelay" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ó" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_Turrets" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="õ" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_FaithPlate" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="å" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_TractorBeam" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="¿" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_Bridge" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ð" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_Franken" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Label class="help-popup__icon" text="ù" style="color: #b79268;" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Item_Potatos" />
+					</Panel>
+
+				</Panel>
+			</Panel>
+		</Panel>
+	</Panel>
+</root>

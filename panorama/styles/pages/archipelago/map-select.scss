@@ -336,4 +336,86 @@
 
 .play_button--active .play_button_text {
     color: white;
+}//=============================================================================
+// 7. HELP BUTTON
+//=============================================================================
+
+.help_button_wrapper {
+    horizontal-align: right;
+    vertical-align: center;
+    height: 100%; 
+    margin-right: 60px;
+    flow-children: none; 
+    overflow: noclip; 
+}
+
+.manual_tooltip {
+    horizontal-align: center;
+    vertical-align: center;
+    y: -60px; 
+    background-color: #1a1a1aee;
+    border: 1px solid #ffffff11;
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: white;
+    font-size: 18px;
+    opacity: 0;
+    overflow: noclip;
+    transform: translateY(10px);
+    transition-property: opacity, transform;
+    transition-duration: 0.1s;
+    
+    &.visible {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+
+.manual_tooltip_arrow {
+    width: 12px;
+    height: 12px;
+    background-color: #1a1a1aee;
+    horizontal-align: center;
+    vertical-align: bottom;
+    margin-bottom: -12px; 
+    transform: rotateZ(45deg);
+    border-right: 1px solid #ffffff11;
+    border-bottom: 1px solid #ffffff11;
+}
+
+.help_button {
+    width: 60px;
+    height: 60px;
+    border-radius: 4px;
+    background-color: #1a1a1a;
+    border: 1px solid #ffffff11;
+    horizontal-align: center;
+    vertical-align: center;
+    transition-property: background-color, border, transform;
+    transition-duration: 0.15s;
+
+    &:hover,
+    .InputController &:focus {
+        background-color: #ffffff08;
+        border: 1px solid #ffffff22;
+    }
+
+    &:active {
+        background-color: #ffffff05;
+        transform: translateY(1px);
+    }
+}
+
+.help_button_text {
+    font-family: "Lexend Deca", Bold;
+    font-size: 32px;
+    color: #ec6726; 
+    horizontal-align: center;
+    vertical-align: center;
+    text-align: center;
+    margin-bottom: 2px;
+    
+    .help_button:hover & {
+        brightness: 1.2;
+    }
 }

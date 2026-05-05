@@ -1,0 +1,16 @@
+﻿[root at 2026-05-05 02:24:53,334]: Archipelago (0.6.7) logging initialized on Windows-11-10.0.26100-SP0 process 17816 running Python 3.13.13
+[Client at 2026-05-05 02:24:53,356]: Please connect to an Archipelago server.
+[Portal2Client at 2026-05-05 02:24:53,364]: Panorama API Server serving on http://localhost:8910 (Sync Thread)
+[Portal2Client at 2026-05-05 02:24:58,363]: Connected to Portal 2 netcon on 127.0.0.1:3000
+[Portal2Client at 2026-05-05 02:27:08,293]: Sending command to game: dfdsf
+[Portal2Client at 2026-05-05 02:27:10,068]: Sending command to game: sfdfdsfds
+[Portal2Client at 2026-05-05 02:28:15,598]: Sending command to game: dsfdsf
+[Portal2Client at 2026-05-05 02:28:17,699]: Sending command to game: dsfdsfdsf
+[Portal2Client at 2026-05-05 02:28:18,466]: Sending command to game: sdfdsfdsf
+[Portal2Client at 2026-05-05 02:28:18,576]: Sending command to game: ds
+[Portal2Client at 2026-05-05 02:28:18,809]: Sending command to game: fdsf
+[Portal2Client at 2026-05-05 02:28:19,040]: Sending command to game: ds
+[Portal2Client at 2026-05-05 02:28:19,164]: Sending command to game: fds
+[Portal2Client at 2026-05-05 02:28:19,285]: Sending command to game: fds
+[Portal2Client at 2026-05-05 02:28:19,502]: Sending command to game: fdsf
+[Portal2Client at 2026-05-05 02:44:26,127]: Portal 2 connection closed by peer

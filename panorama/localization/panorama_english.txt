@@ -117,6 +117,8 @@
 		"Archipelago_Map_MissingItems"          "MISSING ITEMS"
 		"Archipelago_Maps_Title"                "Archipelago Maps"
 		"Archipelago_Maps_Tagline"              "Select a map to play"
+		"Archipelago_Console_Title"             "Archipelago Client Console"
+		"Archipelago_Console_Tagline"           "Interact with the Archipelago client"
 		"Archipelago_Settings_Title"            "Archipelago"
 		"Archipelago_Settings_General"          "General Settings"
 		"Archipelago_Settings_HideLocationCounts" "Hide Location Counts"

@@ -38,11 +38,36 @@ class ArchipelagoMapSelect {
         return false;
     }
 
+    static onConsoleFocus() {
+        $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus');
+        $( '#ManualHelpTooltip' )?.AddClass('visible');
+    }
+
+    static onConsoleBlur() {
+        $( '#ManualHelpTooltip' )?.RemoveClass('visible');
+    }
+
+    static toggleConsole() {
+        $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
+        $.DispatchEvent('MainMenuOpenNestedPage', 'ap_console', 'archipelago/console', undefined);
+    }
+
+    static onConsoleLoad() {
+        $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Console_Title'), $.Localize('#Archipelago_Console_Tagline'));
+        
+        const global = (UiToolkitAPI.GetGlobalObject() as any);
+        if (global.ArchipelagoConsole) {
+            global.ArchipelagoConsole.init();
+        }
+    }
+
     static getCompletionSymbol(): string {
-        return ($.persistentStorage.getItem('ap_completion_symbol') ?? 0) === 1 ? "★" : "✓";
+        return ($.persistentStorage.getItem('ap_completion_symbol') ?? 0) === 1 ? "\u2605" : "\u2713";
     }
 
     static onLoad() {
+        $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
+
         const syncInputMode = () => {
             $.GetContextPanel().SetHasClass('is-controller-mode', this.isController());
             $.Schedule(1.0, syncInputMode);

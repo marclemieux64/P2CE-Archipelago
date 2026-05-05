@@ -1,0 +1,39 @@
+client:
+  last_server_address: 127.0.0.1:38282
+groups_by_checksum:
+  6a86ddc259e5ded3cf68c5e72aedb4ced86a3848:
+    Portal 2:
+      item_name_groups:
+        Everything:
+        - Adventure Core
+        - Aerial Faith Plates
+        - Antique Buttons
+        - Antique Cubes
+        - Antique Floor Buttons
+        - Blue Gel
+        - Butter Fingers Trap
+        - Buttons
+        - Cube Confetti Trap
+        - Excursion Funnels
+        - Fact Core
+        - Fizzle Portal Trap
+        - Floor Buttons
+        - Frankenturrets
+        - Hard Light Bridges
+        - Laser Catchers
+        - Laser Relays
+        - Lasers
+        - Lemon
+        - Moon Dust
+        - Motion Blur Trap
+        - Orange Gel
+        - PotatOS
+        - Redirection Cubes
+        - Slice of Cake
+        - Slippery Floor Trap
+        - Space Core
+        - Spherical Cubes
+        - Turrets
+        - Upgraded Portal Gun
+        - Weighted Cubes
+        - White Gel

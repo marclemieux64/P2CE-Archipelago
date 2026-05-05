@@ -1,0 +1,5 @@
+﻿[root at 2026-05-05 01:32:23,858]: Archipelago (0.6.7) logging initialized on Windows-11-10.0.26100-SP0 process 1812 running Python 3.13.13
+[Client at 2026-05-05 01:32:23,878]: Please connect to an Archipelago server.
+[Portal2Client at 2026-05-05 01:32:23,887]: Panorama API Server serving on http://localhost:8910 (Sync Thread)
+[Portal2Client at 2026-05-05 01:32:28,892]: Connected to Portal 2 netcon on 127.0.0.1:3000
+[Portal2Client at 2026-05-05 01:48:00,957]: Portal 2 connection closed by peer

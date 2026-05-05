@@ -1,0 +1,69 @@
+﻿[root at 2026-05-05 04:15:14,104]: Archipelago (0.6.7) logging initialized on Windows-11-10.0.26100-SP0 process 20056 running Python 3.13.13
+[Client at 2026-05-05 04:15:14,123]: Please connect to an Archipelago server.
+[Portal2Client at 2026-05-05 04:15:14,130]: Panorama API Server serving on http://localhost:8910 (Sync Thread)
+[Portal2Client at 2026-05-05 04:15:19,137]: Connected to Portal 2 netcon on 127.0.0.1:3000
+[Client at 2026-05-05 04:17:20,592]: Connecting to Archipelago server at ws://127.0.0.1:38282
+[Client at 2026-05-05 04:17:20,611]: Connected
+[Client at 2026-05-05 04:17:20,621]: --------------------------------
+[Client at 2026-05-05 04:17:20,621]: Room Information:
+[Client at 2026-05-05 04:17:20,621]: --------------------------------
+[Client at 2026-05-05 04:17:20,621]: Server protocol version: 0.6.7, generator version: 0.6.7, tags: AP
+[Client at 2026-05-05 04:17:20,621]: Release permission: goal
+[Client at 2026-05-05 04:17:20,621]: Remaining permission: goal
+[Client at 2026-05-05 04:17:20,622]: Collect permission: disabled
+[Client at 2026-05-05 04:17:20,622]: A !hint costs 5% of your total location count as points and you get 1 for each location checked. Use !hint for more information.
+[Client at 2026-05-05 04:17:20,622]: Enter slot name:
+[Portal2Client at 2026-05-05 04:17:21,777]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:23,781]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Client at 2026-05-05 04:17:24,021]: Lost connection to the multiworld server, type /connect to reconnect
+Traceback (most recent call last):
+  File "C:\Program Files (x86)\Steam\steamapps\sourcemods\p2ce-archipelago\archipelago\CommonClient.py", line 884, in server_loop
+    await process_server_cmd(ctx, msg)
+  File "C:\Program Files (x86)\Steam\steamapps\sourcemods\p2ce-archipelago\archipelago\CommonClient.py", line 972, in process_server_cmd
+    await ctx.server_auth(args['password'])
+  File "C:\Program Files (x86)\Steam\steamapps\sourcemods\p2ce-archipelago\archipelago\worlds\portal2_p2ce\client\Portal2Client.py", line 695, in server_auth
+    await self.send_connect(game="Portal 2")
+  File "C:\Program Files (x86)\Steam\steamapps\sourcemods\p2ce-archipelago\archipelago\CommonClient.py", line 527, in send_connect
+    await self.send_msgs([payload])
+  File "C:\Program Files (x86)\Steam\steamapps\sourcemods\p2ce-archipelago\archipelago\CommonClient.py", line 487, in send_msgs
+    if not self.server or not self.server.socket.open or self.server.socket.closed:
+                              ^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'ClientConnection' object has no attribute 'open'
+[Client at 2026-05-05 04:17:33,228]: Connecting to Archipelago server at ws://127.0.0.1:38282
+[Client at 2026-05-05 04:17:33,229]: Connected
+[Client at 2026-05-05 04:17:33,230]: --------------------------------
+[Client at 2026-05-05 04:17:33,230]: Room Information:
+[Client at 2026-05-05 04:17:33,230]: --------------------------------
+[Client at 2026-05-05 04:17:33,230]: Server protocol version: 0.6.7, generator version: 0.6.7, tags: AP
+[Client at 2026-05-05 04:17:33,230]: Release permission: goal
+[Client at 2026-05-05 04:17:33,230]: Remaining permission: goal
+[Client at 2026-05-05 04:17:33,230]: Collect permission: disabled
+[Client at 2026-05-05 04:17:33,231]: A !hint costs 5% of your total location count as points and you get 1 for each location checked. Use !hint for more information.
+[Client at 2026-05-05 04:17:33,231]: Enter slot name:
+[Portal2Client at 2026-05-05 04:17:33,792]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:35,797]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:37,805]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:39,813]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:41,821]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:43,868]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:45,903]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:47,941]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:49,977]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:52,016]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:54,053]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:56,098]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:17:58,143]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:00,182]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:02,226]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:04,266]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:06,313]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:08,350]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:10,351]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:12,395]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:14,436]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:16,443]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:18,479]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:20,507]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:22,510]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:24,512]: API Status Error: 'ClientConnection' object has no attribute 'closed'
+[Portal2Client at 2026-05-05 04:18:26,580]: Portal 2 connection closed by peer

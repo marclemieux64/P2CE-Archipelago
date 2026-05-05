@@ -67,10 +67,12 @@
 		"portal2_MapName_sp_a4_finale4"         "La partie où vous le tuez"
 
 		//Archipelago
-		"Archipelago_Map_Checks"                "Validations"
+		"Archipelago_Map_Checks"                "Validations"	
 		"Archipelago_Map_MissingItems"          "Objets manquants"
 		"Archipelago_Maps_Title"                "Niveaux Archipelago"
 		"Archipelago_Maps_Tagline"              "Choisissez un niveau"
+		"Archipelago_Console_Title"             "Console Client Archipelago"
+		"Archipelago_Console_Tagline"           "Interagir avec le client Archipelago"
 		"Archipelago_Settings_Title"            "Archipelago"
 		"Archipelago_Settings_General"          "Paramètres Généraux"
 		"Archipelago_Settings_HideLocationCounts" "Cacher le compteur de validations"

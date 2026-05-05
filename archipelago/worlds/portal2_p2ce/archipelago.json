@@ -1,0 +1,6 @@
+{
+    "game": "Portal 2 P2CE",
+	"authors": [ "GlassToadstool" ],
+    "minimum_ap_version": "0.6.3",
+    "world_version": "0.7.0"
+}

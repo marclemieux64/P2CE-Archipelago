@@ -1,0 +1,16 @@
+﻿[root at 2026-05-05 04:34:08,213]: Archipelago (0.6.7) logging initialized on Windows-11-10.0.26100-SP0 process 17892 running Python 3.13.13
+[Client at 2026-05-05 04:34:08,233]: Please connect to an Archipelago server.
+[Portal2Client at 2026-05-05 04:34:08,240]: Panorama API Server serving on http://localhost:8910 (Sync Thread)
+[Portal2Client at 2026-05-05 04:34:13,246]: Connected to Portal 2 netcon on 127.0.0.1:3000
+[Client at 2026-05-05 04:34:29,714]: Connecting to Archipelago server at ws://127.0.0.1:38282
+[Client at 2026-05-05 04:34:29,727]: Connected
+[Client at 2026-05-05 04:34:29,734]: --------------------------------
+[Client at 2026-05-05 04:34:29,734]: Room Information:
+[Client at 2026-05-05 04:34:29,734]: --------------------------------
+[Client at 2026-05-05 04:34:29,734]: Server protocol version: 0.6.7, generator version: 0.6.7, tags: AP
+[Client at 2026-05-05 04:34:29,734]: Release permission: goal
+[Client at 2026-05-05 04:34:29,735]: Remaining permission: goal
+[Client at 2026-05-05 04:34:29,735]: Collect permission: disabled
+[Client at 2026-05-05 04:34:29,735]: A !hint costs 5% of your total location count as points and you get 1 for each location checked. Use !hint for more information.
+[Client at 2026-05-05 04:34:29,735]: Enter slot name:
+[Portal2Client at 2026-05-05 04:36:18,400]: Portal 2 connection closed by peer

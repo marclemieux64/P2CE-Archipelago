@@ -1,0 +1,45 @@
+<Root>
+<styles>
+    <include src="file://{resources}/styles/main.scss" />
+    <include src="file://{resources}/styles/components/steam-input.scss" />
+    <include src="file://{resources}/styles/pages/archipelago/map-select.scss" />
+    <include src="file://{resources}/styles/pages/archipelago/console.scss" />
+</styles>
+
+<scripts>
+    <include src="file://{resources}/scripts/util/event-definition.ts" />
+    <include src="file://{resources}/scripts/util/archipelago-logic.ts" />
+    <include src="file://{resources}/scripts/util/archipelago-sync.ts" />
+    <include src="file://{resources}/scripts/pages/archipelago/map-select.ts" />
+    <include src="file://{resources}/scripts/pages/archipelago/console.ts" />
+</scripts>
+
+    <Panel class="archipelago__page mainmenu__page mainmenu" 
+           onload="ArchipelagoMapSelect.onConsoleLoad()">
+        <Panel id="MainBox" class="main_box">
+            
+            <Panel id="ColumnsWrapper" class="columns_wrapper">
+                <!-- CONSOLE OUTPUT AREA -->
+                <Panel id="ConsoleOutputArea" class="console_output_area">
+                    <Label id="ConsoleOutput" class="console_output_text" multiline="true" text="CONNECTING TO ARCHIPELAGO..." />
+                </Panel>
+            </Panel>
+
+            <!-- FULL WIDTH CONTROL BAR -->
+            <Panel id="FullWidthFooter" class="preview_bottom_row">
+            
+                <!-- CONSOLE INPUT AREA -->
+                <Panel id="FooterContent" class="footer_content">
+                    <Panel id="ArchipelagoInputWrapper" class="archipelago_input_wrapper">
+                        <Label class="console_prompt" text=">" />
+                        <TextEntry id="ArchipelagoInput" 
+                                   class="archipelago_input" 
+                                   placeholder="Type a command (e.g. /status, /help, /hint)..." 
+                                   oninputsubmit="ArchipelagoConsole.onArchipelagoInput()" />
+                    </Panel>
+                </Panel>
+            </Panel>
+
+        </Panel>
+    </Panel>
+</Root>

@@ -1,0 +1,160 @@
+//=============================================================================
+// 1. PAGE & MAIN CONTAINERS (EXACT CLONE FROM MAP-SELECT.SCSS)
+//=============================================================================
+
+.archipelago__page {
+    width: 100%;
+    height: 100%;
+    padding: 5px;
+    flow-children: down;
+
+    // ANIMATION STATES FOR MENU MANAGER
+    opacity: 0;
+    transform: translateX(-50px);
+    transition-property: opacity, transform;
+    transition-duration: 0.25s;
+    transition-timing-function: ease-in-out;
+
+    &.mainmenu__page__anim {
+        opacity: 1;
+        transform: translateX(0px);
+    }
+
+    &.mainmenu__page__back-anim {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+}
+
+.main_box {
+    width: 100%;
+    height: fill-parent-flow(1.0);
+    flow-children: down;
+    padding: 0px;
+    background-color: #00000088;
+    border: 1px solid #ffffff11;
+    border-radius: 8px;
+    overflow: clip;
+}
+
+.columns_wrapper {
+    width: 100%;
+    height: fill-parent-flow(1.0);
+    flow-children: right;
+    padding: 24px 24px 0px 24px;
+}
+
+.preview_bottom_row {
+    width: 100%;
+    padding: 0px 24px 24px 24px;
+    height: fit-children;
+    flow-children: right;
+}
+
+.footer_content {
+    min-height: 93px;
+    max-height: 93px;
+    width: fill-parent-flow(3.0);
+    flow-children: right;
+    margin: 24px 0px 0px 0px;
+}
+
+//=============================================================================
+// 2. CONSOLE SPECIFIC ELEMENTS
+//=============================================================================
+
+.console_output_area {
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    border-radius: 4px;
+    padding: 20px;
+    overflow: clip scroll;
+
+    VerticalScrollBar {
+        width: 8px;
+        margin-right: 4px;
+        background-color: transparent;
+
+        .ScrollThumb {
+            background-color: #ec672644;
+            border-radius: 4px;
+            transition-property: background-color;
+            transition-duration: 0.1s;
+        }
+
+        &:hover .ScrollThumb {
+            background-color: #ec6726aa;
+        }
+    }
+}
+
+.console_output_text {
+    width: 100%;
+    font-family: "LexendDeca";
+    font-size: 20px;
+    color: #eeeeee;
+    text-shadow: 0px 0px 4px #000000;
+}
+
+.archipelago_input_wrapper {
+    width: 100%;
+    height: 60px;
+    vertical-align: center;
+    background-color: #000000aa;
+    border: 1px solid #ffffff11;
+    border-radius: 4px;
+    padding: 0px 20px;
+    flow-children: right;
+    transition-property: border, background-color, box-shadow;
+    transition-duration: 0.2s;
+
+    &.focused {
+        border: 1px solid #ffffff44;
+        background-color: #000000ee;
+    }
+}
+
+.console_prompt {
+    font-size: 32px;
+    font-family: "LexendDeca";
+    color: #ffffff44;
+    vertical-align: center;
+    margin-right: 15px;
+}
+
+.archipelago_input {
+    width: fill-parent-flow(1.0);
+    vertical-align: center;
+    background-color: transparent;
+    border: 0px none;
+    color: white;
+    font-size: 24px;
+    font-family: "LexendDeca";
+
+    & #TextEntryContents,
+    & #PlaceholderText {
+        text-align: left;
+        width: 100%;
+        vertical-align: center;
+    }
+
+    & #TextEntryContents Label {
+        vertical-align: center;
+    }
+
+    #PlaceholderText {
+        color: #ffffff22;
+        font-size: 20px;
+        transition-property: opacity;
+        transition-duration: 0.1s;
+        transition-timing-function: ease-in-out;
+
+    }
+
+    &:focus #PlaceholderText {
+        opacity: 0;
+
+
+    }
+}

@@ -5,9 +5,6 @@
     <include src="file://{resources}/styles/pages/archipelago/map-select.scss" />
 </styles>
 
-<script>
-    $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
-</script>
 <scripts>
     <include src="file://{resources}/scripts/util/event-definition.ts" />
     <include src="file://{resources}/scripts/util/archipelago-logic.ts" />
@@ -44,6 +41,13 @@
                             <Label text="#Archipelago_Help_Tooltip" />
                             <Panel class="manual_tooltip_arrow" />
                         </Panel>
+                        <Button id="ConsoleButton"
+                                class="console_button"
+                                onmouseover="ArchipelagoMapSelect.onConsoleFocus()"
+                                onmouseout="ArchipelagoMapSelect.onConsoleBlur()"
+                                onactivate="ArchipelagoMapSelect.toggleConsole()">
+                            <Label class="console_button_text" text="C" />
+                        </Button>
                         <Button id="HelpButton"
                                 class="help_button"
                                 onmouseover="$( '#ManualHelpTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"

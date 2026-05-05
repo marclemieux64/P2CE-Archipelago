@@ -1,0 +1,86 @@
+﻿[root at 2026-05-05 03:36:47,834]: Archipelago (0.6.7) logging initialized on Windows-11-10.0.26100-SP0 process 19504 running Python 3.13.13
+[Client at 2026-05-05 03:36:47,858]: Please connect to an Archipelago server.
+[Portal2Client at 2026-05-05 03:36:47,866]: Panorama API Server serving on http://localhost:8910 (Sync Thread)
+[Portal2Client at 2026-05-05 03:36:52,861]: Connected to Portal 2 netcon on 127.0.0.1:3000
+[Portal2Client at 2026-05-05 03:55:48,178]: Portal 2 connection closed by peer
+[Portal2Client at 2026-05-05 03:55:50,213]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:55:55,227]: Connected to Portal 2 netcon on 127.0.0.1:3000
+[Portal2Client at 2026-05-05 03:55:56,191]: Portal 2 connection closed by peer
+[Portal2Client at 2026-05-05 03:55:58,221]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:56:05,277]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:56:12,328]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:56:19,395]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:56:26,431]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:56:33,480]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:56:40,535]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:56:47,584]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:56:54,628]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:57:01,685]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:57:08,739]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:57:15,801]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:57:22,857]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:57:29,914]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:57:36,955]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:57:43,994]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:57:51,054]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:57:58,104]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:58:05,157]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:58:12,200]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:58:19,253]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:58:26,307]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:58:33,376]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:58:40,420]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:58:47,475]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:58:54,526]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:59:01,575]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:59:08,630]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:59:15,681]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:59:22,727]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:59:29,776]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:59:36,820]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:59:43,878]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:59:50,944]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 03:59:57,994]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:00:05,054]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:00:12,112]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:00:19,180]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:00:26,245]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:00:33,305]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:00:40,356]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:00:47,411]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:00:54,478]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:01:01,537]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:01:08,590]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:01:15,656]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:01:22,705]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:01:29,772]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:01:36,832]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:01:43,876]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:01:50,932]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:01:57,988]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:02:05,030]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:02:12,085]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:02:19,150]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:02:26,203]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:02:33,259]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:02:40,309]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:02:47,368]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:02:54,429]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:03:01,492]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:03:08,551]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:03:15,600]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:03:22,670]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:03:29,728]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:03:36,769]: Connection refused on 127.0.0.1:3000. Is the game running with -netconport 3000?
+[Portal2Client at 2026-05-05 04:03:42,290]: Connected to Portal 2 netcon on 127.0.0.1:3000
+[asyncio at 2026-05-05 04:03:42,291]: Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Users\WIN-VM\AppData\Local\Programs\Python\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\WIN-VM\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+[Portal2Client at 2026-05-05 04:03:44,674]: Portal 2 connection closed by peer

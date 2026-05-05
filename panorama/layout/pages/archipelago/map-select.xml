@@ -37,24 +37,33 @@
                 <!-- ALIGNMENT SPACER -->
                 <Panel id="FooterAlignmentSpacer" class="footer_alignment_spacer">
                     <Panel class="help_button_wrapper">
-                        <Panel id="ManualHelpTooltip" class="manual_tooltip">
-                            <Label text="#Archipelago_Help_Tooltip" />
-                            <Panel class="manual_tooltip_arrow" />
+                        <Panel class="button_with_tooltip">
+                            <Panel id="ConsoleHelpTooltip" class="manual_tooltip">
+                                <Label text="#Archipelago_Console_Tooltip" />
+                                <Panel class="manual_tooltip_arrow" />
+                            </Panel>
+                            <Button id="ConsoleButton"
+                                    class="console_button"
+                                    onmouseover="ArchipelagoMapSelect.onConsoleFocus()"
+                                    onmouseout="ArchipelagoMapSelect.onConsoleBlur()"
+                                    onactivate="ArchipelagoMapSelect.toggleConsole()">
+                                <Label class="console_button_text" text="C" />
+                            </Button>
                         </Panel>
-                        <Button id="ConsoleButton"
-                                class="console_button"
-                                onmouseover="ArchipelagoMapSelect.onConsoleFocus()"
-                                onmouseout="ArchipelagoMapSelect.onConsoleBlur()"
-                                onactivate="ArchipelagoMapSelect.toggleConsole()">
-                            <Label class="console_button_text" text="C" />
-                        </Button>
-                        <Button id="HelpButton"
-                                class="help_button"
-                                onmouseover="$( '#ManualHelpTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
-                                onmouseout="$( '#ManualHelpTooltip' ).RemoveClass('visible')"
-                                onactivate="$.PlaySoundEvent('UIPanorama.P2CE.MenuAccept'); ArchipelagoMapSelect.showHelp()">
-                            <Label class="help_button_text" text="?" />
-                        </Button>
+
+                        <Panel class="button_with_tooltip">
+                            <Panel id="ManualHelpTooltip" class="manual_tooltip">
+                                <Label text="#Archipelago_Help_Tooltip" />
+                                <Panel class="manual_tooltip_arrow" />
+                            </Panel>
+                            <Button id="HelpButton"
+                                    class="help_button"
+                                    onmouseover="$( '#ManualHelpTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
+                                    onmouseout="$( '#ManualHelpTooltip' ).RemoveClass('visible')"
+                                    onactivate="$.PlaySoundEvent('UIPanorama.P2CE.MenuAccept'); ArchipelagoMapSelect.showHelp()">
+                                <Label class="help_button_text" text="?" />
+                            </Button>
+                        </Panel>
                     </Panel>
                 </Panel>
 

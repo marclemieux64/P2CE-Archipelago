@@ -189,6 +189,10 @@
 		"Archipelago_Help_Item_Potatos" "PotatOS"
 		"Archipelago_Help_Close" "Close"
 		"Archipelago_Help_Tooltip" "Help"
+		"Archipelago_Console_Tooltip" "Open Archipelago Console"
+		"Archipelago_Status_Server"	"Archipelago Server Connection"
+		"Archipelago_Status_Game"	"Portal 2 (Netcon) Connection"
+		"Archipelago_Status_NotConnected" "NOT CONNECTED TO ARCHIPELAGO SERVER. Use the console (C) to connect."
 		
 
 		"COOP_PRESENCE_WAITING_DEFAULT"			"Waiting for Partner"

@@ -77,3 +77,4 @@ docs/
 
 # Mod Configuration
 gameinfo.txt
+archipelago/logs/*.txt

@@ -4,7 +4,7 @@ declare var GameInterfaceAPI: any;
 
 class ArchipelagoSync {
     static VERSION: string = "1.0.5";
-    static ENABLE_DEBUG: boolean = true;
+    static ENABLE_DEBUG: boolean = false;
 
     static getCompletionSymbol(): string {
         return ($.persistentStorage.getItem('CompletionSymbol') ?? 0) === 1 ? "★" : "✓";
@@ -59,8 +59,32 @@ class ArchipelagoSync {
         return chapters;
     }
 
+    static parseApiStatus(status: any): any {
+        if (!status || !status.menu || !status.menu.chapters) return {};
+        const chapters: any = {};
+        for (const chapter of status.menu.chapters) {
+            const chId = chapter.chapter_number.toString();
+            chapters[chId] = {
+                title: chapter.title,
+                subtitle: chapter.subtitle,
+                pic: chapter.pic,
+                maps: chapter.maps.map((map: any) => ({
+                    title: map.title,
+                    subtitle: map.subtitle,
+                    command: map.command,
+                    command_deactivated: map.command_deactivated,
+                    pic: map.pic,
+                    statusIcons: map.statusIcons,
+                    completed: map.completed
+                }))
+            };
+        }
+        return chapters;
+    }
+
     static getMapStatus(map: any, allData: any) {
-        const mapCmdName = map.command ? map.command.replace("map ", "").trim().toLowerCase() : "";
+        const fullCommand = map.command || map.command_deactivated || "";
+        const mapCmdName = fullCommand ? fullCommand.replace("map ", "").trim().toLowerCase() : "";
         let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
         const mItems = map.subtitle || "";
 
@@ -117,16 +141,42 @@ class ArchipelagoSync {
 
         $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
             if (global.ArchipelagoSyncInstance !== ArchipelagoSync) return;
-
             const parts = payload.split('|');
             const mapName = parts[0];
             if (!mapName || mapName === "main_menu") return;
-
             this.m_LastSymbols = "MAP_CHANGE_DETECTED";
             this.m_CurrentMap = mapName;
             this.runSync(mapName);
+        });
 
-            if (!this.m_PollSchedule) this.startPolling();
+        $.RegisterForUnhandledEvent("MapLoaded", (map: string, bg: boolean) => {
+            if (bg) return;
+            
+            // --- SANITIZE MAP NAME ---
+            let cleanMap = map;
+            if (cleanMap.indexOf("maps/") === 0 || cleanMap.indexOf("maps\\") === 0) {
+                cleanMap = cleanMap.substring(5);
+            }
+            if (cleanMap.toLowerCase().endsWith(".bsp")) {
+                cleanMap = cleanMap.substring(0, cleanMap.length - 4);
+            }
+
+            // --- UPDATED MAP DETECTION ---
+            if (cleanMap && cleanMap !== "main_menu" && cleanMap !== this.m_CurrentMap) {
+                $.Msg("[AP] Panorama detected map change via event: " + cleanMap);
+                this.m_CurrentMap = cleanMap;
+                GameInterfaceAPI.ConsoleCommand("ap_report_map " + cleanMap);
+                this.runSync(cleanMap);
+            }
+
+            const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+            if (api && api.getStatus() && !api.getStatus().connected) {
+                $.DispatchEvent("ArchipelagoNotify", JSON.stringify({
+                    text: "#Archipelago_Status_NotConnected",
+                    type: "error",
+                    duration: 10.0
+                }));
+            }
         });
 
         GameInterfaceAPI.ConsoleCommand("RefreshMapName");
@@ -142,8 +192,13 @@ class ArchipelagoSync {
                 this.m_PollSchedule = null;
                 return;
             }
+
             if (this.m_CurrentMap && this.m_CurrentMap !== "main_menu") {
                 this.runSync(this.m_CurrentMap);
+                this.m_PollSchedule = null;
+                this.startPolling();
+            } else {
+                // Keep polling if we're in menu to detect first map load
                 this.m_PollSchedule = null;
                 this.startPolling();
             }
@@ -215,3 +270,4 @@ class ArchipelagoSync {
 
 (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync = ArchipelagoSync;
 ArchipelagoSync.initSync();
+ArchipelagoSync.startPolling();

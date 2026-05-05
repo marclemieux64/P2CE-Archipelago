@@ -40,6 +40,7 @@
 		<Panel id="HudLowerLeft" hittest="false" hittestchildren="true">
 			<HudStaticMenu />
 			<HudHealth />
+			<Frame id="ArchipelagoStatusFrame" src="file://{resources}/layout/components/archipelago/status-indicator.xml" />
 		</Panel>
 
 		<!-- Anchored on lower-right corner, laid out from top to bottom -->

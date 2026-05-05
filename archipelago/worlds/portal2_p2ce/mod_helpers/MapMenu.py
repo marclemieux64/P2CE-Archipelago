@@ -87,6 +87,7 @@ class MenuElement:
             "subtitle": self.subtitle,
             "command": self.command,
             "pic": self.pic,
+            "statusIcons": self.info_text,
             "info": self.info_text
         }
 
@@ -142,8 +143,21 @@ class MapMenuElement(MenuElement):
         
         return text
 
-    def to_dict(self):
+    def to_dict(self, previous_completed: bool):
+        # Update required items
+        new_required_items = [item for item in self.required_items if item in self.parent.parent.client.item_list]
+        self.subtitle = "".join(items_to_shortened(new_required_items))
+
+        is_blocked = not (self.parent.parent.is_open_world or previous_completed)
+        self.refresh_title(blocked=is_blocked)
+
         d = super().to_dict()
+        if is_blocked:
+            d["command_deactivated"] = d.pop("command")
+            d["command"] = None
+        else:
+            d["command_deactivated"] = None
+
         d.update({
             "location_id": self.location_id,
             "required_items": list(self.required_items),
@@ -218,6 +232,7 @@ class ChapterMenuElement(MenuElement):
     first_map: MapMenuElement = None
 
     def __init__(self, parent, chapter_number: int, map_names: list[str]):
+        self.chapter_number = chapter_number
         super().__init__(parent, f"chapter{chapter_number}", f"Chapter {chapter_number}", pic=f"vgui/chapters/chapter{chapter_number}")
         if not map_names:
             self.first_map = blank_map_element(self, chapter_number)
@@ -253,10 +268,13 @@ class ChapterMenuElement(MenuElement):
         d = super().to_dict()
         maps = []
         curr = self.first_map
+        prev_completed = True # First map is always unlocked
         while curr:
-            maps.append(curr.to_dict())
+            maps.append(curr.to_dict(prev_completed))
+            prev_completed = curr.completed
             curr = curr.next_map
         d["maps"] = maps
+        d["chapter_number"] = self.chapter_number
         return d
     
     def complete_map(self, map_id: int):

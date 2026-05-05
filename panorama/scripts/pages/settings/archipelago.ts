@@ -9,11 +9,11 @@ function UpdateCompletionSymbolStatus() {
 }
 
 function UpdateMapStatusHUDKeyBinder() {
-    const showHUD = $.persistentStorage.getItem('ap_show_map_status_hud') ?? 1;
+    const showHUD = $.persistentStorage.getItem('ap_show_map_status_hud') ?? 0;
     const keyBinder = $('#MapStatusKeyBinder');
     if (keyBinder) {
-        // Use loose equality to handle string/number mismatch from PS
-        keyBinder.enabled = (showHUD == 1);
+        // Disable manual invocation when "Hide" is ON, as it's intended for map entry only
+        keyBinder.enabled = (showHUD == 0);
     }
 }
 

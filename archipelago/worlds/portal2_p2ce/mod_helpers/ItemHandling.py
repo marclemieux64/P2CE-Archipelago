@@ -33,32 +33,32 @@ def handle_item(item_name: str) -> list[str]:
 
     if DELETE_CUBE in item_tags:
         model = item_data.variant
-        return_commands.append(f'script DeleteEntity("{model}")')
+        return_commands.append(f'DeleteEntity "{model}"')
     
     if DELETE_ENTITY in item_tags:
         if item_name == button or item_name == old_button:
-            return_commands.append(f'script AddButtonFrame("{ent_name}")')
+            return_commands.append(f'AddButtonFrame "{ent_name}"')
         elif item_name == floor_button or item_name == old_floor_button:
-            return_commands.append(f'script AddFloorButtonFrame("{ent_name}")')
+            return_commands.append(f'AddFloorButtonFrame "{ent_name}"')
         else:
-            return_commands.append(f'script DeleteEntity("{ent_name}")')
+            return_commands.append(f'DeleteEntity "{ent_name}"')
     
     # No longer handle gel removal generically, now under map specific commands
     
     if ItemTag.WEAPON in item_tags:
         if item_name == portal_gun_1: # Removed Item for improved randomized levels (too many levels rely on this)
-            return_commands.append(f'script DisablePortalGun(true, false)')
+            return_commands.append(f'DisablePortalGun 1 0')
         if item_name == portal_gun_2:
-            return_commands.append(f'script DisablePortalGun(false, true)')
+            return_commands.append(f'DisablePortalGun 0 1')
         
     if DISABLE_PICKUP in item_tags:
-        return_commands.append(f'script DisableEntityPickup("{ent_name}")')
-        return_commands.append(f'script AttachHologramToEntity("{ent_name}", null, 0.66, 20, 2)')
+        return_commands.append(f'DisableEntityPickup "{ent_name}"')
+        return_commands.append(f'AttachHologramToEntity "{ent_name}" "" 0.66 20 2')
 
     if ItemTag.CORE in item_tags:
         core_name = item_data.variant
-        return_commands.append(f'script DeleteCoreOnOutput("{core_name}", "core_hit_trigger", "OnTrigger")')
-        return_commands.append(f'script DeleteEntity("{"core"+core_name[-1]+"_display"}")')
+        return_commands.append(f'DeleteCoreOnOutput "{core_name}" "core_hit_trigger" "OnTrigger"')
+        return_commands.append(f'DeleteEntity "{"core"+core_name[-1]+"_display"}"')
     
     return return_commands
     
@@ -67,15 +67,15 @@ def handle_trap(trap_name: str) -> str:
         return
     
     if trap_name == motion_blur_trap:
-        return "script MotionBlurTrap()\n"
+        return "MotionBlurTrap\n"
     elif trap_name == fizzle_portal_trap:
-        return "script FizzlePortalTrap()\n"
+        return "FizzlePortalTrap\n"
     elif trap_name == butter_fingers_trap:
-        return "script ButterFingersTrap()\n"
+        return "ButterFingersTrap\n"
     elif trap_name == cube_confetti_trap:
-        return "script CubeConfettiTrap()\n"
+        return "CubeConfettiTrap\n"
     elif trap_name == slippery_floor_trap:
-        return "script SlipperyFloorTrap()\n"
+        return "SlipperyFloorTrap\n"
     
 
 maps_with_potatos = ["sp_a3_speed_ramp",
@@ -102,21 +102,21 @@ def handle_map_start(map_code: str, items_missing: list[str], wheatley_monitors_
     commands: list[str] = []
     
     if map_code in maps_with_potatos and potatos in items_missing:
-        commands.append("script RemovePotatosFromGun()\n")
+        commands.append("RemovePotatosFromGun\n")
     
     for mc in map_specific_commands:
         if map_code == mc.map_code and (mc.condition_item == None or mc.condition_item in items_missing):
             # For ratman den commands, check if pressed
             if mc.type == LocationType.RATMAN_DEN and any(den in mc.commands[0] for den in ratman_dens_checked):
-                replacement_command = mc.commands[0].replace(")\n", ", 1)\n")
+                replacement_command = mc.commands[0].replace("\n", " 1\n")
                 commands.append(replacement_command)
             else:
                 commands += mc.commands
     
     # Mark wheatley monitors that have already been checked
     map_names = [wheatley_monitor_table[monitor].map_name for monitor in wheatley_monitors_checked]
-    commands.append(f'script SetCheckedScreens(["{'", "'.join(map_names)}"])\n')
-    commands += ["script AddWheatleyMonitorBreakCheck()\n"]
+    commands.append(f'SetCheckedScreens {" ".join(map_names)}\n')
+    commands += ["AddWheatleyMonitorBreakCheck\n"]
     
     return commands
 
@@ -129,15 +129,15 @@ class MapCommand:
     type: LocationType | None = None
     
 map_specific_commands: list[MapCommand] = [
-    MapCommand("sp_a4_finale4", potatos, ["script BlockWheatleyFight()\n"]),
-    MapCommand("sp_a2_laser_stairs", reflection_cube, ['script ppmod.addscript([Vector(-352, -288, -32), 1, "trigger_once"], "OnStartTouch", "DeleteEntity(reflection_cube)", 0.5, 1)\n',
-                                                         'script ppmod.addscript("prop_button", "OnPressed", "DeleteEntity(reflection_cube)", 0.5)\n']),
-    MapCommand("sp_a2_laser_relays", reflection_cube, ['script ppmod.get("laser_cube_spawner").Destroy()\n']),
-    MapCommand("sp_a1_intro1", weighted_cube, ['script DeleteEntity("entity_box_maker_rm1")\n']),
+    MapCommand("sp_a4_finale4", potatos, ["BlockWheatleyFight\n"]),
+    MapCommand("sp_a2_laser_stairs", reflection_cube, ['AddScriptAtPos -352 -288 -32 trigger_once "OnStartTouch" "DeleteEntity reflection_cube" 0.5 1\n',
+                                                         'AddScript "prop_button" "OnPressed" "DeleteEntity reflection_cube" 0.5\n']),
+    MapCommand("sp_a2_laser_relays", reflection_cube, ['DeleteEntity "laser_cube_spawner" 0\n']),
+    MapCommand("sp_a1_intro1", weighted_cube, ['DeleteEntity "entity_box_maker_rm1" 0\n']),
     # Turret physics disable (sometimes cannot be at start of level due to spawning times)
-    MapCommand("sp_a2_turret_intro", turrets, [f'script DisableEntityPhysics(turret)\n']),
-    MapCommand("sp_a2_bts2", turrets, ['script ppmod.addscript([Vector(1514, -3898, 64), 1, "trigger_once"], "OnStartTouch", "DisableEntityPhysics(turret)", 3, 1)\n']),
-    MapCommand("sp_a4_finale2", turrets, ['script ppmod.addscript([Vector(11835, 11776, 8543), 1, "trigger_once"], "OnStartTouch", "DisableEntityPhysics(turret)", 2.5, 1)\n']),
+    MapCommand("sp_a2_turret_intro", turrets, [f'DisableEntityPhysics npc_portal_turret_floor\n']),
+    MapCommand("sp_a2_bts2", turrets, ['AddScriptAtPos 1514 -3898 64 trigger_once "OnStartTouch" "DisableEntityPhysics npc_portal_turret_floor" 3 1\n']),
+    MapCommand("sp_a4_finale2", turrets, ['AddScriptAtPos 11835 11776 8543 trigger_once "OnStartTouch" "DisableEntityPhysics npc_portal_turret_floor" 2.5 1\n']),
 ]
 
 # map specific gel removal commands
@@ -149,25 +149,25 @@ for map, gels in map_gel_table.items():
         map_specific_commands.append(MapCommand(map, orange_gel, ['removeallpaint\n']))
     
     for gel_data in gels:
-        map_specific_commands.append(MapCommand(map, gel_data.gel_item, [f'script RemoveGel({gel_data.x}, {gel_data.y}, {gel_data.z}, "{gel_data.object_type}", "{gel_data.object_name}")\n']))
+        map_specific_commands.append(MapCommand(map, gel_data.gel_item, [f'RemoveGel {gel_data.x} {gel_data.y} {gel_data.z} "{gel_data.object_type}" "{gel_data.object_name}"\n']))
                 
 def potatos_not_inplace():
     global map_specific_commands
-    map_specific_commands.append(MapCommand("sp_a3_transition01", potatos, ["script RemovePotatOS()\n"]))
+    map_specific_commands.append(MapCommand("sp_a3_transition01", potatos, ["RemovePotatOS\n"]))
     
 def portal_gun_upgrade_not_inplace():
     global map_specific_commands
-    map_specific_commands.append(MapCommand("sp_a2_intro", portal_gun_2, ["script InciniratorDisablePortalGun()\n"]))
+    map_specific_commands.append(MapCommand("sp_a2_intro", portal_gun_2, ["InciniratorDisablePortalGun\n"]))
 
 # Option based commands
 ratman_den_commands: list[MapCommand] = [
-    MapCommand("sp_a1_intro4", None, ['script CreateAPButton("Ratman Den 1", Vector(847, -703, 320-65), Vector(0,-90,0), 0.8)\n'], LocationType.RATMAN_DEN),
-    MapCommand("sp_a2_dual_lasers", None, ['script CreateAPButton("Ratman Den 2", Vector(438, -636, 827-65), Vector(0,135,0), 0.8)\n'], LocationType.RATMAN_DEN),
-    MapCommand("sp_a2_trust_fling", None, ['script CreateAPButton("Ratman Den 3", Vector(2045, 82, 254-65), Vector(0,-135,0), 0.8)\n'], LocationType.RATMAN_DEN),
-    MapCommand("sp_a2_bridge_intro", None, ['script CreateAPButton("Ratman Den 4", Vector(612, -618, 64-65), Vector(0,-135,0), 0.8)\n'], LocationType.RATMAN_DEN),
-    MapCommand("sp_a2_bridge_the_gap", None, ['script CreateAPButton("Ratman Den 5", Vector(-128, -270, 1756-65), Vector(0,90,0), 0.8)\n'], LocationType.RATMAN_DEN),
-    MapCommand("sp_a2_laser_vs_turret", None, ['script CreateAPButton("Ratman Den 6", Vector(850, -720, 222-65), Vector(0,180,0), 0.8)\n'], LocationType.RATMAN_DEN),
-    MapCommand("sp_a2_pull_the_rug", None, ['script CreateAPButton("Ratman Den 7", Vector(63, -1158, 550-65), Vector(0,45,0), 0.8)\n'], LocationType.RATMAN_DEN)
+    MapCommand("sp_a1_intro4", None, ['CreateAPButton "Ratman Den 1" 847 -703 255 0 -90 0 0.8\n'], LocationType.RATMAN_DEN),
+    MapCommand("sp_a2_dual_lasers", None, ['CreateAPButton "Ratman Den 2" 438 -636 762 0 135 0 0.8\n'], LocationType.RATMAN_DEN),
+    MapCommand("sp_a2_trust_fling", None, ['CreateAPButton "Ratman Den 3" 2045 82 189 0 -135 0 0.8\n'], LocationType.RATMAN_DEN),
+    MapCommand("sp_a2_bridge_intro", None, ['CreateAPButton "Ratman Den 4" 612 -618 -1 0 -135 0 0.8\n'], LocationType.RATMAN_DEN),
+    MapCommand("sp_a2_bridge_the_gap", None, ['CreateAPButton "Ratman Den 5" -128 -270 1691 0 90 0 0.8\n'], LocationType.RATMAN_DEN),
+    MapCommand("sp_a2_laser_vs_turret", None, ['CreateAPButton "Ratman Den 6" 850 -720 157 0 180 0 0.8\n'], LocationType.RATMAN_DEN),
+    MapCommand("sp_a2_pull_the_rug", None, ['CreateAPButton "Ratman Den 7" 63 -1158 485 0 45 0 0.8\n'], LocationType.RATMAN_DEN)
 ]
 
 def add_ratman_commands():

@@ -11,7 +11,6 @@ void DisableEntityPickup(string target) {
         CBaseEntity@ t = targets[i];
         if (t is null) continue;
         t.KeyValue("PickupEnabled", "0");
-       //ArchipelagoLog("[Archipelago] Disabled pickup for: " + t.GetClassname() + " (" + target + ")");
     }
 }
 

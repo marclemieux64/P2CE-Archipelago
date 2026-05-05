@@ -19,6 +19,7 @@
     overflow: clip;
 }
 
+
 .columns_wrapper {
     width: 100%;
     height: fill-parent-flow(1.0);
@@ -62,6 +63,16 @@
 //=============================================================================
 // 3. CHAPTER ENTRIES
 //=============================================================================
+
+.error_entry {
+    width: 90%;
+    flow-children: down;
+    background-color: #331111aa;
+    padding: 8px 15px;
+    margin-bottom: 5px;
+    border: 1px solid #ff444444;
+    border-radius: 4px;
+}
 
 .chapter_entry {
     width: 90%;
@@ -346,15 +357,23 @@
     horizontal-align: right;
     vertical-align: center;
     height: 100%;
-    margin-right: 60px;
+    margin-right: 47px;
     flow-children: right;
     overflow: noclip;
+}
+
+.button_with_tooltip {
+    width: 60px;
+    height: 100%;
+    flow-children: none;
+    overflow: noclip;
+    margin-left: 5px;
 }
 
 .manual_tooltip {
     horizontal-align: center;
     vertical-align: center;
-    y: -60px;
+    y: -65px;
     background-color: #1a1a1aee;
     border: 1px solid #ffffff11;
     border-radius: 4px;

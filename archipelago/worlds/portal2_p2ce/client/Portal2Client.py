@@ -195,6 +195,11 @@ class Portal2Context(CommonContext):
         })
         if len(self.chat_log) > 50:
             self.chat_log.pop(0)
+            
+        # Only mirror prompts to the game console to avoid spam
+        if "Enter " in text or "Please " in text:
+            sanitized_text = text.replace('"', "'").replace('\n', ' ')
+            self.command_queue.append(f'echo "[Archipelago] {sanitized_text}"\n')
 
     def on_print_json(self, data: typing.Union[dict, list]):
         """Hook for Archipelago formatted messages (Legacy/Alternative)"""
@@ -213,10 +218,6 @@ class Portal2Context(CommonContext):
         """Legacy output hook"""
         self.on_print(text)
 
-    def create_level_begin_command(self):
-        '''Generates a command that deletes all entities not collected yet'''
-        return f"{';'.join(self.item_remove_commands)}\n"
-    
     def update_menu(self, location_id: int = None):
         if location_id is not None:
             self.menu.complete_check(location_id)
@@ -235,9 +236,11 @@ class Portal2Context(CommonContext):
     async def p2_connection_loop(self):
         '''Single loop to handle both reading and writing to Portal 2 via netcon'''
         # Give the game a few seconds to open the netcon port if starting together
-        await asyncio.sleep(5)
+        await asyncio.sleep(1)
+        attempt_count = 0
         while not self.exit_event.is_set():
             try:
+                attempt_count += 1
                 reader, writer = await asyncio.open_connection(self.HOST, self.PORT)
                 self.sender_active = True
                 self.listener_active = True
@@ -261,8 +264,9 @@ class Portal2Context(CommonContext):
                             logger.warning("Portal 2 connection closed by peer")
                             break
                         
-                        messages = data.decode(errors="ignore").replace("\'", "").split('\r\n')
+                        messages = data.decode(errors="ignore").replace("\'", "").split('\n')
                         for message in messages:
+                            message = message.strip()
                             if message:
                                 await self.handle_message(message)
                     except asyncio.TimeoutError:
@@ -273,15 +277,18 @@ class Portal2Context(CommonContext):
                         break
 
             except ConnectionRefusedError:
-                logger.warning(f"Connection refused on {self.HOST}:{self.PORT}. Is the game running with -netconport {self.PORT}?")
+                if attempt_count <= 5:
+                    logger.info(f"Waiting for Portal 2 to start on {self.HOST}:{self.PORT}... (Attempt {attempt_count})")
+                else:
+                    logger.warning(f"Connection refused on {self.HOST}:{self.PORT}. Is the game running with -netconport {self.PORT}?")
                 self.sender_active = False
                 self.listener_active = False
-                await asyncio.sleep(5)
+                await asyncio.sleep(1)
             except Exception as e:
                 logger.error(f"Netcon Loop Error ({type(e).__name__}): {e}")
                 self.sender_active = False
                 self.listener_active = False
-                await asyncio.sleep(5)
+                await asyncio.sleep(1)
             finally:
                 self.sender_active = False
                 self.listener_active = False
@@ -418,12 +425,18 @@ class Portal2Context(CommonContext):
         except Exception as e:
             return web.json_response({"error": str(e)}, status=400)
 
+    def send_level_begin_commands(self):
+        '''Sends each item removal command individually to avoid netcon/buffer limits'''
+        for cmd in self.item_remove_commands:
+            if cmd:
+                self.command_queue.append(cmd + "\n")
+
     async def handle_message(self, message: str):
         if message.startswith("map_name:"):
             map_name = message.split(':', 1)[1]
-            # append the whole command string
-            command_string = self.create_level_begin_command()
-            self.command_queue.append(command_string)
+            # Send all item removal commands individually
+            self.send_level_begin_commands()
+            # Send map start commands (already a list)
             self.command_queue += handle_map_start(map_name, self.item_list, self.get_wheatley_monitor_names(self.checked_locations), self.get_ratman_den_names(self.checked_locations))
 
         # For map complete checks

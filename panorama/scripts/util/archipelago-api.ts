@@ -27,7 +27,6 @@ class ArchipelagoAPI {
     }
 
     static refreshStatus() {
-        if (this.ENABLE_DEBUG) $.Msg("[AP API] Refreshing status...");
         $.AsyncWebRequest(this.API_BASE + "/status", {
             type: 'GET',
             complete: (data: any) => {
@@ -84,7 +83,7 @@ class ArchipelagoAPI {
         return this.m_Chat;
     }
 
-    static ENABLE_DEBUG: boolean = true;
+    static ENABLE_DEBUG: boolean = false;
 }
 
 // Global exposure

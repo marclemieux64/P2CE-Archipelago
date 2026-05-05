@@ -1,0 +1,19 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/main.scss" />
+		<include src="file://{resources}/styles/components/archipelago/status-indicator.scss" />
+	</styles>
+	<scripts>
+		<include src="file://{resources}/scripts/components/archipelago/status-indicator.ts" />
+	</scripts>
+
+	<Panel class="ap-status" hittest="false">
+		<Panel id="IndicatorContainer" class="ap-status__container">
+			<Label id="StatusLabel" class="ap-status__label" text="ARCHIPELAGO" />
+			<Panel id="ConnectionDots" class="ap-status__dots">
+				<Panel id="ServerDot" class="ap-status__dot ap-status__dot--disconnected" onmouseover="UIShowTextTooltip('#Archipelago_Status_Server')" onmouseout="UIHideTextTooltip()" />
+				<Panel id="GameDot" class="ap-status__dot ap-status__dot--disconnected" onmouseover="UIShowTextTooltip('#Archipelago_Status_Game')" onmouseout="UIHideTextTooltip()" />
+			</Panel>
+		</Panel>
+	</Panel>
+</root>

@@ -11,6 +11,7 @@ interface LabelPanel extends Panel { }
 class ArchipelagoMapSelect {
     static g_ChapterData: any = {};
     static g_SelectedMapCommand: string = '';
+    static g_LastApiJson: string = '';
 
     static isController() {
         let p = $.GetContextPanel();
@@ -40,11 +41,11 @@ class ArchipelagoMapSelect {
 
     static onConsoleFocus() {
         $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus');
-        $( '#ManualHelpTooltip' )?.AddClass('visible');
+        $( '#ConsoleHelpTooltip' )?.AddClass('visible');
     }
 
     static onConsoleBlur() {
-        $( '#ManualHelpTooltip' )?.RemoveClass('visible');
+        $( '#ConsoleHelpTooltip' )?.RemoveClass('visible');
     }
 
     static toggleConsole() {
@@ -87,14 +88,49 @@ class ArchipelagoMapSelect {
             }
         });
 
-        const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
-        const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
-
         const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
         if (syncHelper && syncHelper.ENABLE_DEBUG) $.Msg("[AP] MapSelect using helper v" + syncHelper.VERSION);
-        if (data) {
-            this.g_ChapterData = syncHelper ? syncHelper.parseExtras(data) : {};
-            this.generateList();
+
+        // Preference: Use the dynamic Web API for real-time updates
+        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        if (api) {
+            const updateFromApi = (json: string) => {
+                if (json === this.g_LastApiJson) return;
+                this.g_LastApiJson = json;
+
+                try {
+                    const status = JSON.parse(json);
+                    if (status) {
+                        // If disconnected, clear the data so generateList shows the error
+                        if (!status.connected) {
+                            this.g_ChapterData = {};
+                            this.generateList();
+                            return;
+                        }
+
+                        if (status.menu) {
+                            this.g_ChapterData = syncHelper ? syncHelper.parseApiStatus(status) : {};
+                            this.generateList();
+                        }
+                    }
+                } catch (e) {
+                    $.Warning("[AP] Error updating MapSelect from API: " + e);
+                }
+            };
+            $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", updateFromApi);
+            if (api.getStatus()) {
+                updateFromApi(JSON.stringify(api.getStatus()));
+            }
+        }
+
+        // Fallback: Static extras.txt if API is not yet available or failing
+        if (!this.g_ChapterData || Object.keys(this.g_ChapterData).length === 0) {
+            const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
+            const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
+            if (data) {
+                this.g_ChapterData = syncHelper ? syncHelper.parseExtras(data) : {};
+                this.generateList();
+            }
         }
     }
 
@@ -287,6 +323,26 @@ class ArchipelagoMapSelect {
             $.Msg("[AP] ERROR: ArchipelagoSync helper not found in MapSelect!");
         }
 
+        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        const isConnected = api && api.getStatus() && api.getStatus().connected;
+
+        if (!this.g_ChapterData || Object.keys(this.g_ChapterData).length === 0) {
+            const entry = $.CreatePanel('Panel', container, '');
+            entry.AddClass('error_entry');
+            
+            const label = $.CreatePanel('Label', entry, '');
+            label.text = isConnected ? "Loading Archipelago Data..." : $.Localize("#Archipelago_Status_NotConnected");
+            label.AddClass('ErrorLabel'); // We can style this in CSS too if needed
+            
+            if (!isConnected) {
+                label.style.color = "#ff4444";
+            }
+            label.style.fontSize = "22px";
+            label.style.fontWeight = "bold";
+            label.style.width = "100%";
+            return;
+        }
+
         const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));
 
         for (const chId of sortedKeys) {
@@ -331,6 +387,8 @@ class ArchipelagoMapSelect {
             let chapterTotalCount = 0;
             let starCount = 0;
             chapter.maps.forEach((map: any) => {
+                if (map.command_deactivated) return;
+
                 const rawTitle = map.title || "Unknown Map";
                 let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
                 if (!statusIcons && rawTitle.length > 4 && (rawTitle.startsWith("~") || rawTitle.startsWith("-") || rawTitle.startsWith("═"))) {
@@ -343,9 +401,10 @@ class ArchipelagoMapSelect {
                     starCount++;
                 }
 
+                const fullCommand = map.command || map.command_deactivated || "";
                 let mapCmdName = "";
-                if (map.command) {
-                    const parts = map.command.split(" ");
+                if (fullCommand) {
+                    const parts = fullCommand.split(" ");
                     if (parts.length >= 2) {
                         mapCmdName = parts[1].trim().toLowerCase();
                     }
@@ -431,9 +490,10 @@ class ArchipelagoMapSelect {
                     cleanName = rawTitle.substring(4).trim();
                 }
 
+                const fullCommand = map.command || map.command_deactivated || "";
                 let mapCmdName = "";
-                if (map.command) {
-                    const parts = map.command.split(" ");
+                if (fullCommand) {
+                    const parts = fullCommand.split(" ");
                     if (parts.length >= 2) {
                         mapCmdName = parts[1].trim().toLowerCase();
                     }
@@ -480,7 +540,7 @@ class ArchipelagoMapSelect {
                     if (!status.isCompleted) mapTotalLeft++;
                 }
 
-                if (mapTotalLeft > 0 && ($.persistentStorage.getItem('HideLocationCounts') ?? 0) === 0) {
+                if (mapTotalLeft > 0 && ($.persistentStorage.getItem('HideLocationCounts') ?? 0) === 0 && !map.command_deactivated) {
                     const progressLabel = $.CreatePanel('Label', mapBtn, '');
                     progressLabel.text = `${mapGreenCount}/${mapTotalLeft}`;
                     

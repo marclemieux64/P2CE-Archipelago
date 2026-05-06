@@ -1,6 +1,4 @@
-// =============================================================
-// ARCHIPELAGO LEGACY TEXT QUEUE
-// =============================================================
+namespace Legacy {
 
 class TextQueue {
     int font_size;
@@ -59,9 +57,11 @@ class TextQueue {
             gt.FireInput("Display", vNone, 0.0f, null, null, 0);
             
             // Self-destruct after the message is finished
-            gt.Remove(); 
+            SafeRemoveEntity(gt); 
             // Note: In Source, game_text only needs to exist to fire the 'Display' event 
             // to the client's HUD. The HUD then manages the rendering.
         }
     }
 }
+
+} // namespace Legacy

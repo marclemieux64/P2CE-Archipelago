@@ -123,15 +123,6 @@ class ArchipelagoMapSelect {
             }
         }
 
-        // Fallback: Static extras.txt if API is not yet available or failing
-        if (!this.g_ChapterData || Object.keys(this.g_ChapterData).length === 0) {
-            const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
-            const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
-            if (data) {
-                this.g_ChapterData = syncHelper ? syncHelper.parseExtras(data) : {};
-                this.generateList();
-            }
-        }
     }
 
     static runTransition(openPanel: any, closePanel: any, clickedEntry: any, scrollContainer: any) {

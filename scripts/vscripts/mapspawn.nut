@@ -1,35 +1,35 @@
 // =============================================================
 // ARCHIPELAGO MAPSPAWN (VScript entry point)
 // =============================================================
-// This file is auto-executed by the game on every map load
-// because it is named "mapspawn.nut".
-// =============================================================
 
 // Load the notification queue system
 IncludeScript("archipelago_notify");
 
-::ap_queued_commands <- [];
-::ap_player_connected <- false;
+if (!("ap_queued_commands" in getroottable())) ::ap_queued_commands <- [];
+if (!("ap_player_connected" in getroottable())) ::ap_player_connected <- false;
 if (!("ArchipelagoDebug" in getroottable())) ::ArchipelagoDebug <- false;
+if (!("ap_potatos_muted" in getroottable())) ::ap_potatos_muted <- false;
 
-function SafeSendToConsole(cmd) {
+::SafeSendToConsole <- function(cmd) {
     if (::ap_player_connected) {
-        // Player is here, fire immediately
         EntFire("InitCmd", "Command", cmd);
     } else {
-        // No player yet, buffer the command
         ::ap_queued_commands.push(cmd);
     }
 }
 
 if ("Entities" in getroottable()) {
-    // Server logic: Polling for player connection before flushing commands
-    function ArchipelagoCheckConnection() {
+    ::ArchipelagoCheckConnection <- function() {
         if (::ap_player_connected) return;
         
         if (Entities.FindByClassname(null, "player") != null) {
             ::ap_player_connected = true;
-            if (::ArchipelagoDebug) printl("[AP-VScript] Player detected! Flushing " + ::ap_queued_commands.len() + " buffered commands.");
+            
+            // Sync subtitle mute state to Panorama now that HUD is ready
+            if (::ap_potatos_muted) {
+                SendToPanorama("ArchipelagoMutePotatos", "1");
+            }
+
             foreach (cmd in ::ap_queued_commands) {
                 EntFire("InitCmd", "Command", cmd);
             }
@@ -37,18 +37,17 @@ if ("Entities" in getroottable()) {
         }
     }
 
-    // Start a frequent check for the player
-    function ArchipelagoStartConnectionCheck() {
-        // Create a dedicated timer entity if it doesn't exist
+    ::ArchipelagoStartConnectionCheck <- function() {
         local timer = Entities.FindByName(null, "ArchipelagoConnectionTimer");
         if (!timer) {
-            timer = Entities.CreateByClassname("info_target");
+            timer = Entities.CreateByClassname("logic_script");
             timer.__KeyValueFromString("targetname", "ArchipelagoConnectionTimer");
         }
         
-        ArchipelagoCheckConnection();
+        ::ArchipelagoCheckConnection();
         if (!::ap_player_connected) {
-            EntFire("ArchipelagoConnectionTimer", "RunScriptCode", "ArchipelagoStartConnectionCheck()", 0.1);
+            // Self-recurse via the timer entity
+            EntFire("ArchipelagoConnectionTimer", "RunScriptCode", "::ArchipelagoStartConnectionCheck()", 0.1);
         } else {
             // Player found, cleanup the timer
             timer.Destroy();
@@ -56,14 +55,11 @@ if ("Entities" in getroottable()) {
     }
 
     // Initial kick-off
-    ArchipelagoStartConnectionCheck();
+    ::ArchipelagoStartConnectionCheck();
 }
 
 // =============================================================
 // PATH-SAFE PROXY SYSTEM
-// =============================================================
-// Catches unquoted paths (models/props/...) from Python calls
-// and converts them to strings automatically.
 // =============================================================
 class APPathProxy {
     path = "";
@@ -73,7 +69,6 @@ class APPathProxy {
     function _tostring() { return path; }
 }
 
-// Global aliases to catch the start of paths
 ::models <- APPathProxy("models");
 ::props <- APPathProxy("props");
 ::archipelago <- APPathProxy("archipelago");
@@ -88,7 +83,6 @@ class APPathProxy {
 ::switch001 <- APPathProxy("switch001");
 ::mdl <- APPathProxy("mdl");
 
-// Entity Class Aliases (These are fine as strings since they are usually leaf nodes)
 ::env_portal_laser <- "env_portal_laser";
 ::prop_under_floor_button <- "prop_under_floor_button";
 ::prop_monster_box <- "prop_monster_box";
@@ -103,229 +97,137 @@ class APPathProxy {
 ::prop_floor_button <- "prop_floor_button";
 ::prop_button <- "prop_button";
 
-// =============================================================
-// SYMBOL ALIASES (For unquoted Python calls)
-// =============================================================
-::npc_portal_turret_floor <- "npc_portal_turret_floor";
-::prop_weighted_cube     <- "prop_weighted_cube";
-::prop_monster_box      <- "prop_monster_box";
-::prop_test_chamber_door <- "prop_test_chamber_door";
-
-// =============================================================
-// PPMOD NATIVE BRIDGE
-// =============================================================
-// This minimal bridge allows legacy calls from the Python client
-// to be handled by the native AngelScript system.
-// =============================================================
-if (::ArchipelagoDebug) printl("[AP-VScript] " + Time() + " ARCHIPELAGO MAPSPAWN (VScript entry point)");
 ::ppmod <- {
-    // We use a large number of arguments to "catch" whatever the client sends
     function addscript(ent, output, scr = "", delay = 0, max = -1, a=0, b=0, c=0) {
         if (typeof ent == "array") {
-            // Handle coordinate-based triggers: [Vector, radius, class]
             local cmd = "AddScriptAtPos " + ent[0].x + " " + ent[0].y + " " + ent[0].z + " " + ent[2] + " \"" + output + "\" \"" + scr + "\" " + delay + " " + max;
-            SafeSendToConsole(cmd);
+            ::SafeSendToConsole(cmd);
         } else {
             local entName = (typeof ent == "instance") ? ent.GetName() : ent;
-            SafeSendToConsole("AddScript \"" + entName + "\" \"" + output + "\" \"" + scr + "\" " + delay + " " + max);
+            ::SafeSendToConsole("AddScript \"" + entName + "\" \"" + output + "\" \"" + scr + "\" " + delay + " " + max);
         }
     }
     
-    function disable_pickup(target) { SafeSendToConsole("DisableEntityPickup \"" + target + "\""); }
-    function force_disable_pickup(target) { SafeSendToConsole("DisableEntityPickup \"" + target + "\""); }
-    function keyval(target, key, val) { 
-        if (key == "origin" || key == "angles") return; // Block redundant transforms that cause "Pushing" errors
+    function disable_pickup(target) { ::SafeSendToConsole("DisableEntityPickup \"" + target + "\""); }
+    function force_disable_pickup(target) { ::SafeSendToConsole("DisableEntityPickup \"" + target + "\""); }
+    function keyval(target, key, val, a=0, b=0, c=0) { 
         EntFire(target, "AddOutput", key + " " + val); 
     }
 
     function get(arg1, arg2 = null, arg3 = null, arg4 = null) {
         return {
-            _name = arg1
-            function Destroy() { SafeSendToConsole("DeleteEntity \"" + _name + "\" 1"); }
-            function Kill() { SafeSendToConsole("DeleteEntity \"" + _name + "\" 1"); }
-            function Disable() { SafeSendToConsole("DisableEntity \"" + _name + "\""); }
+            _name = arg1,
+            function Destroy() { ::SafeSendToConsole("DeleteEntity \"" + _name + "\" 1"); }
+            function Kill() { ::SafeSendToConsole("DeleteEntity \"" + _name + "\" 1"); }
+            function Disable() { ::SafeSendToConsole("DisableEntity \"" + _name + "\""); }
         };
     }
 }
 
-
-// =============================================================
-// CreateAPButton — bridge from Python to AngelScript command.
-//
-// Python calls:
-//   script CreateAPButton("Name", Vector(x,y,z), Vector(r,p,y), scale)
-// This reconstructs the exact string that sv_init.as expects.
-// =============================================================
-function CreateAPButton(name, pos, rot, scale, is_checked = 0) {
+::CreateAPButton <- function(name, pos, rot, scale, is_checked = 0) {
     local cmd = "CreateAPButton \"" + name + "\" " +
                 "Vector(" + pos.x + " " + pos.y + " " + pos.z + ") " +
                 "Vector(" + rot.x + " " + rot.y + " " + rot.z + ") " +
                 scale;
-    SafeSendToConsole(cmd);
-    
-    if (is_checked) {
-        SafeSendToConsole("AddCheckedDen " + name);
-    }
-    
+    ::SafeSendToConsole(cmd);
+    if (is_checked) ::SafeSendToConsole("AddCheckedDen " + name);
     return cmd;
 }
 
-// =============================================================
-// ARCHIPELAGO DELETE ENTITY BRIDGE
-// =============================================================
-::scripted_fling_levels <- ["sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity"];
-
-function DeleteEntity(entity_name = "", create_holo = true, scale = 0.7) { 
+::DeleteEntity <- function(entity_name = "", create_holo = true, scale = 0.7) { 
     local cmd = "DeleteEntity \"" + entity_name + "\" " + (create_holo ? "1" : "0") + " " + scale;
-    SafeSendToConsole(cmd);
-    return cmd; // Return string for nesting
+    ::SafeSendToConsole(cmd);
+    return cmd;
 }
-function ty(entity_name, create_holo = true, scale = 0.7) {DeleteEntity(entity_name, create_holo, scale);}
+::ty <- function(entity_name, create_holo = true, scale = 0.7) {::DeleteEntity(entity_name, create_holo, scale);}
 
-// =============================================================
-// ARCHIPELAGO PICKUP DISABLE BRIDGE
-// =============================================================
-
-function DisableEntityPickup(entity_name = "") {
+::DisableEntityPickup <- function(entity_name = "") {
     local cmd = "DisableEntityPickup \"" + entity_name + "\"";
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
     return cmd;
 }
 
-function DeleteCoreOnOutput(core_name = "", target_name = "", output = "") {
+::DeleteCoreOnOutput <- function(core_name = "", target_name = "", output = "") {
     local cmd = "DeleteCoreOnOutput \"" + core_name + "\" \"" + target_name + "\" \"" + output + "\"";
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
     return cmd;
 }
 
-function DisablePortalGun(blue = true, orange = true) {   
+::DisablePortalGun <- function(blue = true, orange = true) {   
     local cmd = "DisablePortalGun " + (blue ? "1" : "0") + " " + (orange ? "1" : "0");
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
     return cmd;
 }
 
-function InciniratorDisablePortalGun() { 
+::InciniratorDisablePortalGun <- function() { 
     local cmd = "InciniratorDisablePortalGun";
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
     return cmd;
 }
 
-
-function DisableEntityPhysics(entity_name = "") {
+::DisableEntityPhysics <- function(entity_name = "") {
     local cmd = "DisableEntityPhysics \"" + entity_name + "\"";
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
     return cmd;
 }
 
-function DisableEntity(entity_name = "") {
+::DisableEntity <- function(entity_name = "") {
     local cmd = "DisableEntity \"" + entity_name + "\"";
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
     return cmd;
 }
 
-function RemoveGel(x, y, z, object_type = null, object_name = null, create_holo = 1) {
+::RemoveGel <- function(x, y, z, object_type = null, object_name = null, create_holo = 1) {
     local cmd = "RemoveGel " + x + " " + y + " " + z;
     if (object_type != null) cmd += " \"" + object_type + "\"";
     if (object_name != null) cmd += " \"" + object_name + "\"";
     cmd += " " + create_holo;
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
 }
 
-function CreateClearGel(pos, offset = -100) {
+::CreateClearGel <- function(pos, offset = -100) {
     local cmd = "CreateClearGel " + pos.x + " " + pos.y + " " + pos.z + " " + offset;
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
 }
 
+::FinishedMap <- function() { ::SafeSendToConsole("FinishedMap");}
+::ChangeLevel <- function(next_map="") {}
 
-// =============================================================
-// ARCHIPELAGO MAP COMPLETION INTERCEPT
-// =============================================================
-
-/**
- * FinishedMap - Override for standard P2 transition function.
- * Called automatically by non-elevator maps via 'transition.nut'.
- */
-function FinishedMap() {  SafeSendToConsole("FinishedMap");}
-
-/**
- * ChangeLevel - Override for standard P2 transition function.
- * By absorbing this call, we permanently block the map from loading the next BSP,
- * freezing the transition perfectly so we can handle returning to the menu independently.
- */
-function ChangeLevel(next_map="") {
-    // We intentionally do nothing here. The map is now suspended indefinitely.
-}
-
-// =============================================================
-// ARCHIPELAGO BUTTON FRAME BRIDGES
-// =============================================================
-
-
-function AddButtonFrame(search_term = "") {
+::AddButtonFrame <- function(search_term = "") {
     local cmd = "AddButtonFrame \"" + search_term + "\"";
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
     return cmd;
 }
-function AddFloorButtonFrame(search_term = "") {
+::AddFloorButtonFrame <- function(search_term = "") {
     local cmd = "AddFloorButtonFrame \"" + search_term + "\"";
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
     return cmd;
 }
 
-// =============================================================
-// ARCHIPELAGO HOLOGRAM ATTACHMENT BRIDGE
-// =============================================================
-
-/**
- * AttachHologramToEntity - Bridge to AngelScript AttachHologramToEntity command.
- */
-function AttachHologramToEntity(entity_name = "", attachment = "", scale = 1.0, offset = 0.0, skin = 0) {
+::AttachHologramToEntity <- function(entity_name = "", attachment = "", scale = 1.0, offset = 0.0, skin = 0) {
     local cmd = "AttachHologramToEntity \"" + entity_name + "\" \"" + attachment + "\" " + scale + " " + offset + " " + skin;
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
 }
 
-// =============================================================
-// ARCHIPELAGO MONITOR TRACKING
-// =============================================================
-
-function SetCheckedScreens(data = "") {
-    // Legacy bridge - no longer needed as we use SetStatus
-    SafeSendToConsole("SetStatus");
-}
-
-function AddWheatleyMonitorBreakCheck(entity_name = "", check_id = 0) {
+::AddWheatleyMonitorBreakCheck <- function(entity_name = "", check_id = 0) {
     local cmd = "AddWheatleyMonitorBreakCheck \"" + entity_name + "\" " + check_id;
-    SafeSendToConsole(cmd);
+    ::SafeSendToConsole(cmd);
 }
 
-function SetCheckedDens(data = "") {
-    // Legacy bridge - no longer needed as we use SetStatus
-    SafeSendToConsole("SetStatus");
-}
+::MotionBlurTrap <- function() { ::SafeSendToConsole("MotionBlurTrap"); return "MotionBlurTrap"; }
+::FizzlePortalTrap <- function() { ::SafeSendToConsole("FizzlePortalTrap"); return "FizzlePortalTrap"; }
+::ButterFingersTrap <- function() { ::SafeSendToConsole("ButterFingersTrap"); return "ButterFingersTrap"; }
+::CubeConfettiTrap <- function() { ::SafeSendToConsole("CubeConfettiTrap"); return "CubeConfettiTrap"; }
+::SlipperyFloorTrap <- function() { ::SafeSendToConsole("SlipperyFloorTrap"); return "SlipperyFloorTrap"; }
+::RemovePotatosFromGun <- function() { ::SafeSendToConsole("RemovePotatosFromGun");}
+::BlockWheatleyFight <- function() { ::SafeSendToConsole("BlockWheatleyFight");}
+::RemovePotatOS <- function() { ::SafeSendToConsole("RemovePotatOS");}
 
-
-// =============================================================
-// ARCHIPELAGO TRAP BRIDGES
-// =============================================================
-
-function MotionBlurTrap() { SafeSendToConsole("MotionBlurTrap"); return "MotionBlurTrap"; }
-function FizzlePortalTrap() { SafeSendToConsole("FizzlePortalTrap"); return "FizzlePortalTrap"; }
-function ButterFingersTrap() { SafeSendToConsole("ButterFingersTrap"); return "ButterFingersTrap"; }
-function CubeConfettiTrap() { SafeSendToConsole("CubeConfettiTrap"); return "CubeConfettiTrap"; }
-function SlipperyFloorTrap() { SafeSendToConsole("SlipperyFloorTrap"); return "SlipperyFloorTrap"; }
-function RemovePotatosFromGun() { SafeSendToConsole("RemovePotatosFromGun");}
-function BlockWheatleyFight() { SafeSendToConsole("BlockWheatleyFight");}
-function RemovePotatOS() { SafeSendToConsole("RemovePotatOS");}
-
-
-function MutePotatOSSubtitles(mute) {
-    if (mute) {
-        SendToPanorama("ArchipelagoMutePotatos", "1");
-    } else {
-        SendToPanorama("ArchipelagoMutePotatos", "0");
+::MutePotatOSSubtitles <- function(mute) {
+    ::ap_potatos_muted = mute;
+    ::SafeSendToConsole("ap_potatos_muted " + (mute ? "1" : "0"));
+    if (::ap_player_connected) {
+        SendToPanorama("ArchipelagoMutePotatos", mute ? "1" : "0");
     }
 }
-
-
-
 

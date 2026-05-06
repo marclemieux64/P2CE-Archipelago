@@ -6,7 +6,7 @@
  * DisableEntity - Safely shuts down an entity without deleting it.
  * Works on funnels, triggers, beams, and lights.
  */
-void DisableEntity(string search_term) {
+void DisableTractorBeam(string search_term) {
     array<CBaseEntity@> targets = FindEntities(search_term);
     
     for (uint i = 0; i < targets.length(); i++) {

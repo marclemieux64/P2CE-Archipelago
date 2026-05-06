@@ -145,7 +145,20 @@ class CloseCaptioning {
 		const onDisplay = (token: string, caption: any, lifetime: number, time: number) => {
 			try {
 				if (!caption) return;
-				if (this.bPotatosMuted && (token.toLowerCase().includes('glados.') || token.toLowerCase().includes('potatos.'))) return;
+				if (this.bPotatosMuted) {
+					const locTextCheck = (caption.text.indexOf('cheaptitles') !== -1 && caption.text.indexOf('#') === -1) ? $.Localize('#' + caption.text) : $.Localize(caption.text);
+					
+					const tokenLow = token.toLowerCase();
+					const locTextLow = locTextCheck.toLowerCase();
+					
+					// 1. PotatOS always muted (No exceptions)
+					if (tokenLow.includes('potatos') || locTextLow.includes('potatos:')) return;
+
+					// 2. GLaDOS muted (With Caroline exception)
+					if (tokenLow.includes('glados') || locTextLow.includes('glados:')) {
+						if (!tokenLow.includes('caroline') && !locTextLow.includes('caroline:')) return;
+					}
+				}
 				if (this.captionRecord.has(token)) return;
 
 				const rawText = caption.text || '';
@@ -167,6 +180,9 @@ class CloseCaptioning {
 
 		const onBad = (token: string, lifetime: number, time?: number) => {
 			try {
+				if (this.bPotatosMuted && (token.toLowerCase().includes('glados.') || token.toLowerCase().includes('potatos.'))) {
+					if (!token.toLowerCase().includes('caroline')) return;
+				}
 				const absLife = getAbsoluteTime(lifetime, time);
 				this.captions.push(new CaptionEntry(token, { text: `[MISSING] ${token}` }, absLife));
 				this.showBox();
@@ -201,8 +217,19 @@ class CloseCaptioning {
 			for (const [txt, life] of this.textCooldowns) if (time >= life) this.textCooldowns.delete(txt);
 		});
 
+		// Restore state from persistent storage or ConVar
+		const savedMute = $.persistentStorage.getItem('ap_potatos_muted');
+		const convarMute = GameInterfaceAPI.GetSettingInt('ap_potatos_muted');
+		
+		if (convarMute === 1 || savedMute === '1') {
+			this.bPotatosMuted = true;
+		} else {
+			this.bPotatosMuted = false;
+		}
+
 		$.RegisterForUnhandledEvent('ArchipelagoMutePotatos', (active: string) => {
 			this.bPotatosMuted = (active === '1');
+			$.persistentStorage.setItem('ap_potatos_muted', active);
 			if (this.bPotatosMuted) this.wipeCaptions();
 		});
 

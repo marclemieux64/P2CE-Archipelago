@@ -1460,5 +1460,11 @@ Ce message ne s’affichera qu’une seule fois et ne s’affichera plus après 
 		"Archipelago_Help_Item_Potatos" "PotatOS"
 		"Archipelago_Help_Close" "Fermer"
 		"Archipelago_Help_Tooltip" "Aide"
+		"Archipelago_Console_Tooltip" "Ouvrir la console Archipelago"
+		"Archipelago_Console_Connecting" "CONNEXION À ARCHIPELAGO..."
+		"Archipelago_Console_Placeholder" "Tapez une commande (ex: /status, /help, /hint)..."
+		"Archipelago_Status_Server"	"Connexion au Serveur Archipelago"
+		"Archipelago_Status_Game"	"Connexion au Jeu (Netcon)"
+		"Archipelago_Status_NotConnected" "NON CONNECTÉ AU SERVEUR ARCHIPELAGO. Utilisez la console (C) pour vous connecter."
 	}
 }

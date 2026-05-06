@@ -27,6 +27,8 @@ function SaveSmartWarpSetting() {
             if (selected) {
                 const val = selected.GetAttributeInt('value', -1);
                 $.persistentStorage.setItem('ap_smart_warp', val);
+                // Also set convar for the engine/AngelScript to read
+                GameInterfaceAPI.SetSettingInt('ap_smart_warp', val);
                 $.Msg(`[AP] Smart Warp setting saved: ${val}`);
             }
         }

@@ -66,7 +66,7 @@ function ProcessQueue() {
 
             $.Schedule(0.5, () => {
                 const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
-                if (useSmartWarp == 1) {
+                if (useSmartWarp === "1" || useSmartWarp === 1) {
                     (UiToolkitAPI.GetGlobalObject() as any).SmartWarpNextMap(pendingWarpMapName);
                 } else {
                     GameInterfaceAPI.ConsoleCommand("disconnect");

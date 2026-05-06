@@ -7,14 +7,18 @@
 
 // 2. Legacy Logic
 #include "Archipelago/Legacy/textqueue.as"
+#include "Archipelago/Legacy/HologramOverrides.as"
 #include "Archipelago/Legacy/mapspawn.as"
 #include "Archipelago/Legacy/mapspawn_commands.as"
+#include "Archipelago/Legacy/AddMapCheck.as"
+#include "Archipelago/Legacy/HologramDebug.as"
+#include "Archipelago/Legacy/AerialFaithPlate.as"
 
 /**
  * InitializeArchipelago - Atomic setup of core bridge entities.
  */
 bool InitializeArchipelago() {
-    ArchipelagoLog("[Archipelago] INITIALIZING LEGACY CORE...");
+    Legacy::ArchipelagoLog("[Archipelago] INITIALIZING LEGACY CORE...");
     CBaseEntity@ cmd = util::CreateEntityByName("point_servercommand");
     if (cmd !is null) {
         cmd.KeyValue("targetname", "InitCmd");
@@ -35,7 +39,7 @@ bool InitializeArchipelago() {
         vInit.SetString("RunDelayedInit");
         cmd.FireInput("Command", vInit, 0.5f, null, null, 0);
         
-        ArchipelagoLog("[Archipelago] SUCCESS: Legacy Core Bridge Ready.");
+        Legacy::ArchipelagoLog("[Archipelago] SUCCESS: Legacy Core Bridge Ready.");
     }
     
     return true; 

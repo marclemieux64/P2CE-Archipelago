@@ -40,6 +40,8 @@ def handle_item(item_name: str) -> list[str]:
             return_commands.append(f'AddButtonFrame "{ent_name}"')
         elif item_name == floor_button or item_name == old_floor_button:
             return_commands.append(f'AddFloorButtonFrame "{ent_name}"')
+        elif item_name == funnel or item_name == bridge:
+            return_commands.append(f'DisableTractorBeam "{ent_name}"')
         else:
             return_commands.append(f'DeleteEntity "{ent_name}"')
     
@@ -78,7 +80,9 @@ def handle_trap(trap_name: str) -> str:
         return "SlipperyFloorTrap\n"
     
 
-maps_with_potatos = ["sp_a3_speed_ramp",
+maps_with_potatos = ["sp_a3_00",
+                    "sp_a3_01",
+                    "sp_a3_speed_ramp",
                      "sp_a3_speed_flings",
                      "sp_a3_portal_intro",
                      "sp_a3_end",

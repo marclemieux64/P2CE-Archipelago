@@ -190,6 +190,8 @@
 		"Archipelago_Help_Close" "Close"
 		"Archipelago_Help_Tooltip" "Help"
 		"Archipelago_Console_Tooltip" "Open Archipelago Console"
+		"Archipelago_Console_Connecting" "CONNECTING TO ARCHIPELAGO..."
+		"Archipelago_Console_Placeholder" "Type a command (e.g. /status, /help, /hint)..."
 		"Archipelago_Status_Server"	"Archipelago Server Connection"
 		"Archipelago_Status_Game"	"Portal 2 (Netcon) Connection"
 		"Archipelago_Status_NotConnected" "NOT CONNECTED TO ARCHIPELAGO SERVER. Use the console (C) to connect."

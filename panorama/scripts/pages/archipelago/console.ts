@@ -13,6 +13,26 @@ class ArchipelagoConsole {
     static g_HistoryIndex: number = -1;
     static g_CurrentInputBuffer: string = "";
 
+    static COLOR_MAP: Record<string, string> = {
+        "red": "#ff5555",
+        "green": "#55ff55",
+        "yellow": "#ffff55",
+        "blue": "#77aaff",
+        "magenta": "#ff55ff",
+        "cyan": "#55ffff",
+        "white": "#ffffff",
+        "black": "#000000",
+        "gold": "#ffaa00",
+        "plum": "#dda0dd",
+        "salmon": "#fa8072",
+        "slate": "#708090",
+        "brown": "#8b4513",
+        "orange": "#ffa500",
+        "pink": "#ffc0cb",
+        "purple": "#800080",
+        "grey": "#808080"
+    };
+
     static init() {
         this.m_Panel = $.GetContextPanel();
         $.Msg("[AP] Console initialized");
@@ -110,6 +130,33 @@ class ArchipelagoConsole {
         }
     }
 
+    static formatRichMessage(data: any[]): string {
+        let result = "";
+        for (const part of data) {
+            if (!part) continue;
+            let text = part.text || "";
+            // Escape HTML special characters to prevent rendering issues
+            text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            
+            let color = "#ffffff";
+            if (part.color && this.COLOR_MAP[part.color]) {
+                color = this.COLOR_MAP[part.color];
+            } else if (part.type === "player_id") {
+                color = "#ffffff"; // Default player color
+            } else if (part.type === "item_id") {
+                color = "#afdfef"; // Default item color
+            } else if (part.type === "location_id") {
+                color = "#00ff7f"; // Default location color
+            } else {
+                // No specific color, just add text as-is
+                result += text;
+                continue;
+            }
+            result += `<font color='${color}'>${text}</font>`;
+        }
+        return result;
+    }
+
     static refreshConsoleUI(chat: any[]) {
         if (!this.m_Panel || !chat) return;
         const output = this.m_Panel.FindChildTraverse('ConsoleOutput') as any;
@@ -119,7 +166,17 @@ class ArchipelagoConsole {
         for (const msg of chat) {
             const d = new Date(msg.time * 1000);
             const timeStr = "[" + d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0') + "]";
-            fullText += timeStr + " " + msg.text + "\n";
+            
+            let lineText = "";
+            if (msg.type === "json" && Array.isArray(msg.data)) {
+                lineText = this.formatRichMessage(msg.data);
+            } else {
+                lineText = msg.text || "";
+                // Escape plain text as well for consistency
+                lineText = lineText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            }
+            
+            fullText += `<font color='#888888'>${timeStr}</font> ${lineText}<br/>`;
         }
 
         if (this.g_ConsoleText === fullText) return;

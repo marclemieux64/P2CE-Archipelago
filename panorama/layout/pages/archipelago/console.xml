@@ -21,7 +21,7 @@
             <Panel id="ColumnsWrapper" class="columns_wrapper">
                 <!-- CONSOLE OUTPUT AREA -->
                 <Panel id="ConsoleOutputArea" class="console_output_area">
-                    <Label id="ConsoleOutput" class="console_output_text" multiline="true" text="CONNECTING TO ARCHIPELAGO..." />
+                    <Label id="ConsoleOutput" class="console_output_text" multiline="true" html="true" text="#Archipelago_Console_Connecting" />
                 </Panel>
             </Panel>
 
@@ -34,7 +34,7 @@
                         <Label class="console_prompt" text=">" />
                         <TextEntry id="ArchipelagoInput" 
                                    class="archipelago_input" 
-                                   placeholder="Type a command (e.g. /status, /help, /hint)..." 
+                                   placeholder="#Archipelago_Console_Placeholder" 
                                    oninputsubmit="ArchipelagoConsole.onArchipelagoInput()" />
                     </Panel>
                 </Panel>

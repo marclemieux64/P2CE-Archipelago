@@ -30,33 +30,25 @@ class ArchipelagoMapStatus {
         return { isCompleted: false, isAvailable: true };
     }
 
-    static parseExtras(data: any): any {
+    static parseApiStatus(status: any): any {
+        if (!status || !status.menu || !status.menu.chapters) return {};
         const chapters: any = {};
-        const infoBlocks: any = {};
-
-        for (const key in data) {
-            if (key.toLowerCase().endsWith('_info')) {
-                infoBlocks[key.substring(0, key.length - 5)] = data[key];
-            }
-        }
-
-        for (const key in data) {
-            const lowerKey = key.toLowerCase();
-            if (lowerKey.startsWith('chapter')) {
-                const majorId = key.match(/\d+/)?.[0];
-                if (majorId) {
-                    if (!chapters[majorId]) chapters[majorId] = { maps: [] };
-                    if (key.includes('.') && !lowerKey.endsWith('_info')) {
-                        const map = { id: key, ...data[key] };
-                        if (infoBlocks[key]) {
-                            map.statusIcons = infoBlocks[key].title;
-                        }
-                        chapters[majorId].maps.push(map);
-                    } else if (!key.includes('.')) {
-                        Object.assign(chapters[majorId], data[key]);
-                    }
-                }
-            }
+        for (const chapter of status.menu.chapters) {
+            const chId = chapter.chapter_number.toString();
+            chapters[chId] = {
+                title: chapter.title,
+                subtitle: chapter.subtitle,
+                pic: chapter.pic,
+                maps: chapter.maps.map((map: any) => ({
+                    title: map.title,
+                    subtitle: map.subtitle,
+                    command: map.command,
+                    command_deactivated: map.command_deactivated,
+                    pic: map.pic,
+                    statusIcons: map.statusIcons,
+                    completed: map.completed
+                }))
+            };
         }
         return chapters;
     }
@@ -152,11 +144,11 @@ class ArchipelagoMapStatus {
     }
 
     static runSync(mapName: string) {
-        const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
-        const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
-        if (!data) return;
+        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        const apiStatus = api ? api.getStatus() : null;
+        if (!apiStatus || !apiStatus.menu) return;
 
-        const chapters = this.parseExtras(data);
+        const chapters = this.parseApiStatus(apiStatus);
         let currentMapData: any = null;
 
         for (const chId in chapters) {
@@ -206,8 +198,6 @@ class ArchipelagoMapStatus {
         $.persistentStorage.setItem("ArchipelagoLastMapStatus", serverStatus);
         $.persistentStorage.setItem("ArchipelagoLastMapName", mapName);
 
-        GameInterfaceAPI.ConsoleCommand(`SetStatus ${serverStatus} ${ratmanStatus} ${portalGunDone} ${potatosDone} ${wheatleyDone} "${symbols}"`);
-        
         if (this.m_Debug) {
             $.Msg("[AP] Status Updated: Map=" + serverStatus + " Symbols=[" + symbols + "]");
         }

@@ -186,11 +186,12 @@ class Portal2Context(CommonContext):
         # We don't log to info here to avoid recursion with the log handler
         self.on_print_silently(text)
 
-    def on_print_silently(self, text: str):
+    def on_print_silently(self, text: str, rich_data: list = None):
         """Internal method to update chat log without triggering the logger"""
         self.chat_log.append({
             "text": text,
-            "type": "text",
+            "data": rich_data,
+            "type": "text" if rich_data is None else "json",
             "time": time.time()
         })
         if len(self.chat_log) > 50:
@@ -207,12 +208,39 @@ class Portal2Context(CommonContext):
             self.print_json(data["data"])
         elif isinstance(data, list):
             self.print_json(data)
+        else:
+            # Fallback for raw JSON logs
+            self.on_print_silently(str(data), [data] if isinstance(data, dict) else data)
 
     def print_json(self, data: typing.List[typing.Dict[str, str]]):
         """Hook for Archipelago formatted messages"""
+        resolved_data = []
+        for part in data:
+            if not isinstance(part, dict):
+                resolved_data.append(part)
+                continue
+                
+            new_part = part.copy()
+            text = part.get("text", "")
+            part_type = part.get("type")
+            
+            try:
+                if part_type == "player_id":
+                    new_part["text"] = self.player_names[int(text)]
+                elif part_type == "item_id":
+                    new_part["text"] = self.item_names.lookup_in_slot(int(text), self.slot)
+                elif part_type == "location_id":
+                    # For location_id, we might not know the sender easily in this context,
+                    # but usually it's for the current game
+                    new_part["text"] = self.location_names.lookup_in_slot(int(text), self.slot)
+            except Exception:
+                pass # Keep original text if resolution fails
+            
+            resolved_data.append(new_part)
+
         # Convert formatted message parts to plain text for the simple console
-        text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in data)
-        self.on_print(text)
+        text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in resolved_data)
+        self.on_print_silently(text, resolved_data)
 
     def output(self, text: str):
         """Legacy output hook"""

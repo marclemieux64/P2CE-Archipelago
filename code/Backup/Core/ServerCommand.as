@@ -45,7 +45,7 @@ void ReportAPButtonCmd(const CommandArgs@ args) {
     RunButtonScenarioCheck(args.Arg(1));
 }
 
-[ServerCommand("CreateAPButton", "Spawns custom buttons")]
+// [ServerCommand("CreateAPButton", "Spawns custom buttons")]
 void CreateAPButtonCmd(const CommandArgs@ args) {
     if (args is null) return;
     string raw = args.GetCommandString();
@@ -60,7 +60,7 @@ void CreateAPButtonCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("DeleteEntity", "Removes entities and optionally spawns a hologram")]
+// [ServerCommand("DeleteEntity", "Removes entities and optionally spawns a hologram")]
 void DeleteEntityCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
     string target = args.Arg(1);
@@ -70,7 +70,7 @@ void DeleteEntityCmd(const CommandArgs@ args) {
     RefreshAllAPHolograms();
 }
 
-[ServerCommand("RemoveGel", "Removes gel sprayer/entity and clears floor: RemoveGel x y z [type] [name] [create_holo]")]
+// [ServerCommand("RemoveGel", "Removes gel sprayer/entity and clears floor: RemoveGel x y z [type] [name] [create_holo]")]
 void RemoveGelCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
@@ -80,7 +80,7 @@ void RemoveGelCmd(const CommandArgs@ args) {
     RemoveGel(pos, type, name, createHolo);
 }
 
-[ServerCommand("CreateClearGel", "Spawns a water paint bomb to clear gel: CreateClearGel x y z [offset]")]
+// [ServerCommand("CreateClearGel", "Spawns a water paint bomb to clear gel: CreateClearGel x y z [offset]")]
 void CreateClearGelCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
@@ -125,7 +125,7 @@ void DumpAPHolosCmd(const CommandArgs@ args) {
     ArchipelagoLog("============================================");
 }
 
-[ServerCommand("DeleteCoreOnOutput", "Queues core deletion for a specific entity output")]
+// [ServerCommand("DeleteCoreOnOutput", "Queues core deletion for a specific entity output")]
 void DeleteCoreOnOutputCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     DeleteCoreOnOutput(args.Arg(1), args.Arg(2), args.Arg(3));
@@ -145,13 +145,13 @@ void AddScriptAtPosCmd(const CommandArgs@ args) {
     AddEntityOutputScriptAtPos(pos, args.Arg(4), args.Arg(5), args.Arg(6), (args.ArgC() > 7 ? args.Arg(7).toFloat() : 0.0f), (args.ArgC() > 8 ? args.Arg(8).toInt() : -1));
 }
 
-[ServerCommand("AddButtonFrame", "Adds frame/hologram to a pedestal button")]
+// [ServerCommand("AddButtonFrame", "Adds frame/hologram to a pedestal button")]
 void AddButtonFrameCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
     AddButtonFrame(args.Arg(1));
 }
 
-[ServerCommand("AddFloorButtonFrame", "Adds frame/hologram to a floor button")]
+// [ServerCommand("AddFloorButtonFrame", "Adds frame/hologram to a floor button")]
 void AddFloorButtonFrameCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
     AddFloorButtonFrame(args.Arg(1));
@@ -194,7 +194,7 @@ void ArchipelagoShowStatusCmd(const CommandArgs@ args) {
     // This command is primarily intercepted by Panorama
 }
 
-[ServerCommand("DisableEntityPhysics", "Freezes an entity in place")]
+// [ServerCommand("DisableEntityPhysics", "Freezes an entity in place")]
 void DisableEntityPhysicsCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
     string target = args.Arg(1);
@@ -206,7 +206,7 @@ void DisableEntityPhysicsCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("DisablePortalGun", "Disables specific portals on the player gun")]
+// [ServerCommand("DisablePortalGun", "Disables specific portals on the player gun")]
 void DisablePortalGunCmd(const CommandArgs@ args) {
     if (args.ArgC() < 3) return;
     bool blue = (args.Arg(1) == "1");
@@ -214,13 +214,13 @@ void DisablePortalGunCmd(const CommandArgs@ args) {
     DisablePortalGun(blue, orange);
 }
 
-[ServerCommand("DisableEntityPickup", "Global lock on generic entity picking up")]
+// [ServerCommand("DisableEntityPickup", "Global lock on generic entity picking up")]
 void DisableEntityPickupCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
     DisableEntityPickup(args.Arg(1));
 }
 
-[ServerCommand("AttachHologramToEntity", "Forces a hologram to stick to a moving entity")]
+// [ServerCommand("AttachHologramToEntity", "Forces a hologram to stick to a moving entity")]
 void AttachHologramToEntityCmd(const CommandArgs@ args) {
     if (args.ArgC() < 6) return;
     AttachHologramToEntity(args.Arg(1), args.Arg(2), args.Arg(3).toFloat(), args.Arg(4).toFloat(), args.Arg(5).toInt());
@@ -232,7 +232,7 @@ void SpawnHolosCmd(const CommandArgs@ args) {
     CreateMapSpecificHolos(current_map);
 }
 
-[ServerCommand("FinishedMap", "Triggers map completion logic")]
+// [ServerCommand("FinishedMap", "Triggers map completion logic")]
 void PrintCompleteCmd(const CommandArgs@ args) {
     PrintMapComplete();
 }
@@ -267,7 +267,7 @@ void RefreshMapNameCmd(const CommandArgs@ args) {
     CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + current_map + "|1\")");
 }
 
-[ServerCommand("PrintItem", "Prints collected item")]
+// [ServerCommand("PrintItem", "Prints collected item")]
 void PrintItemCmd(const CommandArgs@ args) {
     if (args is null) return;
     string raw = args.GetCommandString();
@@ -278,7 +278,7 @@ void PrintItemCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("PrintMonitor", "Internal - Prints monitor break check to console")]
+// [ServerCommand("PrintMonitor", "Internal - Prints monitor break check to console")]
 void PrintMonitorCmd(const CommandArgs@ args) {
     if (args is null) return;
     string raw = args.GetCommandString();
@@ -300,7 +300,7 @@ void PrintMonitorCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("AddWheatleyMonitorBreakCheck", "Manually triggers Wheatley monitor break check setup")]
+// [ServerCommand("AddWheatleyMonitorBreakCheck", "Manually triggers Wheatley monitor break check setup")]
 void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
     UpdateInternalMapName();
     AddWheatleyMonitorBreakCheck(current_map);
@@ -361,17 +361,17 @@ void RainbowLasersCmd(const CommandArgs@ args) {
     RainbowCmd(args);
 }
 
-[ServerCommand("RemovePotatOS", "Removes PotatOS and establishes instructor hints")]
+// [ServerCommand("RemovePotatOS", "Removes PotatOS and establishes instructor hints")]
 void RemovePotatOSCmd(const CommandArgs@ args) {
     RemovePotatOS();
 }
 
-[ServerCommand("InciniratorDisablePortalGun", "Bridge from VScript/Client")]
+// [ServerCommand("InciniratorDisablePortalGun", "Bridge from VScript/Client")]
 void InciniratorDisablePortalGunCmd(const CommandArgs@ args) {
     IncineratorDisablePortalGun();
 }
 
-[ServerCommand("BlockWheatleyFight", "Blocks the Wheatley fight and establishes instructor hints")]
+// [ServerCommand("BlockWheatleyFight", "Blocks the Wheatley fight and establishes instructor hints")]
 void BlockWheatleyFightCmd(const CommandArgs@ args) {
     BlockWheatleyFight();
 }
@@ -455,7 +455,7 @@ void HologramRotateCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("RemovePotatosFromGun", "Removes PotatOS from the gun")]
+// [ServerCommand("RemovePotatosFromGun", "Removes PotatOS from the gun")]
 void RemovePotatosFromGunCmd(const CommandArgs@ args) {
     RemovePotatosFromGun();
 }
@@ -630,7 +630,7 @@ void GameStatusTickCmd(const CommandArgs@ args) {
     RunGameStatusTickCommand(args);
 }
 
-[ServerCommand("RunDelayedInit", "Runs one-time map setup")]
+// [ServerCommand("RunDelayedInit", "Runs one-time map setup")]
 void RunDelayedInitCmd(const CommandArgs@ args) {
     RunDelayedInitialization();
 }
@@ -639,36 +639,36 @@ void RunDelayedInitCmd(const CommandArgs@ args) {
 // TRAP COMMANDS 
 // -------------------------------------------------------------
 
-[ServerCommand("CubeConfettiTrap", "Triggers cube confetti trap")]
+// [ServerCommand("CubeConfettiTrap", "Triggers cube confetti trap")]
 void CubeConfettiTrapCmd(const CommandArgs@ args) {
     TriggerCubeConfettiTrap();
 }
 
-[ServerCommand("MotionBlurTrap", "Triggers motion blur trap")]
+// [ServerCommand("MotionBlurTrap", "Triggers motion blur trap")]
 void MotionBlurTrapCmd(const CommandArgs@ args) {
     float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 20.0f;
     TriggerMotionBlurTrap(duration);
 }
 
-[ServerCommand("SlipperyFloorTrap", "Triggers slippery floor trap")]
+// [ServerCommand("SlipperyFloorTrap", "Triggers slippery floor trap")]
 void SlipperyFloorTrapCmd(const CommandArgs@ args) {
     float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 15.0f;
     TriggerSlipperyFloorTrap(duration);
 }
 
-[ServerCommand("FizzlePortalTrap", "Triggers fizzle portal trap")]
+// [ServerCommand("FizzlePortalTrap", "Triggers fizzle portal trap")]
 void FizzlePortalTrapCmd(const CommandArgs@ args) {
     TriggerFizzlePortalTrap();
 }
 
-[ServerCommand("DialogTrap", "Triggers dialog trap")]
+// [ServerCommand("DialogTrap", "Triggers dialog trap")]
 void DialogTrapCmd(const CommandArgs@ args) {
     string scene = (args !is null && args.ArgC() >= 2) ? args.Arg(1) : "";
     float duration = (args !is null && args.ArgC() >= 3) ? args.Arg(2).toFloat() : 15.0f;
     TriggerDialogTrap(scene, duration);
 }
 
-[ServerCommand("ButterFingersTrap", "Triggers butter fingers trap")]
+// [ServerCommand("ButterFingersTrap", "Triggers butter fingers trap")]
 void ButterFingersTrapCmd(const CommandArgs@ args) {
     float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 30.0f;
     TriggerButterFingersTrap(duration);

@@ -59,21 +59,20 @@ class ArchipelagoMapStatusHUD {
             return;
         }
 
-        const extrasKv = $.LoadKeyValuesFile("scripts/extras.txt") || $.LoadKeyValues3File("scripts/extras.txt");
-        const data = extrasKv && extrasKv.Extras ? extrasKv.Extras : extrasKv;
-        if (!data) {
-            if (this.m_Debug) $.Msg("[AP] MapStatusHUD: ERROR - Could not load extras.txt");
+        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        const apiStatus = api ? api.getStatus() : null;
+        if (!apiStatus || !apiStatus.menu) {
+            if (this.m_Debug) $.Msg("[AP] MapStatusHUD: API status not available.");
             return;
         }
 
         const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
-        if (mapStatusHelper && mapStatusHelper.ENABLE_DEBUG) $.Msg("[AP] MapStatusHUD using helper v" + mapStatusHelper.VERSION);
         if (!mapStatusHelper) {
             if (this.m_Debug) $.Msg("[AP] MapStatusHUD ERROR: ArchipelagoMapStatus helper not found!");
             return;
         }
 
-        const chapters = mapStatusHelper.parseExtras(data);
+        const chapters = mapStatusHelper.parseApiStatus(apiStatus);
         let currentMapData: any = null;
         for (const chId in chapters) {
             for (const map of chapters[chId].maps) {
@@ -90,7 +89,7 @@ class ArchipelagoMapStatusHUD {
         }
 
         if (!currentMapData) {
-            if (this.m_Debug) $.Msg("[AP] MapStatusHUD ERROR: No map data found for " + currentMapName + " in extras.txt");
+            if (this.m_Debug) $.Msg("[AP] MapStatusHUD ERROR: No map data found for " + currentMapName + " in API status.");
             return;
         }
 

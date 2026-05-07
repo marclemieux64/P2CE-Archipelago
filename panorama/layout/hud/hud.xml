@@ -68,7 +68,7 @@
 			<WeaponSwitcher />
 		</Panel>
 		
-<ClosedCaptions id="ClosedCaptions" />
+		<ClosedCaptions id="ClosedCaptions" />
 
 		<!-- Console notifications should always draw above anything else! -->
 		<Panel id="HudNotify" hittest="false" hittestchildren="false">

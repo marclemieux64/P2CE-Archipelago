@@ -16,27 +16,27 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     string name = ent.GetEntityName();
     
 
-    // 1. DEFAULT VALUES (Relative to parent)
-    targetPos = Vector(0, 0, 0);
-    targetAng = QAngle(0, 0, 0);
-    targetSkin = 4; // Default to Skin 4 (Item Skin)
-    targetScale = 0.7f;
-    shouldParent = true;
-    absoluteAngles = false;
+    // 1. OVERRIDE LOGIC (Modify only if category matches)
+    // We no longer set defaults here because they are provided by the caller/client.
 
     // 2. ITEM CATEGORIES (Translated from Backup)
     bool isCube = (classname == "prop_weighted_cube" || model.locate("metal_box") != uint(-1) || model.locate("box") != uint(-1) || model.locate("cube") != uint(-1));
-    bool isLaser = (classname.locate("laser") != uint(-1) || classname.locate("catcher") != uint(-1) || name.locate("laser") != uint(-1));
+    bool isLaser = (classname.locate("env_portal_laser") != uint(-1) || classname.locate("prop_laser_relay") != uint(-1) || classname.locate("prop_laser_catcher") != uint(-1));
     bool isButton = (classname.locate("button") != uint(-1));
     bool isFaithPlate = (model.locate("faith_plate") != uint(-1));
-    bool isFunnelBridge = (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel" || classname == "prop_wall_projector");
+    bool isFunnelBridge = (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel");
+    bool isMonsterBox = (classname == "prop_monster_box");
 
     // G. WHEATLEY MONITORS
-    if (model.locate("wheatley_monitor") != uint(-1) || model.locate("screen") != uint(-1) || model.locate("monitor") != uint(-1) || name.tolower().locate("monitor") != uint(-1)) {
-        targetPos = Vector(130.0f, 30.0f, 0.0f); // Out from screen
-        targetAng = QAngle(90, 0, 0); // Face player
+    if (model.locate("monitor") != uint(-1) || model.locate("screen") != uint(-1) || name.tolower().locate("monitor") != uint(-1)) {
+        if (classname == "logic_relay") {
+            targetPos = Vector(0.0f, 20.0f, 64.0f); // Pop it out from the relay's wall position
+        } else {
+            targetPos = Vector(0.0f, -40.0f, 140.0f); // Backup Match: High and Left (Y is Left in some models)
+        }
+        targetAng = QAngle(0, 0, 0); 
         targetSkin = 0;
-        targetScale = 1.0f;
+        targetScale = 0.8f;
         shouldParent = true;
         absoluteAngles = false;
         return;
@@ -62,6 +62,16 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     }
 
+    if (isMonsterBox) {
+        targetPos = Vector(0, 0, 50.0f); // Higher UP for FrankenCubes
+        targetAng = QAngle(0, 0, 0);
+        targetSkin = 4;
+        targetScale = 0.8f;
+        shouldParent = true;
+        absoluteAngles = true;
+        return;
+    }
+
     if (isCube || isFaithPlate) {
         targetPos = Vector(0, 0, 40.0f); // Local UP
         targetAng = QAngle(0, 0, 0); // Point Down
@@ -70,33 +80,34 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         absoluteAngles = true; 
     } else if (isLaser) {
         targetSkin = 4;
-        if (classname.locate("relay") != uint(-1) || name.locate("relay") != uint(-1)) {
+        shouldParent = true;
+        absoluteAngles = false; // Follow entity orientation
+        if (classname.locate("prop_laser_relay") != uint(-1)) {
             targetPos = Vector(0, 0, 40.0f); // Local UP
+            targetAng = QAngle(0, 0, 0);
             targetScale = 0.66f;
         } else {
-            targetPos = Vector(24.0f, 0, 0); // Local Forward (out of device)
-            targetAng = QAngle(90.0f, 0, 0); 
+            targetPos = Vector(32.0f, 0, 0); // Further out to avoid clipping
             targetScale = 0.55f;
+            targetAng = QAngle(90.0f, 0, 0); // Rotate to face outward
         }
     } else if (isButton) {
         targetSkin = 4;
-        if (classname.locate("floor") != uint(-1)) {
-            targetPos = Vector(0, 0, 40.0f);
+        if (classname.locate("floor") != uint(-1) || model.locate("floor_button") != uint(-1)) {
+            targetPos = Vector(0, 0, 50.0f);
             targetScale = 1.0f;
+            absoluteAngles = false; // Follow button orientation (Floor/Wall/Ceiling)
         } else {
             targetPos = Vector(0, 0, 70.0f);
             targetScale = 0.66f;
         }
-    } else if (isFunnelBridge) {
+    } else if (classname == "prop_tractor_beam") {
         targetSkin = 4;
-        if (classname == "prop_wall_projector") {
-            targetPos = Vector(32.0f, 0, 0); // Local Forward
-            targetAng = QAngle(90.0f, 0, 0);
-            targetScale = 0.8f;
-        } else {
-            targetPos = Vector(0, 0, -50.0f); // Funnels
-            targetScale = 0.7f;
-        }
+        targetPos = Vector(80.0f, 0, 0); // Out from wall frame
+        targetAng = QAngle(90.0f, 0, 0); // Rotate face to match emitter orientation
+        targetScale = 1.0f;
+        shouldParent = true;
+        absoluteAngles = false; 
     }
 
     if (::current_map == "sp_a1_intro5") {

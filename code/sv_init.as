@@ -12,7 +12,6 @@
 #include "Archipelago/Legacy/mapspawn_commands.as"
 #include "Archipelago/Legacy/AddMapCheck.as"
 #include "Archipelago/Legacy/HologramDebug.as"
-#include "Archipelago/Legacy/AerialFaithPlate.as"
 
 /**
  * InitializeArchipelago - Atomic setup of core bridge entities.

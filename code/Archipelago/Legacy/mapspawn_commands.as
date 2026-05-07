@@ -46,6 +46,29 @@ void AddButtonFrameLegacyCmd(const CommandArgs@ args) {
     Legacy::AddButtonFrame(args.Arg(1));
 }
 
+[ServerCommand("AddTractorBeamFrame", "Legacy AddButtonFrame command")]
+void AddTractorBeamFrameLegacyCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    Legacy::AddTractorBeamFrame(args.Arg(1));
+}
+
+[ServerCommand("MakeFaithPlateFaulty", "Legacy MakeFaithPlateFaulty command")]
+void MakeFaithPlateFaultyLegacyCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+
+    // On récupère le nom passé par la console
+    string entName = args.Arg(1);
+
+    // On cherche l'entité correspondante
+    CBaseEntity@ target = EntityList().FindByName(null, entName);
+    if (target is null) @target = EntityList().FindByClassname(null, entName);
+
+    // Si on l'a trouvée, on lance la fonction
+    if (target !is null) {
+        Legacy::MakeFaithPlateFaulty(target);
+    }
+}
+
 [ServerCommand("DeleteCoreOnOutput", "Legacy DeleteCoreOnOutput command")]
 void DeleteCoreOnOutputLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
@@ -206,11 +229,24 @@ void SetCheckedScreensLegacyCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("DisableTractorBeam", "Legacy DisableTractorBeam command")]
-void DisableTractorBeamLegacyCmd(const CommandArgs@ args) {
-    if (args.ArgC() < 2) return;
-    Legacy::ArchipelagoLog("[AP RECV] DisableTractorBeam: " + args.Arg(1));
-    Legacy::DisableTractorBeam(args.Arg(1));
+[ServerCommand("AddScriptAtPos", "Legacy AddScriptAtPos command")]
+void AddScriptAtPosLegacyCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 6) return;
+    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    Legacy::AddEntityOutputScriptAtPos(pos, args.Arg(4), args.Arg(5), args.Arg(6), (args.ArgC() > 7 ? args.Arg(7).toFloat() : 0.0f), (args.ArgC() > 8 ? args.Arg(8).toInt() : -1));
+}
+
+[ServerCommand("CreateAPButton", "Legacy CreateAPButton command")]
+void CreateAPButtonLegacyCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 8) return;
+    string name = args.Arg(1);
+    Vector pos(args.Arg(2).toFloat(), args.Arg(3).toFloat(), args.Arg(4).toFloat());
+    QAngle ang(args.Arg(5).toFloat(), args.Arg(6).toFloat(), args.Arg(7).toFloat());
+    float scale = (args.ArgC() > 8) ? args.Arg(8).toFloat() : 1.0f;
+    int skin = (args.ArgC() > 9) ? args.Arg(9).toInt() : 0;
+    
+    Legacy::ArchipelagoLog("[AP RECV] CreateAPButton: " + name);
+    Legacy::CreateAPButton(name, pos, ang, scale, skin);
 }
 
 } // namespace Legacy

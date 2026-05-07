@@ -115,14 +115,26 @@ namespace Legacy {
 
     // 1.1 PRIMARY PASS (Exact Match / Name)
         while ((@ent = EntityList().FindByName(ent, search)) !is null) {
-            if (lowerSearch.locate("archipelago_hologram") != uint(-1) || ent.GetEntityName().locate("_holo") == uint(-1)) {
+            string name = ent.GetEntityName();
+            if (lowerSearch.locate("archipelago_hologram") != uint(-1) || name.tolower().locate("_holo") == uint(-1)) {
                 targets.insertLast(ent);
             }
         }
     
         if (targets.length() > 0) return targets;
 
-    // 1.2 MODEL PATH PASS
+    // 1.2 SECONDARY PASS (Classname Match)
+        @ent = null;
+        while ((@ent = EntityList().FindByClassname(ent, search)) !is null) {
+            string name = ent.GetEntityName();
+            if (lowerSearch.locate("archipelago_hologram") != uint(-1) || name.tolower().locate("_holo") == uint(-1)) {
+                targets.insertLast(ent);
+            }
+        }
+
+        if (targets.length() > 0) return targets;
+
+    // 1.3 MODEL PATH PASS
         if (search.locate("/") != uint(-1) || search.locate("\\") != uint(-1) || search.locate(".mdl") != uint(-1)) {
             @ent = EntityList().First();
             while (@ent !is null) {
@@ -134,15 +146,6 @@ namespace Legacy {
             if (targets.length() > 0) return targets;
         }
 
-    // 1.3 CLASSNAME PASS
-        @ent = null;
-        while ((@ent = EntityList().FindByClassname(ent, search)) !is null) {
-            if (search == "npc_portal_turret_floor") {
-                if (ent.GetModelName().tolower().locate("npcs/turret/turret.mdl") == uint(-1)) continue;
-            }
-            targets.insertLast(ent);
-        }
-    
     // Fallback: Turrets check prop_dynamic
         if (search == "npc_portal_turret_floor") {
             @ent = null;
@@ -159,25 +162,22 @@ namespace Legacy {
         bool isCoreRequest = (lowerSearch.locate("core") != uint(-1) || lowerSearch.locate("fact") != uint(-1) || lowerSearch.locate("faulty") != uint(-1));
         bool isHologramRequest = (lowerSearch.locate("archipelago_hologram") != uint(-1));
     
-        string coreDigit = "";
         if (isCoreRequest) {
-            if (lowerSearch.locate("1") != uint(-1)) coreDigit = "1"; else if (lowerSearch.locate("2") != uint(-1)) coreDigit = "2"; else if (lowerSearch.locate("3") != uint(-1)) coreDigit = "3";
+            // Logic handled per-entity inside the loop
         }
 
         @ent = EntityList().First();
         while (@ent !is null) {
-            string name = ent.GetEntityName().tolower();
-            string cls = ent.GetClassname().tolower();
+            string name = ent.GetEntityName();
+            string cls = ent.GetClassname();
             string model = ent.GetModelName().tolower();
-        
-            if (!isHologramRequest && name.locate("_holo") != uint(-1)) { @ent = EntityList().Next(ent); continue; }
 
             if (isCoreRequest) {
-                bool nameMatch = (name.locate("core") != uint(-1) || name.locate("fact") != uint(-1));
-                bool modelMatch = (model.locate("personality_core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
-
-                if (nameMatch || modelMatch) {
-                    if (coreDigit != "" && name.locate(coreDigit) != uint(-1)) targets.insertLast(ent); else if (coreDigit == "") targets.insertLast(ent);
+                if (cls == "npc_personality_sphere") {
+                    string cSub = "";
+                    if (lowerSearch.locate("1") != uint(-1)) cSub = "core1"; else if (lowerSearch.locate("2") != uint(-1)) cSub = "core2"; else if (lowerSearch.locate("3") != uint(-1)) cSub = "core3";
+                    
+                    if (cSub != "" && name.locate(cSub) != uint(-1)) targets.insertLast(ent); else if (cSub == "") targets.insertLast(ent);
                 }
             } else if (isHologramRequest) {
                 if (model.locate("archipelago_hologram") != uint(-1)) {
@@ -185,9 +185,14 @@ namespace Legacy {
                 }
             } else {
                 bool match = false;
-                if (lowerSearch == "cube" && (cls.locate("cube") != uint(-1) || model.locate("metal_box") != uint(-1) || model.locate("box") != uint(-1))) match = true; else if (lowerSearch == "button" && (cls.locate("button") != uint(-1))) match = true; else if (lowerSearch == "monster" && (cls.locate("monster_box") != uint(-1))) match = true;
+                string lCls = cls.tolower();
+                if (lowerSearch == "cube" && (lCls.locate("cube") != uint(-1) || model.locate("metal_box") != uint(-1) || model.locate("box") != uint(-1))) match = true; else if (lowerSearch == "button" && (lCls.locate("button") != uint(-1))) match = true; else if (lowerSearch == "monster" && (lCls.locate("monster_box") != uint(-1))) match = true;
             
-                if (match) targets.insertLast(ent);
+                if (match) {
+                    if (lowerSearch.locate("archipelago_hologram") != uint(-1) || name.tolower().locate("_holo") == uint(-1)) {
+                        targets.insertLast(ent);
+                    }
+                }
             }
 
             @ent = EntityList().Next(ent);
@@ -211,9 +216,11 @@ namespace Legacy {
  */
     void SafeAddOutput(CBaseEntity@ ent, string output, string target, string input, string param = "", float delay = 0.0f, int maxTimes = -1) {
         if (ent is null) return;
-    // Format: "target,input,parameter,delay,maxTimes"
-        string value = target + "," + input + "," + param + "," + delay + "," + maxTimes;
-        ent.KeyValue(output, value);
+        
+        // Format: "target:input:parameter:delay:maxTimes"
+        Variant v;
+        v.SetString(output + " " + target + ":" + input + ":" + param + ":" + delay + ":" + maxTimes);
+        ent.FireInput("AddOutput", v, 0.0f, null, null, 0);
     }
 
 /**

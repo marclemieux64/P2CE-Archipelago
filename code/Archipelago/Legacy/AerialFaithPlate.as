@@ -8,7 +8,7 @@ namespace Legacy {
  * HandleFaithPlateLock - Manages the physical stabilization and player feedback
  * for a Faith Plate when its associated trigger is locked.
  */
-void HandleFaithPlateLock(CBaseEntity@ trigger) {
+void MakeFaithPlateFaulthy(CBaseEntity@ trigger) {
     if (trigger is null) return;
 
     // 1. Stabilization Logic: Locate and sanitize the physical plate

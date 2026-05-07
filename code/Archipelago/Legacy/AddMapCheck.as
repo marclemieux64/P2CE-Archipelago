@@ -19,17 +19,21 @@ void AddMapCheck() {
         // 1. Unnamed Positional Triggers
         CBaseEntity@ tr = null;
         while ((@tr = EntityList().FindByClassname(tr, "trigger_once")) !is null) {
-            if (tr.GetEntityName() == "") { 
-                Vector pos = tr.GetAbsOrigin();
+            Vector pos = tr.GetAbsOrigin();
+            if (tr.GetEntityName() == "" || current_map == "sp_a1_wakeup") { 
+                Vector targetVec;
                 bool is_target = false;
-                if (current_map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 100) is_target = true;
-                else if (current_map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 100) is_target = true;
-                else if (current_map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 100) is_target = true;
-                else if (current_map == "sp_a4_finale1" && pos.DistTo(Vector(-12832, -3040, -112)) < 100) is_target = true;
-                else if (current_map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 100) is_target = true;
+                
+                if (current_map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 100) { is_target = true; targetVec = Vector(5952, 4624, -1736); }
+                else if (current_map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 100) { is_target = true; targetVec = Vector(-4080, -7232, 6328); }
+                else if (current_map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 100) { is_target = true; targetVec = Vector(0, 304, -10438); }
+                else if (current_map == "sp_a4_finale1" && pos.DistTo(Vector(-12832, -3040, -112)) < 100) { is_target = true; targetVec = Vector(-12832, -3040, -112); }
+                else if (current_map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 100) { is_target = true; targetVec = Vector(-3152, -1928, -240); }
+                else if (current_map == "sp_a1_wakeup" && pos.DistTo(Vector(6144, 3456, 904)) < 100) { is_target = true; targetVec = Vector(6144, 3456, 904); }
 
                 if (is_target) {
-                    CreateAPHologram(tr.WorldSpaceCenter(), QAngle(0, 0, 0), 1.0f, null, "", 0, "transition_trigger_holo");
+                    string uniqueHoloName = "map_check_trigger_holo";
+                    CreateAPHologram(Vector(6164, 3456, 904), QAngle(0, 270, 90), 1.0f, null, "", 0, uniqueHoloName, false);
                 }
             }
         }
@@ -43,7 +47,7 @@ void AddMapCheck() {
         for (uint s = 0; s < transTargets.length(); s++) {
             CBaseEntity@ t = null;
             while ((@t = EntityList().FindByName(t, transTargets[s])) !is null) {
-                CreateAPHologram(t.WorldSpaceCenter(), QAngle(0, 0, 0), 1.0f, null, "", 0, t.GetEntityName() + "_holo");
+                CreateAPHologram(t.WorldSpaceCenter(), QAngle(0, 0, 0), 1.0f, null, "", 0, t.GetEntityName() + "_holo", false);
             }
         }
     } else {
@@ -52,7 +56,7 @@ void AddMapCheck() {
         while ((@tEnt = EntityList().FindByClassname(tEnt, "func_tracktrain")) !is null) {
             string tName = tEnt.GetEntityName();
             if (tName.locate("exit_lift_train") != uint(-1) || tName.locate("departure_elavator") != uint(-1) || tName.locate("departure_elevator") != uint(-1)) {
-                CreateAPHologram(Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, tEnt, "", 0, tName + "_holo");
+                CreateAPHologram(Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, tEnt, "", 0, tName + "_holo", false);
             }
         }
     }

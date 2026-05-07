@@ -185,6 +185,7 @@ void PrintMonitorLegacyCmd(const CommandArgs@ args) {
         Legacy::g_reported_monitors.insertLast(check);
 
         Legacy::ArchipelagoLog("monitor_break:" + check);
+        HandleMonitorWarp(check);
     }
 }
 

@@ -212,10 +212,10 @@ void RemovePotatosFromGunLegacyCmd(const CommandArgs@ args) {
     Legacy::RemovePotatosFromGun();
 }
 
-[ServerCommand("AddWheatleyMonitorBreakCheck", "Manually triggers Wheatley monitor break check setup")]
+/* [ServerCommand("AddWheatleyMonitorBreakCheck", "Manually triggers Wheatley monitor break check setup")]
 void AddWheatleyMonitorBreakCheckLegacyCmd(const CommandArgs@ args) {
     Legacy::AddWheatleyMonitorChecks(::current_map);
-}
+} */
 
 [ServerCommand("SetStatus", "Dummy - Deprecated")]
 void SetStatusLegacyCmd(const CommandArgs@ args) {}
@@ -277,4 +277,46 @@ void SpawnPaintBombLegacyCmd(const CommandArgs@ args) {
     Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
     Legacy::SpawnPaintBomb(pos);
 }
+
+ [ServerCommand("CubeConfettiTrap", "Triggers cube confetti trap")]
+void CubeConfettiTrapCmd(const CommandArgs@ args) {
+    TriggerCubeConfettiTrap();
+}
+
+ [ServerCommand("MotionBlurTrap", "Triggers motion blur trap")]
+void MotionBlurTrapCmd(const CommandArgs@ args) {
+    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 20.0f;
+    Legacy::TriggerMotionBlurTrap(duration);
+}
+
+[ServerCommand("SlipperyFloorTrap", "Triggers slippery floor trap")]
+void SlipperyFloorTrapCmd(const CommandArgs@ args) {
+    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 15.0f;
+    Legacy::TriggerSlipperyFloorTrap(duration);
+}
+
+ [ServerCommand("FizzlePortalTrap", "Triggers fizzle portal trap")]
+void FizzlePortalTrapCmd(const CommandArgs@ args) {
+    Legacy::TriggerFizzlePortalTrap();
+}
+
+[ServerCommand("DialogTrap", "Triggers dialog trap")]
+void DialogTrapCmd(const CommandArgs@ args) {
+    string scene = (args !is null && args.ArgC() >= 2) ? args.Arg(1) : "";
+    float duration = (args !is null && args.ArgC() >= 3) ? args.Arg(2).toFloat() : 15.0f;
+    Legacy::TriggerDialogTrap(scene, duration);
+}
+
+[ServerCommand("ButterFingersTrap", "Triggers butter fingers trap")]
+void ButterFingersTrapCmd(const CommandArgs@ args) {
+    // Si aucun argument n'est fourni, duration sera 30.0f
+    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 30.0f;
+    
+    // Maintenant cette ligne compilera car Legacy::ButterFingersTrap(float) existe !
+    Legacy::ButterFingersTrap(duration);
+}
+
+
+
+
 } // namespace Legacy

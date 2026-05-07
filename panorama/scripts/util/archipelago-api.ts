@@ -23,7 +23,7 @@ class ArchipelagoAPI {
         
         this.refreshStatus();
         this.fetchChat();
-        this.m_PollSchedule = $.Schedule(0.1, () => this.startPolling());
+        this.m_PollSchedule = $.Schedule(1.0, () => this.startPolling());
     }
     static sendCommand(cmd: string) {
         if (!cmd) return;

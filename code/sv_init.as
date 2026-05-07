@@ -12,6 +12,13 @@
 #include "Archipelago/Legacy/mapspawn_commands.as"
 #include "Archipelago/Legacy/AddMapCheck.as"
 #include "Archipelago/Legacy/HologramDebug.as"
+#include "Archipelago/ButterFingerTrap.as"
+#include "Archipelago/CubeConfettiTrap.as"
+#include "Archipelago/DialogTrap.as"
+#include "Archipelago/MotionBlurTrap.as"
+#include "Archipelago/SlipperyFloorTrap.as"
+#include "Archipelago/FizzlePortalTrap.as"
+
 
 /**
  * InitializeArchipelago - Atomic setup of core bridge entities.

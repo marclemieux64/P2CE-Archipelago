@@ -27,20 +27,12 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     bool isFunnelBridge = (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel");
     bool isMonsterBox = (classname == "prop_monster_box");
 
-    // G. WHEATLEY MONITORS
-    if (model.locate("monitor") != uint(-1) || model.locate("screen") != uint(-1) || name.tolower().locate("monitor") != uint(-1)) {
-        if (classname == "logic_relay") {
-            targetPos = Vector(0.0f, 20.0f, 64.0f); // Pop it out from the relay's wall position
-        } else {
-            targetPos = Vector(0.0f, -40.0f, 140.0f); // Backup Match: High and Left (Y is Left in some models)
-        }
-        targetAng = QAngle(0, 0, 0); 
-        targetSkin = 0;
-        targetScale = 0.8f;
-        shouldParent = true;
-        absoluteAngles = false;
-        return;
-    }
+  // G. WHEATLEY MONITORS
+if (classname == "func_monitor") {
+    targetPos = Vector(5.0f, 0.0f, 0.0f); // Très proche de la surface
+    shouldParent = false;
+    return;
+}
 
     // H. VITRIFIED BUTTONS
     if (name.locate("dummy_chamber_button") != uint(-1)) {
@@ -73,7 +65,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     }
 
     if (isCube || isFaithPlate) {
-        targetPos = Vector(0, 0, 40.0f); // Local UP
+        targetPos = Vector(0, 0, 0); // Local UP
         targetAng = QAngle(0, 0, 0); // Point Down
         targetSkin = 4;
         targetScale = 0.66f;
@@ -106,7 +98,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         targetPos = Vector(80.0f, 0, 0); // Out from wall frame
         targetAng = QAngle(90.0f, 0, 0); // Rotate face to match emitter orientation
         targetScale = 1.0f;
-        shouldParent = true;
+        shouldParent = false;
         absoluteAngles = false; 
     }
 

@@ -40,25 +40,25 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
     string mapName = ConVarRef("host_map").GetString();
 
     if (entity_name == "trigger_catapult" && ItemInList(mapName, scripted_fling_levels)) {
-        Msgl("not removing trigger_catapult");
+        // MsgI est probablement ta fonction de log custom
+        Legacy::ArchipelagoLog("not removing trigger_catapult");
         return;
     }
 
     array<CBaseEntity@> entsToDelete;
     CBaseEntity@ searchEnt = null;
 
-    if (entity_name.locate(".mdl") < entity_name.length()) {
+    // --- RECHERCHE DES ENTITÉS ---
+    if (entity_name.locate(".mdl") != uint(-1)) { // Correction du check .mdl
         while ((@searchEnt = EntityList().FindByModel(searchEnt, entity_name)) !is null) {
             entsToDelete.insertLast(searchEnt);
         }
     } 
     else {
-        // Search by Classname
         while ((@searchEnt = EntityList().FindByClassname(searchEnt, entity_name)) !is null) {
             entsToDelete.insertLast(searchEnt);
         }
         
-        // Search by Targetname (Name)
         @searchEnt = null;
         while ((@searchEnt = EntityList().FindByName(searchEnt, entity_name)) !is null) {
             bool alreadyInList = false;
@@ -68,15 +68,12 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
                     break;
                 }
             }
-            if (!alreadyInList) {
-                entsToDelete.insertLast(searchEnt);
-            }
+            if (!alreadyInList) entsToDelete.insertLast(searchEnt);
         }
     }
 
-    // Apply the logic to all found entities
+    // --- TRAITEMENT ET SUPPRESSION ---
     for (uint i = 0; i < entsToDelete.length(); i++) {
-        
         CBaseEntity@ ent = @entsToDelete[i];
 
         if (entity_name == "trigger_catapult") {
@@ -85,14 +82,23 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
         }
 
         if (create_holo) {
+            // 1. Récupérer le nom de l'entité originale
+            string originalName = ent.GetEntityName();
+            
+            // 2. Si l'entité n'a pas de nom, on en génère un basé sur entity_name
+            // pour pouvoir le retrouver plus tard (ex: "holo_prop_weighted_cube")
+            string holoName = (originalName != "") ? originalName + "_holo" : entity_name + "_holo";
+
             QAngle angles = ent.GetAbsAngles();
             Vector forward;
             AngleVectors(angles, forward);
             
-            // Generic offset for other entities (buttons, etc.)
-            Vector spawnPos = ent.GetAbsOrigin() + (forward * Vector(-50.0f, -50.0f, -50.0f));
+            // On récupère la position actuelle
+            Vector spawnPos = ent.GetAbsOrigin();
             
-            Legacy::CreateAPHologram(spawnPos, angles, 0.7f, null, "", 4);
+            // On appelle CreateAPHologram avec le nouveau nom généré
+            // Note : J'ai passé holoName dans l'argument 'name' (7ème paramètre)
+            Legacy::CreateAPHologram(spawnPos, angles, 0.7f, null, "", 4, holoName);
         }
         
         ent.Remove();
@@ -379,7 +385,7 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
     // We completely removed DeleteEntity(entity_name, false) from here!
     // The original tractor beams are already dead and replaced by dummies.
 }
-        void AddTractorBeamFrame(string entity_name) {
+    void AddTractorBeamFrame(string entity_name) {
     array<CBaseEntity@> targets = FindEntities(entity_name);
     for (uint i = 0; i < targets.length(); i++) {
         CBaseEntity@ ent = targets[i];
@@ -530,9 +536,6 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
             vCapt.SetString("script MutePotatOSSubtitles(true)");
             cmd.FireInput("Command", vCapt, 0.1f, null, null, 0);
 
-            Variant vStopShock;
-            vStopShock.SetString("stopsound playonce/scripted_sequence/glados_potados_shock.wav");
-            cmd.FireInput("Command", vStopShock, 0.0f, null, null, 0);
         }
         ArchipelagoLog("[AP DEBUG] RemovePotatosFromGun: Done (Visuals, Mixer & Subtitles silenced).");
     }
@@ -855,65 +858,70 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         }
     }
 
-    void AddWheatleyMonitorChecks(string map_name) {
-        InitWheatleyMonitorRegistry();
-        ArchipelagoLog("[AP DEBUG] Checking monitors for map: " + map_name);
-        
-        array<string>@ keys = g_monitor_break_names.getKeys();
-        for (uint i = 0; i < keys.length(); i++) {
-            string key = keys[i];
-            if (key.locate(map_name + ":") == 0) {
-                string entName = key.substr(map_name.length() + 1);
+/* void AddWheatleyMonitorChecks(string map_name) {
+    InitWheatleyMonitorRegistry();
+    
+    array<string> checkClasses = {"logic_relay", "func_breakable", "trigger_once", "logic_branch"};
+
+    for (uint c = 0; c < checkClasses.length(); c++) {
+        CBaseEntity@ ent = null;
+        while ((@ent = EntityList().FindByClassname(ent, checkClasses[c])) !is null) {
+            string entName = ent.GetEntityName();
+            if (entName == "") continue;
+
+            string registryKey = map_name + ":" + entName;
+            if (g_monitor_registry.exists(registryKey)) {
                 string locationID;
-                g_monitor_break_names.get(key, locationID);
-                ArchipelagoLog("[AP DEBUG] Found registry entry for monitor: " + entName);
+                g_monitor_registry.get(registryKey, locationID);
+
+                // 1. Output Logic
+                string cls = ent.GetClassname();
+                string output = (cls == "func_breakable") ? "OnBreak" : 
+                                (cls.locate("trigger") != uint(-1) ? "OnStartTouch" : "OnTrigger");
+
+                string safe_id = locationID.replace(" ", ".");
+                Legacy::SafeAddOutput(ent, output, "InitCmd", "Command", "PrintMonitor " + safe_id, 0.0f, -1);
+
+                // 2. Gestion de l'Ancre
+                CBaseEntity@ prop = EntityList().FindByClassnameNearest("prop_dynamic", ent.GetAbsOrigin(), 128.0f);
+                CBaseEntity@ anchor = (prop !is null) ? prop : ent;
                 
-                CBaseEntity@ ent = EntityList().FindByName(null, entName);
-                if (ent !is null) {
-                    ArchipelagoLog("[AP DEBUG] Entity " + entName + " successfully found.");
-                    string cls = ent.GetClassname();
-                    string output = "OnTrigger"; 
-                    if (cls == "func_breakable") {
-                        output = "OnBreak";
-                    } else if (cls.locate("trigger") != uint(-1)) {
-                        output = "OnStartTouch";
-                    }
-                    
-                    string safe_id = locationID.replace(" ", ".");
-                    Variant v;
-                    v.SetString(output + " InitCmd:Command:PrintMonitor " + safe_id + ":0.0:-1");
-                    ent.FireInput("AddOutput", v, 0.0f, null, null, 0);
+                // 3. PRÉPARATION DES VARIABLES POUR LES OVERRIDES
+                // On met tes valeurs par défaut ici
+                Vector targetPos(45.0f, 0.0f, 25.0f); 
+                QAngle targetAng(0.0f, 0.0f, 0.0f);
+                int targetSkin = 0;
+                float targetScale = 1.0f;
+                bool shouldParent = false;
+                bool absoluteAngles = false;
 
-                    // Visuals
-                    string holo_name = entName + "_holo";
-                    CBaseEntity@ anchor = ent;
-                    CBaseEntity@ prop = EntityList().FindByClassnameNearest("prop_dynamic", ent.GetAbsOrigin(), 256.0f);
-                    if (prop !is null && (prop.GetModelName().locate("monitor") != uint(-1) || prop.GetModelName().locate("screen") != uint(-1))) {
-                        @anchor = prop;
-                    }
-                    
-                    Vector anchorPos = anchor.GetAbsOrigin();
-                    ArchipelagoLog("[AP DEBUG] Monitor " + entName + " anchor: " + anchor.GetClassname() + " (" + anchor.GetModelName() + ") at " + anchorPos.x + " " + anchorPos.y + " " + anchorPos.z);
+                // --- APPEL DE TA FONCTION D'OVERRIDE ---
+                // Cette ligne va modifier les variables ci-dessus si une règle spécifique existe
+                Legacy::GetHologramVisualOverrides(anchor, targetPos, targetAng, targetSkin, targetScale, shouldParent, absoluteAngles);
 
-                    Vector hPos(0, 0, 0);
-                    QAngle hAng(0, 0, 0);
-                    int hSkin = 4;
-                    float hScale = 0.7f;
-                    bool hParent = true;
-                    bool hAbs = false;
-                    Legacy::GetHologramVisualOverrides(anchor, hPos, hAng, hSkin, hScale, hParent, hAbs);
-                    
-                    Vector finalPos = anchor.GetAbsOrigin() + (AnglesToForward(anchor.GetAbsAngles()) * hPos.x) + (AnglesToRight(anchor.GetAbsAngles()) * -hPos.y) + (AnglesToUp(anchor.GetAbsAngles()) * hPos.z);
-                    QAngle finalAng = hAbs ? hAng : (anchor.GetAbsAngles() + hAng);
+                // 4. CALCUL DE LA POSITION FINALE
+                Vector origin = anchor.GetAbsOrigin();
+                Vector forward, right, up;
+                AngleVectors(anchor.GetAbsAngles(), forward, right, up);
+                
+                // Utilisation des vecteurs directionnels + les offsets de targetPos
+                Vector finalPos = origin + (forward * targetPos.x) + (right * targetPos.y) + (up * targetPos.z);
+                
+                // Détermination de la rotation
+                QAngle finalAng = absoluteAngles ? targetAng : (anchor.GetAbsAngles() + targetAng);
 
-                    CreateAPHologram(finalPos, finalAng, hScale, null, "", hSkin, holo_name);
-                    ArchipelagoLog("Monitor Check Restored: " + entName + " at " + finalPos.x + " " + finalPos.y + " " + finalPos.z);
-                } else {
-                    ArchipelagoLog("[AP DEBUG] FAILED to find monitor entity by name: " + entName);
-                }
+                // 5. CRÉATION
+                string holo_name = entName + "_holo";
+                CBaseEntity@ holo = Legacy::CreateAPHologram(finalPos, finalAng, targetScale, (shouldParent ? anchor : null), "", targetSkin, holo_name);
+                
+                Legacy::ArchipelagoLog("Monitor Setup: " + entName + " (ID: " + locationID + ")");
             }
         }
     }
+}
+ */
+    
+
     void AddToTextQueue(string text, string color = "") { }
 
     /**

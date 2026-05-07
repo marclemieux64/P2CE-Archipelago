@@ -109,6 +109,13 @@ class ArchipelagoSync {
         if (this.m_Initialized) return;
         this.m_Initialized = true;
 
+        // --- GLOBAL CONSOLE KEYBIND ---
+        $.RegisterKeyBind($.GetContextPanel(), "key_f1", () => {
+            $.Msg("[AP] Console key (F1) pressed. Toggling Archipelago Console...");
+            $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
+            $.DispatchEvent('MainMenuOpenNestedPage', 'ap_console', 'archipelago/console', undefined);
+        });
+
         $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
             if (global.ArchipelagoSyncInstance !== ArchipelagoSync) return;
             const parts = payload.split('|');

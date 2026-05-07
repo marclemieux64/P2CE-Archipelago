@@ -14,6 +14,17 @@ class BaseMenu {
             }
         },
         {
+            id: 'ArchipelagoConsoleBtn',
+            headline: '#Archipelago_Console_Title',
+            tagline: '#Archipelago_Console_Tagline',
+            activated: () => {
+                $.DispatchEvent('MainMenuOpenNestedPage', 'ap_console', 'archipelago/console', undefined);
+            },
+            focused: () => {
+                this.hideContinueDetails();
+            }
+        },
+        {
             id: 'SettingsKeyboardBtn',
             headline: '#MainMenu_Navigation_Options',
             tagline: '#MainMenu_Navigation_Options_Tagline',

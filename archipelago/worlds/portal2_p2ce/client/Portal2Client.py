@@ -27,7 +27,8 @@ from ..Options import GameModeOption
 import json
 
 if __name__ == "__main__":
-    init_logging("Portal2Client", exception_logger="Portal2Client")
+    # init_logging("Portal2Client", exception_logger="Portal2Client") # Hangs in this environment
+    pass
     
 logger = logging.getLogger("Portal2Client")
 
@@ -101,41 +102,45 @@ class Portal2Context(CommonContext):
             def emit(self, record):
                 self.queue.append(self.format(record))
         
-        temp_handler = QueuingLogHandler()
-        temp_handler.setFormatter(logging.Formatter('%(message)s'))
-        logging.getLogger().addHandler(temp_handler)
+        self.temp_handler = QueuingLogHandler()
+        self.temp_handler.setFormatter(logging.Formatter('%(message)s'))
+        logging.getLogger().addHandler(self.temp_handler)
 
-        super().__init__(server_address, password)
-        
- # 1. Setup the real handler
+        # 2. Setup the real Panorama handler
         class PanoramaLogHandler(logging.Handler):
             def __init__(self, ctx):
                 super().__init__()
                 self.ctx = ctx
 
             def emit(self, record):
-                # CONDITION CRUCIALE : On ignore les messages qui contiennent déjà 
-                # notre préfixe d'écho pour éviter la boucle infinie de logs.
                 if "[Archipelago]" in record.msg:
                     return
-                
                 try:
                     msg = self.format(record)
-                    # On envoie tout au Panorama (UI du jeu)
                     if self.ctx.loop:
                         self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg)
+                    else:
+                        # Fallback if loop isn't ready: add to chat_log directly if possible
+                        # but on_print_silently is safer once loop is up.
+                        pass
                 except Exception:
                     pass
 
-        handler = PanoramaLogHandler(self)
-        handler.setFormatter(logging.Formatter('%(message)s'))
-        
-        # 2. ON ATTACHE AU ROOT (pour ne rien rater d'important)
-        logging.getLogger().addHandler(handler)
+        self.panorama_handler = PanoramaLogHandler(self)
+        self.panorama_handler.setFormatter(logging.Formatter('%(message)s'))
+        logging.getLogger().addHandler(self.panorama_handler)
 
-        # 3. SUPPRIME le QueuingLogHandler et le Flush
-        # On appelle super() APRÈS avoir mis le handler pour capter le début
+        # Call super only once
         super().__init__(server_address, password)
+
+    def flush_init_logs(self):
+        """Flushes the logs captured during initialization to the Panorama console"""
+        if hasattr(self, 'temp_handler') and self.temp_handler:
+            for msg in self.temp_handler.queue:
+                self.on_print_silently(msg)
+            logging.getLogger().removeHandler(self.temp_handler)
+            self.temp_handler = None
+
     game = "Portal 2"
     items_handling = 0b111  # receive all items for /received
 
@@ -660,10 +665,13 @@ class Portal2Context(CommonContext):
                     text = self.parse_message(args["data"], sending = item.player)
                 elif args["type"] == "Goal":
                     text = self.parse_message(args["data"])
+                elif args["type"] == "Collect":
+                    self.update_menu()
+                    return
                 else:
-                    if args["type"] == "Collect":
-                        self.update_menu()
-                    return # Don't send text to game
+                    # Regular chat or other message
+                    text = self.parse_message(args["data"])
+                
                 self.add_to_in_game_message_queue(text)
                 
             # chat_log.append is handled by the logging handler for all messages, including PrintJSON
@@ -737,6 +745,7 @@ async def main(args: Namespace):
     ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
     ctx.game_connection_task = asyncio.create_task(ctx.p2_connection_loop(), name="netcon loop")
     ctx.start_api_server()
+    ctx.flush_init_logs()
 
     if gui_enabled:
         ctx.run_gui()

@@ -37,6 +37,12 @@ class ArchipelagoMapSelect {
             }
         }
         return false;
+        const mainBox = $.GetContextPanel().FindChildTraverse('MainBox');
+        if (mainBox) {
+            $.RegisterKeyBind(mainBox, "key_c", () => {
+                this.toggleConsole();
+            });
+        }
     }
 
     static onConsoleFocus() {
@@ -123,6 +129,12 @@ class ArchipelagoMapSelect {
             }
         }
 
+        const mainBox = $.GetContextPanel().FindChildTraverse('MainBox');
+        if (mainBox) {
+            $.RegisterKeyBind(mainBox, "key_c", () => {
+                this.toggleConsole();
+            });
+        }
     }
 
     static runTransition(openPanel: any, closePanel: any, clickedEntry: any, scrollContainer: any) {

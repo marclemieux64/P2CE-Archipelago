@@ -104,18 +104,22 @@ void WarpToMenuLegacyCmd(const CommandArgs@ args) {
 
 [ServerCommand("RunDelayedInit", "Internal - Runs the delayed initialization sequence")]
 void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
+    // 1. On met à jour le nom interne une seule fois
     Legacy::UpdateInternalMapName();
-    if (::current_map == "unknown" || ::current_map == "") return;
 
-    // Reset and sync
-    ::current_map = ""; 
-    Legacy::UpdateInternalMapName();
-    
+    // 2. Validation
+    if (::current_map == "unknown" || ::current_map == "") {
+        Legacy::ArchipelagoLog("DelayedInit: Map name unknown, skipping.");
+        return;
+    }
+
+    // 3. Setup (Une seule fois avec le nom validé)
     Legacy::DoMapSpecificSetup();
     Legacy::CreateCompleteLevelAlertHook(::current_map);
     Legacy::CreateMapSpecificHolos();
+    
+    Legacy::ArchipelagoLog("DelayedInit complete for: " + ::current_map);
 }
-
 [ServerCommand("AddScript", "Connects an entity output to a console command")]
 void AddScriptLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
@@ -250,4 +254,27 @@ void CreateAPButtonLegacyCmd(const CommandArgs@ args) {
     Legacy::CreateAPButton(name, pos, ang, scale, skin);
 }
 
+[ServerCommand("RemoveGel", "Legacy RemoveGel command")]
+void RemoveGelLegacyCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    string filter = (args.ArgC() > 4) ? args.Arg(4) : "";
+    string name = (args.ArgC() > 5) ? args.Arg(5) : "";
+    Legacy::RemoveGel(pos, filter, name);
+}
+
+[ServerCommand("CreateClearGel", "Legacy CreateClearGel command")]
+void CreateClearGelLegacyCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    float offset = (args.ArgC() > 4) ? args.Arg(4).toFloat() : -100.0f;
+    Legacy::CreateClearGel(pos, offset);
+}
+
+[ServerCommand("SpawnPaintBomb", "Legacy SpawnPaintBomb command")]
+void SpawnPaintBombLegacyCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    Legacy::SpawnPaintBomb(pos);
+}
 } // namespace Legacy

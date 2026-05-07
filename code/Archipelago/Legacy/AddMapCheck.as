@@ -56,7 +56,7 @@ void AddMapCheck() {
         while ((@tEnt = EntityList().FindByClassname(tEnt, "func_tracktrain")) !is null) {
             string tName = tEnt.GetEntityName();
             if (tName.locate("exit_lift_train") != uint(-1) || tName.locate("departure_elavator") != uint(-1) || tName.locate("departure_elevator") != uint(-1)) {
-                CreateAPHologram(Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, tEnt, "", 0, tName + "_holo", false);
+                CreateAPHologram(Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, tEnt, "", 0, tName + "_holo", true);
             }
         }
     }

@@ -107,30 +107,35 @@ class Portal2Context(CommonContext):
 
         super().__init__(server_address, password)
         
-        # 2. Setup the real handler that sends to the Panorama UI
+ # 1. Setup the real handler
         class PanoramaLogHandler(logging.Handler):
             def __init__(self, ctx):
                 super().__init__()
                 self.ctx = ctx
+
             def emit(self, record):
+                # CONDITION CRUCIALE : On ignore les messages qui contiennent déjà 
+                # notre préfixe d'écho pour éviter la boucle infinie de logs.
+                if "[Archipelago]" in record.msg:
+                    return
+                
                 try:
                     msg = self.format(record)
-                    # Use call_soon_threadsafe because logging can happen from any thread
-                    self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg)
+                    # On envoie tout au Panorama (UI du jeu)
+                    if self.ctx.loop:
+                        self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg)
                 except Exception:
                     pass
 
         handler = PanoramaLogHandler(self)
         handler.setFormatter(logging.Formatter('%(message)s'))
         
-        # Add to root logger to catch everything
+        # 2. ON ATTACHE AU ROOT (pour ne rien rater d'important)
         logging.getLogger().addHandler(handler)
-        
-        # 3. Flush the temporary queue and remove it
-        for msg in temp_handler.queue:
-            self.loop.call_soon_threadsafe(self.on_print_silently, msg)
-        logging.getLogger().removeHandler(temp_handler)
 
+        # 3. SUPPRIME le QueuingLogHandler et le Flush
+        # On appelle super() APRÈS avoir mis le handler pour capter le début
+        super().__init__(server_address, password)
     game = "Portal 2"
     items_handling = 0b111  # receive all items for /received
 
@@ -198,9 +203,12 @@ class Portal2Context(CommonContext):
             self.chat_log.pop(0)
             
         # Only mirror prompts to the game console to avoid spam
-        if "Enter " in text or "Please " in text:
+        keywords = ["Enter ", "Please ", "[AP RECV]", "Connected"]
+        if any(k in text for k in keywords):
             sanitized_text = text.replace('"', "'").replace('\n', ' ')
-            self.command_queue.append(f'echo "[Archipelago] {sanitized_text}"\n')
+            # On insère en priorité 0 pour que le joueur voit le message AVANT 
+            # que le buffer netcon ne soit saturé par d'autres commandes
+            self.command_queue.insert(0, f'echo "[Archipelago] {sanitized_text}"\n')
 
     def on_print_json(self, data: typing.Union[dict, list]):
         """Hook for Archipelago formatted messages (Legacy/Alternative)"""

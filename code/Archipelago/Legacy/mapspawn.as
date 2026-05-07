@@ -970,4 +970,45 @@ if (shouldWarp) {
     }
 }
 
-} // namespace Legacy
+void RemoveGel(Vector position, string filter = "", string object_name = "") {
+        float radius = 32.0f; 
+        CBaseEntity@ foundEnt = null;
+
+        CBaseEntity@ ent = null;
+        while ((@ent = EntityList().FindInSphere(ent, position, radius)) !is null) {
+            // Logique ppmod.get : check classname ou targetname
+            if (ent.GetClassname() == filter || ent.GetEntityName() == filter) {
+                if (object_name != "" && ent.GetEntityName() != object_name) continue;
+                @foundEnt = ent;
+                break;
+            }
+        }
+
+        if (foundEnt is null && filter != "") {
+            @foundEnt = EntityList().FindInSphere(null, position, radius);
+            if (foundEnt !is null && foundEnt.GetClassname() != filter) @foundEnt = null;
+        }
+
+        if (foundEnt !is null) {
+            foundEnt.Remove();
+        }
+    }
+
+    void CreateClearGel(Vector position, float offset = -100.0f) {
+        CBaseEntity@ gel = util::CreateEntityByName("prop_paint_bomb");
+        if (gel !is null) {
+            position.z += offset;
+            gel.SetAbsOrigin(position);
+            gel.KeyValue("paint_type", 3);
+            gel.Spawn();
+        }
+    }
+
+    void SpawnPaintBomb(Vector position) {
+        CBaseEntity@ gel = util::CreateEntityByName("prop_paint_bomb");
+        if (gel !is null) {
+            gel.SetAbsOrigin(position);
+            gel.Spawn();
+        }
+    }
+} //namespace Legacy 

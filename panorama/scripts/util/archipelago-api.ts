@@ -23,7 +23,20 @@ class ArchipelagoAPI {
         
         this.refreshStatus();
         this.fetchChat();
-        this.m_PollSchedule = $.Schedule(2.0, () => this.startPolling());
+        this.m_PollSchedule = $.Schedule(0.1, () => this.startPolling());
+    }
+    static sendCommand(cmd: string) {
+        if (!cmd) return;
+        $.Msg("[AP API] Sending command: " + cmd);
+        
+        $.AsyncWebRequest(this.API_BASE + "/command", {
+            type: 'POST',
+            data: { command: cmd }, // Ton serveur Python attend un JSON avec "command"
+            complete: (data: any) => {
+                // Optionnel: rafraîchir le chat immédiatement après un message envoyé
+                this.fetchChat();
+            }
+        });
     }
 
     static refreshStatus() {

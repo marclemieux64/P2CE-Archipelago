@@ -569,7 +569,7 @@ class Portal2Context(CommonContext):
         await self.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
     def on_deathlink(self, data):
-        self.command_queue.append("restart\n")
+        self.command_queue.append("kill\n")
         return super().on_deathlink(data)
 
     def check_game_connection(self) -> bool:

@@ -36,6 +36,30 @@ namespace Legacy {
 
     array<string> scripted_fling_levels = {"sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity" };
 
+void AttachDeathTrigger() {
+        sent_death_link = false; // Réinitialise à chaque chargement de map
+
+        // Création du timer natif
+        CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
+        if (timer !is null) {
+            timer.KeyValue("targetname", "ap_deathlink_timer");
+            timer.KeyValue("RefireTime", "0.5"); // Check 2 fois par seconde (plus réactif)
+            
+            // Format d'output Source : Target \x1B Input \x1B Parameter \x1B Delay \x1B MaxFires
+            // On utilise l'entité "InitCmd" pour lancer notre ServerCommand
+            string payload = "InitCmd\x1BCommand\x1BDeathLink\x1B0\x1B-1";
+            timer.KeyValue("OnTimer", payload);
+            
+            timer.Spawn();
+            
+            // Activation du timer
+            Variant empty;
+            timer.FireInput("Enable", empty, 0.0f, null, null, 0);
+        }
+
+        Msgl("AP: DeathLink active");
+    }
+
 void DeleteEntity(const string&in entity_name, bool create_holo = true) {
     string mapName = ConVarRef("host_map").GetString();
 
@@ -888,98 +912,113 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         }
     }
 
-
 dictionary screen_names;
+        array<string> checked_screens;
 
-void InitMonitorData() {
-    // Chaque entrée doit être un sous-dictionnaire pour respecter la structure d'origine
-    dictionary sp_a4_tb_intro; sp_a4_tb_intro.set("monitor1-relay_break", "sp_a4_tb_intro");
-    screen_names.set("sp_a4_tb_intro", sp_a4_tb_intro);
+        void InitMonitorData() {
+            // Sécurité : on ne remplit le dictionnaire que s'il est vide
+            if (!screen_names.isEmpty()) return;
 
-    dictionary sp_a4_tb_trust_drop; sp_a4_tb_trust_drop.set("monitor1-relay_break", "sp_a4_tb_trust_drop");
-    screen_names.set("sp_a4_tb_trust_drop", sp_a4_tb_trust_drop);
+            dictionary sp_a4_tb_intro; sp_a4_tb_intro.set("monitor1-relay_break", "sp_a4_tb_intro");
+            screen_names.set("sp_a4_tb_intro", sp_a4_tb_intro);
 
-    dictionary sp_a4_tb_wall_button; sp_a4_tb_wall_button.set("wheatley_monitor-relay_break", "sp_a4_tb_wall_button");
-    screen_names.set("sp_a4_tb_wall_button", sp_a4_tb_wall_button);
+            dictionary sp_a4_tb_trust_drop; sp_a4_tb_trust_drop.set("monitor1-relay_break", "sp_a4_tb_trust_drop");
+            screen_names.set("sp_a4_tb_trust_drop", sp_a4_tb_trust_drop);
 
-    dictionary sp_a4_tb_polarity; sp_a4_tb_polarity.set("monitor1-relay_break", "sp_a4_tb_polarity");
-    screen_names.set("sp_a4_tb_polarity", sp_a4_tb_polarity);
+            dictionary sp_a4_tb_wall_button; sp_a4_tb_wall_button.set("wheatley_monitor-relay_break", "sp_a4_tb_wall_button");
+            screen_names.set("sp_a4_tb_wall_button", sp_a4_tb_wall_button);
 
-    dictionary sp_a4_tb_catch; 
-    sp_a4_tb_catch.set("monitor1-relay_break", "sp_a4_tb_catch 1");
-    sp_a4_tb_catch.set("monitor2-relay_break", "sp_a4_tb_catch 2");
-    screen_names.set("sp_a4_tb_catch", sp_a4_tb_catch);
+            dictionary sp_a4_tb_polarity; sp_a4_tb_polarity.set("monitor1-relay_break", "sp_a4_tb_polarity");
+            screen_names.set("sp_a4_tb_polarity", sp_a4_tb_polarity);
 
-    dictionary sp_a4_stop_the_box; sp_a4_stop_the_box.set("wheatley_monitor-relay_break", "sp_a4_stop_the_box");
-    screen_names.set("sp_a4_stop_the_box", sp_a4_stop_the_box);
+            dictionary sp_a4_tb_catch; 
+            sp_a4_tb_catch.set("monitor1-relay_break", "sp_a4_tb_catch 1");
+            sp_a4_tb_catch.set("monitor2-relay_break", "sp_a4_tb_catch 2");
+            screen_names.set("sp_a4_tb_catch", sp_a4_tb_catch);
 
-    dictionary sp_a4_laser_catapult; sp_a4_laser_catapult.set("wheatley_monitor_1-relay_break", "sp_a4_laser_catapult");
-    screen_names.set("sp_a4_laser_catapult", sp_a4_laser_catapult);
+            dictionary sp_a4_stop_the_box; sp_a4_stop_the_box.set("wheatley_monitor-relay_break", "sp_a4_stop_the_box");
+            screen_names.set("sp_a4_stop_the_box", sp_a4_stop_the_box);
 
-    dictionary sp_a4_laser_platform; sp_a4_laser_platform.set("wheatley_monitor_1-relay_break", "sp_a4_laser_platform");
-    screen_names.set("sp_a4_laser_platform", sp_a4_laser_platform);
+            dictionary sp_a4_laser_catapult; sp_a4_laser_catapult.set("wheatley_monitor_1-relay_break", "sp_a4_laser_catapult");
+            screen_names.set("sp_a4_laser_catapult", sp_a4_laser_catapult);
 
-    dictionary sp_a4_speed_tb_catch; sp_a4_speed_tb_catch.set("wheatley_monitor-relay_break", "sp_a4_speed_tb_catch");
-    screen_names.set("sp_a4_speed_tb_catch", sp_a4_speed_tb_catch);
+            dictionary sp_a4_laser_platform; sp_a4_laser_platform.set("wheatley_monitor_1-relay_break", "sp_a4_laser_platform");
+            screen_names.set("sp_a4_laser_platform", sp_a4_laser_platform);
 
-    dictionary sp_a4_jump_polarity; sp_a4_jump_polarity.set("wheatley_monitor_1-relay_break", "sp_a4_jump_polarity");
-    screen_names.set("sp_a4_jump_polarity", sp_a4_jump_polarity);
+            dictionary sp_a4_speed_tb_catch; sp_a4_speed_tb_catch.set("wheatley_monitor-relay_break", "sp_a4_speed_tb_catch");
+            screen_names.set("sp_a4_speed_tb_catch", sp_a4_speed_tb_catch);
 
-    dictionary sp_a4_finale3; sp_a4_finale3.set("wheatley_screen-relay_break", "sp_a4_finale3");
-    screen_names.set("sp_a4_finale3", sp_a4_finale3);
-}
-// Liste des écrans déjà validés par le client Archipelago [cite: 1227]
-array<string> checked_screens;
+            dictionary sp_a4_jump_polarity; sp_a4_jump_polarity.set("wheatley_monitor_1-relay_break", "sp_a4_jump_polarity");
+            screen_names.set("sp_a4_jump_polarity", sp_a4_jump_polarity);
+
+            dictionary sp_a4_finale3; sp_a4_finale3.set("wheatley_screen-relay_break", "sp_a4_finale3");
+            screen_names.set("sp_a4_finale3", sp_a4_finale3);
+        }
 
 void AddWheatleyMonitorBreakCheck() {
-    // Utilisation du nom de la map stocké dans votre variable globale
-    string map_name = current_map;
+            InitMonitorData(); 
 
-    // 1. Vérifie si la map est répertoriée dans le dictionnaire des moniteurs
-    if (!screen_names.exists(map_name)) {
-        return;
-    }
+            string map_name = current_map;
+            Msgl("AP DEBUG: Running check for map: '" + map_name + "'");
 
-    // 2. Récupère le dictionnaire spécifique à cette map
-    dictionary@ map_screens;
-    screen_names.get(map_name, @map_screens);
-
-    if (map_screens is null) return;
-
-    // 3. Itération sur les logic_relay via la liste globale des entités
-    CBaseEntity@ relay = null;
-    while ((@relay = EntityList().FindByClassname(relay, "logic_relay")) !is null) {
-        string name = relay.GetEntityName();
-
-        // 4. Si le relais correspond à un moniteur dans nos données
-        if (map_screens.exists(name)) {
-            string check_name;
-            map_screens.get(name, check_name);
-
-            // 5. Injection de l'output via KeyValue (remplace ppmod.addscript)
-            // On utilise \x1B (ASCII 27) pour séparer les paramètres du moteur Source
-            string scriptCode = "printl(\"monitor_break:" + check_name + "\")";
-            string payload = "worldspawn\x1BRunScriptCode\x1B" + scriptCode + "\x1B0\x1B-1";
-            relay.KeyValue("OnTrigger", payload);
-
-            // 6. Calcul du skin de l'hologramme (skin 1 si déjà trouvé)
-            int skin = 0;
-            uint count = checked_screens.length();
-            uint i = 0; 
-            for (i = 0; i < count; i++) {
-                // Utilisation obligatoire de opIndex car [] est rejeté
-                if (checked_screens.opIndex(i) == check_name) {
-                    skin = 1;
-                    break;
-                }
+            if (!screen_names.exists(map_name)) {
+                Msgl("AP DEBUG: Map '" + map_name + "' NOT found in dictionary.");
+                return;
             }
 
-            // 7. Création de l'hologramme Archipelago
-            Legacy::CreateAPHologram(relay.GetAbsOrigin(), QAngle(0, 0, 0), 0.9f, null, "", skin, "monitor_holo_" + check_name);
-        }
-    }
-}
+            dictionary@ map_screens;
+            screen_names.get(map_name, @map_screens);
 
+            if (map_screens is null) return;
+
+            CBaseEntity@ relay = null;
+            while ((@relay = EntityList().FindByClassname(relay, "logic_relay")) !is null) {
+                string name = relay.GetEntityName();
+
+                if (map_screens.exists(name)) {
+                    string check_name;
+                    map_screens.get(name, check_name);
+
+                    // --- 1. OUTPUT SQUIRREL (Le Printl) ---
+                    string scriptCode = "printl(\"monitor_break:" + check_name + "\")";
+                    string payloadPrint = "worldspawn\x1BRunScriptCode\x1B" + scriptCode + "\x1B0\x1B-1";
+                    relay.KeyValue("OnTrigger", payloadPrint);
+
+                    // --- 2. OUTPUT ANGELSCRIPT (La Téléportation) ---
+                    // On utilise InitCmd pour lancer une commande custom "AP_WarpMonitor" avec un délai de 0.1s
+                    string payloadWarp = "InitCmd\x1BCommand\x1BWarpMonitor " + check_name + "\x1B0.1\x1B-1";
+                    relay.KeyValue("OnTrigger", payloadWarp);
+
+                    int skin = 0;
+                    uint count = checked_screens.length();
+                    for (uint i = 0; i < count; i++) {
+                        if (checked_screens.opIndex(i) == check_name) {
+                            skin = 4;
+                            break;
+                        }
+                    }
+
+                    // Calcul de l'offset local pour l'hologramme
+                    QAngle angles = relay.GetAbsAngles();
+                    float forwardOffset = 0.0f; 
+                    float rightOffset = -20.0f;
+                    float upOffset = 50.0f;
+
+                    Vector forwardVec = Legacy::AnglesToForward(angles);
+                    Vector rightVec = Legacy::AnglesToRight(angles);
+                    Vector upVec = Legacy::AnglesToUp(angles);
+
+                    Vector finalPos = relay.GetAbsOrigin() + 
+                                      (forwardVec * forwardOffset) + 
+                                      (rightVec * rightOffset) + 
+                                      (upVec * upOffset);
+
+                    Legacy::CreateAPHologram(finalPos, angles, 1.0f, null, "", skin, name + "_holo");
+                    
+                    Msgl("AP: Attached check '" + check_name + "' to relay '" + name + "'");
+                }
+            }
+        }
 
 /**
  * HandleMonitorWarp - Checks for specific monitor IDs that should trigger a player teleport.

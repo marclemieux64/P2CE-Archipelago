@@ -1,5 +1,5 @@
 client:
-  last_server_address: archipelago.gg:63833
+  last_server_address: archipelago.gg:60196
 groups_by_checksum:
   6a86ddc259e5ded3cf68c5e72aedb4ced86a3848:
     Portal 2:
@@ -37,3 +37,183 @@ groups_by_checksum:
         - Upgraded Portal Gun
         - Weighted Cubes
         - White Gel
+      location_name_groups:
+        Chambers:
+        - Bomb Flings Completion
+        - Bridge Intro Completion
+        - Bridge the Gap Completion
+        - Catapult Intro Completion
+        - Cave Johnson Completion
+        - Ceiling Button Completion
+        - Ceiling Catapult Completion
+        - Column Blocker Completion
+        - Container Ride Completion
+        - Conversion Intro Completion
+        - Core Completion
+        - Crazy Box Completion
+        - Cube Momentum Completion
+        - Dual Lasers Completion
+        - Escape Completion
+        - Finale 1 Completion
+        - Finale 2 Completion
+        - Finale 3 Completion
+        - Finale 4 Completion
+        - Fizzler Intro Completion
+        - Funnel Catch Completion
+        - Funnel Intro Completion
+        - Future Starter Completion
+        - Incinerator Completion
+        - Jailbreak Completion
+        - Laser Catapult Completion
+        - Laser Chaining Completion
+        - Laser Intro Completion
+        - Laser Over Goo Completion
+        - Laser Platform Completion
+        - Laser Relays Completion
+        - Laser Stairs Completion
+        - Laser Vs. Turret Completion
+        - Long Fall Completion
+        - Neurotoxin Sabotage Completion
+        - Pit Flings Completion
+        - Polarity Completion
+        - Portal Carousel Completion
+        - Portal Gun Completion
+        - PotatOS Completion
+        - Propulsion Catch Completion
+        - Propulsion Flings Completion
+        - Propulsion Intro Completion
+        - Pull The Rug Completion
+        - Repulsion Intro Completion
+        - Repulsion Polarity Completion
+        - Ricochet Completion
+        - Secret Panel Completion
+        - Smooth Jazz Completion
+        - Stop The Box Completion
+        - Test Completion
+        - Three Gels Completion
+        - Triple Laser Completion
+        - Trust Fling Completion
+        - Tube Ride Completion
+        - Turret Blocker Completion
+        - Turret Factory Completion
+        - Turret Intro Completion
+        - Turret Sabotage Completion
+        - Underground Completion
+        - Wake Up Completion
+        - Wall Button Completion
+        Everywhere:
+        - Bomb Flings Completion
+        - Bridge Intro Completion
+        - Bridge the Gap Completion
+        - Catapult Intro Completion
+        - Cave Johnson Completion
+        - Ceiling Button Completion
+        - Ceiling Catapult Completion
+        - Column Blocker Completion
+        - Container Ride Completion
+        - Conversion Intro Completion
+        - Core Completion
+        - Crazy Box Completion
+        - Cube Momentum Completion
+        - Dual Lasers Completion
+        - Escape Completion
+        - Finale 1 Completion
+        - Finale 2 Completion
+        - Finale 3 Completion
+        - Finale 4 Completion
+        - Fizzler Intro Completion
+        - Funnel Catch Completion
+        - Funnel Intro Completion
+        - Future Starter Completion
+        - Incinerator Completion
+        - Jailbreak Completion
+        - Laser Catapult Completion
+        - Laser Chaining Completion
+        - Laser Intro Completion
+        - Laser Over Goo Completion
+        - Laser Platform Completion
+        - Laser Relays Completion
+        - Laser Stairs Completion
+        - Laser Vs. Turret Completion
+        - Long Fall Completion
+        - Neurotoxin Sabotage Completion
+        - Pit Flings Completion
+        - Polarity Completion
+        - Portal Carousel Completion
+        - Portal Gun
+        - Portal Gun Completion
+        - PotatOS
+        - PotatOS Completion
+        - Propulsion Catch Completion
+        - Propulsion Flings Completion
+        - Propulsion Intro Completion
+        - Pull The Rug Completion
+        - Ratman Den 1
+        - Ratman Den 2
+        - Ratman Den 3
+        - Ratman Den 4
+        - Ratman Den 5
+        - Ratman Den 6
+        - Ratman Den 7
+        - Repulsion Intro Completion
+        - Repulsion Polarity Completion
+        - Ricochet Completion
+        - Secret Panel Completion
+        - Smooth Jazz Completion
+        - Stop The Box Completion
+        - Test Completion
+        - Three Gels Completion
+        - Triple Laser Completion
+        - Trust Fling Completion
+        - Tube Ride Completion
+        - Turret Blocker Completion
+        - Turret Factory Completion
+        - Turret Intro Completion
+        - Turret Sabotage Completion
+        - Underground Completion
+        - Upgraded Portal Gun
+        - Vitrified Door 1
+        - Vitrified Door 2
+        - Vitrified Door 3
+        - Vitrified Door 4
+        - Vitrified Door 5
+        - Vitrified Door 6
+        - Wake Up Completion
+        - Wall Button Completion
+        - Wheatley Monitor 1
+        - Wheatley Monitor 10
+        - Wheatley Monitor 11
+        - Wheatley Monitor 12
+        - Wheatley Monitor 2
+        - Wheatley Monitor 3
+        - Wheatley Monitor 4
+        - Wheatley Monitor 5
+        - Wheatley Monitor 6
+        - Wheatley Monitor 7
+        - Wheatley Monitor 8
+        - Wheatley Monitor 9
+        Pickups:
+        - Portal Gun
+        - PotatOS
+        - Upgraded Portal Gun
+        Ratman Dens:
+        - Ratman Den 1
+        - Ratman Den 2
+        - Ratman Den 3
+        - Ratman Den 4
+        - Ratman Den 5
+        - Ratman Den 6
+        - Ratman Den 7
+        Wheatley Monitors:
+        - Wheatley Monitor 1
+        - Wheatley Monitor 10
+        - Wheatley Monitor 11
+        - Wheatley Monitor 12
+        - Wheatley Monitor 2
+        - Wheatley Monitor 3
+        - Wheatley Monitor 4
+        - Wheatley Monitor 5
+        - Wheatley Monitor 6
+        - Wheatley Monitor 7
+        - Wheatley Monitor 8
+        - Wheatley Monitor 9

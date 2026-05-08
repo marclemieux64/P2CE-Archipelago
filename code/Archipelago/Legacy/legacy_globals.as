@@ -6,7 +6,7 @@
 string current_map = "unknown";
 int transition_script_count = 0;
 bool g_has_printed_map_complete = false;
-bool g_bSentDeathLink = false;
+bool sent_death_link = false;
 
 namespace Legacy {
 

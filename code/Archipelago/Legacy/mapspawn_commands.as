@@ -228,10 +228,18 @@ void CreateAPButtonLegacyCmd(const CommandArgs@ args) {
 [ServerCommand("RemoveGel", "Legacy RemoveGel command")]
 void RemoveGelLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
-    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+
+    // Conversion des arguments texte en types numériques/objets
+    float x = args.Arg(1).toFloat();
+    float y = args.Arg(2).toFloat();
+    float z = args.Arg(3).toFloat();
+    Vector pos(x, y, z);
+
     string filter = (args.ArgC() > 4) ? args.Arg(4) : "";
     string name = (args.ArgC() > 5) ? args.Arg(5) : "";
-    Legacy::RemoveGel(pos, filter, name);
+
+    // APPEL CORRIGÉ : On appelle la fonction globale directement
+    RemoveGel(pos, filter, name);
 }
 
 [ServerCommand("CreateClearGel", "Legacy CreateClearGel command")]

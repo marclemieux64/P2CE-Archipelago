@@ -985,28 +985,61 @@ if (shouldWarp) {
 }
 
 void RemoveGel(Vector position, string filter = "", string object_name = "") {
-        float radius = 32.0f; 
-        CBaseEntity@ foundEnt = null;
+    float radius = 64.0f; 
+    CBaseEntity@ ent = null;
+    bool found = false;
 
-        CBaseEntity@ ent = null;
-        while ((@ent = EntityList().FindInSphere(ent, position, radius)) !is null) {
-            // Logique ppmod.get : check classname ou targetname
-            if (ent.GetClassname() == filter || ent.GetEntityName() == filter) {
-                if (object_name != "" && ent.GetEntityName() != object_name) continue;
-                @foundEnt = ent;
-                break;
+    // 1. PRIORITÉ : Recherche par nom (pour les entités logiques sans volume)
+    if (object_name != "" && object_name != "null") {
+        @ent = EntityList().FindByName(null, object_name);
+        if (ent !is null) {
+            if ((ent.GetAbsOrigin() - position).Length() < 128.0f) {
+                found = true;
             }
         }
+    }
 
-        if (foundEnt is null && filter != "") {
-            @foundEnt = EntityList().FindInSphere(null, position, radius);
-            if (foundEnt !is null && foundEnt.GetClassname() != filter) @foundEnt = null;
-        }
+    // 2. FALLBACK : Recherche par sphère (si le nom n'a pas suffi)
+    if (!found) {
+        @ent = null; 
+        while ((@ent = EntityList().FindInSphere(ent, position, radius)) !is null) {
+            string className = ent.GetClassname();
+            string targetName = ent.GetEntityName();
 
-        if (foundEnt !is null) {
-            foundEnt.Remove();
+            bool classMatch = (filter == "" || filter == "null" || className == filter);
+            bool nameMatch = (object_name == "" || object_name == "null" || targetName == object_name);
+
+            if (classMatch && nameMatch) {
+                found = true;
+                break; 
+            }
         }
     }
+
+    // 3. EXÉCUTION AVEC NOM D'HOLOGRAMME PERSONNALISÉ
+    if (found && ent !is null) {
+        Vector pos = ent.GetAbsOrigin();
+        QAngle ang = ent.GetAbsAngles();
+        
+        // RÉCUPÉRATION DU NOM DE L'ENTITÉ
+        string originalName = ent.GetEntityName();
+        
+        // Si l'entité n'a pas de nom, on utilise sa classe par défaut
+        if (originalName == "" || originalName == "null") {
+            originalName = ent.GetClassname();
+        }
+
+        // CONSTRUCTION DU NOM : Nom de l'entité + _holo
+        string holoName = originalName + "_holo";
+        
+        // Création de l'hologramme
+        CreateAPHologram(pos, ang, 1.0f, null, "", 0, holoName, true);
+        
+        ent.Remove();
+        Msg("AP: Replaced " + originalName + " with " + holoName + " at " + pos.x + " " + pos.y + "\n");
+    }
+}
+
 
     void CreateClearGel(Vector position, float offset = -100.0f) {
         CBaseEntity@ gel = util::CreateEntityByName("prop_paint_bomb");

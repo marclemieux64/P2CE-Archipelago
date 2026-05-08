@@ -2,7 +2,7 @@
 <styles>
     <include src="file://{resources}/styles/main.scss" />
     <include src="file://{resources}/styles/components/steam-input.scss" />
-    <include src="file://{resources}/styles/pages/archipelago/map-select.scss" />
+    <include src="file://{resources}/styles/pages/archipelago/base.scss" />
     <include src="file://{resources}/styles/pages/archipelago/console.scss" />
 </styles>
 
@@ -15,7 +15,7 @@
 </scripts>
 
     <Panel class="archipelago__page mainmenu__page mainmenu" 
-           onload="ArchipelagoMapSelect.onConsoleLoad()">
+           onload="ArchipelagoConsole.init()">
         <Panel id="MainBox" class="main_box">
             
             <Panel id="ColumnsWrapper" class="columns_wrapper">

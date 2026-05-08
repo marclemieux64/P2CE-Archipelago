@@ -13,6 +13,28 @@ class PauseMenu {
             focusIsHover: true
         },
         {
+            id: 'ArchipelagoConsoleBtn',
+            headline: '#Archipelago_Console_Title',
+            tagline: '#Archipelago_Console_Tagline',
+            activated: () => {
+                $.DispatchEvent('MainMenuOpenNestedPage', 'ap_console', 'archipelago/console', undefined);
+            },
+            hovered: () => { },
+            unhovered: () => { },
+            focusIsHover: true
+        },
+        {
+            id: 'ArchipelagoHintBtn',
+            headline: '#Archipelago_Hint_Title',
+            tagline: '#Archipelago_Hint_Tagline',
+            activated: () => {
+                $.DispatchEvent('MainMenuOpenNestedPage', 'ap_hint', 'archipelago/hint', undefined);
+            },
+            hovered: () => { },
+            unhovered: () => { },
+            focusIsHover: true
+        },
+        {
             id: 'ResumeBtn',
             headline: '#MainMenu_Home_Resume',
             tagline: '#MainMenu_Home_Resume_Tagline',

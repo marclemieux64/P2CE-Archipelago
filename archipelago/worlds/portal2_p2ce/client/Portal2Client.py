@@ -192,19 +192,27 @@ class Portal2Context(CommonContext):
     def on_input(self, command: str):
         command = command.strip()
         try:
-            # Check if the client is waiting for a direct answer (like a password or slot name)
+            # Vérifie si le client attend une réponse directe (ex: mot de passe)
             if getattr(self, "input_requests", 0) > 0:
                 self.input_requests -= 1
                 self.input_queue.put_nowait(command)
                 return
 
             if command.startswith("/"):
-                logger.debug(f"Executing command: {command}")
-                # Pass the whole command (including the /) to the processor
+                logger.debug(f"Executing client command: {command}")
                 proc = self.command_processor(self)
                 proc(command)
+            
+            # --- AJOUT POUR LES COMMANDES SERVEUR (!) ---
+            elif command.startswith("!"):
+                logger.info(f"Sending server command: {command}")
+                # Les commandes commençant par ! sont envoyées via le protocole 'Say' d'Archipelago
+                async_start(self.send_msgs([{"cmd": "Say", "text": command}]))
+            
             else:
+                # Tout le reste est envoyé à la console de Portal 2
                 self.command_queue.append(command + "\n")
+                
         except Exception as e:
             logger.error(f"Command Error ({command}): {e}")
             self.on_print(f"Error: {e}")

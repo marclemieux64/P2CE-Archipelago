@@ -1,0 +1,25 @@
+<Root>
+    <styles>
+        <include src="file://{resources}/styles/main.scss" />
+        <include src="file://{resources}/styles/components/steam-input.scss" />
+        <include src="file://{resources}/styles/pages/archipelago/base.scss" />
+        <!-- <include src="file://{resources}/styles/pages/archipelago/hint.scss" /> -->
+    </styles>
+
+    <scripts>
+        <!-- <include src="file://{resources}/scripts/pages/archipelago/hint.ts" /> -->
+    </scripts>
+
+    <Panel class="archipelago__page mainmenu__page mainmenu">
+        <Panel id="MainBox" class="main_box">
+            
+            <Panel id="ColumnsWrapper" class="columns_wrapper">
+                </Panel>
+
+            <Panel id="FullWidthFooter" class="preview_bottom_row">
+                <Panel id="FooterContent" class="footer_content">
+                    </Panel> </Panel>
+
+        </Panel>
+    </Panel>
+</Root>

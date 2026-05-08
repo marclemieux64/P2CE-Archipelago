@@ -2,6 +2,7 @@
 <styles>
     <include src="file://{resources}/styles/main.scss" />
     <include src="file://{resources}/styles/components/steam-input.scss" />
+    <include src="file://{resources}/styles/pages/archipelago/base.scss" />
     <include src="file://{resources}/styles/pages/archipelago/map-select.scss" />
 </styles>
 
@@ -37,20 +38,6 @@
                 <!-- ALIGNMENT SPACER -->
                 <Panel id="FooterAlignmentSpacer" class="footer_alignment_spacer">
                     <Panel class="help_button_wrapper">
-                        <Panel class="button_with_tooltip">
-                            <Panel id="ConsoleHelpTooltip" class="manual_tooltip">
-                                <Label text="#Archipelago_Console_Tooltip" />
-                                <Panel class="manual_tooltip_arrow" />
-                            </Panel>
-                            <Button id="ConsoleButton"
-                                    class="console_button"
-                                    onmouseover="ArchipelagoMapSelect.onConsoleFocus()"
-                                    onmouseout="ArchipelagoMapSelect.onConsoleBlur()"
-                                    onactivate="ArchipelagoMapSelect.toggleConsole()">
-                                <Label class="console_button_text" text="C" />
-                            </Button>
-                        </Panel>
-
                         <Panel class="button_with_tooltip">
                             <Panel id="ManualHelpTooltip" class="manual_tooltip">
                                 <Label text="#Archipelago_Help_Tooltip" />

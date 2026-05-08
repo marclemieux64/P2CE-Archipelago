@@ -198,6 +198,8 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Legacy::CreateCompleteLevelAlertHook(::current_map);
     Legacy::CreateMapSpecificHolos();
     Legacy::AttachDeathTrigger();
+    Legacy::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|1\")");
+    
     
     Legacy::ArchipelagoLog("DelayedInit complete for: " + ::current_map);
 }

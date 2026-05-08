@@ -61,7 +61,7 @@ class MenuManager {
 			$.DispatchEvent('ArchipelagoQueueUpdated', "");
 		});
 	}
-
+	
 	static {
 		$.RegisterForUnhandledEvent('LayoutReloaded', () => {
 			this.closePages();

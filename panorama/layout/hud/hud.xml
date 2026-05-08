@@ -58,6 +58,7 @@
 			<Frame id="ArchipelagoNotificationFrame" src="file://{resources}/layout/components/archipelago/notification.xml" />
 		</Panel>
 
+
 		<!-- HUD anchored to top center of screen, laid out vertically top-to-bottom
 		-  NOTE: Not really set up properly - HudTeamCounter should dynamically move
 		-        between HudTopCenter and HudBottomCenter, but instead it just moves

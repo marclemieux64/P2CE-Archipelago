@@ -106,7 +106,6 @@ function PollForNotifications() {
                         let lastId = api ? api.getLastNotificationId() : -1;
                         
                         if (lastId === -1) {
-                            // Initialisation : on se cale sur le DERNIER message existant
                             lastId = chat[chat.length - 1].id;
                             if (api) api.setLastNotificationId(lastId);
                             $.Schedule(0.25, PollForNotifications);
@@ -118,35 +117,51 @@ function PollForNotifications() {
                                 lastId = msg.id;
                                 if (api) api.setLastNotificationId(lastId);
 
-                                // Seuls les messages prioritaires (Items, Goal, Mort) vont au HUD
+                                // Seuls les messages prioritaires (Items, Goal, Mort, Trap) vont au HUD
                                 if (msg.priority === true && !msg.no_notification) { 
                                     
                                     let finalMessage = msg.text || "";
                                     let isDeathMsg = false;
+                                    let isTrapMsg = false;
 
-                                    // Extraction propre du texte et vérification du tag secret
+                                    // Extraction propre du texte et vérification des tags secrets
                                     if (msg.type === "json" && Array.isArray(msg.data)) {
                                         finalMessage = msg.data.map((p: any) => p.text || "").join("");
-                                        // Si l'un des morceaux du JSON possède le tag "is_death: true"
+                                        
+                                        // Détection des tags envoyés par Portal2Client.py
                                         isDeathMsg = msg.data.some((p: any) => p.is_death === true);
+                                        isTrapMsg = msg.data.some((p: any) => p.is_trap === true);
                                     }
 
-                                    // Sécurité supplémentaire au cas où
-                                    if (!isDeathMsg) {
-                                        isDeathMsg = finalMessage.includes("DeathLink") || finalMessage.includes("mort") || finalMessage.includes("euthanized");
+                                    // Sécurité par mots-clés si les tags sont absents
+                                    if (!isDeathMsg && !isTrapMsg) {
+                                        isDeathMsg = finalMessage.includes("DeathLink") || finalMessage.includes("mort");
+                                        isTrapMsg = finalMessage.includes("Trap");
                                     }
                                     
+                                    // Détermination du style visuel
+                                    let notifyTitle = "ARCHIPELAGO";
+                                    let notifyType = "success"; 
+                                    
+                                    if (isDeathMsg) {
+                                        notifyTitle = "DEATHLINK";
+                                        notifyType = "255 50 50"; // Rouge
+                                    } else if (isTrapMsg) {
+                                        notifyTitle = "TRAP TRIGGERED";
+                                        notifyType = "255 150 0"; // Orange
+                                    }
+
                                     OnArchipelagoNotify(JSON.stringify({
-                                        title: isDeathMsg ? "DEATHLINK" : "ARCHIPELAGO",
-                                        message: finalMessage, // Texte propre garanti
+                                        title: notifyTitle,
+                                        message: finalMessage,
                                         html: msg.html || "",
-                                        type: isDeathMsg ? "255 50 50" : "success", // ROUGE VIF pour la mort
+                                        type: notifyType,
                                         play_sound: true 
                                     }));
                                 }
                             }
-                        } // Fin du for
-                    } // Fin du if Array
+                        }
+                    }
                 } catch (e) {
                     $.Warning("[AP] Error parsing chat: " + e);
                 }
@@ -171,12 +186,14 @@ function OnArchipelagoNotify(payload: string) {
         if (!entry) return;
 
         // LE SON : On le joue uniquement si le panel a pu être créé
+        // LE SON : Choix selon le titre
         if (data.play_sound) {
             if (data.title === "DEATHLINK") {
-                // Son d'erreur/alerte (vous pouvez le changer)
                 $.PlaySoundEvent('Player.FallGib'); 
+            } else if (data.title === "TRAP TRIGGERED") {
+                // Son de fizzle/erreur pour les pièges
+                GameInterfaceAPI.ConsoleCommand("snd_playsounds Error");
             } else {
-                // Son positif par défaut (Items, Objectifs)
                 $.PlaySoundEvent('Instructor.LessonStart');
             }
         }

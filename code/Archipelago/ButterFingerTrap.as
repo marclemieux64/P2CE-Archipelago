@@ -17,7 +17,6 @@ void ButterFingersTrap(float duration = 30.0f) {
             // Simule l'appui (+use) et le relâchement (-use)
             SafeAddOutput(timer, "OnTimer", "InitCmd", "Command", "+use", 0.0f, -1);
             SafeAddOutput(timer, "OnTimer", "InitCmd", "Command", "-use", 0.5f, -1);
-            SafeAddOutput(timer, "OnTimer", "InitCmd", "Command", "snd_playsounds Error", 0.0f, -1);
         }
 
         // 3. Le minuteur de fin (logic_relay)

@@ -351,7 +351,7 @@ void MotionBlurTrapCmd(const CommandArgs@ args) {
 
 [ServerCommand("SlipperyFloorTrap", "Triggers slippery floor trap")]
 void SlipperyFloorTrapCmd(const CommandArgs@ args) {
-    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 15.0f;
+    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 60.0f;
     Legacy::TriggerSlipperyFloorTrap(duration);
 }
 

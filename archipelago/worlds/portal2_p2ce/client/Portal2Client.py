@@ -275,6 +275,8 @@ class Portal2Context(CommonContext):
     def print_json(self, data: typing.List[typing.Dict[str, str]], mirror_to_hud: bool = False):
         """Hook for Archipelago formatted messages with name resolution"""
         resolved_data = []
+        is_trap_msg = False # On suit si le message contient un piège
+        
         for part in data:
             if not isinstance(part, dict):
                 resolved_data.append(part)
@@ -288,7 +290,19 @@ class Portal2Context(CommonContext):
                 if part_type == "player_id":
                     new_part["text"] = self.player_names[int(text)]
                 elif part_type == "item_id":
-                    new_part["text"] = self.item_names.lookup_in_slot(int(text), self.slot)
+                    item_name = self.item_names.lookup_in_slot(int(text), self.slot)
+                    new_part["text"] = item_name
+                    
+                    # --- DÉTECTION DU PIÈGE ---
+                    # handle_trap renvoie une commande si c'est un piège, sinon None
+                    trap_cmd = handle_trap(item_name)
+                    if trap_cmd:
+                        new_part["is_trap"] = True
+                        is_trap_msg = True
+                        # Si le message nous est destiné (mirror_to_hud est True pour nos items)
+                        if mirror_to_hud:
+                            self.command_queue.append(trap_cmd)
+                        
                 elif part_type == "location_id":
                     new_part["text"] = self.location_names.lookup_in_slot(int(text), self.slot)
             except Exception:
@@ -296,9 +310,11 @@ class Portal2Context(CommonContext):
             
             resolved_data.append(new_part)
 
-        # Plain text conversion
+        # Conversion en texte brut
         text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in resolved_data)
-        self.on_print_silently(text, resolved_data, mirror_to_hud=mirror_to_hud)
+        
+        # On force l'affichage sur le HUD si c'est un piège, même si ce n'était pas prévu
+        self.on_print_silently(text, resolved_data, mirror_to_hud=(mirror_to_hud or is_trap_msg))
 
     def on_print_json(self, args: dict):
         """Surcharge pour filtrer les messages : Vos items = Son + HUD, les autres = Silence"""

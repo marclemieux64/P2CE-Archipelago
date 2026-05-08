@@ -504,7 +504,20 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         hint.Spawn();
 
         SafeAddOutput(EntityList().FindByName(null, "sphere_entrance_potatos_button"), "OnPressed", "hudhint_no_potatos", "ShowHint", "", 0.0f, -1);
+        RemovePotatosFromGun();
     }
+
+    void IncineratorDisablePortalGun() {
+        CBaseEntity@ trigger = EntityList().FindByName(null, "player_near_portalgun");
+        if (trigger !is null) {
+            Variant v;
+            // Arguments: blue=0 (off), orange=(portalgun_2_disabled ? 1 : 0), isDelayed=0
+        string orangeVal = portalgun_2_disabled ? "1" : "0";
+        v.SetString("OnStartTouch InitCmd:Command:DisablePortalGun 0 " + orangeVal + " 0:0.25:-1");
+        trigger.FireInput("AddOutput", v, 0.0f, null, null, 0);
+    }
+}
+
 
     void RemovePotatosFromGun() {
         ArchipelagoLog("[AP DEBUG] RemovePotatosFromGun: Executing viewmodel and world cleanup.");
@@ -531,6 +544,10 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
             Variant vMix;
             vMix.SetString("snd_setmixer potatosVO vol 0.0");
             cmd.FireInput("Command", vMix, 0.0f, null, null, 0);
+            
+            Variant vMixG;
+            vMixG.SetString("snd_setmixer GLaDOSVO vol 0.0");
+            cmd.FireInput("Command", vMixG, 0.05f, null, null, 0);
             
             Variant vCapt;
             vCapt.SetString("script MutePotatOSSubtitles(true)");
@@ -749,39 +766,91 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         CallVScript("SendToPanorama(\"Archipelago_WarpToMenu\", \"" + current_map + "\")");
     }
 
-    void CreateCompleteLevelAlertHook(string map) {
-        g_has_printed_map_complete = false;
-        if (two_trigger_levels.find(map) >= 0) transition_script_count = 1;
+  void CreateCompleteLevelAlertHook(string map) {
+    g_has_printed_map_complete = false;
+    
+    // Initialisation du compteur pour les maps à double trigger
+    if (two_trigger_levels.find(map) >= 0) {
+        transition_script_count = 1;
+    }
 
-    // Standard hooks for non-elevator maps
-        if (non_elevator_maps.find(map) >= 0) {
-            array<CBaseEntity@> logicScripts = FindEntities("@transition_script");
-            for (uint i = 0; i < logicScripts.length(); i++) logicScripts[i].Remove();
+    // --- RESTAURATION : Le scan des triggers anonymes (Fixes spécifiques par map) ---
+    CBaseEntity@ tr = null;
+    while ((@tr = EntityList().FindByClassname(tr, "trigger_once")) !is null) {
+        if (tr.GetEntityName() == "") { 
+            Vector pos = tr.GetAbsOrigin();
+            bool is_target = false;
 
-            array<string> targets = { "transition_trigger", "trigger_transition", "@transition_from_map", "relay_transition", "ending_relay" };
-            for (uint s = 0; s < targets.length(); s++) {
-                array<CBaseEntity@> ents = FindEntities(targets[s]);
-                for (uint i = 0; i < ents.length(); i++) {
-                    SafeAddOutput(ents[i], "OnStartTouch", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
-                    SafeAddOutput(ents[i], "OnTrigger", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
-                }
+            if (map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 100) is_target = true;
+            else if (map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 100) is_target = true;
+            else if (map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 100) is_target = true;
+            else if (map == "sp_a4_finale1" && pos.DistTo(Vector(-12832, -3040, -112)) < 100) is_target = true;
+            else if (map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 100) is_target = true;
+
+            if (is_target) {
+                // Utilisation de la nouvelle syntaxe propre
+                SafeAddOutput(tr, "OnStartTouch", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
             }
-        } else {
-            array<CBaseEntity@> cls = FindEntities("@transition_from_map");
-            for (uint i = 0; i < cls.length(); i++) {
-                SafeAddOutput(cls[i], "OnTrigger", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
-            }
-            DeleteEntity("@exit_teleport", false);
         }
     }
 
+    // --- RESTAURATION : Logique finale spéciale pour sp_a4_finale4 ---
+    if (map == "sp_a4_finale4") {
+        array<CBaseEntity@> relays = FindEntities("ending_relay");
+        for (uint i = 0; i < relays.length(); i++) {
+            // Note : PrintCompleteNoExit au lieu de FinishedMap
+            SafeAddOutput(relays[i], "OnTrigger", "InitCmd", "Command", "PrintCompleteNoExit", 0.0f, -1);
+        }
+    } 
+    // --- LOGIQUE NON-ELEVATOR (Méthode Moderne) ---
+    else if (non_elevator_maps.find(map) >= 0) {
+        // Empêche le jeu de faire un "hot-swap"
+        array<CBaseEntity@> logicScripts = FindEntities("@transition_script");
+        for (uint i = 0; i < logicScripts.length(); i++) {
+            logicScripts[i].Remove();
+        }
+
+        // Hooks standards
+        array<string> targets = { "transition_trigger", "trigger_transition", "relay_transition", "ending_relay","potatos_end_relay","relay_transition","ending_relay" };
+        for (uint s = 0; s < targets.length(); s++) {
+            array<CBaseEntity@> ents = FindEntities(targets[s]);
+            for (uint i = 0; i < ents.length(); i++) {
+                SafeAddOutput(ents[i], "OnStartTouch", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
+                SafeAddOutput(ents[i], "OnTrigger", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
+            }
+        }
+    } 
+    // --- LOGIQUE ELEVATOR (Avec Restauration du hook) ---
+    else {
+        // On récupère le hook de transition qui avait été supprimé dans la nouvelle version
+        array<CBaseEntity@> cls = FindEntities("@transition_from_map");
+        for (uint i = 0; i < cls.length(); i++) {
+            SafeAddOutput(cls[i], "OnTrigger", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
+        }
+        
+        DeleteEntity("@exit_teleport", false);
+    }
+}
+
     void DoMapSpecificSetup() {
         if (current_map == "sp_a1_intro3") {
-            SafeAddOutput(EntityList().FindByName(null, "portalgun_pickup_trigger"), "OnStartTouch", "InitCmd", "Command", "PrintItem Portal.Gun", 0.0f, -1);
+            // Portal Gun pickup trigger (Primary - by Vector)
+            AddEntityOutputScriptAtPos(Vector(25, 1958, -299), "trigger_once", "OnStartTouch", "PrintItem Portal Gun", 0.0f, 1);
+            // Portal Gun pickup trigger (Backup for speedrun pickup)
+            AddEntityOutputScriptAtPos(Vector(-704, 1856, -32), "trigger_multiple", "OnStartTouch", "PrintItem Portal Gun", 0.0f, 1);
         } else if (current_map == "sp_a2_intro") {
-            SafeAddOutput(EntityList().FindByName(null, "player_near_portalgun"), "OnStartTouch", "InitCmd", "Command", "PrintItem Upgraded.Portal.Gun", 0.0f, -1);
+            // Upgraded Portal Gun (By Name)
+            CBaseEntity@ gun_trigger = EntityList().FindByName(null, "player_near_portalgun");
+            if (gun_trigger !is null) {
+                SafeAddOutput(gun_trigger, "OnStartTouch", "InitCmd", "Command", "PrintItem Upgraded Portal Gun", 0.0f, 1);
+            }
+            // Upgraded Portal Gun (Backup - by Vector)
+            AddEntityOutputScriptAtPos(Vector(-360, 440, -10680), "trigger_once", "OnStartTouch", "PrintItem Upgraded Portal Gun", 0.0f, 1);
         } else if (current_map == "sp_a3_transition01") {
-            SafeAddOutput(EntityList().FindByName(null, "sphere_entrance_potatos_button"), "OnPressed", "InitCmd", "Command", "PrintItem PotatOS", 0.0f, -1);
+            CBaseEntity@ potatos_btn = EntityList().FindByName(null, "sphere_entrance_potatos_button");
+            if (potatos_btn !is null) {
+                SafeAddOutput(potatos_btn, "OnPressed", "InitCmd", "Command", "PrintItem PotatOS", 0.0f, -1);
+            }
         } else if (current_map == "sp_a2_laser_intro") {
             CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
             if (cmd !is null) {

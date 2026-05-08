@@ -15,14 +15,14 @@ class ArchipelagoConsole {
 
     static COLOR_MAP: Record<string, string> = {
         "red": "#ff5555",
-        "green": "#55ff55",
-        "yellow": "#ffff55",
+        "green": "#00ff00",
+        "yellow": "#ffff00",
         "blue": "#77aaff",
-        "magenta": "#ff55ff",
-        "cyan": "#55ffff",
+        "magenta": "#ee82ee",
+        "cyan": "#00ffff",
         "white": "#ffffff",
         "black": "#000000",
-        "gold": "#ffaa00",
+        "gold": "#ffd700",
         "plum": "#dda0dd",
         "salmon": "#fa8072",
         "slate": "#708090",
@@ -139,14 +139,16 @@ class ArchipelagoConsole {
             text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             
             let color = "#ffffff";
-            if (part.color && this.COLOR_MAP[part.color]) {
-                color = this.COLOR_MAP[part.color];
-            } else if (part.type === "player_id") {
-                color = "#ffffff"; // Default player color
-            } else if (part.type === "item_id") {
-                color = "#afdfef"; // Default item color
-            } else if (part.type === "location_id") {
-                color = "#00ff7f"; // Default location color
+            if (part.color && ArchipelagoConsole.COLOR_MAP[part.color]) {
+                color = ArchipelagoConsole.COLOR_MAP[part.color];
+            } else if (part.type === "player_id" || part.type === "player_name") {
+                color = "#ff7f50"; // Standard Archipelago Player Coral
+            } else if (part.type === "item_id" || part.type === "item_name") {
+                color = "#00ffff"; // Standard Archipelago Item Cyan
+            } else if (part.type === "location_id" || part.type === "location_name") {
+                color = "#00ff00"; // Standard Archipelago Location Green
+            } else if (part.type === "entrance_id") {
+                color = "#da70d6"; // Standard Archipelago Entrance Orchid
             } else {
                 // No specific color, just add text as-is
                 result += text;

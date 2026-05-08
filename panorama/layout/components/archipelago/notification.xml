@@ -12,7 +12,7 @@
                 <Panel id="AccentBar" class="accent-bar" />
                 <Panel class="content"> 
                     <Label id="Title" class="title" text="TEST TITLE" /> 
-                    <Label id="Message" class="body" text="TEST MESSAGE" /> 
+                    <Label id="Message" class="body" html="true" text="TEST MESSAGE" /> 
                 </Panel>
             </Panel>
         </snippet>

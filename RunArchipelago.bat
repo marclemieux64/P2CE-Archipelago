@@ -1,49 +1,53 @@
 @echo off
-:: Archipelago Autonomous Launch Script for P2CE
-:: This script runs the local bundled Archipelago client.
+title P2CE Archipelago Launcher
 
-set MOD_FOLDER=%~dp0
-set ARCHIPELAGO_LOCAL=%MOD_FOLDER%archipelago
+:: 1. On définit les chemins précis (grâce à ton arborescence)
+set "MOD_FOLDER=%~dp0"
+set "ARCHIPELAGO_LOCAL=%MOD_FOLDER%archipelago"
+set "PYTHON_EXE=%ARCHIPELAGO_LOCAL%\libs\python.exe"
+set "CLIENT_PY=%ARCHIPELAGO_LOCAL%\worlds\portal2_p2ce\client\Portal2Client.py"
 
-:: Use system python (required by user)
-set PYTHON_PATH=python
-
-where %PYTHON_PATH% >nul 2>&1
-if %ERRORLEVEL% neq 0 (
-    echo [Archipelago] ERROR: Python was not found in your system PATH.
-    echo Please ensure Python is installed and added to your environment variables.
+:: 2. Vérification de l'exécutable Python
+if not exist "%PYTHON_EXE%" (
+    echo [Archipelago] ERROR: Bundled Python not found!
+    echo Looked in: "%PYTHON_EXE%"
     pause
     exit /b 1
 )
 
-echo [Archipelago] Launching Game...
-set "GAME_ARGS=%*"
-
-:: Start the game in a new process so we can continue the script
-start "" %GAME_ARGS%
-
-echo [Archipelago] Waiting for game to initialize...
-:: Delay the client launch as requested by the user
-timeout /t 3 /nobreak >nul
-
-echo [Archipelago] Starting Autonomous Client...
-pushd "%MOD_FOLDER%"
-set PYTHONPATH=%ARCHIPELAGO_LOCAL%
-:: Start the Portal 2 Client module in the background and hide its output
-start /B "" "%PYTHON_PATH%" -W ignore -m worlds.portal2_p2ce.client.Portal2Client --nogui >archipelago_client.log 2>&1
-popd
-
-echo [Archipelago] Client is running. The game is active.
-
-:: Wait for the game process to finish. 
-:: We check for both p2ce.exe and portal2.exe just in case.
-:WAITLOOP
-tasklist /FI "IMAGENAME eq p2ce.exe" 2>NUL | find /I /N "p2ce.exe">NUL
-if "%ERRORLEVEL%"=="0" (
-    goto WAITLOOP
+:: 3. Vérification du fichier client (Portal2Client.py)
+if not exist "%CLIENT_PY%" (
+    echo [Archipelago] ERROR: Client script not found!
+    echo Looked in: "%CLIENT_PY%"
+    pause
+    exit /b 1
 )
 
-echo [Archipelago] Game closed. Cleaning up...
-taskkill /F /IM python.exe /T >nul 2>&1
+echo [Archipelago] Starting Autonomous Client...
+:: 4. On lance Python en lui donnant le fichier directement
+:: On utilise cmd /c pour que la fenêtre se ferme d'elle-même si le processus finit
+start "ArchipelagoClient" cmd /c ""%PYTHON_EXE%" "%CLIENT_PY%" --nogui"
 
-echo [Archipelago] Done.
+echo [Archipelago] Launching Game...
+:: 5. Sécurité : On ne lance le jeu que si des arguments ont été passés (ex: via Steam)
+if not "%~1"=="" (
+    start "" %*
+) else (
+    echo [Archipelago] No game arguments provided.
+    echo [Archipelago] If you are running from Steam, this is normal.
+)
+
+:: 6. Attente de la fermeture du jeu pour nettoyer
+:WAITLOOP
+timeout /t 2 /nobreak >nul
+tasklist /FI "IMAGENAME eq p2ce.exe" 2>NUL | find /I /N "p2ce.exe">NUL
+if "%ERRORLEVEL%"=="0" goto WAITLOOP
+
+tasklist /FI "IMAGENAME eq portal2.exe" 2>NUL | find /I /N "portal2.exe">NUL
+if "%ERRORLEVEL%"=="0" goto WAITLOOP
+
+echo [Archipelago] Game closed. Cleaning up client...
+:: On cible spécifiquement la fenêtre qu'on a nommée "ArchipelagoClient"
+taskkill /FI "WINDOWTITLE eq ArchipelagoClient*" /T /F >nul 2>&1
+
+exit /b 0

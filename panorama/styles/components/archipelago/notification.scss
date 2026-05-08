@@ -43,7 +43,7 @@
 
 .body {
     font-size: 16px;
-    color: #cccccc;
+    color: #ffffff;
     width: 100%;
     height: fit-children;
 }
@@ -117,3 +117,14 @@
         transform: translateX(0px);
     }
 }
+
+// Rich Text Colors
+.color-player_id, .color-player_name { color: #ff7f50; }
+.color-item_id, .color-item_name { color: #00ffff; }
+.color-location_id, .color-location_name { color: #adff2f; }
+.color-entrance_id { color: #da70d6; }
+.color-gold { color: #ffd700; }
+.color-yellow { color: #ffff00; }
+.color-magenta { color: #ee82ee; }
+.color-cyan { color: #00ffff; }
+.color-green { color: #00ff00; }

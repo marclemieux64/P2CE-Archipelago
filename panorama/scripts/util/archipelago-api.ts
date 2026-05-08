@@ -95,6 +95,18 @@ class ArchipelagoAPI {
     static getChat() {
         return this.m_Chat;
     }
+    
+    static getLastNotificationId() {
+        const globalObj: any = UiToolkitAPI.GetGlobalObject();
+        if (globalObj.Archipelago_LastMsgId === undefined) {
+            globalObj.Archipelago_LastMsgId = -1;
+        }
+        return globalObj.Archipelago_LastMsgId;
+    }
+
+    static setLastNotificationId(id: number) {
+        (UiToolkitAPI.GetGlobalObject() as any).Archipelago_LastMsgId = id;
+    }
 
     static ENABLE_DEBUG: boolean = false;
 }

@@ -89,13 +89,10 @@ function ProcessQueue() {
         return;
     }
 
-    $.Msg("[AP] 3-second timer started for top panel.");
-
     // 3 second reading timer
     $.Schedule(3.0, () => {
         if (topPanel && topPanel.IsValid()) {
             topPanel.AddClass('exit-anim');
-            $.Msg("[AP] Top panel exiting. Sliding queue.");
 
             // Wait 0.35s for the CSS collapse animation to finish before deleting
             $.Schedule(0.35, () => {
@@ -113,48 +110,125 @@ function ProcessQueue() {
     });
 }
 
+const API_BASE = "http://127.0.0.1:8910";
+function PollForNotifications() {
+    const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+    
+    $.AsyncWebRequest(API_BASE + "/chat", {
+        type: 'GET',
+        complete: (res: any) => {
+            if (res.status === 200 && res.responseText) {
+                try {
+                    const cleanJson = res.responseText.trim().replace(/\0/g, '');
+                    const chat = JSON.parse(cleanJson);
+                    if (Array.isArray(chat) && chat.length > 0) {
+                        let lastId = api ? api.getLastNotificationId() : -1;
+                        
+                        // On first run, initialize to the latest message minus one to show the last message
+                        if (lastId === -1) {
+                            lastId = chat[chat.length - 1].id - 1;
+                            if (api) api.setLastNotificationId(lastId);
+                        }
+
+                        for (const msg of chat) {
+                            if (msg.id > lastId) {
+                                OnArchipelagoNotify(JSON.stringify({
+                                    title: "ARCHIPELAGO",
+                                    message: msg.type === "json" ? JSON.stringify(msg.data) : msg.text,
+                                    html: msg.html || "",
+                                    type: "success"
+                                }));
+                                lastId = msg.id;
+                                if (api) api.setLastNotificationId(lastId);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    $.Warning("[AP] Error parsing chat: " + e);
+                }
+            }
+            $.Schedule(0.25, PollForNotifications);
+        },
+        error: () => {
+            $.Schedule(2.0, PollForNotifications);
+        }
+    });
+}
+
 function OnArchipelagoNotify(payload: string) {
     const container = $.GetContextPanel();
     if (!container) return;
 
     try {
         const data = JSON.parse(payload);
-
+        
         $.PlaySoundEvent('Instructor.LessonStart');
 
-        // 1. Create the main entry wrapper
+        const rawMsg = data.message || "";
+        // $.Msg("[AP HUD] Rendering message: " + rawMsg.substring(0, 20));
+
+        // Create the main entry manually for maximum compatibility with P2CE
         const entry = $.CreatePanel('Panel', container, '');
         entry.AddClass('notify-entry');
 
-        // 2. Create the colored accent bar
         const accentBar = $.CreatePanel('Panel', entry, 'AccentBar');
         accentBar.AddClass('accent-bar');
 
-        // 3. Create the content container that holds the text
         const content = $.CreatePanel('Panel', entry, '');
         content.AddClass('content');
 
-        // 4. Create and populate the Title label
         const titleLabel = $.CreatePanel('Label', content, 'Title');
         titleLabel.AddClass('title');
         titleLabel.text = data.title || "ARCHIPELAGO";
 
-        // 5. Create and populate the Message label
-        const Msgabel = $.CreatePanel('Label', content, 'Message');
-        Msgabel.AddClass('body');
-        Msgabel.text = data.message || "";
+        const messageContainer = $.CreatePanel('Panel', content, 'MessageArea');
+        messageContainer.style.flowChildren = 'right';
+        messageContainer.style.width = '100%';
 
-        // Handle the RGB string ("255 100 0")
+        // Check if the message is a JSON array of parts
+        let parts: any[] = [];
+        try {
+            const trimmed = rawMsg.trim();
+            if (trimmed.startsWith('[')) {
+                parts = JSON.parse(trimmed);
+            }
+        } catch (e) {
+            parts = [];
+        }
+
+        // If we have HTML from the Python client, use it for perfect color parity
+        if (data.html) {
+            const msgLabel = $.CreatePanel('Label', messageContainer, 'Message');
+            msgLabel.AddClass('body');
+            msgLabel.html = true;
+            msgLabel.text = data.html;
+        } else if (parts.length > 0) {
+            for (const part of parts) {
+                const label = $.CreatePanel('Label', messageContainer, '');
+                label.AddClass('body');
+                label.text = part.text || "";
+                
+                // Use CSS classes for coloring (defined in notification.scss)
+                if (part.type) label.AddClass('color-' + part.type);
+                if (part.color) label.AddClass('color-' + part.color);
+            }
+        } else {
+            const msgLabel = $.CreatePanel('Label', messageContainer, 'Message');
+            msgLabel.AddClass('body');
+            msgLabel.text = data.message || "";
+        }
+
+        // Handle the accent color
         if (data.type && data.type.includes(" ")) {
             const rgb = "rgb(" + data.type.replace(/ /g, ",") + ")";
             accentBar.style.backgroundColor = rgb;
             titleLabel.style.color = rgb;
+        } else if (data.type) {
+            entry.AddClass('type-' + data.type);
         }
 
-        // PUSH TO MEMORY: Instead of checking the UI, we just push the panel object to our array
         notificationQueue.push(entry);
 
-        // If the queue isn't already ticking, kickstart it!
         if (!isTimerRunning) {
             ProcessQueue();
         }
@@ -164,15 +238,27 @@ function OnArchipelagoNotify(payload: string) {
     }
 }
 
-$.RegisterForUnhandledEvent("ArchipelagoQueueUpdated", CheckQueue);
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
 
-function CheckQueue() {
-    const global: any = UiToolkitAPI.GetGlobalObject();
-    if (!global || !global.ArchipelagoMessageQueue) return;
-    const pending = global.ArchipelagoMessageQueue.filter((msg: any) => !msg.shown);
-    for (const msg of pending) {
-        msg.shown = true;
-        OnArchipelagoNotify(msg.payload);
+(function () {
+    const context = $.GetContextPanel();
+    if (context) {
+        $.Msg("[AP] Notification HUD Initialized (API Polling Mode)");
+        PollForNotifications();
+
+        // No longer listening for ArchipelagoNotify event to avoid duplicates from legacy sources
+        
+        const global: any = UiToolkitAPI.GetGlobalObject();
+        if (global.ArchipelagoMessageQueue) {
+            $.Schedule(0.5, () => {
+                const pending = global.ArchipelagoMessageQueue.filter((msg: any) => !msg.shown);
+                for (const msg of pending) {
+                    msg.shown = true;
+                    OnArchipelagoNotify(msg.payload);
+                }
+            });
+        }
     }
-}
-CheckQueue();
+})();

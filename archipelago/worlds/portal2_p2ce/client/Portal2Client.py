@@ -1,35 +1,38 @@
-from .. import Portal2World
-import worlds
-# Manually overwrite the "Portal 2" data package with our mod's data
-# This allows us to use our mod's logic while still connecting to the server as "Portal 2"
-worlds.network_data_package["games"]["Portal 2"] = Portal2World.get_data_package_data()
-
-from argparse import Namespace
 import os
+import sys
+import argparse
 import asyncio
 import logging
-import sys
 import time
 import typing
+import json
+
+# --- STANDALONE FIX ---
+# On remonte de 3 dossiers pour atteindre la racine "archipelago"
+# (client -> portal2_p2ce -> worlds -> archipelago)
+archipelago_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+if archipelago_root not in sys.path:
+    sys.path.insert(0, archipelago_root)
 
 os.environ['SKIP_REQUIREMENTS_UPDATE'] = '1'
 
+# Imports généraux Archipelago
 from CommonClient import CommonContext, server_loop, ClientCommandProcessor, logger, gui_enabled
 from NetUtils import ClientStatus, NetworkItem
 from Utils import async_start, init_logging
 
-from ..mod_helpers.ItemHandling import add_ratman_commands, handle_item, handle_map_start, handle_trap, portal_gun_upgrade_not_inplace, potatos_not_inplace
-from ..mod_helpers.MapMenu import Menu
-from .DeathMessages import get_death_message
-from ..Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
-from ..Options import GameModeOption
+# Imports absolus (Adaptés au nom exact de ton dossier "portal2_p2ce")
+import worlds
+from worlds.portal2_p2ce import Portal2World
+from worlds.portal2_p2ce.mod_helpers.ItemHandling import add_ratman_commands, handle_item, handle_map_start, handle_trap, portal_gun_upgrade_not_inplace, potatos_not_inplace
+from worlds.portal2_p2ce.mod_helpers.MapMenu import Menu
+from worlds.portal2_p2ce.client.DeathMessages import get_death_message
+from worlds.portal2_p2ce.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
+from worlds.portal2_p2ce.Options import GameModeOption
 
-import json
+# Manually overwrite the "Portal 2" data package with our mod's data
+worlds.network_data_package["games"]["Portal 2"] = Portal2World.get_data_package_data()
 
-if __name__ == "__main__":
-    # init_logging("Portal2Client", exception_logger="Portal2Client") # Hangs in this environment
-    pass
-    
 logger = logging.getLogger("Portal2Client")
 
 class Portal2CommandProcessor(ClientCommandProcessor):
@@ -53,7 +56,8 @@ class Portal2CommandProcessor(ClientCommandProcessor):
         """Toggles death link for this client"""
         self.ctx.death_link_active = not self.ctx.death_link_active
         async_start(self.ctx.update_death_link(self.ctx.death_link_active), "set_deathlink")
-        self.output(f"Death link has been {"enabled" if self.ctx.death_link_active else "disabled"}")
+        # FIX: Single quotes inside the f-string
+        self.output(f"Death link has been {'enabled' if self.ctx.death_link_active else 'disabled'}")
 
     def _cmd_refresh_menu(self):
         """Refreshed the in game menu in case of maps being inaccessible when they should be"""
@@ -70,19 +74,19 @@ class Portal2CommandProcessor(ClientCommandProcessor):
 
     def _cmd_needed(self, *location_name):
         """Get the requirements for the map separated by all requirements and ones not yet acquired"""
-        # Check if map name is in the list of map names
         message = "Location not found, use /locations to get a list of locations"
-        location_name = ' '.join(location_name)
+        location_name_str = ' '.join(location_name)
         for location in location_names_to_map_codes.keys():
-            if location_name in location:
+            if location_name_str in location:
                 requirements = all_locations_table[location].required_items
                 requirements_not_collected = list(set(self.ctx.item_list) & set(requirements))
                 requirements.sort()
                 requirements_not_collected.sort()
 
+                # FIX: Syntax error with quotes fixed
                 message = ("Required Items: \n"
-                           f"{", ".join(requirements)}\n"
-                           f"{"All items acquired" if not requirements_not_collected else "Still needed: \n" + ", ".join(requirements_not_collected)}")
+                           f"{', '.join(requirements)}\n"
+                           f"{'All items acquired' if not requirements_not_collected else 'Still needed: \n' + ', '.join(requirements_not_collected)}")
                 break
         self.output(message)
 
@@ -113,16 +117,14 @@ class Portal2Context(CommonContext):
                 self.ctx = ctx
 
             def emit(self, record):
-                if "[Archipelago]" in record.msg:
+                if "[Archipelago]" in record.msg or "[HUD]" in record.msg:
                     return
                 try:
                     msg = self.format(record)
-                    if self.ctx.loop:
-                        self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg)
-                    else:
-                        # Fallback if loop isn't ready: add to chat_log directly if possible
-                        # but on_print_silently is safer once loop is up.
-                        pass
+                    if getattr(self.ctx, 'loop', None):
+                        # On ne duplique pas dans le HUD ce qui sera géré par PrintJSON
+                        mirror = not ("[AP RECV]" in msg or "found their" in msg)
+                        self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg, None, None, mirror)
                 except Exception:
                     pass
 
@@ -157,6 +159,7 @@ class Portal2Context(CommonContext):
 
     sender_active : bool = False
     listener_active : bool = False
+    completed_maps: set[str] = set()
 
     location_name_to_id: dict[str, int] = None
     menu: Menu = None
@@ -164,6 +167,8 @@ class Portal2Context(CommonContext):
     # Live API State
     chat_log: list[dict] = []
     last_api_update: float = 0
+    has_ever_connected: bool = False
+    _msg_id_counter: int = 0
 
     def on_input(self, command: str):
         command = command.strip()
@@ -193,13 +198,49 @@ class Portal2Context(CommonContext):
 
     def on_print(self, text: str):
         """Hook for client output to capture it for the Panorama API"""
-        # We don't log to info here to avoid recursion with the log handler
         self.on_print_silently(text)
 
-    def on_print_silently(self, text: str, rich_data: list = None):
+    def output(self, text: str):
+        """Standard output method for Archipelago contexts"""
+        self.on_print(text)
+
+    def on_print_silently(self, text: str, rich_data: list = None, html_text: str = None, mirror_to_hud: bool = True):
         """Internal method to update chat log without triggering the logger"""
+        # Filter out noisy messages
+        if "changed tags from" in text and "['AP']" in text:
+            return
+        if "Now that you are connected, you can use !help" in text:
+            return
+
+        # If we have rich_data but no html_text, generate it now
+        if rich_data and not html_text:
+            color_map = {
+                "player_id": "#ff7f50", "player_name": "#ff7f50", "magenta": "#ee82ee",
+                "item_id": "#00ffff", "item_name": "#00ffff", "cyan": "#00ffff",
+                "location_id": "#00ff00", "location_name": "#00ff00", "green": "#00ff00",
+                "entrance_id": "#da70d6", "gold": "#ffd700", "yellow": "#ffff00"
+            }
+            html_text = ""
+            for part in rich_data:
+                part_text = part.get("text", "") if isinstance(part, dict) else str(part)
+                color = None
+                if isinstance(part, dict):
+                    p_type = part.get("type")
+                    p_color = part.get("color")
+                    color = color_map.get(p_type) or color_map.get(p_color) or p_color
+                
+                if color:
+                    html_text += f"<font color='{color}'>{part_text}</font>"
+                else:
+                    html_text += part_text
+
+        self._msg_id_counter += 1
+        if mirror_to_hud:
+            logger.info(f"[HUD] {text}")
         self.chat_log.append({
+            "id": self._msg_id_counter, 
             "text": text,
+            "html": html_text,
             "data": rich_data,
             "type": "text" if rich_data is None else "json",
             "time": time.time()
@@ -207,13 +248,9 @@ class Portal2Context(CommonContext):
         if len(self.chat_log) > 50:
             self.chat_log.pop(0)
             
-        # Only mirror prompts to the game console to avoid spam
-        keywords = ["Enter ", "Please ", "[AP RECV]", "Connected"]
-        if any(k in text for k in keywords):
-            sanitized_text = text.replace('"', "'").replace('\n', ' ')
-            # On insère en priorité 0 pour que le joueur voit le message AVANT 
-            # que le buffer netcon ne soit saturé par d'autres commandes
-            self.command_queue.insert(0, f'echo "[Archipelago] {sanitized_text}"\n')
+        # Mirror prompts to the game console for legacy support
+        # We no longer mirror to game console, Panorama polls /chat directly
+        pass
 
     def on_print_json(self, data: typing.Union[dict, list]):
         """Hook for Archipelago formatted messages (Legacy/Alternative)"""
@@ -222,7 +259,6 @@ class Portal2Context(CommonContext):
         elif isinstance(data, list):
             self.print_json(data)
         else:
-            # Fallback for raw JSON logs
             self.on_print_silently(str(data), [data] if isinstance(data, dict) else data)
 
     def print_json(self, data: typing.List[typing.Dict[str, str]]):
@@ -243,40 +279,42 @@ class Portal2Context(CommonContext):
                 elif part_type == "item_id":
                     new_part["text"] = self.item_names.lookup_in_slot(int(text), self.slot)
                 elif part_type == "location_id":
-                    # For location_id, we might not know the sender easily in this context,
-                    # but usually it's for the current game
                     new_part["text"] = self.location_names.lookup_in_slot(int(text), self.slot)
             except Exception:
-                pass # Keep original text if resolution fails
+                pass 
             
             resolved_data.append(new_part)
 
-        # Convert formatted message parts to plain text for the simple console
+        # Plain text conversion
         text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in resolved_data)
         self.on_print_silently(text, resolved_data)
 
-    def output(self, text: str):
-        """Legacy output hook"""
-        self.on_print(text)
-
     def update_menu(self, location_id: int = None):
-        if location_id is not None:
+        if self.menu and location_id is not None:
             self.menu.complete_check(location_id)
 
-        # We no longer write to a file, Panorama will get this via the API
-        pass
-
     def refresh_menu(self):
+        if not self.menu:
+            return
         for location_id in self.checked_locations:
             self.menu.complete_check(location_id)
         self.update_menu()
 
     def add_to_in_game_message_queue(self, message: str, color_string: str = None) -> None:
-        self.command_queue.append(f'script AddToTextQueue("{message}"{f',"{color_string}"' if color_string else ""})\n')
+        """Processes /message_in_game and generates a colored notification"""
+        if color_string:
+            try:
+                rgb = [int(x) for x in color_string.split()]
+                if len(rgb) == 3:
+                    hex_color = '#%02x%02x%02x' % (rgb[0], rgb[1], rgb[2])
+                    self.on_print_silently(message, [{"text": message, "color": hex_color}])
+                    return
+            except Exception:
+                pass
+        self.on_print_silently(message)
 
     async def p2_connection_loop(self):
         '''Single loop to handle both reading and writing to Portal 2 via netcon'''
-        # Give the game a few seconds to open the netcon port if starting together
         await asyncio.sleep(1)
         attempt_count = 0
         while not self.exit_event.is_set():
@@ -285,6 +323,8 @@ class Portal2Context(CommonContext):
                 reader, writer = await asyncio.open_connection(self.HOST, self.PORT)
                 self.sender_active = True
                 self.listener_active = True
+                self.has_ever_connected = True
+                attempt_count = 0 
                 logger.info(f"Connected to Portal 2 netcon on {self.HOST}:{self.PORT}")
                 self.alert_game_connection()
 
@@ -299,7 +339,6 @@ class Portal2Context(CommonContext):
 
                     # 2. Handle Incoming Messages (Non-blocking read)
                     try:
-                        # We use a small timeout to keep the loop responsive to outgoing commands
                         data = await asyncio.wait_for(reader.read(4096), timeout=0.1)
                         if not data:
                             logger.warning("Portal 2 connection closed by peer")
@@ -311,13 +350,19 @@ class Portal2Context(CommonContext):
                             if message:
                                 await self.handle_message(message)
                     except asyncio.TimeoutError:
-                        # No data to read right now, just continue the loop
                         pass
                     except Exception as e:
                         logger.error(f"Error reading from Portal 2: {e}")
+                        self.add_to_in_game_message_queue(f"Error reading from Portal 2: {e}", "error")
                         break
 
             except ConnectionRefusedError:
+                if self.has_ever_connected:
+                    if attempt_count > 10:
+                        logger.info("Game connection lost for 10s. Shutting down client...")
+                        self.exit_event.set()
+                        break
+                
                 if attempt_count <= 5:
                     logger.info(f"Waiting for Portal 2 to start on {self.HOST}:{self.PORT}... (Attempt {attempt_count})")
                 else:
@@ -339,12 +384,11 @@ class Portal2Context(CommonContext):
         import threading
         from http.server import BaseHTTPRequestHandler, HTTPServer
         
-        # Capture 'self' for the handler
         client_self = self
 
         class APIHandler(BaseHTTPRequestHandler):
             def log_message(self, format, *args):
-                pass # Silence console logs
+                pass 
 
             def do_OPTIONS(self):
                 self.send_response(200)
@@ -361,9 +405,9 @@ class Portal2Context(CommonContext):
                             "game_connected": client_self.check_game_connection(),
                             "seed": client_self.seed_name if hasattr(client_self, 'seed_name') else "unknown",
                             "slot": client_self.slot,
-                            "items": [client_self.item_names.lookup_in_game(i.item, client_self.game) for i in client_self.items_received] if client_self.item_names else [],
+                            "items": [client_self.item_names.lookup_in_game(i.item, client_self.game) for i in client_self.items_received] if getattr(client_self, 'item_names', None) else [],
                             "checked_locations": list(client_self.checked_locations),
-                            "missing_locations": list(client_self.missing_locations) if hasattr(client_self, 'missing_locations') else [],
+                            "missing_locations": list(getattr(client_self, 'missing_locations', [])),
                             "deathlink": client_self.death_link_active,
                             "menu": client_self.menu.to_dict() if client_self.menu else None
                         })
@@ -381,7 +425,6 @@ class Portal2Context(CommonContext):
 
             def do_POST(self):
                 try:
-                    # logger.info(f"API POST Request: {self.path}")
                     if self.path == '/command':
                         content_length = int(self.headers.get('Content-Length', 0))
                         if content_length == 0:
@@ -396,15 +439,12 @@ class Portal2Context(CommonContext):
                             data = json.loads(decoded_data)
                             command = data.get("command")
                         except json.JSONDecodeError:
-                            # Fallback for form-encoded data from Panorama
                             from urllib.parse import parse_qs
                             data = parse_qs(decoded_data)
                             if "command" in data:
                                 command = data["command"][0]
                         
                         if command:
-                            # logger.info(f"API Command received: {command}")
-                            # Use call_soon_threadsafe because we're in the HTTP server thread, not the main loop thread
                             client_self.loop.call_soon_threadsafe(client_self.on_input, command)
                             self._send_json({"status": "ok"})
                         else:
@@ -437,35 +477,6 @@ class Portal2Context(CommonContext):
         thread = threading.Thread(target=run_server, daemon=True)
         thread.start()
 
-    async def handle_api_status(self, request):
-        from aiohttp import web
-        status = {
-            "connected": self.server is not None and self.server.socket is not None and not self.server.socket.closed,
-            "seed": self.seed_name if hasattr(self, 'seed_name') else "unknown",
-            "slot": self.slot,
-            "items": [self.item_names.lookup_in_game(i.item, self.game) for i in self.items_received],
-            "checked_locations": list(self.checked_locations),
-            "missing_locations": list(self.missing_locations) if hasattr(self, 'missing_locations') else [],
-            "deathlink": self.death_link_active
-        }
-        return web.json_response(status)
-
-    async def handle_api_chat(self, request):
-        from aiohttp import web
-        return web.json_response(self.chat_log)
-
-    async def handle_api_command(self, request):
-        from aiohttp import web
-        try:
-            data = await request.json()
-            command = data.get("command")
-            if command:
-                self.run_gui_command(command)
-                return web.json_response({"status": "ok"})
-            return web.json_response({"error": "No command"}, status=400)
-        except Exception as e:
-            return web.json_response({"error": str(e)}, status=400)
-
     def send_level_begin_commands(self):
         '''Sends each item removal command individually to avoid netcon/buffer limits'''
         for cmd in self.item_remove_commands:
@@ -475,14 +486,15 @@ class Portal2Context(CommonContext):
     async def handle_message(self, message: str):
         if message.startswith("map_name:"):
             map_name = message.split(':', 1)[1]
-            # Send all item removal commands individually
             self.send_level_begin_commands()
-            # Send map start commands (already a list)
             self.command_queue += handle_map_start(map_name, self.item_list, self.get_wheatley_monitor_names(self.checked_locations), self.get_ratman_den_names(self.checked_locations))
 
-        # For map complete checks
         elif message.startswith("map_complete:"):
             done_map = message.split(':', 1)[1]
+            if done_map in self.completed_maps:
+                return
+            self.completed_maps.add(done_map)
+
             if done_map == self.goal_map_code:
                 await self.handle_goal_completion()
             
@@ -491,40 +503,37 @@ class Portal2Context(CommonContext):
                 await self.check_locations([map_id])
                 self.update_menu(map_id)
         
-        # All other checks
-        # Item checks e.g. portal gun upgrade, potatos
         elif message.startswith("item_collected:"):
             item_collected = message.split(":", 1)[1]
-            check_id = all_locations_table[item_collected].id
-            await self.check_locations([check_id])
-            self.update_menu(check_id)
+            if item_collected in all_locations_table:
+                check_id = all_locations_table[item_collected].id
+                await self.check_locations([check_id])
+                self.update_menu(check_id)
         
-        # Wheatley monitor checks
         elif message.startswith("monitor_break:"):
             map_name = message.split(":", 1)[1]
-            check_name = wheatley_maps_to_monitor_names[map_name]
-            check_id = all_locations_table[check_name].id
-            await self.check_locations([check_id])
-            self.update_menu(check_id)
-        
-        # Custom buttons e.g. ratman dens, vitrified doors
+            if map_name in wheatley_maps_to_monitor_names:
+                check_name = wheatley_maps_to_monitor_names[map_name]
+                if check_name in all_locations_table:
+                    check_id = all_locations_table[check_name].id
+                    await self.check_locations([check_id])
+                    self.update_menu(check_id)
         elif message.startswith("button_check:"):
             check_name = message.split(":", 1)[1]
-            check_id = all_locations_table[check_name].id
-            await self.check_locations([check_id])
-            self.update_menu(check_id)
+            if check_name in all_locations_table:
+                check_id = all_locations_table[check_name].id
+                await self.check_locations([check_id])
+                self.update_menu(check_id)
         
-        # Deathlink
         elif message.startswith("send_deathlink"):
-            if self.death_link_active and time.time() - self.last_death_link > 10:
+            if self.death_link_active and time.time() - getattr(self, 'last_death_link', 0) > 10:
                 map_name = message.split(" ")[1]
                 death_message = get_death_message(map_name, self.player_names[self.slot])
                 await self.send_death(death_text=death_message)
 
     async def handle_goal_completion(self):
-        if self.finished_game:
+        if getattr(self, 'finished_game', False):
             return
-        
         self.finished_game = True
         await self.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
@@ -535,31 +544,23 @@ class Portal2Context(CommonContext):
     def check_game_connection(self) -> bool:
         return self.sender_active and self.listener_active
     
-    # Used for nothing?
     def location_id_to_map_code(self, location_id: str) -> str:
-        '''Converts a location ID to a map code (if that id relates to a map location)'''
-        # Convert id to name
         location_name = self.location_names.lookup_in_game(location_id)
-        # Get info for location name
         if location_name in location_names_to_map_codes:
             return location_names_to_map_codes[location_name]
-        
         return None
     
     def map_code_to_location_id(self, map_code: str):
-        '''Convert in game map name to location id for location checks'''
         if map_code not in map_codes_to_location_names:
             return None
-        
         location_name = map_codes_to_location_names[map_code]
-        if not self.location_name_to_id:
-            raise Exception("location_name_to_id dict has not been created yet")
+        if not hasattr(self, 'location_name_to_id') or not self.location_name_to_id:
+            return None
         if location_name not in self.location_name_to_id:
             return None
         return self.location_name_to_id[location_name]
     
     def get_wheatley_monitor_names(self, location_ids: list[int]) -> list[str]:
-        '''Convert location ids to the names of the wheatley monitor checks if they are ones'''
         monitors_checked = []
         for loc in location_ids:
             location_name = self.location_names.lookup_in_game(loc)
@@ -568,7 +569,6 @@ class Portal2Context(CommonContext):
         return monitors_checked
     
     def get_ratman_den_names(self, location_ids: list[int]) -> list[str]:
-        '''Convert location ids to the names of the ratman den checks if they are ones'''
         dens_checked = []
         for loc in location_ids:
             location_name = self.location_names.lookup_in_game(loc)
@@ -611,11 +611,9 @@ class Portal2Context(CommonContext):
             if slot_data["vitrified_doors"]:
                 self.menu.has_vitrified_doors = True
         
-        # Don't remove the portal gun upgrade after pickup
         if "portal_gun_upgrade_inplace" not in slot_data:
             portal_gun_upgrade_not_inplace()
             
-        # Don't disable potatos in PotatOS level
         if "potatos_inplace" not in slot_data:
             potatos_not_inplace()
         
@@ -624,12 +622,10 @@ class Portal2Context(CommonContext):
 
     def on_package(self, cmd, args):
         def update_item_list():
-            # Update item list to only include items not collected
             items_received_names = [self.item_names.lookup_in_game(i.item, self.game) for i in self.items_received]
             self.item_list = list(set(self.item_list) - set(items_received_names))
             self.refresh_menu()
 
-        # Add item names to list
         if cmd == "Retrieved":
             if f"_read_item_name_groups_{self.game}" in args["keys"]:
                 self.item_list = args["keys"][f"_read_item_name_groups_{self.game}"]["Everything"]
@@ -639,18 +635,16 @@ class Portal2Context(CommonContext):
         if cmd == "ReceivedItems":
             index = args["index"]
             for item in args["items"]:
-                # Only handle traps if they are new (index >= current count)
                 if index >= len(self.items_received):
-                    if item.flags & 0b100: # Trap flag
+                    if item.flags & 0b100:
                         trap_name = self.item_names.lookup_in_game(item.item, self.game)
                         self.command_queue.append(handle_trap(trap_name))
                 index += 1
             
-            # Now let the base class update self.items_received
             super().on_package(cmd, args)
             update_item_list()
             self.update_item_remove_commands()
-            return # Already called super
+            return
         
         super().on_package(cmd, args)
 
@@ -658,25 +652,7 @@ class Portal2Context(CommonContext):
             self.handle_slot_data(args["slot_data"])
             self.alert_game_connection()
 
-        if cmd == "PrintJSON":
-            if "type" in args:
-                if args["type"] == "ItemSend" and args["receiving"] == self.slot:
-                    item: NetworkItem = args["item"]
-                    text = self.parse_message(args["data"], sending = item.player)
-                elif args["type"] == "Goal":
-                    text = self.parse_message(args["data"])
-                elif args["type"] == "Collect":
-                    self.update_menu()
-                    return
-                else:
-                    # Regular chat or other message
-                    text = self.parse_message(args["data"])
-                
-                self.add_to_in_game_message_queue(text)
-                
-            # chat_log.append is handled by the logging handler for all messages, including PrintJSON
-
-    def parse_message(self, data: list[dict], sending: int | None = None) -> str: # data pats not cast to JSONMessagePart as expected, dict instead
+    def parse_message(self, data: list[dict], sending: int | None = None) -> str:
         message = ""
         for part in data:
             text = part["text"]
@@ -688,9 +664,7 @@ class Portal2Context(CommonContext):
                 elif part["type"] == "player_id":
                     text = self.player_names[int(text)]
             message += text
-
         return message
-
 
     def update_item_remove_commands(self):
         temp_commands = []
@@ -698,7 +672,6 @@ class Portal2Context(CommonContext):
             item_commands = handle_item(item_name)
             if item_commands:
                 temp_commands += item_commands
-
         self.item_remove_commands = temp_commands
         
     def make_gui(self):
@@ -730,7 +703,7 @@ class Portal2Context(CommonContext):
         self.keep_alive_task.cancel()
         if self.ui_task:
             await self.ui_task
-        if self.input_task:
+        if getattr(self, 'input_task', None):
             self.input_task.cancel()
 
     async def server_auth(self, password_requested: bool = False) -> None:
@@ -739,26 +712,34 @@ class Portal2Context(CommonContext):
         await self.get_username()
         await self.send_connect(game="Portal 2")
 
-async def main(args: Namespace):
+async def main(args: argparse.Namespace):
     ctx = Portal2Context(args.connect, args.password)
     ctx.loop = asyncio.get_running_loop()
     ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
     ctx.game_connection_task = asyncio.create_task(ctx.p2_connection_loop(), name="netcon loop")
+    
+    # Démarrage du serveur API local pour le HUD Panorama
     ctx.start_api_server()
     ctx.flush_init_logs()
 
-    if gui_enabled:
+    if gui_enabled and not args.nogui:
         ctx.run_gui()
     ctx.run_cli()
     
     await ctx.exit_event.wait()
     await ctx.shutdown()
 
-def launch(*args: str) -> None:
-    from .Launch import launch_portal_2_client
-
-    launch_portal_2_client(*args)
-
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Portal 2 Archipelago Standalone Client")
+    parser.add_argument("connect", nargs="?", help="Address of the Archipelago server", default="")
+    parser.add_argument("--password", help="Password for the Archipelago server", default=None)
+    parser.add_argument("--nogui", help="Disable the GUI", action="store_true")
+    return parser.parse_args()
 
 if __name__ == "__main__":
-    launch(*sys.argv[1:])
+    init_logging("Portal2Client", exception_logger="Portal2Client")
+    args = get_args()
+    try:
+        asyncio.run(main(args))
+    except KeyboardInterrupt:
+        logger.info("Client closed by user.")

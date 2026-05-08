@@ -172,9 +172,15 @@ void PrintItemLegacyCmd(const CommandArgs@ args) {
     uint spaceIdx = raw.locate(" ");
     if (spaceIdx != uint(-1)) {
         string item = raw.substr(int(spaceIdx) + 1).trim();
-        Legacy::ArchipelagoLog("[AP RECV] PrintItem: " + item);
+        item = item.replace(".", " ");
+        // Legacy::ArchipelagoLog("[AP RECV] PrintItem: " + item);
         Legacy::ArchipelagoLog("item_collected:" + item);
     }
+}
+
+[ServerCommand("InciniratorDisablePortalGun", "Bridge from VScript/Client")]
+void InciniratorDisablePortalGunCmd(const CommandArgs@ args) {
+    Legacy::IncineratorDisablePortalGun();
 }
 
 [ServerCommand("PrintMonitor", "Internal - Prints monitor break check to console")]

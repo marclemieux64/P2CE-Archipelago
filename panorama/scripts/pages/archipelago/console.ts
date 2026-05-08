@@ -159,7 +159,7 @@ class ArchipelagoConsole {
         return result;
     }
 
-    static refreshConsoleUI(chat: any[]) {
+static refreshConsoleUI(chat: any[]) {
         if (!this.m_Panel || !chat) return;
         const output = this.m_Panel.FindChildTraverse('ConsoleOutput') as any;
         if (!output) return;
@@ -174,17 +174,22 @@ class ArchipelagoConsole {
                 lineText = this.formatRichMessage(msg.data);
             } else {
                 lineText = msg.text || "";
-                // Escape plain text as well for consistency
                 lineText = lineText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             }
             
             fullText += `<font color='#888888'>${timeStr}</font> ${lineText}<br/>`;
         }
 
-        if (this.g_ConsoleText === fullText) return;
+        // --- COMPARAISON STRICTE ---
+        // Si le texte genere est EXACTEMENT le meme que celui deja affiche,
+        // on ne touche ABSOLUMENT PAS a output.text.
+        if (output.text === fullText || this.g_ConsoleText === fullText) {
+            return;
+        }
 
         this.g_ConsoleText = fullText;
-        output.text = fullText;
+        output.text = fullText; // Le son ne se declenchera QUE si cette ligne s'execute
+        // ---------------------------
 
         $.Schedule(0.05, () => {
             if (!this.m_Panel) return;
@@ -194,7 +199,6 @@ class ArchipelagoConsole {
             }
         });
     }
-
     static onArchipelagoInput() {
         if (!this.m_Panel) return;
         const input = this.m_Panel.FindChildTraverse('ArchipelagoInput') as any;

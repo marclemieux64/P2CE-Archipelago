@@ -1,3 +1,4 @@
+import copy
 import os
 import sys
 import argparse
@@ -130,9 +131,18 @@ class Portal2Context(CommonContext):
                 try:
                     msg = self.format(record)
                     if getattr(self.ctx, 'loop', None):
-                        # On ne duplique pas dans le HUD ce qui sera géré par PrintJSON
-                        mirror = not ("[AP RECV]" in msg or "found their" in msg)
-                        self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg, None, None, mirror)
+                        msg_lower = msg.lower()
+                        # On ne met JAMAIS les logs techniques ou d'info serveur dans le HUD
+                        noise_keywords = ["serving on", "connected to", "logged in", "connecting to", "connection closed", 
+                                          "room information", "server protocol", "permission", "hint cost", "!hint", "enter slot", "lost connection"]
+                        
+                        if any(noise.lower() in msg_lower for noise in noise_keywords):
+                            self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg, None, None, False)
+                            return
+
+                        # Par défaut, les logs bruts (non-JSON) ne vont PAS au HUD pour éviter le spam
+                        # Seuls les messages importants (via PrintJSON) ou les messages explicites y vont.
+                        self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg, None, None, False)
                 except Exception:
                     pass
 
@@ -201,80 +211,69 @@ class Portal2Context(CommonContext):
 
     def alert_game_connection(self):
         if self.check_game_connection():
-            self.output("Connection to Portal 2 is up and running")
+            self.on_print_silently("Connection to Portal 2 is up and running", mirror_to_hud=False)
         else:
-            self.output("Disconnected from Portal 2. Make sure the mod is open and the `-netconport 3000` launch option is set")
+            self.on_print_silently("Disconnected from Portal 2. Make sure the mod is open and the `-netconport 3000` launch option is set", mirror_to_hud=False)
 
     def on_print(self, text: str):
-        """Hook for client output to capture it for the Panorama API"""
-        self.on_print_silently(text)
+        """Hook for client output to capture it for the Panorama API (Silent by default)"""
+        self.on_print_silently(text, mirror_to_hud=False)
 
     def output(self, text: str):
         """Standard output method for Archipelago contexts"""
         self.on_print(text)
 
-    def on_print_silently(self, text: str, rich_data: list = None, html_text: str = None, mirror_to_hud: bool = True):
-        """Internal method to update chat log without triggering the logger"""
-        # Filter out noisy messages
-        if "changed tags from" in text and "['AP']" in text:
-            return
-        if "Now that you are connected, you can use !help" in text:
-            return
+    def on_print_silently(self, text: str, rich_data: list = None, html_text: str = None, mirror_to_hud: bool = False):
+        """Méthode de log centrale : Gère l'affichage CMD, le HUD et l'API Panorama"""
+        # 1. VISIBILITÉ CMD : On affiche tout dans la fenêtre noire pour le débug
+        print(f"[DEBUG] {text}")
 
-        # If we have rich_data but no html_text, generate it now
+        # 2. FILTRE DE BRUIT : On ignore les messages système pour l'historique F6
+        text_lower = text.lower()
+        noise_filters = ["changed tags from", "now that you are connected", "room information", 
+                         "server protocol", "permission", "hint cost", "!hint", "enter slot", "lost connection"]
+        if any(noise.lower() in text_lower for noise in noise_filters):
+            # On logue quand même dans le chat_log pour l'historique console (F6), mais sans HUD
+            mirror_to_hud = False
+
+        # 3. GÉNÉRATION DU HTML : Pour les couleurs dans Panorama
         if rich_data and not html_text:
             color_map = {
                 "player_id": "#ff7f50", "player_name": "#ff7f50", "magenta": "#ee82ee",
                 "item_id": "#00ffff", "item_name": "#00ffff", "cyan": "#00ffff",
                 "location_id": "#00ff00", "location_name": "#00ff00", "green": "#00ff00",
-                "entrance_id": "#da70d6", "gold": "#ffd700", "yellow": "#ffff00"
+                "entrance_id": "#da70d6", "gold": "#ffd700", "yellow": "#ffff00", "red": "#ff0000", "blue": "#0000ff"
             }
             html_text = ""
             for part in rich_data:
-                part_text = part.get("text", "") if isinstance(part, dict) else str(part)
-                color = None
-                if isinstance(part, dict):
-                    p_type = part.get("type")
-                    p_color = part.get("color")
-                    color = color_map.get(p_type) or color_map.get(p_color) or p_color
-                
-                if color:
-                    html_text += f"<font color='{color}'>{part_text}</font>"
-                else:
-                    html_text += part_text
+                p_text = part.get("text", "") if isinstance(part, dict) else str(part)
+                p_type = part.get("type") if isinstance(part, dict) else None
+                p_color = part.get("color") if isinstance(part, dict) else None
+                color = color_map.get(p_type) or color_map.get(p_color) or p_color
+                html_text += f"<font color='{color}'>{p_text}</font>" if color else p_text
 
-        self._msg_id_counter += 1
+        # 4. VISIBILITÉ HUD (Netcon) : Uniquement si mirror_to_hud est True
         if mirror_to_hud:
             logger.info(f"[HUD] {text}")
-        
+
+        # 5. STOCKAGE API PANORAMA (Le JavaScript lira 'priority' pour le son)
+        self._msg_id_counter += 1
         no_notification = getattr(self, 'is_processing_received_cmd', False)
         self.chat_log.append({
             "id": self._msg_id_counter, 
             "text": text,
-            "html": html_text,
+            "html": html_text if html_text else text,
             "data": rich_data,
             "type": "text" if rich_data is None else "json",
+            "priority": mirror_to_hud,  # <--- Définit si le JS fait un son
             "no_notification": no_notification,
             "time": time.time()
         })
         if len(self.chat_log) > 50:
             self.chat_log.pop(0)
-            
-        # Mirror prompts to the game console for legacy support
-        # We no longer mirror to game console, Panorama polls /chat directly
-        pass
 
-    def on_print_json(self, data: typing.Union[dict, list]):
-        """Hook for Archipelago formatted messages (Legacy/Alternative)"""
-        if isinstance(data, dict) and "data" in data:
-            self.print_json(data["data"])
-        elif isinstance(data, list):
-            self.print_json(data)
-        else:
-            self.on_print_silently(str(data), [data] if isinstance(data, dict) else data)
-
-    def print_json(self, data: typing.List[typing.Dict[str, str]]):
-        """Hook for Archipelago formatted messages"""
+    def print_json(self, data: typing.List[typing.Dict[str, str]], mirror_to_hud: bool = False):
+        """Hook for Archipelago formatted messages with name resolution"""
         resolved_data = []
         for part in data:
             if not isinstance(part, dict):
@@ -299,8 +298,28 @@ class Portal2Context(CommonContext):
 
         # Plain text conversion
         text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in resolved_data)
-        self.on_print_silently(text, resolved_data)
+        self.on_print_silently(text, resolved_data, mirror_to_hud=mirror_to_hud)
 
+    def on_print_json(self, args: dict):
+        """Surcharge pour filtrer les messages : Vos items = Son + HUD, les autres = Silence"""
+        if not isinstance(args, dict):
+            return
+            
+        msg_type = args.get("type", "")
+        is_essential = False
+
+        # On ne met priority=True QUE pour les items entrants pour notre slot
+        if msg_type == "ItemSend":
+            if args.get("receiving") == self.slot:
+                is_essential = True
+        # On garde la priorité pour la complétion de l'objectif
+        elif msg_type == "Goal":
+            is_essential = True
+            
+        if "data" in args:
+            # mirror_to_hud ici devient le flag 'priority' dans on_print_silently
+            self.print_json(args["data"], mirror_to_hud=is_essential)
+            
     def update_menu(self, location_id: int = None):
         if self.menu and location_id is not None:
             self.menu.complete_check(location_id)

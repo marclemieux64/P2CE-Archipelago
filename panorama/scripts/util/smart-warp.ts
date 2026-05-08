@@ -65,7 +65,7 @@ function SmartWarpNextMap(currentMapName: string) {
     if (targetMap && targetMap.command) {
         $.Msg("[AP] Smart Warp Success: Sending player to " + (targetMap.title || targetMap.command));
         
-        $.Schedule(1.0, () => {
+        $.Schedule(140, () => {
             GameInterfaceAPI.ConsoleCommand(targetMap.command);
         });
     } else {

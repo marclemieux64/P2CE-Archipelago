@@ -645,39 +645,42 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
             }
         }
 
-        @h = util::CreateEntityByName("prop_dynamic");
-        if (h !is null) {
-            h.KeyValue("model", "models/effects/ap/archipelago_hologram.mdl");
-            if (name != "") h.KeyValue("targetname", name);
-            h.KeyValue("skin", "" + skin);
-            h.KeyValue("modelscale", "" + scale);
-            h.KeyValue("DefaultAnim", animate ? "idle" : "");
+    @h = util::CreateEntityByName("prop_dynamic");
+    if (h !is null) {
+        h.KeyValue("model", "models/effects/ap/archipelago_hologram.mdl");
+        if (name != "") h.KeyValue("targetname", name);
+        h.KeyValue("skin", "" + skin);
+        h.KeyValue("modelscale", "" + scale);
+        h.KeyValue("DefaultAnim", animate ? "idle" : "");
 
-            // Set temporary world position to avoid collision issues at origin
-            h.SetAbsOrigin(position);
+        // FIX : Spawner à un endroit sûr avant le parentage
+        if (parent !is null) {
+            h.SetAbsOrigin(parent.GetAbsOrigin()); // On spawn sur le parent (SÛR)
+            h.SetAbsAngles(parent.GetAbsAngles());
+        } else {
+            h.SetAbsOrigin(position); // Spawn absolu normal
             h.SetAbsAngles(angles);
-            h.Spawn();
+        }
+        
+        h.Spawn(); // L'entité survit à 100%
 
-            h.SetSolid(SOLID_NONE);
-            h.SetMoveType(MOVETYPE_NONE);
+        h.SetSolid(SOLID_NONE);
+        h.SetMoveType(MOVETYPE_NONE);
 
-            if (parent !is null) {
-                h.SetParent(parent);
-                h.SetLocalOrigin(position);
-                h.SetLocalAngles(angles);
-                
-                if (attachment != "") {
-                    Variant v;
-                    v.SetString(attachment);
-                    h.FireInput("SetParentAttachment", v, 0.01f, null, null, 0);
-                }
-            } else {
-                h.SetAbsOrigin(position);
-                h.SetAbsAngles(angles);
+        if (parent !is null) {
+            h.SetParent(parent);
+            h.SetLocalOrigin(position); // On applique ton offset (30, 0, 100)
+            h.SetLocalAngles(angles);
+            
+            if (attachment != "") {
+                Variant v;
+                v.SetString(attachment);
+                h.FireInput("SetParentAttachment", v, 0.01f, null, null, 0);
             }
         }
-        return h;
     }
+    return h;
+}
 
     void AttachHologramToEntity(string entity_name, string attachment_point, float holo_scale, float offset, int skin = 0) {
         array<CBaseEntity@> targets = FindEntities(entity_name);
@@ -908,7 +911,7 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
                     QAngle hAng(0, 0, 0);
                     int hSkin = 0;
                     float hScale = 1.0f;
-                    bool hParent = true;
+                    bool hParent = false;
                     bool hAbs = false;
                     Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
 
@@ -926,72 +929,6 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
             }
         }
     }
-
-/* void AddWheatleyMonitorChecks(string map_name) {
-    InitWheatleyMonitorRegistry();
-    
-    array<string> checkClasses = {"logic_relay", "func_breakable", "trigger_once", "logic_branch"};
-
-    for (uint c = 0; c < checkClasses.length(); c++) {
-        CBaseEntity@ ent = null;
-        while ((@ent = EntityList().FindByClassname(ent, checkClasses[c])) !is null) {
-            string entName = ent.GetEntityName();
-            if (entName == "") continue;
-
-            string registryKey = map_name + ":" + entName;
-            if (g_monitor_registry.exists(registryKey)) {
-                string locationID;
-                g_monitor_registry.get(registryKey, locationID);
-
-                // 1. Output Logic
-                string cls = ent.GetClassname();
-                string output = (cls == "func_breakable") ? "OnBreak" : 
-                                (cls.locate("trigger") != uint(-1) ? "OnStartTouch" : "OnTrigger");
-
-                string safe_id = locationID.replace(" ", ".");
-                Legacy::SafeAddOutput(ent, output, "InitCmd", "Command", "PrintMonitor " + safe_id, 0.0f, -1);
-
-                // 2. Gestion de l'Ancre
-                CBaseEntity@ prop = EntityList().FindByClassnameNearest("prop_dynamic", ent.GetAbsOrigin(), 128.0f);
-                CBaseEntity@ anchor = (prop !is null) ? prop : ent;
-                
-                // 3. PRÉPARATION DES VARIABLES POUR LES OVERRIDES
-                // On met tes valeurs par défaut ici
-                Vector targetPos(45.0f, 0.0f, 25.0f); 
-                QAngle targetAng(0.0f, 0.0f, 0.0f);
-                int targetSkin = 0;
-                float targetScale = 1.0f;
-                bool shouldParent = false;
-                bool absoluteAngles = false;
-
-                // --- APPEL DE TA FONCTION D'OVERRIDE ---
-                // Cette ligne va modifier les variables ci-dessus si une règle spécifique existe
-                Legacy::GetHologramVisualOverrides(anchor, targetPos, targetAng, targetSkin, targetScale, shouldParent, absoluteAngles);
-
-                // 4. CALCUL DE LA POSITION FINALE
-                Vector origin = anchor.GetAbsOrigin();
-                Vector forward, right, up;
-                AngleVectors(anchor.GetAbsAngles(), forward, right, up);
-                
-                // Utilisation des vecteurs directionnels + les offsets de targetPos
-                Vector finalPos = origin + (forward * targetPos.x) + (right * targetPos.y) + (up * targetPos.z);
-                
-                // Détermination de la rotation
-                QAngle finalAng = absoluteAngles ? targetAng : (anchor.GetAbsAngles() + targetAng);
-
-                // 5. CRÉATION
-                string holo_name = entName + "_holo";
-                CBaseEntity@ holo = Legacy::CreateAPHologram(finalPos, finalAng, targetScale, (shouldParent ? anchor : null), "", targetSkin, holo_name);
-                
-                Legacy::ArchipelagoLog("Monitor Setup: " + entName + " (ID: " + locationID + ")");
-            }
-        }
-    }
-}
- */
-    
-
-    void AddToTextQueue(string text, string color = "") { }
 
     /**
  * HandleMonitorWarp - Checks for specific monitor IDs that should trigger a player teleport.

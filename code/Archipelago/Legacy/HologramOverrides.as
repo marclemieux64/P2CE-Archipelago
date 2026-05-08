@@ -26,13 +26,24 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     bool isFaithPlate = (model.locate("faith_plate") != uint(-1));
     bool isFunnelBridge = (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel");
     bool isMonsterBox = (classname == "prop_monster_box");
+    bool isWheatleyScreen = (model.locate("glados_screenborder_curve.mdl") != uint(-1));
 
-  // G. WHEATLEY MONITORS
-if (classname == "func_monitor") {
-    targetPos = Vector(5.0f, 0.0f, 0.0f); // Très proche de la surface
-    shouldParent = false;
-    return;
-}
+    // WHEATLEY SCREENS
+    if (isWheatleyScreen) {
+        // Tweak this vector to push the hologram out of the screen.
+        // X = Forward/Backward, Y = Left/Right, Z = Up/Down
+        targetPos = Vector(30.0f, 0.0f, 100.0f); 
+        
+        targetAng = QAngle(0.0f, 0.0f, 0.0f); // Keep aligned with the screen
+        targetSkin = 0; // Use default skin (or 4 if you prefer)
+        targetScale = 1.0f;
+        
+        shouldParent = true;  // Crucial: stick it to the screen!
+        absoluteAngles = false; // Crucial: rotate with the screen!
+        
+        return; // Exit early so no other rules mess this up
+    }
+
 
     // H. VITRIFIED BUTTONS
     if (name.locate("dummy_chamber_button") != uint(-1)) {

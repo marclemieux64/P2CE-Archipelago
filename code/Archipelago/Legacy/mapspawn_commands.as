@@ -183,22 +183,6 @@ void InciniratorDisablePortalGunCmd(const CommandArgs@ args) {
     Legacy::IncineratorDisablePortalGun();
 }
 
-[ServerCommand("PrintMonitor", "Internal - Prints monitor break check to console")]
-void PrintMonitorLegacyCmd(const CommandArgs@ args) {
-    string raw = args.GetCommandString();
-    uint spaceIdx = raw.locate(" ");
-    if (spaceIdx != uint(-1)) {
-        string check = raw.substr(int(spaceIdx) + 1).trim();
-        check = check.replace(".", " ");
-        
-        if (Legacy::g_reported_monitors.find(check) >= 0) return;
-        Legacy::g_reported_monitors.insertLast(check);
-
-        Legacy::ArchipelagoLog("monitor_break:" + check);
-        HandleMonitorWarp(check);
-    }
-}
-
 [ServerCommand("ReportAPButton", "Logs a custom AP button press")]
 void ReportAPButtonLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
@@ -218,27 +202,8 @@ void RemovePotatosFromGunLegacyCmd(const CommandArgs@ args) {
     Legacy::RemovePotatosFromGun();
 }
 
-/* [ServerCommand("AddWheatleyMonitorBreakCheck", "Manually triggers Wheatley monitor break check setup")]
-void AddWheatleyMonitorBreakCheckLegacyCmd(const CommandArgs@ args) {
-    Legacy::AddWheatleyMonitorChecks(::current_map);
-} */
-
 [ServerCommand("SetStatus", "Dummy - Deprecated")]
 void SetStatusLegacyCmd(const CommandArgs@ args) {}
-
-[ServerCommand("ap_report_map", "Dummy - Deprecated")]
-void ap_report_mapLegacyCmd(const CommandArgs@ args) {}
-
-[ServerCommand("SetCheckedScreens", "Synchronizes the list of already-broken Wheatley monitors")]
-void SetCheckedScreensLegacyCmd(const CommandArgs@ args) {
-    Legacy::ArchipelagoLog("[AP RECV] Syncing " + (args.ArgC() - 1) + " checked screens.");
-    for (int i = 1; i < args.ArgC(); i++) {
-        string screenName = args.Arg(i);
-        if (Legacy::g_reported_monitors.find(screenName) < 0) {
-            Legacy::g_reported_monitors.insertLast(screenName);
-        }
-    }
-}
 
 [ServerCommand("AddScriptAtPos", "Legacy AddScriptAtPos command")]
 void AddScriptAtPosLegacyCmd(const CommandArgs@ args) {

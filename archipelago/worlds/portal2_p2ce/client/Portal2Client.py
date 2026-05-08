@@ -63,6 +63,14 @@ class Portal2CommandProcessor(ClientCommandProcessor):
         """Refreshed the in game menu in case of maps being inaccessible when they should be"""
         self.ctx.refresh_menu()
 
+    def _cmd_received(self):
+        """Display the list of received items (Console only)"""
+        self.ctx.is_processing_received_cmd = True
+        try:
+            super()._cmd_received()
+        finally:
+            self.ctx.is_processing_received_cmd = False
+
     def _cmd_message_in_game(self, message: str, *color_string):
         """Send a message to be displayed in game (only works while in a map). 
         message can be any text 
@@ -156,6 +164,7 @@ class Portal2Context(CommonContext):
     item_remove_commands: list[str] = []
     command_queue: list[str] = []
     game_message_queue: list[str] = []
+    is_processing_received_cmd: bool = False
 
     sender_active : bool = False
     listener_active : bool = False
@@ -237,12 +246,15 @@ class Portal2Context(CommonContext):
         self._msg_id_counter += 1
         if mirror_to_hud:
             logger.info(f"[HUD] {text}")
+        
+        no_notification = getattr(self, 'is_processing_received_cmd', False)
         self.chat_log.append({
             "id": self._msg_id_counter, 
             "text": text,
             "html": html_text,
             "data": rich_data,
             "type": "text" if rich_data is None else "json",
+            "no_notification": no_notification,
             "time": time.time()
         })
         if len(self.chat_log) > 50:

@@ -26,7 +26,7 @@ if not exist "%CLIENT_PY%" (
 echo [Archipelago] Starting Autonomous Client...
 :: 4. On lance Python en lui donnant le fichier directement
 :: On utilise cmd /c pour que la fenêtre se ferme d'elle-même si le processus finit
-start "ArchipelagoClient" cmd /c ""%PYTHON_EXE%" "%CLIENT_PY%" --nogui"
+start "ArchipelagoClient" cmd /k ""%PYTHON_EXE%" "%CLIENT_PY%" --nogui >> archipelago_debug.log 2>&1"
 
 echo [Archipelago] Launching Game...
 :: 5. Sécurité : On ne lance le jeu que si des arguments ont été passés (ex: via Steam)

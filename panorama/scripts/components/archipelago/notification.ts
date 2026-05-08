@@ -132,12 +132,14 @@ function PollForNotifications() {
 
                         for (const msg of chat) {
                             if (msg.id > lastId) {
-                                OnArchipelagoNotify(JSON.stringify({
-                                    title: "ARCHIPELAGO",
-                                    message: msg.type === "json" ? JSON.stringify(msg.data) : msg.text,
-                                    html: msg.html || "",
-                                    type: "success"
-                                }));
+                                if (!msg.no_notification) {
+                                    OnArchipelagoNotify(JSON.stringify({
+                                        title: "ARCHIPELAGO",
+                                        message: msg.type === "json" ? JSON.stringify(msg.data) : msg.text,
+                                        html: msg.html || "",
+                                        type: "success"
+                                    }));
+                                }
                                 lastId = msg.id;
                                 if (api) api.setLastNotificationId(lastId);
                             }

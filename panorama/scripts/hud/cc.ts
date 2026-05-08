@@ -74,18 +74,17 @@ class CloseCaptioning {
         const onDisplay = (token: string, caption: any, lifetime: number, time: number) => {
             if (!caption || !caption.text) return;
 
-            // 1. FILTRE "BACK-TO-BACK" : On ne bloque que si c'est identique à la DERNIÈRE ligne
+            // 1. FILTRE "BACK-TO-BACK"
             if (this.captions.length > 0) {
                 const lastEntry = this.captions[this.captions.length - 1];
                 if (lastEntry.text === caption.text) {
-                    return; // Bloque le quadruplé instantané, mais autorise la répétition plus tard
+                    return; 
                 }
             }
 
             // 2. ÉJECTION SI PLEIN
             if (this.captions.length >= this.MAX_VISIBLE) {
                 this.captions[0].FadeOut();
-                this.captions[0].bReadyToPurge = true;
             }
 
             const now = (time !== undefined && time > 0) ? time : this.m_Time;
@@ -95,7 +94,7 @@ class CloseCaptioning {
             if (this.bg) this.bg.style.opacity = 1;
         };
 
-        $.RegisterForUnhandledEvent('DisplayCaption', onDisplay as any);
+        // CORRECTION : On ne garde que DisplayCaptionRequest car DisplayCaption n'est pas un Event Panorama valide
         $.RegisterForUnhandledEvent('DisplayCaptionRequest', onDisplay as any);
 
         $.RegisterEventHandler('CaptionTick', $.GetContextPanel(), (time: number) => {
@@ -107,9 +106,9 @@ class CloseCaptioning {
                 if (time >= c.lifetime) {
                     c.FadeOut();
                 }
-                if (c.bReadyToPurge || (time > c.lifetime + 0.01)) {
-                    if (c.panel.IsValid()) c.panel.DeleteAsync(0);
-                    if (c.dummy.IsValid()) c.dummy.DeleteAsync(0);
+                if (c.bReadyToPurge || (time > c.lifetime + 1.5)) { // Sécurité supplémentaire sur le cleanup
+                    if (c.panel && c.panel.IsValid()) c.panel.DeleteAsync(0);
+                    if (c.dummy && c.dummy.IsValid()) c.dummy.DeleteAsync(0);
                     this.captions.splice(i, 1);
                 }
             }

@@ -107,49 +107,41 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
 
 void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
     if (trigger is null) return;
-
-    // S'assurer que l'entité est bien une catapulte
     if (trigger.GetClassname() != "trigger_catapult") return;
 
-    // 1. Protection des maps scriptées (Scripted Fling Levels)
     string current_map = ConVarRef("host_map").GetString();
     bool isFlingMap = false;
     
     for (uint f = 0; f < scripted_fling_levels.length(); f++) {
-        if (scripted_fling_levels[f] == current_map) { 
+        if (scripted_fling_levels.opIndex(f) == current_map) { 
             isFlingMap = true; 
             break; 
         }
     }
     
     if (isFlingMap) {
-        ArchipelagoLog("[AP DEBUG] Protection Active: Skipping trigger_catapult deletion on scripted fling map " + current_map);
-        return; // Remplace le 'continue' vu qu'on est dans une fonction
+        return; 
     }
 
-    // 2. Logique de Stabilisation
     bool foundPlate = false;
     CBaseEntity@ targetPlate = null;
     string targetPlateName = "";
     
     CBaseEntity@ p = null;
-    // On augmente le rayon à 256 car sur sp_a2_sphere_peek, 
-    // les entités sont parfois plus espacées.
-    while ((@p = EntityList().FindInSphere(p, trigger.GetAbsOrigin(), 256.0f)) !is null) {
+    // On garde un rayon raisonnable (64 à 128 max pour éviter de chopper la mauvaise plaque)
+    while ((@p = EntityList().FindInSphere(p, trigger.GetAbsOrigin(), 128.0f)) !is null) {
         string pModel = p.GetModelName().tolower();
         
-      // --- VÉRIFICATION DES MODÈLES PRÉCIS ---
         if (pModel == "models/props/faith_plate.mdl" || pModel == "models/props/faith_plate_128.mdl") {
-            
             targetPlateName = p.GetEntityName();
             if (targetPlateName == "") {
-                targetPlateName = "ap_faith_plate_" + RandomInt(1000, 9999);
+                targetPlateName = "ap_faith_plate_" + trigger.GetEntityIndex();
                 p.KeyValue("targetname", targetPlateName);
             }
 
+            // Stabilisation physique de la plaque
             p.KeyValue("solid", "2");
             p.SetSolid(SOLID_BBOX);
-            p.SetMoveType(MOVETYPE_PUSH);
             p.FireInput("EnableCollision", Variant(), 0.0f, null, null, 0);
 
             @targetPlate = p;
@@ -158,88 +150,54 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         }
     }
 
+    // --- CORRECTION CRITIQUE ICI ---
     if (!foundPlate) {
-        // SI ON NE TROUVE PAS DE PLAQUE : 
-        // Sur sp_a2_sphere_peek, il y a des triggers de saut qui n'ont pas de plaque visuelle.
-        // Au lieu de bloquer le script, on va simplement supprimer le trigger 
-        // pour que le joueur ne soit pas propulsé par "rien".
-        ArchipelagoLog("[AP DEBUG] No model found for " + trigger.GetEntityIndex() + ". Killing invisible catapult.");
-        trigger.FireInput("kill", Variant(), 0.0f, null, null, 0);
-        return;
-    }
-    // 3. Intégration des Feedbacks (Audio & Visuel)
-    // A. Feedback Audio
-    string sndUid = "ap_cat_snd_" + targetPlateName;
-    CBaseEntity@ snd = EntityList().FindByName(null, sndUid);
-    if (snd is null) {
-        @snd = util::CreateEntityByName("ambient_generic");
-        if (snd !is null) {
-            snd.KeyValue("targetname", sndUid);
-            snd.KeyValue("message", "World.RobotNegInteractPitchedUp");
-            snd.KeyValue("spawnflags", "48"); 
-            snd.KeyValue("health", "10"); 
-            snd.SetAbsOrigin(targetPlate.GetAbsOrigin());
-            snd.Spawn();
-        }
+        // Si on ne trouve pas de plaque physique, c'est un trigger système.
+        // On NE fait RIEN (on ne le tue pas), pour qu'il reste fonctionnel.
+        return; 
     }
 
-    // B. Feedback Visuel (Cible pour l'Instructor Hint)
-    string targetUid = "ap_hint_target_" + targetPlateName;
-    CBaseEntity@ hintTarget = EntityList().FindByName(null, targetUid);
-    if (hintTarget is null) {
-        @hintTarget = util::CreateEntityByName("info_target_instructor_hint");
-        if (hintTarget !is null) {
-            hintTarget.KeyValue("targetname", targetUid);
-            hintTarget.SetAbsOrigin(targetPlate.GetAbsOrigin());
-            hintTarget.Spawn();
-        }
-    }
-
-    // C. Feedback Visuel (Le Hint en lui-même)
-    string hintUid = "ap_hint_" + targetPlateName;
-    CBaseEntity@ hint = EntityList().FindByName(null, hintUid);
-    if (hint is null) {
-        @hint = util::CreateEntityByName("env_instructor_hint");
-        if (hint !is null) {
-            hint.KeyValue("targetname", hintUid);
-            hint.KeyValue("hint_target", targetUid);
-            hint.KeyValue("hint_static", "1");
-            hint.KeyValue("hint_caption", "#AP_Item_AerialFaithPlate_Hint");
-            hint.KeyValue("hint_icon_onscreen", "icon_alert");
-            hint.KeyValue("hint_color", "255 50 50");
-            hint.KeyValue("hint_timeout", "0");
-            hint.KeyValue("hint_range", "0"); 
-            hint.Spawn();
-        }
-    }
-
-    // 4. Trigger de Détection Proxy (Copie les dimensions exactes de la catapulte)
-    string proxyUid = "ap_prox_" + trigger.GetEntityIndex();
-    CBaseEntity@ proxy = EntityList().FindByName(null, proxyUid);
+    // --- À partir d'ici, on sait qu'on a une plaque, on peut remplacer le trigger ---
     
-    if (proxy is null) {
-        @proxy = util::CreateEntityByName("trigger_multiple");
-        if (proxy !is null) {
-            proxy.KeyValue("targetname", proxyUid);
-            proxy.KeyValue("spawnflags", "1"); // Joueurs uniquement
-            proxy.KeyValue("wait", "1.5"); // Se redéclenche toutes les 1.5s
-            proxy.SetAbsOrigin(trigger.GetAbsOrigin());
-            proxy.SetAbsAngles(trigger.GetAbsAngles());
-            
-            // Copie l'index du modèle brush (ex: "*123")
-            proxy.SetModel(trigger.GetModelName());
-            proxy.Spawn();
-
-            // Connecter le proxy aux feedbacks
-            SafeAddOutput(proxy, "OnTrigger", hintUid, "ShowHint", "", 0.0f, -1);
-            SafeAddOutput(proxy, "OnTrigger", sndUid, "PlaySound", "", 0.0f, -1);
-
-            // Faire clignoter la texture de la plaque (Skin 1 puis retour à 0)
-            SafeAddOutput(proxy, "OnTrigger", targetPlateName, "Skin", "1", 0.0f, -1);
-            SafeAddOutput(proxy, "OnTrigger", targetPlateName, "Skin", "0", 0.5f, -1);
-        }
+    // Feedback Audio
+    string sndUid = "ap_cat_snd_" + targetPlateName;
+    CBaseEntity@ snd = util::CreateEntityByName("ambient_generic");
+    if (snd !is null) {
+        snd.KeyValue("targetname", sndUid);
+        snd.KeyValue("message", "World.RobotNegInteractPitchedUp");
+        snd.KeyValue("spawnflags", "48"); 
+        snd.SetAbsOrigin(targetPlate.GetAbsOrigin());
+        snd.Spawn();
     }
-    trigger.FireInput("kill", Variant(), 0.0f, null, null, 0);
+
+    // Feedback Visuel (Hint)
+    string hintUid = "ap_hint_" + targetPlateName;
+    CBaseEntity@ hint = util::CreateEntityByName("env_instructor_hint");
+    if (hint !is null) {
+        hint.KeyValue("targetname", hintUid);
+        hint.KeyValue("hint_static", "1");
+        hint.KeyValue("hint_caption", "#AP_Item_AerialFaithPlate_Hint");
+        hint.KeyValue("hint_icon_onscreen", "icon_alert");
+        hint.KeyValue("hint_color", "255 50 50");
+        hint.Spawn();
+    }
+
+    // Création du Proxy (pour détecter le joueur et afficher les alertes)
+    CBaseEntity@ proxy = util::CreateEntityByName("trigger_multiple");
+    if (proxy !is null) {
+        proxy.KeyValue("targetname", "ap_prox_" + trigger.GetEntityIndex());
+        proxy.KeyValue("spawnflags", "1");
+        proxy.KeyValue("wait", "1.0");
+        proxy.SetAbsOrigin(trigger.GetAbsOrigin());
+        proxy.SetModel(trigger.GetModelName());
+        proxy.Spawn();
+
+        SafeAddOutput(proxy, "OnTrigger", hintUid, "ShowHint", "", 0.0f, -1);
+        SafeAddOutput(proxy, "OnTrigger", sndUid, "PlaySound", "", 0.0f, -1);
+    }
+
+    // Maintenant qu'on a un proxy pour l'alerte, on peut supprimer l'original
+    trigger.Remove();
 }
 
 
@@ -930,7 +888,100 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         }
     }
 
-    /**
+
+dictionary screen_names;
+
+void InitMonitorData() {
+    // Chaque entrée doit être un sous-dictionnaire pour respecter la structure d'origine
+    dictionary sp_a4_tb_intro; sp_a4_tb_intro.set("monitor1-relay_break", "sp_a4_tb_intro");
+    screen_names.set("sp_a4_tb_intro", sp_a4_tb_intro);
+
+    dictionary sp_a4_tb_trust_drop; sp_a4_tb_trust_drop.set("monitor1-relay_break", "sp_a4_tb_trust_drop");
+    screen_names.set("sp_a4_tb_trust_drop", sp_a4_tb_trust_drop);
+
+    dictionary sp_a4_tb_wall_button; sp_a4_tb_wall_button.set("wheatley_monitor-relay_break", "sp_a4_tb_wall_button");
+    screen_names.set("sp_a4_tb_wall_button", sp_a4_tb_wall_button);
+
+    dictionary sp_a4_tb_polarity; sp_a4_tb_polarity.set("monitor1-relay_break", "sp_a4_tb_polarity");
+    screen_names.set("sp_a4_tb_polarity", sp_a4_tb_polarity);
+
+    dictionary sp_a4_tb_catch; 
+    sp_a4_tb_catch.set("monitor1-relay_break", "sp_a4_tb_catch 1");
+    sp_a4_tb_catch.set("monitor2-relay_break", "sp_a4_tb_catch 2");
+    screen_names.set("sp_a4_tb_catch", sp_a4_tb_catch);
+
+    dictionary sp_a4_stop_the_box; sp_a4_stop_the_box.set("wheatley_monitor-relay_break", "sp_a4_stop_the_box");
+    screen_names.set("sp_a4_stop_the_box", sp_a4_stop_the_box);
+
+    dictionary sp_a4_laser_catapult; sp_a4_laser_catapult.set("wheatley_monitor_1-relay_break", "sp_a4_laser_catapult");
+    screen_names.set("sp_a4_laser_catapult", sp_a4_laser_catapult);
+
+    dictionary sp_a4_laser_platform; sp_a4_laser_platform.set("wheatley_monitor_1-relay_break", "sp_a4_laser_platform");
+    screen_names.set("sp_a4_laser_platform", sp_a4_laser_platform);
+
+    dictionary sp_a4_speed_tb_catch; sp_a4_speed_tb_catch.set("wheatley_monitor-relay_break", "sp_a4_speed_tb_catch");
+    screen_names.set("sp_a4_speed_tb_catch", sp_a4_speed_tb_catch);
+
+    dictionary sp_a4_jump_polarity; sp_a4_jump_polarity.set("wheatley_monitor_1-relay_break", "sp_a4_jump_polarity");
+    screen_names.set("sp_a4_jump_polarity", sp_a4_jump_polarity);
+
+    dictionary sp_a4_finale3; sp_a4_finale3.set("wheatley_screen-relay_break", "sp_a4_finale3");
+    screen_names.set("sp_a4_finale3", sp_a4_finale3);
+}
+// Liste des écrans déjà validés par le client Archipelago [cite: 1227]
+array<string> checked_screens;
+
+void AddWheatleyMonitorBreakCheck() {
+    // Utilisation du nom de la map stocké dans votre variable globale
+    string map_name = current_map;
+
+    // 1. Vérifie si la map est répertoriée dans le dictionnaire des moniteurs
+    if (!screen_names.exists(map_name)) {
+        return;
+    }
+
+    // 2. Récupère le dictionnaire spécifique à cette map
+    dictionary@ map_screens;
+    screen_names.get(map_name, @map_screens);
+
+    if (map_screens is null) return;
+
+    // 3. Itération sur les logic_relay via la liste globale des entités
+    CBaseEntity@ relay = null;
+    while ((@relay = EntityList().FindByClassname(relay, "logic_relay")) !is null) {
+        string name = relay.GetEntityName();
+
+        // 4. Si le relais correspond à un moniteur dans nos données
+        if (map_screens.exists(name)) {
+            string check_name;
+            map_screens.get(name, check_name);
+
+            // 5. Injection de l'output via KeyValue (remplace ppmod.addscript)
+            // On utilise \x1B (ASCII 27) pour séparer les paramètres du moteur Source
+            string scriptCode = "printl(\"monitor_break:" + check_name + "\")";
+            string payload = "worldspawn\x1BRunScriptCode\x1B" + scriptCode + "\x1B0\x1B-1";
+            relay.KeyValue("OnTrigger", payload);
+
+            // 6. Calcul du skin de l'hologramme (skin 1 si déjà trouvé)
+            int skin = 0;
+            uint count = checked_screens.length();
+            uint i = 0; 
+            for (i = 0; i < count; i++) {
+                // Utilisation obligatoire de opIndex car [] est rejeté
+                if (checked_screens.opIndex(i) == check_name) {
+                    skin = 1;
+                    break;
+                }
+            }
+
+            // 7. Création de l'hologramme Archipelago
+            Legacy::CreateAPHologram(relay.GetAbsOrigin(), QAngle(0, 0, 0), 0.9f, null, "", skin, "monitor_holo_" + check_name);
+        }
+    }
+}
+
+
+/**
  * HandleMonitorWarp - Checks for specific monitor IDs that should trigger a player teleport.
  */
 void HandleMonitorWarp(string monitorID) {

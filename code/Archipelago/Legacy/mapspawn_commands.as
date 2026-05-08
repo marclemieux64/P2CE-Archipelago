@@ -85,6 +85,72 @@ void RemovePotatOSLegacyCmd(const CommandArgs@ args) {
     Legacy::RemovePotatOS();
 }
 
+// Commande pour mettre à jour la liste des écrans déjà trouvés
+[ServerCommand("SetCheckedScreens", "Updates the list of checked monitors")]
+void SetCheckedScreensCmd(const CommandArgs@ args) {
+    // Efface la liste actuelle
+    checked_screens.removeRange(0, checked_screens.length());
+    
+    // Remplit avec les nouveaux arguments envoyés par le client
+    for (int i = 1; i < args.ArgC(); i++) {
+        checked_screens.insertLast(args.Arg(i));
+    }
+    
+    Msg("AP: Checked screens updated (" + checked_screens.length() + " items)\n");
+}
+
+// Commande pour lancer la vérification automatique de la map
+[ServerCommand("AddWheatleyMonitorBreakCheck", "Runs the automatic monitor check logic")]
+void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
+    // Appelle la fonction de logique que nous avons écrite
+    Legacy::AddWheatleyMonitorBreakCheck();
+}
+
+[ServerCommand("AddWheatleyMonitorAtPos", "Legacy AddWheatleyMonitorAtPos command")]
+void AddWheatleyMonitorAtPosLegacyCmd(const CommandArgs@ args) {
+    // Format attendu: x y z outputName checkName
+    if (args.ArgC() < 6) return;
+
+    // 1. Extraction de la position et des noms
+    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    string outputName = args.Arg(4);
+    string checkName  = args.Arg(5);
+
+    // Log de réception pour le débug (similaire à vos autres commandes)
+    Legacy::ArchipelagoLog("[AP RECV] AddMonitor: " + checkName + " at pos " + pos.x + "," + pos.y);
+
+    // 2. Recherche du relais le plus proche (rayon de 32 unités)
+    CBaseEntity@ relay = EntityList().FindInSphere(null, pos, 32.0f);
+
+    if (relay !is null) {
+        // 3. Injection du code Squirrel de notification pour le client Archipelago
+        // On construit la commande printl attendue par le client
+        string scriptCode = "printl(\"monitor_break:" + checkName + "\")";
+        
+        // Formatage de l'output via le caractère Escape \x1B (standard Source Engine)
+        string payload = "worldspawn\x1BRunScriptCode\x1B" + scriptCode + "\x1B0\x1B-1";
+        
+        // On utilise KeyValue pour attacher l'output dynamiquement
+        relay.KeyValue(outputName, payload);
+
+        // 4. Gestion visuelle (Hologramme)
+        // Vérification si l'écran est déjà coché dans les réglages globaux
+        int skin = 0;
+        // On suppose que ::checked_screens est accessible ou géré par votre client
+        for (uint i = 0; i < checked_screens.length(); i++) {
+            if (checked_screens[i] == checkName) {
+                skin = 1;
+                break;
+            }
+        }
+
+        // Création de l'hologramme sur le moniteur
+        // On utilise une échelle de 0.9f comme dans vos scripts originaux [cite: 39]
+        Legacy::CreateAPHologram(relay.GetAbsOrigin(), QAngle(0, 0, 0), 0.9f, null, "", skin, "monitor_holo_" + checkName);
+    } else {
+        Legacy::ArchipelagoLog("[AP ERROR] No entity found for monitor check: " + checkName);
+    }
+}
 
 [ServerCommand("FinishedMap", "Triggers map completion logic")]
 void FinishedMapLegacyCmd(const CommandArgs@ args) {

@@ -558,9 +558,14 @@ class Portal2Context(CommonContext):
         
         elif message.startswith("send_deathlink"):
             if self.death_link_active and time.time() - getattr(self, 'last_death_link', 0) > 10:
-                map_name = message.split(" ")[1]
+                map_name = message.strip().split()[1]
                 death_message = get_death_message(map_name, self.player_names[self.slot])
+                
                 await self.send_death(death_text=death_message)
+                
+                # AJOUT DU TAG SECRET : "is_death": True
+                fake_data = [{"text": death_message, "is_death": True}]
+                self.on_print_silently(death_message, fake_data, mirror_to_hud=True)
 
     async def handle_goal_completion(self):
         if getattr(self, 'finished_game', False):
@@ -568,8 +573,15 @@ class Portal2Context(CommonContext):
         self.finished_game = True
         await self.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
-    def on_deathlink(self, data):
+    def on_deathlink(self, data: typing.Dict[str, typing.Any]):
         self.command_queue.append("kill\n")
+        
+        cause = data.get("cause", "Un joueur est mort.")
+        
+        # AJOUT DU TAG SECRET : "is_death": True
+        fake_data = [{"text": cause, "is_death": True}]
+        self.on_print_silently(cause, fake_data, mirror_to_hud=True)
+        
         return super().on_deathlink(data)
 
     def check_game_connection(self) -> bool:

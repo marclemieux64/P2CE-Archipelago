@@ -19,6 +19,17 @@ function GetHudRoot(): Panel | null {
 
 $.DefineEvent("ArchipelagoQueueUpdated", 0);
 $.DefineEvent("ArchipelagoNotify", 1, "payload");
+$.DefineEvent("ArchipelagoHideNotifications", 1, "time");
+$.DefineEvent("ArchipelagoDeath", 1, "message");
+$.RegisterForUnhandledEvent("ArchipelagoDeath", (msg: string) => {
+    // Le HUD construit le JSON lui-même de manière sécurisée
+    OnArchipelagoNotify(JSON.stringify({
+        title: "DEATHLINK",
+        message: msg,
+        type: "255 50 50",
+        play_sound: true
+    }));
+});
 
 try {
     $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch with fade buffer");
@@ -91,37 +102,51 @@ function PollForNotifications() {
                     const cleanJson = res.responseText.trim().replace(/\0/g, '');
                     const chat = JSON.parse(cleanJson);
                     
- // Dans PollForNotifications()
-if (Array.isArray(chat) && chat.length > 0) {
-    let lastId = api ? api.getLastNotificationId() : -1;
-    
-    if (lastId === -1) {
-        // Initialisation : on se cale sur le DERNIER message existant
-        // pour ne pas jouer les sons de tout l'historique au lancement
-        lastId = chat[chat.length - 1].id;
-        if (api) api.setLastNotificationId(lastId);
-        $.Schedule(0.25, PollForNotifications);
-        return;
-    }
+                    if (Array.isArray(chat) && chat.length > 0) {
+                        let lastId = api ? api.getLastNotificationId() : -1;
+                        
+                        if (lastId === -1) {
+                            // Initialisation : on se cale sur le DERNIER message existant
+                            lastId = chat[chat.length - 1].id;
+                            if (api) api.setLastNotificationId(lastId);
+                            $.Schedule(0.25, PollForNotifications);
+                            return;
+                        }
 
-    for (const msg of chat) {
-        if (msg.id > lastId) {
-            lastId = msg.id;
-            if (api) api.setLastNotificationId(lastId);
+                        for (const msg of chat) {
+                            if (msg.id > lastId) {
+                                lastId = msg.id;
+                                if (api) api.setLastNotificationId(lastId);
 
-            // Seuls les messages prioritaires (Items pour soi, Goal) vont au HUD
-            if (msg.priority === true && !msg.no_notification) { 
-                OnArchipelagoNotify(JSON.stringify({
-                    title: "ARCHIPELAGO",
-                    message: msg.type === "json" ? JSON.stringify(msg.data) : msg.text,
-                    html: msg.html || "",
-                    type: "success",
-                    play_sound: true 
-                }));
-            }
-        }
-    }
-}
+                                // Seuls les messages prioritaires (Items, Goal, Mort) vont au HUD
+                                if (msg.priority === true && !msg.no_notification) { 
+                                    
+                                    let finalMessage = msg.text || "";
+                                    let isDeathMsg = false;
+
+                                    // Extraction propre du texte et vérification du tag secret
+                                    if (msg.type === "json" && Array.isArray(msg.data)) {
+                                        finalMessage = msg.data.map((p: any) => p.text || "").join("");
+                                        // Si l'un des morceaux du JSON possède le tag "is_death: true"
+                                        isDeathMsg = msg.data.some((p: any) => p.is_death === true);
+                                    }
+
+                                    // Sécurité supplémentaire au cas où
+                                    if (!isDeathMsg) {
+                                        isDeathMsg = finalMessage.includes("DeathLink") || finalMessage.includes("mort") || finalMessage.includes("euthanized");
+                                    }
+                                    
+                                    OnArchipelagoNotify(JSON.stringify({
+                                        title: isDeathMsg ? "DEATHLINK" : "ARCHIPELAGO",
+                                        message: finalMessage, // Texte propre garanti
+                                        html: msg.html || "",
+                                        type: isDeathMsg ? "255 50 50" : "success", // ROUGE VIF pour la mort
+                                        play_sound: true 
+                                    }));
+                                }
+                            }
+                        } // Fin du for
+                    } // Fin du if Array
                 } catch (e) {
                     $.Warning("[AP] Error parsing chat: " + e);
                 }
@@ -147,7 +172,13 @@ function OnArchipelagoNotify(payload: string) {
 
         // LE SON : On le joue uniquement si le panel a pu être créé
         if (data.play_sound) {
-            $.PlaySoundEvent('Instructor.LessonStart');
+            if (data.title === "DEATHLINK") {
+                // Son d'erreur/alerte (vous pouvez le changer)
+                $.PlaySoundEvent('Player.FallGib'); 
+            } else {
+                // Son positif par défaut (Items, Objectifs)
+                $.PlaySoundEvent('Instructor.LessonStart');
+            }
         }
 
         entry.AddClass('notify-entry');;

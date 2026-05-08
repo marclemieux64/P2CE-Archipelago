@@ -1,260 +1,132 @@
 'use strict';
 
-$.Msg("CC: Loading cc.ts...");
-
-const CCSetting = {
-	BG_OPACITY: 'cc.bg_opacity',
-	FONT_SIZE: 'cc.font_size',
-	FONT_TYPE: 'cc.font',
-	TEXT_ALIGN: 'cc.text_align',
-	BOX_WIDTH: 'cc.box_width'
-};
-
-interface Caption {
-	bLowPriority: boolean;
-	bSFX: boolean;
-	nNoRepeat: number;
-	nDelay: number;
-	flLifetimeOverride: number;
-	text: string;
-	options: Map<string, string>;
-}
+$.Msg("CC: Loading Smart-Filter cc.ts (Back-to-back blocking only)...");
 
 class CaptionEntry {
-	lifetime: number;
-	panel: Label;
-	dummy: Panel;
-	bMarkedForDeletion: boolean = false;
-	bReadyToPurge: boolean = false;
-	height: number;
-	token: string;
+    lifetime: number;
+    panel: Label;
+    dummy: Panel;
+    bMarkedForDeletion: boolean = false;
+    bReadyToPurge: boolean = false;
+    height: number;
+    token: string;
+    text: string;
 
-	constructor(token: string, caption: any, lifetime: number) {
-		this.lifetime = lifetime;
-		this.token = token;
+    constructor(token: string, caption: any, lifetime: number) {
+        this.lifetime = lifetime;
+        this.token = token;
+        this.text = caption.text || "";
 
-		let style = `font-size: ${CloseCaptioning.settings.fontSize}px;`;
-		switch (CloseCaptioning.settings.textAlign) {
-			default:
-			case 0: style += 'text-align: left;'; break;
-			case 1: style += 'text-align: center;'; break;
-			case 2: style += 'text-align: right;'; break;
-		}
+        let style = `font-size: ${CloseCaptioning.settings.fontSize}px; font-family: 'Lexend';`;
+        if (CloseCaptioning.settings.textAlign === 1) style += 'text-align: center;';
+        else if (CloseCaptioning.settings.textAlign === 2) style += 'text-align: right;';
 
-		switch (CloseCaptioning.settings.fontType) {
-			case 0: style += "font-family: 'Lexend';transform: translateY(-1px);"; break;
-			case 1: style += "font-family: 'Univers LT Std 47 Cn Lt';"; break;
-			case 2: style += "font-family: 'GorDIN';"; break;
-			case 3: style += "font-family: 'Verdana';"; break;
-			case 4: style += "font-family: 'Noto Sans';"; break;
-			case 5: style += "font-family: 'Stratum2';"; break;
-			default: style += "font-family: 'Lexend';"; break;
-		}
+        this.panel = $.CreatePanel('Label', CloseCaptioning.box, '', {
+            class: 'closecaptions__text',
+            style: style,
+            html: true,
+            text: this.text
+        });
 
-		if (CloseCaptioning.settings.bgOpacity === 0.0) {
-			style += 'text-shadow: 2px 2px 1px 2 rgb(0,0,0);';
-		}
+        this.dummy = $.CreatePanel('Panel', CloseCaptioning.bg, '', {
+            class: 'closecaptions__dummy'
+        });
 
-		const parent = CloseCaptioning.box || $<Panel>('#CaptionsBox');
-		const bgParent = CloseCaptioning.bg || $<Panel>('#CaptionsBg');
+        this.panel.style.width = `${CloseCaptioning.CAPTION_WIDTH}px`;
+        this.height = this.panel.GetHeightForText(CloseCaptioning.CAPTION_WIDTH, this.panel.text);
+        
+        this.panel.style.opacity = 1;
+        this.panel.style.height = `${this.height > 0 ? this.height : 24}px`;
+        this.dummy.style.height = `${(this.height > 0 ? this.height : 24) + 4}px`;
 
-		if (!parent || !bgParent) {
-			$.Msg("CC: ERROR: Panels not found during CaptionEntry creation!");
-			return;
-		}
+        $.RegisterEventHandler('PropertyTransitionEnd', this.panel, (s: string, prop: keyof Style) => {
+            if (prop === 'opacity' && this.panel.IsTransparent()) {
+                this.dummy.style.height = '0px';
+                $.RegisterEventHandler('PropertyTransitionEnd', this.dummy, (ds: string, dprop: keyof Style) => {
+                    if (dprop === 'height') { this.bReadyToPurge = true; }
+                });
+            }
+        });
+    }
 
-		this.panel = $.CreatePanel('Label', parent, '', {
-			class: 'closecaptions__text',
-			style: style,
-			html: true,
-			text: caption.text
-		});
-
-		this.dummy = $.CreatePanel('Panel', bgParent, '', {
-			class: 'closecaptions__dummy'
-		});
-
-		this.panel.style.width = `${CloseCaptioning.CAPTION_WIDTH}px`;
-		this.dummy.style.width = `${CloseCaptioning.CAPTION_WIDTH}px`;
-
-		const rawText = (caption && caption.text) ? caption.text : '';
-		const localizedText = (rawText.indexOf('cheaptitles') !== -1 && rawText.indexOf('#') === -1) ? $.Localize('#' + rawText) : $.Localize(rawText);
-		const textToMeasure = this.panel.text || localizedText.replace(/<[^>]*>?/gm, '');
-		this.height = this.panel.GetHeightForText(CloseCaptioning.CAPTION_WIDTH, textToMeasure);
-		if (this.height <= 0) this.height = 24;
-
-		this.panel.style.opacity = 1;
-		this.panel.style.height = `${this.height}px`;
-		this.dummy.style.height = `${this.height + 4}px`;
-
-		$.RegisterEventHandler('PropertyTransitionEnd', this.panel, (s: string, prop: keyof Style) => {
-			if (prop === 'opacity' && this.panel.IsTransparent()) {
-				this.dummy.style.height = '0px';
-				$.RegisterEventHandler('PropertyTransitionEnd', this.dummy, (s: string, prop: keyof Style) => {
-					if (prop === 'height') { this.bReadyToPurge = true; }
-				});
-			}
-		});
-	}
-
-	FadeOut() {
-		if (!this.panel || !this.panel.IsValid() || this.bMarkedForDeletion) return;
-		this.panel.style.opacity = 0;
-		this.bMarkedForDeletion = true;
-	}
+    FadeOut() {
+        if (!this.panel || !this.panel.IsValid() || this.bMarkedForDeletion) return;
+        this.panel.style.opacity = 0;
+        this.bMarkedForDeletion = true;
+        $.Schedule(1.2, () => { this.bReadyToPurge = true; });
+    }
 }
 
 class CloseCaptioning {
-	static captions: Array<CaptionEntry> = [];
-	static box: Panel;
-	static bg: Panel;
-	static CAPTION_WIDTH = 1102;
-	static settings = {
-		bgOpacity: 0.75,
-		fontSize: 20,
-		fontType: 0,
-		textAlign: 0,
-		boxWidth: 1102
-	};
+    static captions: Array<CaptionEntry> = [];
+    static box: Panel;
+    static bg: Panel;
+    static CAPTION_WIDTH = 1102;
+    static MAX_VISIBLE = 2; 
+    
+    static settings = { bgOpacity: 0.75, fontSize: 20, fontType: 0, textAlign: 0 };
+    static m_Time: number = 0;
 
-	static bPotatosMuted: boolean = false;
-	static captionRecord: Map<string, number> = new Map();
-	static textCooldowns: Map<string, number> = new Map();
+    static init() {
+        this.box = $<Panel>('#CaptionsBox')!;
+        this.bg = $<Panel>('#CaptionsBg')!;
 
-	static getVars() {
-		const fontType = $.persistentStorage.getItem(CCSetting.FONT_TYPE);
-		if (fontType !== null) this.settings.fontType = Number(fontType);
-		const textAlign = $.persistentStorage.getItem(CCSetting.TEXT_ALIGN);
-		if (textAlign !== null) this.settings.textAlign = Number(textAlign);
-	}
+        const onDisplay = (token: string, caption: any, lifetime: number, time: number) => {
+            if (!caption || !caption.text) return;
 
-	static init() {
-		$.Msg("CC: Initializing CloseCaptioning system...");
-		this.box = $<Panel>('#CaptionsBox')!;
-		this.bg = $<Panel>('#CaptionsBg')!;
-		this.getVars();
+            // 1. FILTRE "BACK-TO-BACK" : On ne bloque que si c'est identique à la DERNIÈRE ligne
+            if (this.captions.length > 0) {
+                const lastEntry = this.captions[this.captions.length - 1];
+                if (lastEntry.text === caption.text) {
+                    return; // Bloque le quadruplé instantané, mais autorise la répétition plus tard
+                }
+            }
 
-		// Helper for absolute time conversion
-		const getAbsoluteTime = (lifetime: number, eventTime?: number) => {
-			const engineTime = ($.GetContextPanel() as any).GetEngineTime ? ($.GetContextPanel() as any).GetEngineTime() : 0;
-			const current = (eventTime !== undefined) ? eventTime : engineTime;
-			if (lifetime > 0 && lifetime < 10000) return current + lifetime;
-			return (lifetime <= 0) ? current + 5.0 : lifetime;
-		};
+            // 2. ÉJECTION SI PLEIN
+            if (this.captions.length >= this.MAX_VISIBLE) {
+                this.captions[0].FadeOut();
+                this.captions[0].bReadyToPurge = true;
+            }
 
-		const onDisplay = (token: string, caption: any, lifetime: number, time: number) => {
-			try {
-				if (!caption) return;
-				if (this.bPotatosMuted) {
-					const locTextCheck = (caption.text.indexOf('cheaptitles') !== -1 && caption.text.indexOf('#') === -1) ? $.Localize('#' + caption.text) : $.Localize(caption.text);
-					
-					const tokenLow = token.toLowerCase();
-					const locTextLow = locTextCheck.toLowerCase();
-					
-					// 1. PotatOS always muted (No exceptions)
-					if (tokenLow.includes('potatos') || locTextLow.includes('potatos:')) return;
+            const now = (time !== undefined && time > 0) ? time : this.m_Time;
+            const duration = (lifetime < 0.5) ? 1.0 : lifetime;
 
-					// 2. GLaDOS muted (With Caroline exception)
-					if (tokenLow.includes('glados') || locTextLow.includes('glados:')) {
-						if (!tokenLow.includes('caroline') && !locTextLow.includes('caroline:')) return;
-					}
-				}
-				if (this.captionRecord.has(token)) return;
+            this.captions.push(new CaptionEntry(token, caption, now + duration));
+            if (this.bg) this.bg.style.opacity = 1;
+        };
 
-				const rawText = caption.text || '';
-				const locText = (rawText.indexOf('cheaptitles') !== -1 && rawText.indexOf('#') === -1) ? $.Localize('#' + rawText) : $.Localize(rawText);
-				if (this.textCooldowns.has(locText) && (time - this.textCooldowns.get(locText)!) < 0.1) return;
+        $.RegisterForUnhandledEvent('DisplayCaption', onDisplay as any);
+        $.RegisterForUnhandledEvent('DisplayCaptionRequest', onDisplay as any);
 
-				this.textCooldowns.set(locText, time);
-				this.captionRecord.set(token, time + Math.max(0.5, caption.nNoRepeat || 0));
+        $.RegisterEventHandler('CaptionTick', $.GetContextPanel(), (time: number) => {
+            this.m_Time = time;
+            if (this.captions.length === 0) return;
 
-				let absLife = getAbsoluteTime(lifetime, time);
-				if (token.toLowerCase().includes('cheaptitles')) {
-					absLife = Math.min(absLife, time + 7.0);
-				}
+            for (let i = this.captions.length - 1; i >= 0; i--) {
+                const c = this.captions[i];
+                if (time >= c.lifetime) {
+                    c.FadeOut();
+                }
+                if (c.bReadyToPurge || (time > c.lifetime + 0.01)) {
+                    if (c.panel.IsValid()) c.panel.DeleteAsync(0);
+                    if (c.dummy.IsValid()) c.dummy.DeleteAsync(0);
+                    this.captions.splice(i, 1);
+                }
+            }
+            if (this.captions.length === 0 && this.bg) this.bg.style.opacity = 0;
+        });
 
-				this.captions.push(new CaptionEntry(token, caption, absLife));
-				this.showBox();
-			} catch (e) { $.Msg("CC: Error in DisplayCaption (" + token + "): " + e); }
-		};
+        $.RegisterForUnhandledEvent('MapUnloaded', () => this.wipeCaptions());
+    }
 
-		const onBad = (token: string, lifetime: number, time?: number) => {
-			try {
-				if (this.bPotatosMuted && (token.toLowerCase().includes('glados.') || token.toLowerCase().includes('potatos.'))) {
-					if (!token.toLowerCase().includes('caroline')) return;
-				}
-				const absLife = getAbsoluteTime(lifetime, time);
-				this.captions.push(new CaptionEntry(token, { text: `[MISSING] ${token}` }, absLife));
-				this.showBox();
-			} catch (e) { $.Msg("CC: Error in BadCaption: " + e); }
-		};
-
-		// Registry with fallbacks
-		try { $.RegisterForUnhandledEvent('DisplayCaption', onDisplay); } catch (e) { }
-		try { $.RegisterForUnhandledEvent('DisplayCaptionRequest', onDisplay); } catch (e) { }
-		try { $.RegisterForUnhandledEvent('BadCaption', onBad); } catch (e) { }
-		try { $.RegisterForUnhandledEvent('BadCaptionRequest', onBad); } catch (e) { }
-		try {
-			$.RegisterForUnhandledEvent('EndCaption', (token: string) => {
-				for (const c of this.captions) if (c.token === token) c.FadeOut();
-			});
-		} catch (e) { }
-
-		$.RegisterEventHandler('CaptionTick', $.GetContextPanel(), (time: number) => {
-			if (this.captions.length === 0) return;
-			for (let i = this.captions.length - 1; i >= 0; i--) {
-				const c = this.captions[i];
-				if (time >= c.lifetime) {
-					if (c.bReadyToPurge) {
-						if (c.panel.IsValid()) c.panel.DeleteAsync(0);
-						if (c.dummy.IsValid()) c.dummy.DeleteAsync(0);
-						if (!c.panel.IsValid() && !c.dummy.IsValid()) this.captions.splice(i, 1);
-					} else { c.FadeOut(); }
-				}
-			}
-			if (this.captions.length === 0) this.hideBox();
-			for (const [tok, life] of this.captionRecord) if (time >= life) this.captionRecord.delete(tok);
-			for (const [txt, life] of this.textCooldowns) if (time >= life) this.textCooldowns.delete(txt);
-		});
-
-		// Restore state from persistent storage or ConVar
-		const savedMute = $.persistentStorage.getItem('ap_potatos_muted');
-		const convarMute = GameInterfaceAPI.GetSettingInt('ap_potatos_muted');
-		
-		if (convarMute === 1 || savedMute === '1') {
-			this.bPotatosMuted = true;
-		} else {
-			this.bPotatosMuted = false;
-		}
-
-		$.RegisterForUnhandledEvent('ArchipelagoMutePotatos', (active: string) => {
-			this.bPotatosMuted = (active === '1');
-			$.persistentStorage.setItem('ap_potatos_muted', active);
-			if (this.bPotatosMuted) this.wipeCaptions();
-		});
-
-		$.RegisterForUnhandledEvent('MapUnloaded', () => this.wipeCaptions());
-		$.RegisterForUnhandledEvent('MapLoaded', () => this.wipeCaptions());
-		$.RegisterForUnhandledEvent('GameUIStateChanged', () => this.updateStyle());
-
-		this.updateStyle();
-	}
-
-	static updateStyle() {
-		$.GetContextPanel().SetHasClass('MainMenu', GameInterfaceAPI.GetGameUIState() === 1); // 1 is MAINMENU
-	}
-
-	static showBox() { if (this.bg) this.bg.style.opacity = 1; }
-	static hideBox() { if (this.bg) this.bg.style.opacity = 0; }
-	static wipeCaptions() {
-		this.captions = [];
-		if (this.box) this.box.RemoveAndDeleteChildren();
-		if (this.bg) this.bg.RemoveAndDeleteChildren();
-		this.hideBox();
-	}
+    static wipeCaptions() {
+        this.captions = [];
+        if (this.box) this.box.RemoveAndDeleteChildren();
+        if (this.bg) {
+            this.bg.RemoveAndDeleteChildren();
+            this.bg.style.opacity = 0;
+        }
+    }
 }
 
-// Global scope initialization
-(function () {
-	CloseCaptioning.init();
-})();
+(function () { CloseCaptioning.init(); })();

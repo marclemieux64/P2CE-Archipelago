@@ -1,9 +1,13 @@
 
-::MutePotatOSSubtitles <- function(mute) {
-    ::ap_potatos_muted = mute;
-    ::SafeSendToConsole("ap_potatos_muted " + (mute ? "1" : "0"));
-    if (::ap_player_connected) {
-        SendToPanorama("ArchipelagoMutePotatos", mute ? "1" : "0");
+
+function MutePotatOSSubtitles(mute) {
+    if (mute) {
+        SendToPanorama("MutePotatos", "1");
+        // CORRECTION : On utilise le + pour ne faire qu'une seule phrase
+        printl("MutePotatos: 1"); 
+    } else {
+        SendToPanorama("MutePotatos", "0");
+        // CORRECTION : On utilise le + pour ne faire qu'une seule phrase
+        printl("MutePotatos: 0"); 
     }
 }
-

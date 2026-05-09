@@ -58,7 +58,7 @@ $.DefineEvent('ReloadCCSettings', 0);
  */
 $.DefineEvent('ArchipelagoNotify', 1, 'payload', 'Direct VScript notification for Archipelago items and events');
 
-$.DefineEvent('ArchipelagoMutePotatos', 1, 'active', 'Mutes all PotatOS/GLaDOS related captions');
+$.DefineEvent('MutePotatos', 1, 'active', 'Mutes all PotatOS/GLaDOS related captions');
 $.DefineEvent('ArchipelagoMapNameUpdated', 1, 'payload', 'Triggered when the current map name changes in the engine');
 $.DefineEvent('ArchipelagoDebug', 1, 'state', 'Toggles debug logging in Panorama');
 

@@ -63,6 +63,11 @@ void AttachDeathTrigger() {
 void DeleteEntity(const string&in entity_name, bool create_holo = true) {
     string mapName = ConVarRef("host_map").GetString();
 
+    // --- NOUVEAU : On force l'annulation de l'hologramme pour PotatOS ---
+    if (entity_name == "potatos_prop" || entity_name == "potatos" || entity_name == "models/props/potatos.mdl") {
+        create_holo = false;
+    }
+
     if (entity_name == "trigger_catapult" && ItemInList(mapName, scripted_fling_levels)) {
         // MsgI est probablement ta fonction de log custom
         Legacy::ArchipelagoLog("not removing trigger_catapult");
@@ -463,7 +468,19 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         SafeAddOutput(EntityList().FindByName(null, "trigger_portal_cleanser"), "OnStartTouch", "hudhint_no_potatos", "ShowHint", "", 0.0f, -1);
     }
 
-    void RemovePotatOS() {
+   void IncineratorDisablePortalGun() {
+        CBaseEntity@ trigger = EntityList().FindByName(null, "player_near_portalgun");
+        if (trigger !is null) {
+            Variant v;
+            // Arguments: blue=0 (off), orange=(portalgun_2_disabled ? 1 : 0), isDelayed=0
+        string orangeVal = portalgun_2_disabled ? "1" : "0";
+        v.SetString("OnStartTouch InitCmd:Command:DisablePortalGun 0 " + orangeVal + " 0:0.25:-1");
+        trigger.FireInput("AddOutput", v, 0.0f, null, null, 0);
+    }
+}
+
+void RemovePotatOS() {
+     ArchipelagoLog("[AP DEBUG] RemovePotatOS: Disabling elevator,removing potatOs Prop.");
         CBaseEntity@ button = EntityList().FindByName(null, "sphere_entrance_potatos_button");
         if (button !is null) {
             Vector place = button.GetAbsOrigin();
@@ -486,20 +503,17 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         hint.Spawn();
 
         SafeAddOutput(EntityList().FindByName(null, "sphere_entrance_potatos_button"), "OnPressed", "hudhint_no_potatos", "ShowHint", "", 0.0f, -1);
+        
+        // --- NEW: Silence GLaDOSVO exclusively here ---
+        CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
+        if (cmd !is null) {
+            Variant vMixG;
+            vMixG.SetString("snd_setmixer GLaDOSVO vol 0.0");
+            cmd.FireInput("Command", vMixG, 0.0f, null, null, 0);
+        }
+
         RemovePotatosFromGun();
     }
-
-    void IncineratorDisablePortalGun() {
-        CBaseEntity@ trigger = EntityList().FindByName(null, "player_near_portalgun");
-        if (trigger !is null) {
-            Variant v;
-            // Arguments: blue=0 (off), orange=(portalgun_2_disabled ? 1 : 0), isDelayed=0
-        string orangeVal = portalgun_2_disabled ? "1" : "0";
-        v.SetString("OnStartTouch InitCmd:Command:DisablePortalGun 0 " + orangeVal + " 0:0.25:-1");
-        trigger.FireInput("AddOutput", v, 0.0f, null, null, 0);
-    }
-}
-
 
     void RemovePotatosFromGun() {
         ArchipelagoLog("[AP DEBUG] RemovePotatosFromGun: Executing viewmodel and world cleanup.");
@@ -526,15 +540,9 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
             Variant vMix;
             vMix.SetString("snd_setmixer potatosVO vol 0.0");
             cmd.FireInput("Command", vMix, 0.0f, null, null, 0);
+            CallVScript("MutePotatOSSubtitles(true)");
             
-            Variant vMixG;
-            vMixG.SetString("snd_setmixer GLaDOSVO vol 0.0");
-            cmd.FireInput("Command", vMixG, 0.05f, null, null, 0);
-            
-            Variant vCapt;
-            vCapt.SetString("script MutePotatOSSubtitles(true)");
-            cmd.FireInput("Command", vCapt, 0.1f, null, null, 0);
-
+           
         }
         ArchipelagoLog("[AP DEBUG] RemovePotatosFromGun: Done (Visuals, Mixer & Subtitles silenced).");
     }
@@ -831,10 +839,14 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
             }
             // Upgraded Portal Gun (Backup - by Vector)
             AddEntityOutputScriptAtPos(Vector(-360, 440, -10680), "trigger_once", "OnStartTouch", "PrintItem Upgraded Portal Gun", 0.0f, 1);
-        } else if (current_map == "sp_a3_transition01") {
+       } else if (current_map == "sp_a3_transition01") {
             CBaseEntity@ potatos_btn = EntityList().FindByName(null, "sphere_entrance_potatos_button");
             if (potatos_btn !is null) {
+                // 1. On garde l'envoi du signal Archipelago quand le joueur appuie dessus
                 SafeAddOutput(potatos_btn, "OnPressed", "InitCmd", "Command", "PrintItem PotatOS", 0.0f, -1);
+                
+                // 2. NOUVEAU : On déverrouille le bouton immédiatement !
+                potatos_btn.FireInput("Unlock", Variant(), 1.0f, null, null, 0);
             }
         } else if (current_map == "sp_a2_laser_intro") {
             CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");

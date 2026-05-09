@@ -302,24 +302,27 @@ class Portal2Context(CommonContext):
             part_type = part.get("type")
             
             try:
+                # FIX: Check if the packet specifies an owner, otherwise default to our slot
+                owner_id = part.get("player", self.slot)
+
                 if part_type == "player_id":
                     new_part["text"] = self.player_names[int(text)]
                 elif part_type == "item_id":
-                    item_name = self.item_names.lookup_in_slot(int(text), self.slot)
+                    # Look up using the owner_id instead of self.slot
+                    item_name = self.item_names.lookup_in_slot(int(text), owner_id)
                     new_part["text"] = item_name
                     
                     # --- DÉTECTION DU PIÈGE ---
-                    # handle_trap renvoie une commande si c'est un piège, sinon None
                     trap_cmd = handle_trap(item_name)
                     if trap_cmd:
                         new_part["is_trap"] = True
                         is_trap_msg = True
-                        # Si le message nous est destiné (mirror_to_hud est True pour nos items)
                         if mirror_to_hud:
                             self.command_queue.append(trap_cmd)
                         
                 elif part_type == "location_id":
-                    new_part["text"] = self.location_names.lookup_in_slot(int(text), self.slot)
+                    # Look up using the owner_id instead of self.slot
+                    new_part["text"] = self.location_names.lookup_in_slot(int(text), owner_id)
             except Exception:
                 pass 
             
@@ -328,7 +331,7 @@ class Portal2Context(CommonContext):
         # Conversion en texte brut
         text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in resolved_data)
         
-        # On force l'affichage sur le HUD si c'est un piège, même si ce n'était pas prévu
+        # On force l'affichage sur le HUD si c'est un piège
         self.on_print_silently(text, resolved_data, mirror_to_hud=(mirror_to_hud or is_trap_msg))
 
     def on_print_json(self, args: dict):

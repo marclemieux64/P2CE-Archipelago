@@ -194,6 +194,7 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     }
 
     // 3. Setup (Une seule fois avec le nom validé)
+    ResetPersistentSystems();
     Legacy::DoMapSpecificSetup();
     Legacy::CreateCompleteLevelAlertHook(::current_map);
     Legacy::CreateMapSpecificHolos();

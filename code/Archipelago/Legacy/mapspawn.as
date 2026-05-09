@@ -36,6 +36,29 @@ namespace Legacy {
 
     array<string> scripted_fling_levels = {"sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity" };
 
+
+/**
+ * ResetPersistentSystems - Forces global engine and player states back to defaults.
+ * Called during map init to prevent trap effects from surviving reloads/save-loads.
+ */
+void ResetPersistentSystems() {
+   
+    CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
+    if (cmd !is null) {
+        Variant v;
+        
+        // Reset Sound Mixers (PotatOS Silence restoration)
+        v.SetString("snd_setmixer potatosVO vol 0.4");
+        cmd.FireInput("Command", v, 0.0f, null, null, 0);
+        v.SetString("snd_setmixer gladosVO vol 0.7");
+        cmd.FireInput("Command", v, 0.0f, null, null, 0);
+        
+        ArchipelagoLog("[Archipelago] Persistent systems have been sanitized for the new session.");
+    }
+}
+
+
+
 void AttachDeathTrigger() {
         sent_death_link = false; // Réinitialise à chaque chargement de map
 

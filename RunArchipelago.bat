@@ -31,7 +31,7 @@ start "ArchipelagoClient" cmd /k ""%PYTHON_EXE%" "%CLIENT_PY%" --nogui >> archip
 echo [Archipelago] Launching Game...
 :: 5. Sécurité : On ne lance le jeu que si des arguments ont été passés (ex: via Steam)
 if not "%~1"=="" (
-    start "" %*
+    start "" %* -netconport 3000
 ) else (
     echo [Archipelago] No game arguments provided.
     echo [Archipelago] If you are running from Steam, this is normal.

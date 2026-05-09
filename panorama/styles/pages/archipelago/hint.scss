@@ -1,0 +1,169 @@
+
+
+.columns_wrapper {
+    width: 100%;
+    flow-children: down;
+}
+
+.hint-section {
+    width: 100%;
+    flow-children: down;
+    transition-property: height, fill-parent-flow, opacity;
+    transition-duration: 0.3s;
+}
+
+.hint-section.hint-section--expand {
+    height: fill-parent-flow(1.0);
+}
+
+.hint-section.collapsed {
+    height: 40px;
+    height: fill-parent-flow(0.0); // <-- CORRECTION ICI : Indispensable pour éviter d'écraser les listes !
+}
+
+.hint-section.collapsed .hint-list {
+    opacity: 0;
+    visibility: collapse;
+}
+
+.hint-section.collapsed .collapse-arrow {
+    transform: rotateZ(0deg);
+}
+
+.hint-section-header {
+    width: 100%;
+    flow-children: right;
+    padding: 5px 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hint-section-header:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.collapse-arrow {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    vertical-align: center;
+    background-image: url("file://{images}/chevron.svg");
+    background-size: contain;
+    background-repeat: no-repeat;
+    transform: rotateZ(90deg);
+    transition-property: transform;
+    transition-duration: 0.2s;
+    wash-color: #ec6726;
+}
+
+.hint-section-title {
+    font-family: "LexendDeca";
+    font-size: 18px;
+    font-weight: bold;
+    color: #cccccc;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.hint-list {
+    width: 100%;
+    height: fill-parent-flow(1.0);
+    flow-children: down;
+    overflow: squish scroll;
+    padding: 10px;
+    opacity: 1;
+    transition-property: opacity;
+    transition-duration: 0.2s;
+}
+
+.hint-row {
+    width: 100%;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    background-color: rgba(255, 255, 255, 0.02);
+    border-left: 4px solid #ff7f50;
+}
+
+.hint-row Label {
+    font-family: "LexendDeca";
+    font-size: 19px;
+    color: #e2e2e2;
+    vertical-align: center;
+}
+
+.hint-row.hint--found {
+    border-left: 4px solid #44ff44;
+    opacity: 0.5;
+}
+
+.hint-row.hint--found Label {
+    text-decoration: line-through;
+}
+
+.hint-row:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.hint-row.hint--found:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+// --- BOÎTE DE SUGGESTIONS (LAYER LIBRE) ---
+.suggestion-box {
+    width: 400px;
+    height: fit-children; // Ne sera plus jamais écrasé
+    flow-children: down;
+    background-color: #000000fa; 
+    border: 1px solid #ffffff1a;
+    border-radius: 4px;
+    padding: 5px;
+    z-index: 100;
+    
+    // Positionné de manière absolue par rapport au MainBox
+    vertical-align: bottom;
+    margin-bottom: 96px; // Passe exactement au-dessus du footer (qui fait 93px)
+    margin-left: 145px;  // S'aligne parfaitement avec l'endroit où le texte commence
+
+    &.hide { visibility: collapse; }
+}
+
+.archipelago_input_wrapper {
+    width: 100%;
+    height: 45px;
+    flow-children: right;
+    vertical-align: center; 
+    background-color: #00000066;
+    border: 1px solid #ffffff1a;
+    padding: 0px 10px;
+    border-radius: 4px;
+}
+
+.suggestion-item {
+    width: 100%;
+    padding: 6px 12px;
+    transition-property: background-color;
+    transition-duration: 0.1s;
+
+    // Le style du texte s'applique au Label enfant
+    Label {
+        font-size: 18px;
+        color: #ccccccff;
+        font-family: "LexendDeca";
+        width: 100%;
+    }
+
+    // Changement de couleur au survol de la souris
+    &:hover {
+        background-color: #ec672622;
+    }
+
+    // L'élément sélectionné au clavier ou cliqué
+    &.selected {
+        background-color: #ec672644;
+        
+        Label {
+            color: #ffffffff;
+            font-weight: bold;
+        }
+    }   
+}

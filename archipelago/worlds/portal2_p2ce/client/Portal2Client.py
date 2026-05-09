@@ -185,6 +185,7 @@ class Portal2Context(CommonContext):
     
     # Live API State
     chat_log: list[dict] = []
+    hint_log: list[dict] = []
     last_api_update: float = 0
     has_ever_connected: bool = False
     _msg_id_counter: int = 0
@@ -216,6 +217,12 @@ class Portal2Context(CommonContext):
         except Exception as e:
             logger.error(f"Command Error ({command}): {e}")
             self.on_print(f"Error: {e}")
+
+    def request_hints_sync(self):
+        """Envoie une requête Get pour récupérer tous les indices du serveur"""
+        if self.team is not None and self.slot:
+            key = f"_read_hints_{self.team}_{self.slot}"
+            async_start(self.send_msgs([{"cmd": "Get", "keys": [key]}]))
 
     def alert_game_connection(self):
         if self.check_game_connection():
@@ -435,102 +442,65 @@ class Portal2Context(CommonContext):
                 self.listener_active = False
 
     def start_api_server(self):
-        """Starts a simple synchronous HTTP server in a separate thread"""
+        """Lance le serveur HTTP pour communiquer avec Panorama"""
         import threading
         from http.server import BaseHTTPRequestHandler, HTTPServer
-        
+        from urllib.parse import parse_qs
         client_self = self
 
         class APIHandler(BaseHTTPRequestHandler):
-            def log_message(self, format, *args):
-                pass 
-
+            def log_message(self, format, *args): pass 
             def do_OPTIONS(self):
-                self.send_response(200)
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-                self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-                self.end_headers()
+                self.send_response(200); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers()
 
             def do_GET(self):
                 if self.path == '/status':
-                    try:
-                        self._send_json({
-                            "connected": client_self.server is not None and client_self.server.socket is not None and not client_self.server.socket.closed,
-                            "game_connected": client_self.check_game_connection(),
-                            "seed": client_self.seed_name if hasattr(client_self, 'seed_name') else "unknown",
-                            "slot": client_self.slot,
-                            "items": [client_self.item_names.lookup_in_game(i.item, client_self.game) for i in client_self.items_received] if getattr(client_self, 'item_names', None) else [],
-                            "checked_locations": list(client_self.checked_locations),
-                            "missing_locations": list(getattr(client_self, 'missing_locations', [])),
-                            "deathlink": client_self.death_link_active,
-                            "menu": client_self.menu.to_dict() if client_self.menu else None
-                        })
-                    except Exception as e:
-                        logger.error(f"API Status Error: {e}")
-                        self.send_error(500, str(e))
+                    is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
+                    self._send_json({"connected": is_conn, "game_connected": client_self.check_game_connection(), "slot": client_self.slot, "checked_locations": list(client_self.checked_locations), "menu": client_self.menu.to_dict() if client_self.menu else None})
                 elif self.path == '/chat':
-                    try:
-                        self._send_json(list(client_self.chat_log))
-                    except Exception as e:
-                        logger.error(f"API Chat Error: {e}")
-                        self.send_error(500, str(e))
-                else:
-                    self.send_error(404)
+                    self._send_json(list(client_self.chat_log))
+                elif self.path == '/hints':
+                    self._send_json(list(client_self.hint_log))
+                else: self.send_error(404)
 
             def do_POST(self):
                 try:
-                    if self.path == '/command':
-                        content_length = int(self.headers.get('Content-Length', 0))
-                        if content_length == 0:
-                            self.send_error(400, "Empty body")
-                            return
-                            
-                        post_data = self.rfile.read(content_length)
-                        decoded_data = post_data.decode('utf-8')
-                        
-                        command = None
-                        try:
-                            data = json.loads(decoded_data)
-                            command = data.get("command")
-                        except json.JSONDecodeError:
-                            from urllib.parse import parse_qs
-                            data = parse_qs(decoded_data)
-                            if "command" in data:
-                                command = data["command"][0]
-                        
-                        if command:
-                            client_self.loop.call_soon_threadsafe(client_self.on_input, command)
-                            self._send_json({"status": "ok"})
-                        else:
-                            self.send_error(400, "No command in JSON")
-                    else:
-                        self.send_error(404)
-                except Exception as e:
-                    logger.error(f"API POST Error: {e}")
-                    self.send_error(500, str(e))
+                    content_length = int(self.headers.get('Content-Length', 0))
+                    body = self.rfile.read(content_length).decode('utf-8')
+                    
+                    # Détection du format (JSON ou Formulaire)
+                    command = None
+                    try:
+                        data = json.loads(body)
+                        command = data.get("command")
+                    except json.JSONDecodeError:
+                        data = parse_qs(body)
+                        if "command" in data: command = data["command"][0]
 
-            def _send_json(self, data):
-                body = json.dumps(data).encode('utf-8')
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.send_header('Content-Length', str(len(body)))
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-                self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-                self.end_headers()
-                self.wfile.write(body)
+                    if self.path == '/command' and command:
+                        print(f"[UI] Commande reçue : {command}")
+                        client_self.loop.call_soon_threadsafe(client_self.on_input, command)
+                        self._send_json({"status": "ok"})
+                    elif self.path == '/hints/refresh':
+                        client_self.loop.call_soon_threadsafe(client_self.request_hints_sync)
+                        self._send_json({"status": "ok"})
+                    else: self.send_error(404)
+                except Exception as e: self.send_error(500, str(e))
+
+            def _send_json(self, d):
+                body = json.dumps(d).encode('utf-8')
+                self.send_response(200); self.send_header('Content-Type', 'application/json'); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers(); self.wfile.write(body)
 
         def run_server():
             try:
+                # Création propre du serveur sur le port 8910
                 server = HTTPServer(('0.0.0.0', 8910), APIHandler)
-                logger.info('Panorama API Server serving on http://localhost:8910 (Sync Thread)')
                 server.serve_forever()
-            except Exception as e:
-                logger.error(f"Failed to start Panorama API Server: {e}")
+            except Exception as e: 
+                print(f"API Server Error: {e}")
 
-        thread = threading.Thread(target=run_server, daemon=True)
-        thread.start()
+        # Lancement de l'unique thread serveur
+        threading.Thread(target=run_server, daemon=True).start()
 
     def send_level_begin_commands(self):
         '''Sends each item removal command individually to avoid netcon/buffer limits'''
@@ -689,32 +659,58 @@ class Portal2Context(CommonContext):
 
     def on_package(self, cmd, args):
         def update_item_list():
-            items_received_names = [self.item_names.lookup_in_game(i.item, self.game) for i in self.items_received]
-            self.item_list = list(set(self.item_list) - set(items_received_names))
+            recv_names = [self.item_names.lookup_in_game(i.item, self.game) for i in self.items_received]
+            self.item_list = list(set(self.item_list) - set(recv_names))
             self.refresh_menu()
 
         if cmd == "Retrieved":
+            # Gestion des groupes d'items
             if f"_read_item_name_groups_{self.game}" in args["keys"]:
                 self.item_list = args["keys"][f"_read_item_name_groups_{self.game}"]["Everything"]
                 update_item_list()
                 self.update_item_remove_commands()
+            
+            # --- FIX : ACCÈS DICTIONNAIRE POUR LES INDICES ---
+            hkey = f"_read_hints_{self.team}_{self.slot}"
+            if hkey in args["keys"]:
+                raw_hints = args["keys"][hkey]
+                self.hint_log = []
+                for h in raw_hints:
+                    try:
+                        # On utilise .get() ou ["key"] car 'h' est un dictionnaire
+                        rec_id = h.get("receiving_player")
+                        find_id = h.get("finding_player")
+                        item_id = h.get("item")
+                        loc_id = h.get("location")
+                        
+                        rec = self.player_names[rec_id]
+                        find = self.player_names[find_id]
+                        item_name = self.item_names.lookup_in_slot(item_id, rec_id)
+                        loc_name = self.location_names.lookup_in_slot(loc_id, find_id)
+                        
+                        txt = f"<font color='#ff7f50'>{rec}</font>'s <font color='#00ffff'>{item_name}</font> is at <font color='#00ff00'>{loc_name}</font> in <font color='#ff7f50'>{find}</font>'s World"
+                    except Exception: 
+                        # Fallback sécurisé en cas d'erreur de résolution de nom
+                        txt = f"Hint: Item {h.get('item', '???')} at {h.get('location', '???')}"
+                    
+                    self.hint_log.append({
+                        "found": h.get("found", False), 
+                        "text": txt
+                    })
+                print(f"[AP] {len(self.hint_log)} indices mis à jour.")
 
         if cmd == "ReceivedItems":
             index = args["index"]
             for item in args["items"]:
-                if index >= len(self.items_received):
-                    if item.flags & 0b100:
-                        trap_name = self.item_names.lookup_in_game(item.item, self.game)
-                        self.command_queue.append(handle_trap(trap_name))
+                if index >= len(self.items_received) and (item.flags & 0b100):
+                    self.command_queue.append(handle_trap(self.item_names.lookup_in_game(item.item, self.game)) + "\n")
                 index += 1
-            
             super().on_package(cmd, args)
             update_item_list()
             self.update_item_remove_commands()
             return
         
         super().on_package(cmd, args)
-
         if cmd == "Connected":
             self.handle_slot_data(args["slot_data"])
             self.alert_game_connection()

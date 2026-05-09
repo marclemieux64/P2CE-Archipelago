@@ -98,6 +98,15 @@
 		"PauseMenu_Navigation_Archipelago_Tagline"	"Changer le niveau en cours"
 		"PauseMenu_Navigation_Reload" "Recharger"
 		"PauseMenu_Navigation_Reload_Tagline" "Recharger le niveau en cours"
+		
+		//Archipelago Hint
+		"Archipelago_Hints_Label" "Indice:"
+		"Archipelago_Hints_Pending" "En attentes"
+		"Archipelago_Hints_Done" "Terminés"
+		"Archipelago_Hints_Title" "Indices"
+		"Archipelago_Hints_Tooltip" "Vérifier ou obtenir des indices"
+
+
 
 
 

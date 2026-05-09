@@ -1,24 +1,48 @@
 <Root>
     <styles>
         <include src="file://{resources}/styles/main.scss" />
-        <include src="file://{resources}/styles/components/steam-input.scss" />
         <include src="file://{resources}/styles/pages/archipelago/base.scss" />
-        <!-- <include src="file://{resources}/styles/pages/archipelago/hint.scss" /> -->
+        <include src="file://{resources}/styles/pages/archipelago/hint.scss" />
     </styles>
 
     <scripts>
-        <!-- <include src="file://{resources}/scripts/pages/archipelago/hint.ts" /> -->
+        <include src="file://{resources}/scripts/pages/archipelago/hint.ts" />
     </scripts>
 
-    <Panel class="archipelago__page mainmenu__page mainmenu">
-        <Panel id="MainBox" class="main_box">
+    <Panel class="archipelago__page mainmenu__page mainmenu" onload="ArchipelagoHint.init()">
+        
+        <Panel id="MainBox" class="main_box" style="flow-children: none;">
             
-            <Panel id="ColumnsWrapper" class="columns_wrapper">
+            <Panel style="width: 100%; height: 100%; flow-children: down;">
+                
+                <Panel id="ColumnsWrapper" class="columns_wrapper" style="flow-children: down;">
+                    <Panel id="SectionPending" class="hint-section hint-section--expand">
+                        <Label id="SectionPendingTitle" class="hint-section-title" text="#Archipelago_Hints_Pending" />
+                        <Panel id="HintListPending" class="hint-list" />
+                    </Panel>
+
+                    <Panel id="SectionDone" class="hint-section hint-section--expand">
+                        <Button id="DoneHeader" class="hint-section-header">
+                            <Panel class="collapse-arrow" />
+                            <Label id="SectionDoneTitle" class="hint-section-title" text="#Archipelago_Hints_Done" />
+                        </Button>
+                        <Panel id="HintListDone" class="hint-list" />
+                    </Panel>
                 </Panel>
 
-            <Panel id="FullWidthFooter" class="preview_bottom_row">
-                <Panel id="FooterContent" class="footer_content">
-                    </Panel> </Panel>
+                <Panel id="FullWidthFooter" class="preview_bottom_row">
+                    <Panel id="FooterContent" class="footer_content">
+                    <Label class="console_prompt" text="#Archipelago_Hints_Label" />
+                        <Panel id="ArchipelagoInputWrapper" class="archipelago_input_wrapper">
+                            <TextEntry id="ArchipelagoInput" 
+                                       class="archipelago_input" />
+                        </Panel>
+                    </Panel> 
+                </Panel>
+
+            </Panel>
+
+            <Panel id="SuggestionBox" class="suggestion-box hide" />
 
         </Panel>
     </Panel>

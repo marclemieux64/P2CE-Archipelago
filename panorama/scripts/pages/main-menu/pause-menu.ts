@@ -25,8 +25,8 @@ class PauseMenu {
         },
         {
             id: 'ArchipelagoHintBtn',
-            headline: '#Archipelago_Hint_Title',
-            tagline: '#Archipelago_Hint_Tagline',
+            headline: '#Archipelago_Hints_Title',
+            tagline: '#Archipelago_Hints_Tooltip',
             activated: () => {
                 $.DispatchEvent('MainMenuOpenNestedPage', 'ap_hint', 'archipelago/hint', undefined);
             },

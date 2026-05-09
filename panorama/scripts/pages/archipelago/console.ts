@@ -1,5 +1,4 @@
 'use strict';
-
 declare var $: any;
 declare var UiToolkitAPI: any;
 
@@ -35,10 +34,17 @@ class ArchipelagoConsole {
 
     static init() {
         this.m_Panel = $.GetContextPanel();
+        // --- LA BONNE MÉTHODE ICI ---
+        $.DispatchEvent('MainMenuSetPageLines', 
+            $.Localize('#Archipelago_Console_Title'), 
+            $.Localize('#Archipelago_Console_Tagline')
+        );
+        
         $.Msg("[AP] Console initialized");
 
         const input = this.m_Panel?.FindChildTraverse('ArchipelagoInput') as any;
         const wrapper = this.m_Panel?.FindChildTraverse('ArchipelagoInputWrapper');
+    
 
         if (input && wrapper) {
             input.SetPanelEvent('onfocus', () => {

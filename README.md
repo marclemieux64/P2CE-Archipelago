@@ -1,6 +1,6 @@
 ![Portal 2 CE Archipelago Mod](.assets/Portal2pelago-LOGO.png)
 
-`Version 0.7.0`
+`Version 1.0.0`
 
 `Unstable` `In Development`
 
@@ -12,7 +12,7 @@ This must be used with the [Portal 2 APWorld and Client](https://github.com/Glas
 > This mod is not compatible with SteamOS.
 
 ***
-\**Cough cough\**
+*\*Cough cough\**
 
 Cave Johnson here.
 
@@ -46,6 +46,7 @@ Additional optional locations include:
 - "Cutscene" maps, those that require no input from the player (removed by default)
 - Breaking **Wheatley Monitors** in Chapter 8 (and one in Chapter 9)
 - Custom buttons in **Ratman Dens**
+- Vitrified doors
 
 ## Items
 
@@ -88,7 +89,7 @@ The folder structure should look like this:
 ```
 sourcemods
 |   
-└─── p2ce-rchipelago 
+└─── p2ce-archipelago 
     |  GameInfo.txt
     |   ...
     └─── cfg

@@ -3,7 +3,6 @@ declare var $: any;
 declare var UiToolkitAPI: any;
 
 class ArchipelagoConsole {
-    static m_Panel: Panel | null = null;
     static m_LastChatCount = 0;
     static g_ConsoleText: string = "";
 
@@ -12,68 +11,63 @@ class ArchipelagoConsole {
     static g_HistoryIndex: number = -1;
     static g_CurrentInputBuffer: string = "";
 
+    // Autocomplete Data
+    static readonly COMMANDS = [
+        "!license", "!options", "!admin", "!help", "!players", "!status", "!release", 
+        "!collect", "!countdown seconds=", "!remaning", "!missing", "!checked", 
+        "!alias", "!getitem", "!hint", "!hint_location", "!video", 
+        "/license", "/exit", "/connect", "/disconnect", "/help", "/received", "/missing", 
+        "/items", "/locations", "/item_groups", "/location_groups", "/ready", 
+        "/check_connection", "/command", "/deathlink", "/refresh_menu", 
+        "/message_in_game", "/needed"
+    ];
+    static m_FilteredCommands: string[] = [];
+    static m_SelectedCmdIndex = 0;
+
     static COLOR_MAP: Record<string, string> = {
-        "red": "#ff5555",
-        "green": "#00ff00",
-        "yellow": "#ffff00",
-        "blue": "#77aaff",
-        "magenta": "#ee82ee",
-        "cyan": "#00ffff",
-        "white": "#ffffff",
-        "black": "#000000",
-        "gold": "#ffd700",
-        "plum": "#dda0dd",
-        "salmon": "#fa8072",
-        "slate": "#708090",
-        "brown": "#8b4513",
-        "orange": "#ffa500",
-        "pink": "#ffc0cb",
-        "purple": "#800080",
-        "grey": "#808080"
+        "red": "#ff5555", "green": "#00ff00", "yellow": "#ffff00",
+        "blue": "#77aaff", "magenta": "#ee82ee", "cyan": "#00ffff",
+        "white": "#ffffff", "black": "#000000", "gold": "#ffd700",
+        "plum": "#dda0dd", "salmon": "#fa8072", "slate": "#708090",
+        "brown": "#8b4513", "orange": "#ffa500", "pink": "#ffc0cb",
+        "purple": "#800080", "grey": "#808080"
     };
 
     static init() {
-        this.m_Panel = $.GetContextPanel();
-        // --- LA BONNE MÉTHODE ICI ---
         $.DispatchEvent('MainMenuSetPageLines', 
             $.Localize('#Archipelago_Console_Title'), 
             $.Localize('#Archipelago_Console_Tagline')
         );
-        
-        $.Msg("[AP] Console initialized");
 
-        const input = this.m_Panel?.FindChildTraverse('ArchipelagoInput') as any;
-        const wrapper = this.m_Panel?.FindChildTraverse('ArchipelagoInputWrapper');
-    
+        const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
+        const wrapper = $.GetContextPanel().FindChildTraverse('ArchipelagoInputWrapper');
 
         if (input && wrapper) {
-            input.SetPanelEvent('onfocus', () => {
-                wrapper.AddClass('focused');
-            });
-            input.SetPanelEvent('onblur', () => {
-                wrapper.RemoveClass('focused');
-            });
+            input.SetPanelEvent('onfocus', () => { wrapper.AddClass('focused'); });
+            input.SetPanelEvent('onblur', () => { wrapper.RemoveClass('focused'); });
 
+            // Écoute de texte sécurisée
+            input.SetPanelEvent('ontextentrychange', () => ArchipelagoConsole.onTextChanged());
+            input.SetPanelEvent('oninputsubmit', () => ArchipelagoConsole.onArchipelagoInput());
+
+            // Navigation intelligente Flèches + Tabulation
             $.RegisterKeyBind(input, "key_up", () => {
-                return this.handleHistoryNavigation(true);
+                if (ArchipelagoConsole.m_FilteredCommands.length > 0) return ArchipelagoConsole.navigateSuggestions(-1);
+                return ArchipelagoConsole.handleHistoryNavigation(true);
             });
             $.RegisterKeyBind(input, "key_down", () => {
-                return this.handleHistoryNavigation(false);
+                if (ArchipelagoConsole.m_FilteredCommands.length > 0) return ArchipelagoConsole.navigateSuggestions(1);
+                return ArchipelagoConsole.handleHistoryNavigation(false);
             });
+            
+            $.RegisterKeyBind(input, "key_tab", () => ArchipelagoConsole.autocompleteSelection());
         }
 
-        const output = this.m_Panel?.FindChildTraverse('ConsoleOutput') as any;
+        const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
         if (output) {
             output.SetPanelEvent('onkeydown', () => {
                 const key = $.GetContextPanel().GetOwnerWindow()?.GetLastKey();
-                // Block Backspace (8), Delete (46), and all standard character keys (> 32)
-                // but allow Ctrl (17) + C (67) if possible, and Arrows (37-40)
-                if (key === 8 || key === 46 || key > 46) {
-                    // Allow C (67) only if we're not sure about Ctrl, 
-                    // but usually blocking everything > 46 is safest to prevent typing.
-                    // We'll block everything that could modify text.
-                    return true;
-                }
+                if (key === 8 || key === 46 || key > 46) return true;
                 return false;
             });
         }
@@ -82,54 +76,130 @@ class ArchipelagoConsole {
             if (input) input.SetFocus();
         });
 
-        // Listen for chat updates from the global API bridge
         $.RegisterForUnhandledEvent('ArchipelagoAPI_ChatUpdated', (json: string) => {
             try {
                 const chat = JSON.parse(json);
-                this.refreshConsoleUI(chat);
+                ArchipelagoConsole.refreshConsoleUI(chat);
             } catch (e) { }
         });
 
-        // Initial fetch from API
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
             const currentChat = api.getChat();
             if (currentChat && currentChat.length > 0) {
-                this.refreshConsoleUI(currentChat);
+                ArchipelagoConsole.refreshConsoleUI(currentChat);
             } else {
-                api.fetchChat((chat: any[]) => this.refreshConsoleUI(chat));
+                api.fetchChat((chat: any[]) => ArchipelagoConsole.refreshConsoleUI(chat));
             }
         }
     }
 
+    static onTextChanged() {
+        const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
+        const box = $.GetContextPanel().FindChildTraverse('SuggestionBox');
+        if (!input || !box) return;
+
+        const val = input.text.toLowerCase().trim();
+        if (val.length < 1) {
+            box.AddClass('hide');
+            ArchipelagoConsole.m_FilteredCommands = [];
+            return;
+        }
+
+        ArchipelagoConsole.m_FilteredCommands = ArchipelagoConsole.COMMANDS.filter(cmd => cmd.toLowerCase().indexOf(val) !== -1);
+
+        if (ArchipelagoConsole.m_FilteredCommands.length > 0) {
+            ArchipelagoConsole.m_SelectedCmdIndex = 0;
+            ArchipelagoConsole.updateSuggestionUI();
+            box.RemoveClass('hide');
+        } else {
+            box.AddClass('hide');
+        }
+    }
+
+    static navigateSuggestions(dir: number): boolean {
+        if (ArchipelagoConsole.m_FilteredCommands.length === 0) return false;
+        ArchipelagoConsole.m_SelectedCmdIndex = (ArchipelagoConsole.m_SelectedCmdIndex + dir + ArchipelagoConsole.m_FilteredCommands.length) % ArchipelagoConsole.m_FilteredCommands.length;
+        ArchipelagoConsole.updateSuggestionUI();
+        return true;
+    }
+
+    static autocompleteSelection(): boolean {
+        if (ArchipelagoConsole.m_FilteredCommands.length === 0) return false;
+        
+        const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
+        const box = $.GetContextPanel().FindChildTraverse('SuggestionBox');
+        
+        if (input && box) {
+            input.text = ArchipelagoConsole.m_FilteredCommands[ArchipelagoConsole.m_SelectedCmdIndex];
+            ArchipelagoConsole.m_FilteredCommands = [];
+            box.AddClass('hide');
+            input.SetFocus(); 
+        }
+        return true;
+    }
+
+    static updateSuggestionUI() {
+        const box = $.GetContextPanel().FindChildTraverse('SuggestionBox');
+        const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
+        if (!box || !input) return;
+
+        box.RemoveAndDeleteChildren();
+        const val = input.text.toLowerCase();
+
+        ArchipelagoConsole.m_FilteredCommands.slice(0, 5).forEach((cmd, idx) => {
+            const btn = $.CreatePanel('Button', box, '');
+            btn.AddClass('suggestion-item');
+            if (idx === ArchipelagoConsole.m_SelectedCmdIndex) btn.AddClass('selected');
+
+            btn.SetPanelEvent('onactivate', () => {
+                ArchipelagoConsole.m_SelectedCmdIndex = idx;
+                ArchipelagoConsole.autocompleteSelection();
+            });
+
+            const lbl = $.CreatePanel('Label', btn, '');
+            lbl.html = true; 
+
+            const startIdx = cmd.toLowerCase().indexOf(val);
+            if (startIdx !== -1) {
+                const before = cmd.substring(0, startIdx);
+                const match = cmd.substring(startIdx, startIdx + val.length);
+                const after = cmd.substring(startIdx + val.length);
+                lbl.text = before + "<font color='#ec6726'>" + match + "</font>" + after;
+            } else {
+                lbl.text = cmd;
+            }
+        });
+    }
+
     static handleHistoryNavigation(isUp: boolean): boolean {
-        const input = this.m_Panel?.FindChildTraverse('ArchipelagoInput') as any;
+        const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
         if (!input) return false;
 
         if (isUp) {
-            if (this.g_CommandHistory.length === 0) return true;
+            if (ArchipelagoConsole.g_CommandHistory.length === 0) return true;
 
-            if (this.g_HistoryIndex === -1) {
-                this.g_CurrentInputBuffer = input.text;
+            if (ArchipelagoConsole.g_HistoryIndex === -1) {
+                ArchipelagoConsole.g_CurrentInputBuffer = input.text;
             }
 
-            if (this.g_HistoryIndex < this.g_CommandHistory.length - 1) {
-                this.g_HistoryIndex++;
-                input.text = this.g_CommandHistory[this.g_CommandHistory.length - 1 - this.g_HistoryIndex];
+            if (ArchipelagoConsole.g_HistoryIndex < ArchipelagoConsole.g_CommandHistory.length - 1) {
+                ArchipelagoConsole.g_HistoryIndex++;
+                input.text = ArchipelagoConsole.g_CommandHistory[ArchipelagoConsole.g_CommandHistory.length - 1 - ArchipelagoConsole.g_HistoryIndex];
                 $.Schedule(0.0, () => input.SetCursorOffset(input.text.length));
             }
             return true;
         }
         else {
-            if (this.g_HistoryIndex === -1) return true;
+            if (ArchipelagoConsole.g_HistoryIndex === -1) return true;
 
-            if (this.g_HistoryIndex > 0) {
-                this.g_HistoryIndex--;
-                input.text = this.g_CommandHistory[this.g_CommandHistory.length - 1 - this.g_HistoryIndex];
+            if (ArchipelagoConsole.g_HistoryIndex > 0) {
+                ArchipelagoConsole.g_HistoryIndex--;
+                input.text = ArchipelagoConsole.g_CommandHistory[ArchipelagoConsole.g_CommandHistory.length - 1 - ArchipelagoConsole.g_HistoryIndex];
                 $.Schedule(0.0, () => input.SetCursorOffset(input.text.length));
             } else {
-                this.g_HistoryIndex = -1;
-                input.text = this.g_CurrentInputBuffer;
+                ArchipelagoConsole.g_HistoryIndex = -1;
+                input.text = ArchipelagoConsole.g_CurrentInputBuffer;
                 $.Schedule(0.0, () => input.SetCursorOffset(input.text.length));
             }
             return true;
@@ -141,22 +211,20 @@ class ArchipelagoConsole {
         for (const part of data) {
             if (!part) continue;
             let text = part.text || "";
-            // Escape HTML special characters to prevent rendering issues
             text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             
             let color = "#ffffff";
             if (part.color && ArchipelagoConsole.COLOR_MAP[part.color]) {
                 color = ArchipelagoConsole.COLOR_MAP[part.color];
             } else if (part.type === "player_id" || part.type === "player_name") {
-                color = "#ff7f50"; // Standard Archipelago Player Coral
+                color = "#ff7f50"; 
             } else if (part.type === "item_id" || part.type === "item_name") {
-                color = "#00ffff"; // Standard Archipelago Item Cyan
+                color = "#00ffff"; 
             } else if (part.type === "location_id" || part.type === "location_name") {
-                color = "#00ff00"; // Standard Archipelago Location Green
+                color = "#00ff00"; 
             } else if (part.type === "entrance_id") {
-                color = "#da70d6"; // Standard Archipelago Entrance Orchid
+                color = "#da70d6"; 
             } else {
-                // No specific color, just add text as-is
                 result += text;
                 continue;
             }
@@ -165,9 +233,8 @@ class ArchipelagoConsole {
         return result;
     }
 
-static refreshConsoleUI(chat: any[]) {
-        if (!this.m_Panel || !chat) return;
-        const output = this.m_Panel.FindChildTraverse('ConsoleOutput') as any;
+    static refreshConsoleUI(chat: any[]) {
+        const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
         if (!output) return;
 
         let fullText = "";
@@ -177,7 +244,7 @@ static refreshConsoleUI(chat: any[]) {
             
             let lineText = "";
             if (msg.type === "json" && Array.isArray(msg.data)) {
-                lineText = this.formatRichMessage(msg.data);
+                lineText = ArchipelagoConsole.formatRichMessage(msg.data);
             } else {
                 lineText = msg.text || "";
                 lineText = lineText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -186,38 +253,40 @@ static refreshConsoleUI(chat: any[]) {
             fullText += `<font color='#888888'>${timeStr}</font> ${lineText}<br/>`;
         }
 
-        // --- COMPARAISON STRICTE ---
-        // Si le texte genere est EXACTEMENT le meme que celui deja affiche,
-        // on ne touche ABSOLUMENT PAS a output.text.
-        if (output.text === fullText || this.g_ConsoleText === fullText) {
-            return;
-        }
+        if (output.text === fullText || ArchipelagoConsole.g_ConsoleText === fullText) return;
 
-        this.g_ConsoleText = fullText;
-        output.text = fullText; // Le son ne se declenchera QUE si cette ligne s'execute
-        // ---------------------------
+        ArchipelagoConsole.g_ConsoleText = fullText;
+        output.text = fullText; 
 
         $.Schedule(0.05, () => {
-            if (!this.m_Panel) return;
-            const outputArea = this.m_Panel.FindChildTraverse('ConsoleOutputArea');
+            const outputArea = $.GetContextPanel().FindChildTraverse('ConsoleOutputArea');
             if (outputArea && typeof (outputArea as any).ScrollToBottom === 'function') {
                 (outputArea as any).ScrollToBottom();
             }
         });
     }
+
     static onArchipelagoInput() {
-        if (!this.m_Panel) return;
-        const input = this.m_Panel.FindChildTraverse('ArchipelagoInput') as any;
+        if (ArchipelagoConsole.m_FilteredCommands.length > 0) {
+            ArchipelagoConsole.autocompleteSelection();
+            return;
+        }
+
+        const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
+        const box = $.GetContextPanel().FindChildTraverse('SuggestionBox');
         if (!input || !input.text) return;
 
-        const text = input.text;
+        const text = input.text.trim();
+        if (!text) return;
 
-        if (this.g_CommandHistory.length === 0 || this.g_CommandHistory[this.g_CommandHistory.length - 1] !== text) {
-            this.g_CommandHistory.push(text);
+        if (ArchipelagoConsole.g_CommandHistory.length === 0 || ArchipelagoConsole.g_CommandHistory[ArchipelagoConsole.g_CommandHistory.length - 1] !== text) {
+            ArchipelagoConsole.g_CommandHistory.push(text);
         }
-        this.g_HistoryIndex = -1;
+        ArchipelagoConsole.g_HistoryIndex = -1;
 
         input.text = "";
+        ArchipelagoConsole.m_FilteredCommands = [];
+        box?.AddClass('hide');
         input.SetFocus();
 
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;

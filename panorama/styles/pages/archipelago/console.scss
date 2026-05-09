@@ -97,5 +97,51 @@
     text-shadow: 0px 0px 4px #000000;
 }
 
+//=============================================================================
+// 3. AUTOCOMPLETE SUGGESTIONS
+//=============================================================================
+.suggestion-box {
+    width: 400px;
+    height: fit-children; // Ne sera plus jamais écrasé
+    flow-children: down;
+    background-color: #000000fa; 
+    border: 1px solid #ffffff1a;
+    border-radius: 4px;
+    padding: 5px;
+    z-index: 100;
+    
+    // Positionnement absolu
+    vertical-align: bottom;
+    margin-bottom: 96px; // Passe exactement au-dessus du footer
+    margin-left: 50px;   // S'aligne avec le début du champ texte après le ">"
 
+    &.hide { visibility: collapse; }
+}
+
+.suggestion-item {
+    width: 100%;
+    padding: 6px 12px;
+    transition-property: background-color;
+    transition-duration: 0.1s;
+
+    Label {
+        font-size: 18px;
+        color: #ccccccff;
+        font-family: "LexendDeca";
+        width: 100%;
+    }
+
+    &:hover {
+        background-color: #ec672622;
+    }
+
+    &.selected {
+        background-color: #ec672644;
+        
+        Label {
+            color: #ffffffff;
+            font-weight: bold;
+        }
+    }   
+}
 

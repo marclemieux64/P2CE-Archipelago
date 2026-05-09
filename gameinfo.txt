@@ -22,7 +22,7 @@
 			"required" "1"
 
 			// Uncomment the language you want to use for voices:
-			//"portal2_french"  { "vpk" "pak01" "optional" "1" }
+			"portal2_french"  { "vpk" "pak01" "optional" "1" }
 			// "portal2_german"  { "vpk" "pak01" "optional" "1" }
 			// "portal2_spanish" { "vpk" "pak01" "optional" "1" }
 			// "portal2_russian" { "vpk" "pak01" "optional" "1" }

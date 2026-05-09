@@ -82,7 +82,7 @@
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ù" style="color: #b79268;" />
+						<Label class="help-popup__icon" text="ù"/>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Potatos" />
 					</Panel>
 

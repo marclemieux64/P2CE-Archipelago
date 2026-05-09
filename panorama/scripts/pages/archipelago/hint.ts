@@ -213,7 +213,7 @@ class ArchipelagoHint {
             if (hint.found) row.AddClass('hint--found');
             const lbl = $.CreatePanel('Label', row, '');
             lbl.html = true;
-            lbl.text = (hint.found ? "✓ " : "• ") + hint.text;
+            lbl.text = hint.text;
         });
     }
 }

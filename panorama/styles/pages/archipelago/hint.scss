@@ -18,7 +18,6 @@
 
 .hint-section.collapsed {
     height: 40px;
-    height: fill-parent-flow(0.0); // <-- CORRECTION ICI : Indispensable pour éviter d'écraser les listes !
 }
 
 .hint-section.collapsed .hint-list {

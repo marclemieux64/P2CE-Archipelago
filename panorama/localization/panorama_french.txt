@@ -1474,6 +1474,6 @@ Ce message ne s’affichera qu’une seule fois et ne s’affichera plus après 
 		"Archipelago_Console_Placeholder" "Tapez une commande (ex: /status, /help, /hint)..."
 		"Archipelago_Status_Server"	"Connexion au Serveur Archipelago"
 		"Archipelago_Status_Game"	"Connexion au Jeu (Netcon)"
-		"Archipelago_Status_NotConnected" "NON CONNECTÉ AU SERVEUR ARCHIPELAGO. Utilisez la console (C) pour vous connecter."
+		"Archipelago_Status_NotConnected" "NON CONNECTÉ AU SERVEUR ARCHIPELAGO."
 	}
 }

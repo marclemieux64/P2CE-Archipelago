@@ -104,11 +104,18 @@ class ArchipelagoMapSelect {
                 if (json === this.g_LastApiJson) return;
                 this.g_LastApiJson = json;
 
+                const overlay = $.GetContextPanel().FindChildTraverse('NotConnectedOverlay');
+                const content = $.GetContextPanel().FindChildTraverse('ConnectedContent');
+
                 try {
                     const status = JSON.parse(json);
                     if (status) {
-                        // If disconnected, clear the data so generateList shows the error
-                        if (!status.connected) {
+                        const connected = !!status.connected;
+                        if (overlay) overlay.SetHasClass('hide', connected);
+                        if (content) content.SetHasClass('hide', !connected);
+
+                        // If disconnected, clear the data
+                        if (!connected) {
                             this.g_ChapterData = {};
                             this.generateList();
                             return;

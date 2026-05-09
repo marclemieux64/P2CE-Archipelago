@@ -390,6 +390,21 @@
 }
 
 
+.help_button_icon {
+    width: 32px;
+    height: 32px;
+    horizontal-align: center;
+    vertical-align: center;
+    wash-color: #ffffffff;
+    transition-property: brightness, transform;
+    transition-duration: 0.15s;
+
+    .help_button:hover & {
+        brightness: 1.1;
+        transform: scale3d(1.05, 1.05, 1);
+    }
+}
+
 .help_button_text {
     font-family: "Lexend Deca", Bold;
     font-size: 32px;
@@ -401,5 +416,68 @@
 
     .help_button:hover & {
         brightness: 1.2;
+    }
+}
+//=============================================================================
+// 8. NOT CONNECTED OVERLAY
+//=============================================================================
+
+.not_connected_overlay {
+    width: 100%;
+    height: 100%;
+    flow-children: down;
+    background-color: #000000dd;
+    z-index: 1000;
+    transition-property: opacity;
+    transition-duration: 0.3s;
+
+    &.hide {
+        opacity: 0;
+        visibility: collapse;
+    }
+}
+
+.warning_icon {
+    width: 128px;
+    height: 128px;
+    horizontal-align: center;
+    margin-top: 150px;
+    margin-bottom: 24px;
+}
+
+.warning_title {
+    font-family: "Lexend Deca", Bold;
+    font-size: 32px;
+    color: white;
+    text-align: center;
+    horizontal-align: center;
+    width: 600px;
+    margin-bottom: 32px;
+}
+
+.warning_button {
+    horizontal-align: center;
+    padding: 12px 32px;
+    background-color: #ec6726;
+    border-radius: 4px;
+    transition-property: background-color, transform;
+    transition-duration: 0.1s;
+
+    Label {
+        color: white;
+        font-size: 20px;
+        font-family: "Lexend Deca", Bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    &:hover {
+        background-color: #f2783a;
+        transform: scale3d(1.02, 1.02, 1);
+    }
+
+    &:active {
+        background-color: #d1561d;
+        transform: scale3d(0.98, 0.98, 1);
     }
 }

@@ -14,9 +14,19 @@
 </scripts>
 
     <Panel class="archipelago__page mainmenu__page mainmenu" onload="ArchipelagoMapSelect.onLoad()">
-        <Panel id="MainBox" class="main_box">
+        <Panel id="MainBox" class="main_box" style="flow-children: none;">
             
-            <Panel id="ColumnsWrapper" class="columns_wrapper">
+            <!-- NOT CONNECTED STATE -->
+            <Panel id="NotConnectedOverlay" class="not_connected_overlay hide">
+                <Image src="file://{images}/archipelago/warning_orange_v3.png" class="warning_icon" scaling="stretch-to-fit-preserve-aspect" />
+                <Label class="warning_title" text="#Archipelago_Status_NotConnected" />
+                <Button class="warning_button" onactivate="ArchipelagoMapSelect.toggleConsole()">
+                    <Label text="#Archipelago_Console_Title" />
+                </Button>
+            </Panel>
+
+            <Panel id="ConnectedContent" style="width: 100%; height: 100%; flow-children: down;">
+                <Panel id="ColumnsWrapper" class="columns_wrapper">
                 <!-- LEFT COLUMN -->
                 <Panel id="LeftList" class="left_list_container">
                     <Panel id="LeftListInner" class="left_list_inner" />
@@ -48,7 +58,7 @@
                                     onmouseover="$( '#ManualHelpTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
                                     onmouseout="$( '#ManualHelpTooltip' ).RemoveClass('visible')"
                                     onactivate="$.PlaySoundEvent('UIPanorama.P2CE.MenuAccept'); ArchipelagoMapSelect.showHelp()">
-                                <Label class="help_button_text" text="?" />
+                                <Image class="help_button_icon" src="file://{images}/learn.svg" />
                             </Button>
                         </Panel>
                     </Panel>
@@ -87,6 +97,7 @@
                 </Panel>
             </Panel>
 
+            </Panel>
         </Panel>
     </Panel>
 </Root>

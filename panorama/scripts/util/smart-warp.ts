@@ -4,7 +4,6 @@ if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 function SmartWarpNextMap(currentMapName: string) {
     $.Msg("[AP] Smart Warp triggered for map: " + currentMapName + ". Searching for best next map...");
     
-    // Ensure we have a string even if something went wrong
     if (!currentMapName) currentMapName = "";
 
     const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
@@ -17,7 +16,6 @@ function SmartWarpNextMap(currentMapName: string) {
         return;
     }
 
-    // Parse data from API into chapters and maps
     const chapters = syncHelper ? syncHelper.parseApiStatus(apiStatus) : {};
     
     if (Object.keys(chapters).length === 0) {
@@ -35,8 +33,6 @@ function SmartWarpNextMap(currentMapName: string) {
         if (chapter.maps) {
             for (const map of chapter.maps) {
                 if (!map.command) continue;
-                
-                // CRITICAL: Skip the map we are currently on to avoid infinite loops
                 if (map.command.trim() === currentMapCmd.trim()) continue;
 
                 const status = syncHelper ? syncHelper.getMapStatus(map, chapters) : { completed: false, doable: false, fullyDoable: false };
@@ -51,8 +47,6 @@ function SmartWarpNextMap(currentMapName: string) {
         }
     }
 
-    $.Msg("[AP] Smart Warp Scan Results: " + fullyDoableMaps.length + " fully doable, " + partiallyDoableMaps.length + " partially doable.");
-    
     let targetMap = null;
     if (fullyDoableMaps.length > 0) {
         const randomIndex = Math.floor(Math.random() * fullyDoableMaps.length);
@@ -63,11 +57,25 @@ function SmartWarpNextMap(currentMapName: string) {
     }
 
     if (targetMap && targetMap.command) {
-        $.Msg("[AP] Smart Warp Success: Sending player to " + (targetMap.title || targetMap.command));
+        const mapNameDisplay = targetMap.title || targetMap.command.replace("map ", "");
+        $.Msg("[AP] Smart Warp Success: Sending player to " + mapNameDisplay);
         
-        $.Schedule(4, () => {
+        // Trigger the on-screen UI Notification
+        const notifyFn = (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify;
+        if (notifyFn) {
+            notifyFn(JSON.stringify({
+                title: "SMART WARP",
+                html: "Destination: <font color='#00ffff'>" + mapNameDisplay + "</font><br/><font color='#aaaaaa'><i>Warping in 3 seconds...</i></font>",
+                type: "0 255 255", // Cyan accent color
+                play_sound: true
+            }));
+        }
+
+        // Wait exactly 3 seconds for the player to read the popup, then warp
+        $.Schedule(3.0, () => {
             GameInterfaceAPI.ConsoleCommand(targetMap.command);
         });
+
     } else {
         $.Msg("[AP] Smart Warp: No doable maps found. Returning to menu.");
         GameInterfaceAPI.ConsoleCommand("disconnect");

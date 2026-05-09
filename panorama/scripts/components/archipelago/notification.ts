@@ -52,6 +52,10 @@ function ProcessQueue() {
     if (notificationQueue.length === 0) {
         isTimerRunning = false;
         if (isWarpPending) {
+            // CRITICAL FIX: Reset the flag immediately so we don't infinite loop 
+            // if Smart Warp adds a new notification to the queue!
+            isWarpPending = false; 
+            
             $.persistentStorage.setItem("ap_return_to_map_select", "true");
             $.Schedule(0.5, () => {
                 const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
@@ -193,6 +197,10 @@ function OnArchipelagoNotify(payload: string) {
             } else if (data.title === "TRAP TRIGGERED") {
                 // Son de fizzle/erreur pour les pièges
                 GameInterfaceAPI.ConsoleCommand("snd_playsounds Error");
+            } else if (data.title === "SMART WARP") {
+                // Son de succès/récompense pour le smart warp
+                $.PlaySoundEvent('Portal.elevator_chime');
+                
             } else {
                 $.PlaySoundEvent('Instructor.LessonStart');
             }
@@ -247,3 +255,6 @@ function OnArchipelagoNotify(payload: string) {
         PollForNotifications();
     }
 })();
+
+// Export the notification system so Smart Warp can use it
+(UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify = OnArchipelagoNotify;

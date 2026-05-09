@@ -16,7 +16,7 @@ class ArchipelagoConsole {
         "!license", "!options", "!admin", "!help", "!players", "!status", "!release", 
         "!collect", "!countdown seconds=", "!remaning", "!missing", "!checked", 
         "!alias", "!getitem", "!hint", "!hint_location", "!video", 
-        "/license", "/exit", "/connect", "/disconnect", "/help", "/received", "/missing", 
+        "/license", "/exit","/connect archipelago.gg:", "/connect", "/disconnect", "/help", "/received", "/missing", 
         "/items", "/locations", "/item_groups", "/location_groups", "/ready", 
         "/check_connection", "/command", "/deathlink", "/refresh_menu", 
         "/message_in_game", "/needed"

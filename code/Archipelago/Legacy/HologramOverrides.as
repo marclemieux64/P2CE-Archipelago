@@ -29,6 +29,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     bool isWheatleyScreen = (model.locate("glados_screenborder_curve.mdl") != uint(-1));
     bool isCore = (classname.locate("core") != uint(-1) || name.locate("core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
     bool isGel = (classname == "info_paint_sprayer" || classname == "prop_paint_bomb" || classname == "paint_sphere" || name.locate("paint") != uint(-1));
+    bool isTurret = (classname == "npc_portal_turret_floor" || model.locate("turret.mdl") != uint(-1));
     
     // WHEATLEY SCREENS
     if (isWheatleyScreen) {
@@ -110,7 +111,15 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         absoluteAngles = true;
         return;
     }
-
+if (isTurret) {
+        targetPos = Vector(0.0f, 0.0f, 60.0f); // Monte l'hologramme de 40 unités
+        targetAng = QAngle(0.0f, 0.0f, 0.0f);
+        targetSkin = 2;       // Skin par défaut (verrouillé)
+        targetScale = 1.0f;
+        shouldParent = true;  // Stick it to the turret!
+        absoluteAngles = false; // Rotation avec la tourelle
+        return;
+    }
     if (isCube || isFaithPlate) {
         targetPos = Vector(0, 0, 0); // Local UP
         targetAng = QAngle(0, 0, 0); // Point Down

@@ -318,12 +318,15 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         if (orange) EntFire("weapon_portalgun", "AddOutput", "CanFirePortal2 0");
     }
 
-    void DisableEntityPickup(string entity_name) {
-        array<CBaseEntity@> targets = FindEntities(entity_name);
-        for (uint i = 0; i < targets.length(); i++) {
-            targets[i].KeyValue("PickupEnabled", "0");
-        }
+    void DisableEntityPickup(string target) {
+    array<CBaseEntity@> targets = FindEntities(target);
+
+    for (uint i = 0; i < targets.length(); i++) {
+        CBaseEntity@ t = targets[i];
+        if (t is null) continue;
+        t.KeyValue("PickupEnabled", "0");
     }
+}
 
     void DisableEntityPhysics(string entity_name) {
         array<CBaseEntity@> targets = FindEntities(entity_name);
@@ -774,36 +777,45 @@ void RemovePotatOS() {
 }
 
     void AttachHologramToEntity(string entity_name, string attachment_point, float holo_scale, float offset, int skin = 0) {
-        array<CBaseEntity@> targets = FindEntities(entity_name);
-        for (uint i = 0; i < targets.length(); i++) {
-            CBaseEntity@ ent = targets[i];
-            
-            Vector hPos;
-            QAngle hAng;
-            int hSkin = 0;
-            float hScale = 1.0f;
-            bool hParent = true;
-            bool hAbsolute = false;
-            
-            Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbsolute);
-            
-            // Use provided defaults if overrides are zero/empty
-            if (hSkin == 0) hSkin = skin;
-            if (hScale == 1.0f) hScale = holo_scale;
-            
-            string name = entity_name + "_" + i;
-            ent.KeyValue("targetname", name);
-            
-            if (hAbsolute) {
-                // World aligned, no parent
-                Vector worldPos = ent.GetAbsOrigin() + (AnglesToForward(ent.GetAbsAngles()) * (hPos.x + offset)) + (AnglesToRight(ent.GetAbsAngles()) * hPos.y) + (AnglesToUp(ent.GetAbsAngles()) * hPos.z);
-                CreateAPHologram(worldPos, hAng, hScale, null, "", hSkin, "");
-            } else {
-                // Parented
-                CreateAPHologram(hPos + Vector(offset, 0, 0), hAng, hScale, ent, attachment_point, hSkin, "");
-            }
+    array<CBaseEntity@> targets = FindEntities(entity_name);
+    
+    for (uint i = 0; i < targets.length(); i++) {
+        // Utilisation de @ pour le pointeur d'entité
+        CBaseEntity@ ent = targets[i]; 
+        if (ent is null) continue;
+
+        // Déclarations explicites pour éviter les erreurs d'expression
+        Vector hPos(0, 0, 0);
+        QAngle hAng(0, 0, 0);
+        int hSkin = 0;
+        float hScale = 1.0f;
+        bool hParent = true;
+        bool hAbsolute = false;
+        
+        // Appel aux overrides (centralisé dans HologramOverrides.as)
+        Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbsolute);
+        
+        // Priorité aux paramètres Archipelago (si non nuls)
+        if (hSkin == 0) hSkin = skin;
+        if (hScale == 1.0f) hScale = holo_scale;
+        
+        // Nom unique pour permettre l'UPDATE dans CreateAPHologram
+        string holoName = entity_name + "_" + ent.GetEntityIndex() + "_holo";
+
+        // Application de l'offset vertical (Z)
+        Vector verticalOffset(0, 0, offset);
+        Vector finalOffset = hPos + verticalOffset;
+
+        if (hAbsolute) {
+            // Calcul de position mondiale
+            Vector worldPos = ent.GetAbsOrigin() + (Legacy::AnglesToForward(ent.GetAbsAngles()) * finalOffset.x) + (Legacy::AnglesToRight(ent.GetAbsAngles()) * -finalOffset.y) + (Legacy::AnglesToUp(ent.GetAbsAngles()) * finalOffset.z);
+            Legacy::CreateAPHologram(worldPos, hAng, hScale, null, "", hSkin, holoName);
+        } else {
+            // Parenté locale
+            Legacy::CreateAPHologram(finalOffset, hAng, hScale, ent, attachment_point, hSkin, holoName);
         }
     }
+}
 
     void PrintMapName() {
         ArchipelagoLog("map_name:" + current_map);
@@ -1104,6 +1116,9 @@ void AddWheatleyMonitorBreakCheck() {
                     // On utilise InitCmd pour lancer une commande custom "AP_WarpMonitor" avec un délai de 0.1s
                     string payloadWarp = "InitCmd\x1BCommand\x1BWarpMonitor " + check_name + "\x1B0.1\x1B-1";
                     relay.KeyValue("OnTrigger", payloadWarp);
+
+                    string payloadSkin = name + "_holo\x1BSkin\x1B4\x1B0.1\x1B-1";
+                    relay.KeyValue("OnTrigger", payloadSkin);
 
                     int skin = 0;
                     uint count = checked_screens.length();

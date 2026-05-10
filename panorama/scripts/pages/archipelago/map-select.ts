@@ -6,8 +6,6 @@ interface Panel { [key: string]: any; }
 interface ImagePanel extends Panel { }
 interface LabelPanel extends Panel { }
 
-
-
 class ArchipelagoMapSelect {
     static g_ChapterData: any = {};
     static g_SelectedMapCommand: string = '';
@@ -36,13 +34,7 @@ class ArchipelagoMapSelect {
                 }
             }
         }
-        return false;
-        const mainBox = $.GetContextPanel().FindChildTraverse('MainBox');
-        if (mainBox) {
-            $.RegisterKeyBind(mainBox, "key_c", () => {
-                this.toggleConsole();
-            });
-        }
+        return false; // Nettoyage du code mort qui se trouvait ici
     }
 
     static onConsoleFocus() {
@@ -55,6 +47,9 @@ class ArchipelagoMapSelect {
     }
 
     static toggleConsole() {
+        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        if (!api || !api.getStatus()) return; // Sécurité : empêche l'ouverture si le client n'est pas là
+
         $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
         $.DispatchEvent('MainMenuOpenNestedPage', 'ap_console', 'archipelago/console', undefined);
     }
@@ -71,7 +66,8 @@ class ArchipelagoMapSelect {
     static getCompletionSymbol(): string {
         return ($.persistentStorage.getItem('ap_completion_symbol') ?? 0) === 1 ? "\u2605" : "\u2713";
     }
-static updateConnectionState() {
+
+    static updateConnectionState() {
         const globalObj = (UiToolkitAPI.GetGlobalObject() as any);
         const api = globalObj.ArchipelagoAPI;
         const status = api ? api.getStatus() : null;
@@ -81,43 +77,47 @@ static updateConnectionState() {
         
         if (!overlay) return;
 
-        // Try to find the text label inside the overlay
-        // (If you gave it an ID in XML, use it here. Otherwise, we grab the first Label)
         let overlayLabel = overlay.FindChildTraverse('NotConnectedLabel');
-        if (!overlayLabel) {
-            const children = overlay.Children();
-            for (let i = 0; i < children.length; i++) {
-                if (children[i].paneltype === "Label") {
-                    overlayLabel = children[i];
-                    break;
-                }
+        let overlayButton = null;
+
+        // Cherche le label et le bouton dynamiquement dans l'overlay
+        const children = overlay.Children();
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].paneltype === "Label" && !overlayLabel) {
+                overlayLabel = children[i];
+            }
+            if (children[i].paneltype === "Button" && !overlayButton) {
+                overlayButton = children[i];
             }
         }
 
         if (!api || !status) {
-            // STATE 1: Client is completely missing
+            // ÉTAT 1 : Client non détecté -> Cacher le bouton console
             overlay.RemoveClass('hide');
             if (content) content.AddClass('hide');
+            if (overlayButton) overlayButton.AddClass('hide'); // Cache le bouton !
             
             if (overlayLabel) {
                 overlayLabel.text = "ARCHIPELAGO CLIENT NOT DETECTED\nPlease launch Portal2Client.py";
                 overlayLabel.style.color = "#ffbb00"; // Orange
             }
         } else if (!status.connected) {
-            // STATE 2: Client is running, but server is disconnected
+            // ÉTAT 2 : Client lancé, mais serveur déconnecté -> Afficher le bouton
             overlay.RemoveClass('hide');
             if (content) content.AddClass('hide');
+            if (overlayButton) overlayButton.RemoveClass('hide'); // Affiche le bouton !
             
             if (overlayLabel) {
                 overlayLabel.text = $.Localize("#Archipelago_Status_NotConnected");
-                overlayLabel.style.color = "#ff4444"; // Red
+                overlayLabel.style.color = "#ff4444"; // Rouge
             }
         } else {
-            // STATE 3: Everything is connected
+            // ÉTAT 3 : Connecté à tout
             overlay.AddClass('hide');
             if (content) content.RemoveClass('hide');
         }
     }
+
     static onLoad() {
         $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
 
@@ -149,7 +149,6 @@ static updateConnectionState() {
                 if (json === this.g_LastApiJson) return;
                 this.g_LastApiJson = json;
 
-                // ---> CALL OUR NEW NATIVE UI HANDLER <---
                 this.updateConnectionState();
 
                 try {
@@ -157,7 +156,6 @@ static updateConnectionState() {
                     if (status) {
                         const connected = !!status.connected;
 
-                        // If disconnected, clear the data
                         if (!connected) {
                             this.g_ChapterData = {};
                             this.generateList();
@@ -186,7 +184,6 @@ static updateConnectionState() {
             });
         }
 
-        // ---> FORCE THE UI TO RENDER PROPERLY THE MOMENT THE MENU OPENS <---
         this.updateConnectionState();
     }
 
@@ -346,7 +343,6 @@ static updateConnectionState() {
             statusLabel.style.color = "#eeeeee";
         }
         if (mapSubtitleLabel) mapSubtitleLabel.text = mapData.title || "";
-        // Subtitle secondary is handled above with color formatting
 
         // SELECTIVE VISIBILITY: Hide details for root chapter selections
         const showDetails = !mapData.is_chapter;
@@ -389,22 +385,31 @@ static updateConnectionState() {
         }
 
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
-        const isConnected = api && api.getStatus() && api.getStatus().connected;
+        const status = api ? api.getStatus() : null;
+        const isConnected = status && status.connected;
 
         if (!this.g_ChapterData || Object.keys(this.g_ChapterData).length === 0) {
             const entry = $.CreatePanel('Panel', container, '');
             entry.AddClass('error_entry');
             
             const label = $.CreatePanel('Label', entry, '');
-            label.text = isConnected ? "Loading Archipelago Data..." : $.Localize("#Archipelago_Status_NotConnected");
-            label.AddClass('ErrorLabel'); // We can style this in CSS too if needed
             
-            if (!isConnected) {
-                label.style.color = "#ff4444";
+            if (!api || !status) {
+                label.text = "Archipelago Client not detected. Please launch Portal2Client.py";
+                label.style.color = "#ffbb00"; 
+            } else if (!isConnected) {
+                label.text = $.Localize("#Archipelago_Status_NotConnected");
+                label.style.color = "#ff4444"; 
+            } else {
+                label.text = "Loading Archipelago Data...";
+                label.style.color = "#eeeeee";
             }
+            
             label.style.fontSize = "22px";
             label.style.fontWeight = "bold";
             label.style.width = "100%";
+            label.style.textAlign = "center";
+            label.style.marginTop = "20px";
             return;
         }
 

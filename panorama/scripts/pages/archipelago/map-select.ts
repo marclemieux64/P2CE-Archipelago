@@ -326,21 +326,31 @@ class ArchipelagoMapSelect {
         }
 
         if (statusLabel) {
-            const rawStatus = mapData.status || "";
-            let finalStatus = "";
+            const rawStatus = mapData.status || mapData.statusIcons || "";
+            
+            // On extrait le nom de la carte proprement (ex: "map sp_a1_intro1" -> "sp_a1_intro1")
             let mapCmdName = "";
             if (mapData.command) {
                 const parts = mapData.command.split(" ");
-                if (parts.length >= 2) mapCmdName = parts[1].trim().toLowerCase();
+                if (parts.length >= 2) {
+                    mapCmdName = parts[1].trim().toLowerCase();
+                }
             }
+            
             const mItems = mapData.subtitle || "";
 
+            // 3. Demander au logicHelper de calculer les icônes formatées (couleurs + complétion)
             const formattedIcons = logicHelper ? logicHelper.getFormattedIcons(rawStatus, mapCmdName, mItems) : [];
+
+            // 4. Construire le texte HTML pour le Label du menu
+            let finalStatusHtml = "";
             for (const iconData of formattedIcons) {
-                finalStatus += `<font color="${iconData.color}">${iconData.char}</font>`;
+                finalStatusHtml += `<font color="${iconData.color}">${iconData.char}</font>`;
             }
-            statusLabel.text = finalStatus;
-            statusLabel.style.color = "#eeeeee";
+
+            // 5. Appliquer au Label
+            statusLabel.text = finalStatusHtml;
+            statusLabel.style.color = "#eeeeee"; 
         }
         if (mapSubtitleLabel) mapSubtitleLabel.text = mapData.title || "";
 

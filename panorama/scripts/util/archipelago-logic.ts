@@ -95,11 +95,26 @@ class ArchipelagoLogic {
     /**
      * Determines the status of a map check indicator.
      */
-    static getIndicatorStatus(char: string, mapCmdName: string, mItems: string, charIndex: number, fullStatus: string): { isCompleted: boolean, isAvailable: boolean } {
+    /**
+     * Determines the status of a map check indicator.
+     */
+    /**
+     * Determines the status of a map check indicator.
+     */
+    static getIndicatorStatus(char: string, mapCmdName: string, mItems: string, charIndex: number, fullStatus: string = ""): { isCompleted: boolean, isAvailable: boolean } {
         const isCompleted = (char === "£" || char === "★");
 
         if (isCompleted) {
             return { isCompleted: true, isAvailable: true };
+        }
+
+        // --- LE PATCH CRUCIAL EST ICI ---
+        // Si le joueur n'a pas le portal gun Bleu (ý), Orange (þ) ou Coop (ǫ),
+        // On rajoute artificiellement le Portal Gun générique (û) à la liste des objets 
+        // manquants pour que le système de prérequis (g_MapRequirements) le détecte !
+        let normalizedMItems = mItems || "";
+        if (normalizedMItems.indexOf("ý") !== -1 || normalizedMItems.indexOf("þ") !== -1 || normalizedMItems.indexOf("ǫ") !== -1) {
+            normalizedMItems += "û"; 
         }
 
         // If not completed, determine availability (Green vs Red)
@@ -107,27 +122,27 @@ class ArchipelagoLogic {
         
         if (char === "ã") {
             const reqs = this.g_MapRequirements[mapCmdName];
-            isAvailable = reqs ? reqs.every(req => mItems.indexOf(req) === -1) : true;
+            isAvailable = reqs ? reqs.every(req => normalizedMItems.indexOf(req) === -1) : true;
         } else if (char === "ø") {
             const reqsList = this.g_RatmanRequirements[mapCmdName];
             if (reqsList) {
                 const reqs = reqsList[charIndex] || reqsList[0];
-                isAvailable = reqs.every(req => mItems.indexOf(req) === -1);
+                isAvailable = reqs.every(req => normalizedMItems.indexOf(req) === -1);
             }
         } else if (char === "ÿ") {
             const reqsList = this.g_WheatleyRequirements[mapCmdName];
             if (reqsList) {
                 const reqs = reqsList[charIndex] || reqsList[0];
-                isAvailable = reqs.every(req => mItems.indexOf(req) === -1);
+                isAvailable = reqs.every(req => normalizedMItems.indexOf(req) === -1);
             }
         } else if (char === "¢" || char === "ù") {
             // Vitrified Doors and PotatOS always require the portal gun (û)
-            isAvailable = (mItems.indexOf("û") === -1);
+            isAvailable = (normalizedMItems.indexOf("û") === -1);
         } else {
             // For other icons, check the subtitle for requirements
             let searchChar = char;
             if (char === "ý" || char === "þ" || char === "ǫ") searchChar = "û";
-            isAvailable = (mItems.indexOf(searchChar) === -1);
+            isAvailable = (normalizedMItems.indexOf(searchChar) === -1);
         }
 
         return { isCompleted: false, isAvailable };

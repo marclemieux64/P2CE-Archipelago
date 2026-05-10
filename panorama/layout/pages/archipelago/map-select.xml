@@ -7,10 +7,10 @@
 </styles>
 
 <scripts>
-    <include src="file://{resources}/scripts/util/event-definition.ts" />
-    <include src="file://{resources}/scripts/util/archipelago-logic.ts" />
-    <include src="file://{resources}/scripts/util/archipelago-sync.ts" />
-    <include src="file://{resources}/scripts/pages/archipelago/map-select.ts" />
+    <include src="file://{scripts}/util/archipelago-api.ts" />
+    <include src="file://{scripts}/util/archipelago-logic.ts" />
+    <include src="file://{scripts}/util/archipelago-sync.ts" />
+    <include src="file://{scripts}/pages/archipelago/map-select.ts" />
 </scripts>
 
     <Panel class="archipelago__page mainmenu__page mainmenu" onload="ArchipelagoMapSelect.onLoad()">

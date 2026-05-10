@@ -5,7 +5,7 @@
  * Handles asynchronous communication with the local Python client.
  */
 class ArchipelagoAPI {
-    static VERSION: string = "1.0.0";
+    static VERSION: string = "1.0.1";
     static API_BASE: string = "http://127.0.0.1:8910";
     static m_Status: any = null;
     static m_Chat: any[] = [];
@@ -25,15 +25,15 @@ class ArchipelagoAPI {
         this.fetchChat();
         this.m_PollSchedule = $.Schedule(1.0, () => this.startPolling());
     }
+
     static sendCommand(cmd: string) {
         if (!cmd) return;
         $.Msg("[AP API] Sending command: " + cmd);
         
         $.AsyncWebRequest(this.API_BASE + "/command", {
             type: 'POST',
-            data: { command: cmd }, // Ton serveur Python attend un JSON avec "command"
+            data: { command: cmd },
             complete: (data: any) => {
-                // Optionnel: rafraîchir le chat immédiatement après un message envoyé
                 this.fetchChat();
             }
         });
@@ -48,15 +48,6 @@ class ArchipelagoAPI {
                         const cleanJson = data.responseText.trim().replace(/\0/g, '');
                         const status = JSON.parse(cleanJson);
                         this.m_Status = status;
-                        
-                        // Seed Validation / Auto-Reset Logic
-                        if (status.seed && status.seed !== "unknown") {
-                            // We can use this to auto-wipe bitmasks if the seed changed
-                            // For now, just log it
-                            if (ArchipelagoAPI.ENABLE_DEBUG) $.Msg("[AP API] Seed: " + status.seed);
-                        }
-
-                        // Dispatch update event
                         $.DispatchEvent("ArchipelagoAPI_StatusUpdated", JSON.stringify(status));
                     } catch (e) {
                         $.Warning("[AP API] Error parsing status: " + e);
@@ -64,7 +55,11 @@ class ArchipelagoAPI {
                 }
             },
             error: () => {
-                // Silently fail if client isn't running
+                // NOUVEAU: Si le client Python est fermé ou injoignable, on le signale proprement.
+                if (!this.m_Status || !this.m_Status.client_offline) {
+                    this.m_Status = { client_offline: true };
+                    $.DispatchEvent("ArchipelagoAPI_StatusUpdated", JSON.stringify(this.m_Status));
+                }
             }
         });
     }
@@ -111,6 +106,5 @@ class ArchipelagoAPI {
     static ENABLE_DEBUG: boolean = false;
 }
 
-// Global exposure
 (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI = ArchipelagoAPI;
 ArchipelagoAPI.init();

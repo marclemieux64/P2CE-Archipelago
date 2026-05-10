@@ -10,6 +10,7 @@ class ArchipelagoMapSelect {
     static g_ChapterData: any = {};
     static g_SelectedMapCommand: string = '';
     static g_LastApiJson: string = '';
+    static g_OpenChapterId: string = '';
 
     static isController() {
         let p = $.GetContextPanel();
@@ -34,7 +35,7 @@ class ArchipelagoMapSelect {
                 }
             }
         }
-        return false; // Nettoyage du code mort qui se trouvait ici
+        return false; 
     }
 
     static onConsoleFocus() {
@@ -48,7 +49,7 @@ class ArchipelagoMapSelect {
 
     static toggleConsole() {
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
-        if (!api || !api.getStatus()) return; // Sécurité : empêche l'ouverture si le client n'est pas là
+        if (!api || !api.getStatus()) return; 
 
         $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
         $.DispatchEvent('MainMenuOpenNestedPage', 'ap_console', 'archipelago/console', undefined);
@@ -80,7 +81,6 @@ class ArchipelagoMapSelect {
         let overlayLabel = overlay.FindChildTraverse('NotConnectedLabel');
         let overlayButton = null;
 
-        // Cherche le label et le bouton dynamiquement dans l'overlay
         const children = overlay.Children();
         for (let i = 0; i < children.length; i++) {
             if (children[i].paneltype === "Label" && !overlayLabel) {
@@ -92,27 +92,24 @@ class ArchipelagoMapSelect {
         }
 
         if (!api || !status) {
-            // ÉTAT 1 : Client non détecté -> Cacher le bouton console
             overlay.RemoveClass('hide');
             if (content) content.AddClass('hide');
-            if (overlayButton) overlayButton.AddClass('hide'); // Cache le bouton !
+            if (overlayButton) overlayButton.AddClass('hide'); 
             
             if (overlayLabel) {
                 overlayLabel.text = "ARCHIPELAGO CLIENT NOT DETECTED\nPlease launch Portal2Client.py";
-                overlayLabel.style.color = "#ffbb00"; // Orange
+                overlayLabel.style.color = "#ffbb00"; 
             }
         } else if (!status.connected) {
-            // ÉTAT 2 : Client lancé, mais serveur déconnecté -> Afficher le bouton
             overlay.RemoveClass('hide');
             if (content) content.AddClass('hide');
-            if (overlayButton) overlayButton.RemoveClass('hide'); // Affiche le bouton !
+            if (overlayButton) overlayButton.RemoveClass('hide'); 
             
             if (overlayLabel) {
                 overlayLabel.text = $.Localize("#Archipelago_Status_NotConnected");
-                overlayLabel.style.color = "#ff4444"; // Rouge
+                overlayLabel.style.color = "#ff4444"; 
             }
         } else {
-            // ÉTAT 3 : Connecté à tout
             overlay.AddClass('hide');
             if (content) content.RemoveClass('hide');
         }
@@ -164,9 +161,65 @@ class ArchipelagoMapSelect {
 
                         if (status.menu) {
                             this.g_ChapterData = syncHelper ? syncHelper.parseApiStatus(status) : {};
+                            
+                            // --- 1. SAUVEGARDE DE L'ÉTAT ---
+                            const savedChapter = this.g_OpenChapterId;
+                            const savedCommand = this.g_SelectedMapCommand;
+
+                            // --- 2. RECONSTRUCTION ---
                             this.generateList();
+
+                            // --- 3. RESTAURATION DU MENU GAUCHE ---
+                            if (savedChapter) {
+                                const mapList = $('#ChapterMaps_' + savedChapter);
+                                const entry = $('#ChapterEntry_' + savedChapter);
+                                if (mapList && entry) {
+                                    entry.AddClass('chapter_entry--active');
+                                    mapList.RemoveClass('hide');
+                                    mapList.style.height = 'fit-children';
+                                    mapList.style.opacity = '1.0';
+                                }
+                            }
+
+                            // --- 4. MISE À JOUR DU PANNEAU DROIT (LIVE UPDATE) ---
+                            if (savedCommand) {
+                                for (const chId in this.g_ChapterData) {
+                                    for (const map of this.g_ChapterData[chId].maps) {
+                                        const cmd = map.command || map.command_deactivated || "";
+                                        if (cmd === savedCommand) {
+                                            const rawTitle = map.title || "Unknown Map";
+                                            let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
+                                            let cleanName = rawTitle;
+                                            
+                                            if (!statusIcons && rawTitle.length > 4 && (rawTitle.startsWith("~") || rawTitle.startsWith("-") || rawTitle.startsWith("═"))) {
+                                                statusIcons = rawTitle.substring(0, 4).replace(/[~\-]/g, "").trim();
+                                                cleanName = rawTitle.substring(4).trim();
+                                            }
+                                            
+                                            let mapCmdName = "";
+                                            if (cmd) {
+                                                const parts = cmd.split(" ");
+                                                if (parts.length >= 2) mapCmdName = parts[1].trim().toLowerCase();
+                                            }
+                                            
+                                            const mapToken = `#portal2_MapName_${mapCmdName}`;
+                                            const localizedMapName = $.Localize(mapToken);
+                                            const finalMapName = (localizedMapName !== mapToken) ? localizedMapName : cleanName;
+
+                                            this.selectMap({ 
+                                                ...map, 
+                                                title: finalMapName, 
+                                                subtitle: map.subtitle || "", 
+                                                status: statusIcons, 
+                                                is_chapter: false 
+                                            });
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }
+                    } // <-- CORRECTION: L'accolade fermante du if (status) était manquante ici !
                 } catch (e) {
                     $.Warning("[AP] Error updating MapSelect from API: " + e);
                 }
@@ -266,6 +319,8 @@ class ArchipelagoMapSelect {
             }
 
             if (bOpening) {
+                this.g_OpenChapterId = chapterId; 
+
                 entry.AddClass('chapter_entry--active');
                 mapList.RemoveClass('hide');
                 mapList.style.height = 'fit-children';
@@ -277,9 +332,11 @@ class ArchipelagoMapSelect {
                     this.runTransition(mapList, activePanel, entry, scrollContainer);
                 });
             } else {
+                this.g_OpenChapterId = ''; 
+                
                 this.runTransition(null, mapList, entry, scrollContainer);
             }
-        }
+        } // <-- CORRECTION: L'accolade fermante du if (mapList) était manquante ici !
 
         const chapter = this.g_ChapterData[chapterId];
         if (chapter) {
@@ -301,8 +358,6 @@ class ArchipelagoMapSelect {
         const subtitle_secondary = $('#MapSubtitleLabel_Secondary') as LabelPanel;
 
         const mapStatusHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatus;
-
-        // Fetch custom logic and colors once from the central hub
         const logicHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoLogic;
         const ICON_COLORS = logicHelper ? logicHelper.getColorMap() : {};
 
@@ -328,7 +383,6 @@ class ArchipelagoMapSelect {
         if (statusLabel) {
             const rawStatus = mapData.status || mapData.statusIcons || "";
             
-            // On extrait le nom de la carte proprement (ex: "map sp_a1_intro1" -> "sp_a1_intro1")
             let mapCmdName = "";
             if (mapData.command) {
                 const parts = mapData.command.split(" ");
@@ -339,22 +393,18 @@ class ArchipelagoMapSelect {
             
             const mItems = mapData.subtitle || "";
 
-            // 3. Demander au logicHelper de calculer les icônes formatées (couleurs + complétion)
             const formattedIcons = logicHelper ? logicHelper.getFormattedIcons(rawStatus, mapCmdName, mItems) : [];
 
-            // 4. Construire le texte HTML pour le Label du menu
             let finalStatusHtml = "";
             for (const iconData of formattedIcons) {
                 finalStatusHtml += `<font color="${iconData.color}">${iconData.char}</font>`;
             }
 
-            // 5. Appliquer au Label
             statusLabel.text = finalStatusHtml;
             statusLabel.style.color = "#eeeeee"; 
         }
         if (mapSubtitleLabel) mapSubtitleLabel.text = mapData.title || "";
 
-        // SELECTIVE VISIBILITY: Hide details for root chapter selections
         const showDetails = !mapData.is_chapter;
         if (checks) checks.visible = showDetails;
         if (reqs) reqs.visible = showDetails;
@@ -448,7 +498,6 @@ class ArchipelagoMapSelect {
                 });
             });
 
-            // Deduplicate maps in the same chapter to avoid double-counting/double-rendering
             const uniqueMaps: any[] = [];
             const seenCmds = new Set();
             if (chapter.maps) {
@@ -517,11 +566,11 @@ class ArchipelagoMapSelect {
                 const chGreenLabel = $.CreatePanel('Label', entry, '');
                 chGreenLabel.text = `${chapterGreenCount}/${chapterTotalCount}`;
 
-                let color = "#ff4444"; // Red (0 available)
+                let color = "#ff4444"; 
                 if (chapterGreenCount === chapterTotalCount) {
-                    color = "#44ff44"; // Green (All pending are available)
+                    color = "#44ff44"; 
                 } else if (chapterGreenCount > 0) {
-                    color = "#ffff44"; // Yellow (Some available, some blocked)
+                    color = "#ffff44"; 
                 }
                 chGreenLabel.style.color = color;
                 chGreenLabel.style.fontSize = "22px";
@@ -624,11 +673,11 @@ class ArchipelagoMapSelect {
                     const progressLabel = $.CreatePanel('Label', mapBtn, '');
                     progressLabel.text = `${mapGreenCount}/${mapTotalLeft}`;
                     
-                    let color = "#ff4444"; // Red (0 available)
+                    let color = "#ff4444"; 
                     if (mapGreenCount === mapTotalLeft) {
-                        color = "#44ff44"; // Green (All pending are available)
+                        color = "#44ff44"; 
                     } else if (mapGreenCount > 0) {
-                        color = "#ffff44"; // Yellow (Some available, some blocked)
+                        color = "#ffff44"; 
                     }
                     progressLabel.style.color = color;
                     progressLabel.style.fontSize = "22px";

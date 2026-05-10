@@ -125,8 +125,15 @@ class MapMenuElement(MenuElement):
             self.title = access_icons["playable"] + self.title
 
     def get_string(self, previous_completed: bool):
-        # Update required items
-        new_required_items = [item for item in self.required_items if item in self.parent.parent.client.item_list]
+        # --- NOUVEAU : On fusionne les prérequis de la carte et de ses sous-locations ---
+        all_reqs = list(self.required_items)
+        for sub_loc in self.sub_location_completion:
+            if sub_loc in all_locations_table:
+                all_reqs.extend(all_locations_table[sub_loc].required_items)
+        all_reqs = list(set(all_reqs)) # Supprime les doublons
+
+        # Update required items based on the combined list
+        new_required_items = [item for item in all_reqs if item in self.parent.parent.client.item_list]
 
         # Remake subtitle
         self.subtitle = "".join(items_to_shortened(new_required_items))
@@ -144,8 +151,15 @@ class MapMenuElement(MenuElement):
         return text
 
     def to_dict(self, previous_completed: bool):
-        # Update required items
-        new_required_items = [item for item in self.required_items if item in self.parent.parent.client.item_list]
+        # --- NOUVEAU : On fusionne les prérequis de la carte et de ses sous-locations ---
+        all_reqs = list(self.required_items)
+        for sub_loc in self.sub_location_completion:
+            if sub_loc in all_locations_table:
+                all_reqs.extend(all_locations_table[sub_loc].required_items)
+        all_reqs = list(set(all_reqs)) # Supprime les doublons
+
+        # Update required items based on the combined list
+        new_required_items = [item for item in all_reqs if item in self.parent.parent.client.item_list]
         self.subtitle = "".join(items_to_shortened(new_required_items))
 
         is_blocked = not (self.parent.parent.is_open_world or previous_completed)

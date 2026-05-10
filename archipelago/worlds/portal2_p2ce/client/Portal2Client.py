@@ -449,6 +449,7 @@ class Portal2Context(CommonContext):
         import threading
         from http.server import BaseHTTPRequestHandler, HTTPServer
         from urllib.parse import parse_qs
+        from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened # <--- NOUVEL IMPORT
         client_self = self
 
         class APIHandler(BaseHTTPRequestHandler):
@@ -459,12 +460,26 @@ class Portal2Context(CommonContext):
             def do_GET(self):
                 if self.path == '/status':
                     is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
-                    self._send_json({"connected": is_conn, "game_connected": client_self.check_game_connection(), "slot": client_self.slot, "checked_locations": list(client_self.checked_locations), "menu": client_self.menu.to_dict() if client_self.menu else None})
+                    
+                    # NOUVEAU : On convertit la liste complète des objets manquants en symboles
+                    missing_str = ""
+                    if hasattr(client_self, "item_list"):
+                        missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list])
+
+                    self._send_json({
+                        "connected": is_conn, 
+                        "game_connected": client_self.check_game_connection(), 
+                        "slot": client_self.slot, 
+                        "checked_locations": list(client_self.checked_locations), 
+                        "missing_items": missing_str, # <--- ON ENVOIE L'INFO AU HUD
+                        "menu": client_self.menu.to_dict() if client_self.menu else None
+                    })
                 elif self.path == '/chat':
-                    self._send_json(list(client_self.chat_log))
+                    self._send_json(client_self.chat_log)
                 elif self.path == '/hints':
-                    self._send_json(list(client_self.hint_log))
-                else: self.send_error(404)
+                    self._send_json(client_self.hint_log)
+                else:
+                    self.send_error(404)
 
             def do_POST(self):
                 try:
@@ -662,16 +677,22 @@ class Portal2Context(CommonContext):
 
     def on_package(self, cmd, args):
         def update_item_list():
+            # NOUVEAU : On importe dynamiquement le dictionnaire depuis MapMenu
+            # Cela garantit que la liste contient exactement ce que le HUD attend
+            if not getattr(self, "full_item_list_loaded", False):
+                from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened
+                self.item_list = list(items_shortened.keys())
+                self.full_item_list_loaded = True
+                
             recv_names = [self.item_names.lookup_in_game(i.item, self.game) for i in self.items_received]
             self.item_list = list(set(self.item_list) - set(recv_names))
             self.refresh_menu()
 
         if cmd == "Retrieved":
-            # Gestion des groupes d'items
-            if f"_read_item_name_groups_{self.game}" in args["keys"]:
-                self.item_list = args["keys"][f"_read_item_name_groups_{self.game}"]["Everything"]
-                update_item_list()
-                self.update_item_remove_commands()
+            # NOUVEAU : On ignore le groupe "Everything" du serveur qui est instable, 
+            # et on calcule la liste manquante directement
+            update_item_list()
+            self.update_item_remove_commands()
             
             # --- FIX : ACCÈS DICTIONNAIRE POUR LES INDICES ---
             hkey = f"_read_hints_{self.team}_{self.slot}"

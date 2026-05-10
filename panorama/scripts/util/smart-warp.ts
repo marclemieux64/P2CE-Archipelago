@@ -56,29 +56,47 @@ function SmartWarpNextMap(currentMapName: string) {
         targetMap = partiallyDoableMaps[randomIndex];
     }
 
+    const notifyFn = (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify;
+
     if (targetMap && targetMap.command) {
-        const mapNameDisplay = targetMap.title || targetMap.command.replace("map ", "");
+        // --- LOGIQUE DE NOM LOCALISÉ (comme dans le HUD) ---
+        const technicalName = targetMap.command.replace("map ", "").trim();
+        const mapToken = `#portal2_MapName_${technicalName}`;
+        const localizedMapName = $.Localize(mapToken);
+        const mapNameDisplay = (localizedMapName !== mapToken) ? localizedMapName : (targetMap.title || technicalName);
+
         $.Msg("[AP] Smart Warp Success: Sending player to " + mapNameDisplay);
         
-        // Trigger the on-screen UI Notification
-        const notifyFn = (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify;
         if (notifyFn) {
             notifyFn(JSON.stringify({
                 title: "SMART WARP",
                 html: "Destination: <font color='#00ffff'>" + mapNameDisplay + "</font><br/><font color='#aaaaaa'><i>Warping in 3 seconds...</i></font>",
-                type: "0 255 255", // Cyan accent color
+                type: "0 255 255", // Cyan
                 play_sound: true
             }));
         }
 
-        // Wait exactly 3 seconds for the player to read the popup, then warp
         $.Schedule(3.0, () => {
             GameInterfaceAPI.ConsoleCommand(targetMap.command);
         });
 
     } else {
+        // --- CAS : AUCUNE CARTE TROUVÉE ---
         $.Msg("[AP] Smart Warp: No doable maps found. Returning to menu.");
-        GameInterfaceAPI.ConsoleCommand("disconnect");
+        
+        if (notifyFn) {
+            notifyFn(JSON.stringify({
+                title: "WARP TO MENU",
+                html: "Aucun niveau disponible.<br/><font color='#aaaaaa'><i>Retour au menu...</i></font>",
+                type: "198 33 223", // Violet (cohérent avec le menu)
+                play_sound: true
+            }));
+        }
+
+        // On attend 1.5s pour que le joueur puisse lire le message d'échec avant de déconnecter
+        $.Schedule(1.5, () => {
+            GameInterfaceAPI.ConsoleCommand("disconnect");
+        });
     }
 }
 

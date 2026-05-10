@@ -41,10 +41,19 @@ $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
     const hud = GetHudRoot();
     if (hud) hud.AddClass("fade-active");
 
-    if (notificationQueue.length === 0) {
-        $.Schedule(1.5, () => {
-            if (isWarpPending) ProcessQueue();
-        });
+    const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
+    
+    // CONDITION : N'afficher "WARP TO MENU" ici que si le Smart Warp est OFF
+    if (useSmartWarp !== "1" && useSmartWarp !== 1) {
+        OnArchipelagoNotify(JSON.stringify({
+            title: "WARP TO MENU",
+            html: "Retour à la sélection de niveau...<br/><font color='#aaaaaa'><i>Chargement...</i></font>",
+            type: "198 33 223",
+            play_sound: true
+        }));
+    } else {
+        // Si Smart Warp est ON, on lance ProcessQueue immédiatement pour traiter le Warp sans message initial
+        if (!isTimerRunning) ProcessQueue();
     }
 });
 
@@ -197,8 +206,8 @@ function OnArchipelagoNotify(payload: string) {
             } else if (data.title === "TRAP TRIGGERED") {
                 // Son de fizzle/erreur pour les pièges
                 GameInterfaceAPI.ConsoleCommand("snd_playsounds Error");
-            } else if (data.title === "SMART WARP") {
-                // Son de succès/récompense pour le smart warp
+            } else if (data.title === "SMART WARP" || data.title === "WARP TO MENU") {
+                // smart warp and warp to menu sound
                 $.PlaySoundEvent('Portal.elevator_chime');
                 
             } else {

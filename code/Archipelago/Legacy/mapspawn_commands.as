@@ -91,7 +91,7 @@ void SetCheckedScreensCmd(const CommandArgs@ args) {
     Legacy::checked_screens.resize(0);
     
     string fullCmd = args.GetCommandString();
-    Msgl("AP DEBUG RAW COMMAND: " + fullCmd);
+    ArchipelagoLog("AP DEBUG RAW COMMAND: " + fullCmd);
 
     // 2. Boucle de récupération intelligente
     for (int i = 1; i < args.ArgC(); i++) {
@@ -109,17 +109,17 @@ void SetCheckedScreensCmd(const CommandArgs@ args) {
                 
                 // Fusion avec un espace
                 Legacy::checked_screens.opIndex(lastIdx) = prev + " " + arg;
-                Msgl("AP DEBUG: Merged to create -> '" + Legacy::checked_screens.opIndex(lastIdx) + "'");
+                ArchipelagoLog("AP DEBUG: Merged to create -> '" + Legacy::checked_screens.opIndex(lastIdx) + "'");
             } 
             else {
                 // Comportement normal pour les autres maps
                 Legacy::checked_screens.insertLast(arg);
-                Msgl("AP DEBUG: Inserted screen -> '" + arg + "'");
+                ArchipelagoLog("AP DEBUG: Inserted screen -> '" + arg + "'");
             }
         }
     }
     
-    Msgl("AP: Checked screens updated (" + Legacy::checked_screens.length() + " items)");
+    ArchipelagoLog("AP: Checked screens updated (" + Legacy::checked_screens.length() + " items)");
 }
 
 [ServerCommand("DeathLink", "Checks if the player is dead for DeathLink")]
@@ -185,6 +185,7 @@ void WarpToMenuLegacyCmd(const CommandArgs@ args) {
 [ServerCommand("RunDelayedInit", "Internal - Runs the delayed initialization sequence")]
 void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     // 1. On met à jour le nom interne une seule fois
+    Msgl("=====Archipelago=====");
     Legacy::UpdateInternalMapName();
 
     // 2. Validation
@@ -192,17 +193,22 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
         Legacy::ArchipelagoLog("DelayedInit: Map name unknown, skipping.");
         return;
     }
-
     // 3. Setup (Une seule fois avec le nom validé)
     ResetPersistentSystems();
+    Msgl("ResetPersistentSystems() completed");
     Legacy::DoMapSpecificSetup();
+    Msgl("DoMapSpecificSetup() completed");
     Legacy::CreateCompleteLevelAlertHook(::current_map);
+    Msgl("CreateCompleteLevelAlertHook() completed");
     Legacy::CreateMapSpecificHolos();
+    Msgl("CreateMapSpecificHolos() completed");
     Legacy::AttachDeathTrigger();
+    Msgl("AttachDeathTrigger() completed");
     Legacy::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|1\")");
-    
-    
+    Msgl("SendToPanorama() completed");
     Legacy::ArchipelagoLog("DelayedInit complete for: " + ::current_map);
+ Msgl("=====================");
+
 }
 [ServerCommand("AddScript", "Connects an entity output to a console command")]
 void AddScriptLegacyCmd(const CommandArgs@ args) {

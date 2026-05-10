@@ -99,7 +99,7 @@ void AttachDeathTrigger() {
             timer.FireInput("Enable", empty, 0.0f, null, null, 0);
         }
 
-        Msgl("AP: DeathLink active");
+        Msgl("DeathLink active");
     }
 
 void DeleteEntity(const string&in entity_name, bool create_holo = true) {
@@ -1087,10 +1087,10 @@ void AddWheatleyMonitorBreakCheck() {
             InitMonitorData(); 
 
             string map_name = current_map;
-            Msgl("AP DEBUG: Running check for map: '" + map_name + "'");
+            ArchipelagoLog("AP DEBUG: Running check for map: '" + map_name + "'");
 
             if (!screen_names.exists(map_name)) {
-                Msgl("AP DEBUG: Map '" + map_name + "' NOT found in dictionary.");
+                ArchipelagoLog("AP DEBUG: Map '" + map_name + "' NOT found in dictionary.");
                 return;
             }
 

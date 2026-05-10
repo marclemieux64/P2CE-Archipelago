@@ -24,7 +24,8 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     bool isLaser = (classname.locate("env_portal_laser") != uint(-1) || classname.locate("prop_laser_relay") != uint(-1) || classname.locate("prop_laser_catcher") != uint(-1));
     bool isButton = (classname.locate("button") != uint(-1));
     bool isFaithPlate = (model.locate("faith_plate") != uint(-1));
-    bool isFunnelBridge = (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel");
+    bool isFunnel = (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel");
+    bool isBridge = (classname == "prop_wall_projector");
     bool isMonsterBox = (classname == "prop_monster_box");
     bool isWheatleyScreen = (model.locate("glados_screenborder_curve.mdl") != uint(-1));
     bool isCore = (classname.locate("core") != uint(-1) || name.locate("core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
@@ -120,12 +121,22 @@ if (isTurret) {
         absoluteAngles = false; // Rotation avec la tourelle
         return;
     }
+    if (isBridge) {
+    targetPos = Vector(0.0f, -40.0f, 0.0f);
+    targetAng = QAngle(90.0f, 0.0f, 0.0f);
+    targetSkin = 4;
+    targetScale = 0.66f;
+    absoluteAngles = false; 
+    shouldParent = true;
+    return;
+}
     if (isCube || isFaithPlate) {
         targetPos = Vector(0, 0, 0); // Local UP
         targetAng = QAngle(0, 0, 0); // Point Down
         targetSkin = 4;
         targetScale = 0.66f;
         absoluteAngles = true; 
+
     } else if (isLaser) {
         targetSkin = 4;
         shouldParent = true;
@@ -136,7 +147,7 @@ if (isTurret) {
             targetScale = 0.66f;
         } else {
             targetPos = Vector(32.0f, 0, 0); // Further out to avoid clipping
-            targetScale = 0.55f;
+            targetScale = 0.66f;
             targetAng = QAngle(90.0f, 0, 0); // Rotate to face outward
         }
     } else if (isButton) {

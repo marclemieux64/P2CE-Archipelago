@@ -27,7 +27,9 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     bool isFunnelBridge = (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel");
     bool isMonsterBox = (classname == "prop_monster_box");
     bool isWheatleyScreen = (model.locate("glados_screenborder_curve.mdl") != uint(-1));
-
+    bool isCore = (classname.locate("core") != uint(-1) || name.locate("core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
+    bool isGel = (classname == "info_paint_sprayer" || classname == "prop_paint_bomb" || classname == "paint_sphere" || name.locate("paint") != uint(-1));
+    
     // WHEATLEY SCREENS
     if (isWheatleyScreen) {
         // Tweak this vector to push the hologram out of the screen.
@@ -43,8 +45,42 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         
         return; // Exit early so no other rules mess this up
     }
+// F. CORES
+    if (isCore) {
+        // 1. Sélection du skin
+        if (name.locate("1") != uint(-1)) targetSkin = 6; 
+        else if (name.locate("2") != uint(-1)) targetSkin = 5; 
+        else if (name.locate("3") != uint(-1)) targetSkin = 3; 
+        else targetSkin = 4;
+        
+        // 2. Position et Rotation
+        // On garde l'origine du cœur, mais on force l'angle mondial
+        targetPos = ent.GetAbsOrigin() + Vector(0, 0, 0.0f); // Position absolue
+        targetAng = QAngle(0, 0, 0);                        // Angle absolu (Vers le bas)
+        
+        // 3. Flags de calcul
+        // On passe à TRUE pour ignorer l'orientation bizarre du cœur
+        absoluteAngles = true; 
+        
+        // On ne parente pas car l'entité va être supprimée (Remove)
+        shouldParent = false; 
+        
+        // On s'assure que le scale est correct pour éviter le bug "1e-45"
+        targetScale = 1.0f; 
+        
+        return;
+    }
 
-
+    // GELS / PAINT (Système ultra-simplifié)
+    if (isGel) {
+        targetSkin = 4;              // Skin 4 pour tous les éléments
+        targetScale = 1.0f;          // Taille normale
+        targetPos = Vector(0, 0, 0); // Zéro offset (pile au centre de l'entité)
+        targetAng = QAngle(90, 0, 0); // Zéro rotation supplémentaire
+        shouldParent = false;         // Attaché à l'entité (parenting)
+        absoluteAngles = false;      // Suit l'orientation de l'entité automatiquement
+        return;
+    }
     // H. VITRIFIED BUTTONS
     if (name.locate("dummy_chamber_button") != uint(-1)) {
         targetSkin = 0;

@@ -39,19 +39,33 @@ namespace Legacy {
     array<int> g_processed_turret_indices;
     array<int> g_processed_entity_indices;
 array<string> trap_colors = { "255 0 0", "0 255 0", "0 0 255", "255 255 0", "255 0 255", "0 255 255" };
+
+
 /**
  * ArchipelagoLog - Core logging for legacy functions.
  */
     void ArchipelagoLog(string msg) {
-        array<string> identifiers = { "map_name:", "monitor_break:", "item_collected:", "button_check:", "map_complete:" };
-        for (uint i = 0; i < identifiers.length(); i++) {
-            if (msg.locate(identifiers[i]) == 0) {
-                Msg(msg + "\n");
-                return;
-            }
+    // 1. On récupère la valeur de la ConVar de debug
+    ConVarRef debugCV("ArchipelagoDebug");
+    bool isDebugEnabled = debugCV.GetBool();
+
+    array<string> identifiers = { "map_name:", "monitor_break:", "item_collected:", "button_check:", "map_complete:" };
+    
+    for (uint i = 0; i < identifiers.length(); i++) {
+        if (msg.locate(identifiers[i]) == 0) {
+            // Ces identifiants sont CRITIQUES (probablement pour ton client externe)
+            // On les affiche toujours.
+            Msg(msg + "\n");
+            return;
         }
+    }
+
+    // 2. Pour tous les autres messages (le "bruit" de debug), 
+    // on ne les affiche que si ArchipelagoDebug est à 1
+    if (isDebugEnabled) {
         Msg("[Archipelago] " + msg + "\n");
     }
+}
 
 /**
  * UpdateInternalMapName - Safely grabs the current map name from the engine.

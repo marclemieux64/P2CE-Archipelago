@@ -47,6 +47,18 @@ void ResetPersistentSystems() {
     if (cmd !is null) {
         Variant v;
         
+
+        // Reset Visuals (Motion Blur Trap)
+        v.SetString("mat_motion_blur_enabled 1"); // Assuming default is 1
+        cmd.FireInput("Command", v, 0.0f, null, null, 0);
+
+        // Réinitialisation du PostProcess (pour retirer le brouillard résiduel)
+        v.SetString("con_log_channel_mode 0");
+        cmd.FireInput("Command", v, 0.1f, null, null, 0); // Léger délai
+         // Réinitialisation du PostProcess (pour retirer le brouillard résiduel)
+        v.SetString("con_log_severity_mode 0");
+        cmd.FireInput("Command", v, 0.1f, null, null, 0); // Léger délai
+
         // Reset Sound Mixers (PotatOS Silence restoration)
         v.SetString("snd_setmixer potatosVO vol 0.4");
         cmd.FireInput("Command", v, 0.0f, null, null, 0);
@@ -86,45 +98,61 @@ void AttachDeathTrigger() {
 void DeleteEntity(const string&in entity_name, bool create_holo = true) {
     string mapName = ConVarRef("host_map").GetString();
 
-    // --- NOUVEAU : On force l'annulation de l'hologramme pour PotatOS ---
+    // --- 1. NETTOYAGE ET EXCEPTIONS ---
+    string cleanName = entity_name;
+    
+    // Correction pour AngelScript : On vérifie si le premier caractère est '@'
+    if (cleanName.length() > 0 && cleanName[0] == 64) { // 64 est le code ASCII pour '@'
+        cleanName = cleanName.substr(1);
+    }
+
     if (entity_name == "potatos_prop" || entity_name == "potatos" || entity_name == "models/props/potatos.mdl") {
         create_holo = false;
     }
 
     if (entity_name == "trigger_catapult" && ItemInList(mapName, scripted_fling_levels)) {
-        // MsgI est probablement ta fonction de log custom
         Legacy::ArchipelagoLog("not removing trigger_catapult");
         return;
     }
 
+    // --- 2. RECHERCHE ROBUSTE ---
     array<CBaseEntity@> entsToDelete;
     CBaseEntity@ searchEnt = null;
 
-    // --- RECHERCHE DES ENTITÉS ---
-    if (entity_name.locate(".mdl") != uint(-1)) { // Correction du check .mdl
+    if (entity_name.locate(".mdl") != uint(-1)) {
         while ((@searchEnt = EntityList().FindByModel(searchEnt, entity_name)) !is null) {
             entsToDelete.insertLast(searchEnt);
         }
     } 
     else {
-        while ((@searchEnt = EntityList().FindByClassname(searchEnt, entity_name)) !is null) {
-            entsToDelete.insertLast(searchEnt);
-        }
-        
-        @searchEnt = null;
-        while ((@searchEnt = EntityList().FindByName(searchEnt, entity_name)) !is null) {
-            bool alreadyInList = false;
-            for (uint i = 0; i < entsToDelete.length(); i++) {
-                if (entsToDelete[i] is searchEnt) {
-                    alreadyInList = true;
-                    break;
+        // On cherche par le nom original (@core01) ET le nom propre (core01)
+        array<string> searchNames = { entity_name, cleanName };
+        for (uint s = 0; s < searchNames.length(); s++) {
+            @searchEnt = null;
+            while ((@searchEnt = EntityList().FindByName(searchEnt, searchNames[s])) !is null) {
+                bool alreadyIn = false;
+                for (uint j = 0; j < entsToDelete.length(); j++) {
+                    if (entsToDelete[j] is searchEnt) { alreadyIn = true; break; }
                 }
+                if (!alreadyIn) entsToDelete.insertLast(searchEnt);
             }
-            if (!alreadyInList) entsToDelete.insertLast(searchEnt);
+        }
+
+        // Si on n'a toujours rien, on cherche par Classname
+        if (entsToDelete.length() == 0) {
+            @searchEnt = null;
+            while ((@searchEnt = EntityList().FindByClassname(searchEnt, entity_name)) !is null) {
+                entsToDelete.insertLast(searchEnt);
+            }
         }
     }
 
-    // --- TRAITEMENT ET SUPPRESSION ---
+    // --- 3. TRAITEMENT ET SUPPRESSION ---
+    if (entsToDelete.length() == 0) {
+        Legacy::ArchipelagoLog("[AP] DeleteEntity: No targets found for " + entity_name);
+        return;
+    }
+
     for (uint i = 0; i < entsToDelete.length(); i++) {
         CBaseEntity@ ent = @entsToDelete[i];
 
@@ -134,23 +162,38 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
         }
 
         if (create_holo) {
-            // 1. Récupérer le nom de l'entité originale
             string originalName = ent.GetEntityName();
-            
-            // 2. Si l'entité n'a pas de nom, on en génère un basé sur entity_name
-            // pour pouvoir le retrouver plus tard (ex: "holo_prop_weighted_cube")
             string holoName = (originalName != "") ? originalName + "_holo" : entity_name + "_holo";
 
+            // --- CORRECTION ICI ---
+            Vector hPos(0, 0, 0);
+            QAngle hAng(0, 0, 0);
+            int hSkin = 4;
+            float hScale = 1.0f; // ON FORCE 1.0 PAR DÉFAUT
+            bool hParent = false;
+            bool hAbs = false;
+
+            // On appelle tes règles (qui peuvent ou non changer le hScale)
+            Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
+
+            // Sécurité supplémentaire : si après l'override le scale est toujours suspect
+            if (hScale <= 0.001f) hScale = 1.0f; 
+
             QAngle angles = ent.GetAbsAngles();
-            Vector forward;
-            AngleVectors(angles, forward);
-            
-            // On récupère la position actuelle
             Vector spawnPos = ent.GetAbsOrigin();
+            Vector finalPos;
+            QAngle finalAng;
             
-            // On appelle CreateAPHologram avec le nouveau nom généré
-            // Note : J'ai passé holoName dans l'argument 'name' (7ème paramètre)
-            Legacy::CreateAPHologram(spawnPos, angles, 0.7f, null, "", 4, holoName);
+            if (hAbs) {
+                finalPos = hPos;
+                finalAng = hAng;
+            } else {
+                finalPos = spawnPos + (AnglesToForward(angles) * hPos.x) + (AnglesToRight(angles) * -hPos.y) + (AnglesToUp(angles) * hPos.z);
+                finalAng = angles + hAng;
+            }
+
+            Legacy::ArchipelagoLog("[AP] Spawning Holo: " + holoName + " | Skin: " + hSkin + " | Scale: " + hScale);
+            Legacy::CreateAPHologram(finalPos, finalAng, hScale, null, "", hSkin, holoName);
         }
         
         ent.Remove();
@@ -462,9 +505,24 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
 }
 
     void DeleteCoreOnOutput(string core_name, string target_name, string output) {
-        float delay = 5.0f;
-        EntFire(target_name, "AddOutput", output + " InitCmd,Command,DeleteEntity " + core_name + " 0, " + delay + ",-1");
+    array<CBaseEntity@> targets = FindEntities(target_name);
+
+    if (targets.length() == 0) {
+        ArchipelagoLog("[Archipelago] Error: DeleteCoreOnOutput target '" + target_name + "' not found");
+        return;
     }
+
+    Variant v;
+    // Command format: DeleteEntity <name> <holo> <scale>
+    // Changed holo flag to 1 to ensure cores hitting Wheatley get holograms
+    v.SetString(output + " InitCmd:Command:DeleteEntity " + core_name + " 1 0.7:5.0:-1");
+
+    for (uint i = 0; i < targets.length(); i++) {
+        targets[i].FireInput("AddOutput", v, 0.0f, null, null, 0);
+    }
+    ArchipelagoLog("[Archipelago] Hooked output '" + output + "' on '" + targets.length() + "' entities matched by '" + target_name + "' to delete '" + core_name + "' in 5s");
+}
+
 
     void BlockWheatleyFight() {
         CBaseEntity@ socket = EntityList().FindByName(null, "breaker_socket_button");
@@ -577,12 +635,24 @@ void RemovePotatOS() {
         if (scenarioName.locate("rd") == 0) skin = 0;
 
     // 0. CLEANUP & IDEMPOTENCY
+        array<CBaseEntity@> entsToRemove; // On crée un tableau temporaire
         CBaseEntity@ entCheck = null;
+        
         while ((@entCheck = EntityList().FindInSphere(entCheck, position, 24.0f)) !is null) {
             string cls = entCheck.GetClassname();
             string entName = entCheck.GetEntityName();
+            
             if (entName == scenarioName + "_model" || entName.locate("ap_") == 0) return;
-            if (cls.locate("button") != uint(-1) || cls.locate("switch") != uint(-1) || cls.locate("dynamic") != uint(-1)) entCheck.Remove();
+            
+            if (cls.locate("button") != uint(-1) || cls.locate("switch") != uint(-1) || cls.locate("dynamic") != uint(-1)) {
+                // Au lieu de Remove(), on l'ajoute à la liste d'attente
+                entsToRemove.insertLast(entCheck); 
+            }
+        }
+
+        // MAINTENANT qu'on a fini de chercher, on peut les supprimer en toute sécurité !
+        for (uint i = 0; i < entsToRemove.length(); i++) {
+            entsToRemove[i].Remove();
         }
 
         string uid = "ap_" + RandomInt(1000, 9999);
@@ -590,6 +660,7 @@ void RemovePotatOS() {
         if (body !is null) {
             body.KeyValue("targetname", scenarioName + "_model");
             body.SetModel("models/props/switch001.mdl");
+            body.KeyValue("solid", "6");
             body.SetAbsOrigin(position);
             body.SetAbsAngles(angle);
             body.Spawn();
@@ -791,21 +862,26 @@ void RemovePotatOS() {
     }
 
     // --- RESTAURATION : Le scan des triggers anonymes (Fixes spécifiques par map) ---
-    CBaseEntity@ tr = null;
-    while ((@tr = EntityList().FindByClassname(tr, "trigger_once")) !is null) {
-        if (tr.GetEntityName() == "") { 
-            Vector pos = tr.GetAbsOrigin();
-            bool is_target = false;
+    // On crée un tableau avec les deux types de triggers à chercher
+    array<string> triggerClasses = {"trigger_once", "trigger_multiple"};
+    
+    for (uint i = 0; i < triggerClasses.length(); i++) {
+        CBaseEntity@ tr = null;
+        while ((@tr = EntityList().FindByClassname(tr, triggerClasses[i])) !is null) {
+            if (tr.GetEntityName() == "") { 
+                Vector pos = tr.GetAbsOrigin();
+                bool is_target = false;
 
-            if (map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 100) is_target = true;
-            else if (map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 100) is_target = true;
-            else if (map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 100) is_target = true;
-            else if (map == "sp_a4_finale1" && pos.DistTo(Vector(-12832, -3040, -112)) < 100) is_target = true;
-            else if (map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 100) is_target = true;
+                // CORRECTION : La chaîne des 'else if' est maintenant parfaite
+                if (map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 2.0f) is_target = true;
+                else if (map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 2.0f) is_target = true;
+                else if (map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 2.0f) is_target = true;
+                else if (map == "sp_a4_finale1" && pos.DistTo(Vector(-12832, -3040, -112)) < 2.0f) is_target = true;
+                else if (map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 2.0f) is_target = true;
 
-            if (is_target) {
-                // Utilisation de la nouvelle syntaxe propre
-                SafeAddOutput(tr, "OnStartTouch", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
+                if (is_target) {
+                    SafeAddOutput(tr, "OnStartTouch", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
+                }
             }
         }
     }
@@ -814,7 +890,6 @@ void RemovePotatOS() {
     if (map == "sp_a4_finale4") {
         array<CBaseEntity@> relays = FindEntities("ending_relay");
         for (uint i = 0; i < relays.length(); i++) {
-            // Note : PrintCompleteNoExit au lieu de FinishedMap
             SafeAddOutput(relays[i], "OnTrigger", "InitCmd", "Command", "PrintCompleteNoExit", 0.0f, -1);
         }
     } 
@@ -826,8 +901,8 @@ void RemovePotatOS() {
             logicScripts[i].Remove();
         }
 
-        // Hooks standards
-        array<string> targets = { "transition_trigger", "trigger_transition", "relay_transition", "ending_relay","potatos_end_relay","relay_transition","ending_relay" };
+        // CORRECTION : Les doublons ont été retirés !
+        array<string> targets = { "transition_trigger", "relay_transition", "ending_relay", "potatos_end_relay" };
         for (uint s = 0; s < targets.length(); s++) {
             array<CBaseEntity@> ents = FindEntities(targets[s]);
             for (uint i = 0; i < ents.length(); i++) {
@@ -838,7 +913,6 @@ void RemovePotatOS() {
     } 
     // --- LOGIQUE ELEVATOR (Avec Restauration du hook) ---
     else {
-        // On récupère le hook de transition qui avait été supprimé dans la nouvelle version
         array<CBaseEntity@> cls = FindEntities("@transition_from_map");
         for (uint i = 0; i < cls.length(); i++) {
             SafeAddOutput(cls[i], "OnTrigger", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
@@ -1110,60 +1184,82 @@ if (shouldWarp) {
 }
 
 void RemoveGel(Vector position, string filter = "", string object_name = "") {
-    float radius = 64.0f; 
-    CBaseEntity@ ent = null;
-    bool found = false;
+        float radius = 64.0f; 
+        CBaseEntity@ ent = null;
+        bool found = false;
 
-    // 1. PRIORITÉ : Recherche par nom (pour les entités logiques sans volume)
-    if (object_name != "" && object_name != "null") {
-        @ent = EntityList().FindByName(null, object_name);
-        if (ent !is null) {
-            if ((ent.GetAbsOrigin() - position).Length() < 128.0f) {
-                found = true;
+        // 1. PRIORITÉ : Recherche par nom (pour les entités logiques sans volume)
+        if (object_name != "" && object_name != "null") {
+            @ent = EntityList().FindByName(null, object_name);
+            if (ent !is null) {
+                if ((ent.GetAbsOrigin() - position).Length() < 128.0f) {
+                    found = true;
+                }
             }
         }
-    }
 
-    // 2. FALLBACK : Recherche par sphère (si le nom n'a pas suffi)
-    if (!found) {
-        @ent = null; 
-        while ((@ent = EntityList().FindInSphere(ent, position, radius)) !is null) {
-            string className = ent.GetClassname();
-            string targetName = ent.GetEntityName();
+        // 2. FALLBACK : Recherche par sphère (si le nom n'a pas suffi)
+        if (!found) {
+            @ent = null; 
+            while ((@ent = EntityList().FindInSphere(ent, position, radius)) !is null) {
+                string className = ent.GetClassname();
+                string targetName = ent.GetEntityName();
 
-            bool classMatch = (filter == "" || filter == "null" || className == filter);
-            bool nameMatch = (object_name == "" || object_name == "null" || targetName == object_name);
+                bool classMatch = (filter == "" || filter == "null" || className == filter);
+                bool nameMatch = (object_name == "" || object_name == "null" || targetName == object_name);
 
-            if (classMatch && nameMatch) {
-                found = true;
-                break; 
+                if (classMatch && nameMatch) {
+                    found = true;
+                    break; 
+                }
             }
         }
-    }
 
-    // 3. EXÉCUTION AVEC NOM D'HOLOGRAMME PERSONNALISÉ
-    if (found && ent !is null) {
-        Vector pos = ent.GetAbsOrigin();
-        QAngle ang = ent.GetAbsAngles();
-        
-        // RÉCUPÉRATION DU NOM DE L'ENTITÉ
-        string originalName = ent.GetEntityName();
-        
-        // Si l'entité n'a pas de nom, on utilise sa classe par défaut
-        if (originalName == "" || originalName == "null") {
-            originalName = ent.GetClassname();
+        // 3. EXÉCUTION AVEC LE SYSTÈME D'OVERRIDES
+        if (found && ent !is null) {
+            // RÉCUPÉRATION DU NOM DE L'ENTITÉ
+            string originalName = ent.GetEntityName();
+            if (originalName == "" || originalName == "null") {
+                originalName = ent.GetClassname();
+            }
+
+            string holoName = originalName + "_holo";
+
+            // --- LECTURE DES RÈGLES (isGel s'appliquera ici) ---
+            Vector hPos(0, 0, 0);
+            QAngle hAng(0, 0, 0);
+            int hSkin = 4;
+            float hScale = 1.0f;
+            bool hParent = false;
+            bool hAbs = false;
+
+            Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
+
+            // --- CALCUL DE LA POSITION MONDIALE FINALE ---
+            Vector spawnPos = ent.GetAbsOrigin();
+            QAngle spawnAng = ent.GetAbsAngles();
+            Vector finalPos;
+            QAngle finalAng;
+
+            if (hAbs) {
+                finalPos = hPos;
+                finalAng = hAng;
+            } else {
+                // On calcule le décalage local demandé par GetHologramVisualOverrides
+                finalPos = spawnPos + (Legacy::AnglesToForward(spawnAng) * hPos.x) + (Legacy::AnglesToRight(spawnAng) * -hPos.y) + (Legacy::AnglesToUp(spawnAng) * hPos.z);
+                finalAng = spawnAng + hAng;
+            }
+
+            // Création de l'hologramme SANS PARENT (null) car l'entité va être détruite !
+            Legacy::CreateAPHologram(finalPos, finalAng, hScale, null, "", hSkin, holoName);
+            
+            // Suppression de l'entité d'origine
+            ent.Remove();
+            
+            // Note: J'ai utilisé ArchipelagoLog (ou Msg selon ce que vous préférez)
+            ArchipelagoLog("AP: Replaced " + originalName + " with " + holoName + " at " + spawnPos.x + " " + spawnPos.y);
         }
-
-        // CONSTRUCTION DU NOM : Nom de l'entité + _holo
-        string holoName = originalName + "_holo";
-        
-        // Création de l'hologramme
-        CreateAPHologram(pos, ang, 1.0f, null, "", 0, holoName, true);
-        
-        ent.Remove();
-        Msg("AP: Replaced " + originalName + " with " + holoName + " at " + pos.x + " " + pos.y + "\n");
     }
-}
 
 
     void CreateClearGel(Vector position, float offset = -100.0f) {

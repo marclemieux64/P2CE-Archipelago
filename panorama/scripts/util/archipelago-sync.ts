@@ -138,14 +138,6 @@ class ArchipelagoSync {
                 cleanMap = cleanMap.substring(0, cleanMap.length - 4);
             }
 
-            // --- UPDATED MAP DETECTION ---
-            if (cleanMap && cleanMap !== "main_menu" && cleanMap !== this.m_CurrentMap) {
-                $.Msg("[AP] Panorama detected map change via event: " + cleanMap);
-                this.m_CurrentMap = cleanMap;
-                GameInterfaceAPI.ConsoleCommand("ap_report_map " + cleanMap);
-                this.runSync(cleanMap);
-            }
-
             const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
             if (api && api.getStatus() && !api.getStatus().connected) {
                 $.DispatchEvent("ArchipelagoNotify", JSON.stringify({

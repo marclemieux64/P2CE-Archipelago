@@ -58,7 +58,7 @@ class ArchipelagoMapStatus {
         let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
         const mItems = map.subtitle || "";
 
-        const isCompleted = statusIcons.length > 0 && (statusIcons.replace(/★/g, "").length === 0 || statusIcons.replace(/✓/g, "").length === 0);
+        const isCompleted = statusIcons.length > 0 && (statusIcons.replace(/★/g, "").length === 0 || statusIcons.replace(/£/g, "").length === 0);
         if (isCompleted) return { completed: true, greenCount: 0, total: statusIcons.length, doable: false, fullyDoable: false };
 
         let greenCount = 0;

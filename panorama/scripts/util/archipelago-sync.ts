@@ -7,7 +7,7 @@ class ArchipelagoSync {
     static ENABLE_DEBUG: boolean = false;
 
     static getCompletionSymbol(): string {
-        return ($.persistentStorage.getItem('CompletionSymbol') ?? 0) === 1 ? "★" : "✓";
+        return ($.persistentStorage.getItem('CompletionSymbol') ?? 0) === 1 ? "★" : "£";
     }
 
     /**

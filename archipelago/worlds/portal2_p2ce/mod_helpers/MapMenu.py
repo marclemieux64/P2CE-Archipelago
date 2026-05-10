@@ -40,7 +40,7 @@ items_shortened = {
 }
 
 indicator_characters: dict[str, str] = {
-    "completed": "✓",
+    "completed": "£",
     "map": "ã",
     "wheatley": "ÿ",
     "ratman": "ø",

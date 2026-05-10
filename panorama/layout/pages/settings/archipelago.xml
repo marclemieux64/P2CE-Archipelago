@@ -1,6 +1,7 @@
 <root>
 	<styles>
 		<include src="file://{resources}/styles/main.scss" />
+		<!-- <include src="file://{resources}/styles/pages/settings/archiepelago.scss" /> -->
 	</styles>
 	<scripts>
 		<include src="file://{scripts}/pages/settings/page.js" />
@@ -35,8 +36,8 @@
 					psvar="ap_completion_symbol"
 					infomessage="#Archipelago_Settings_CompletionSymbol_info"
 				>
-					<Label text="#Archipelago_Settings_Symbol_Checkmark" value="0" id="ap_symbol0" html="true" />
-					<Label text="#Archipelago_Settings_Symbol_Star" value="1" id="ap_symbol1" html="true" />
+					<Label class="ap_symbol" text="#Archipelago_Settings_CompletionSymbol_0" value="0" id="ap_symbol_0" />
+					<Label class="ap_symbol" text="#Archipelago_Settings_CompletionSymbol_1" value="1" id="ap_symbol_1" />
 				</SettingsEnumDropDown>
 
 				<SettingsEnumDropDown

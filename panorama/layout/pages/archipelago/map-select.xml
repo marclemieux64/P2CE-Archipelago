@@ -36,7 +36,7 @@
                 <Panel id="RightPreview" class="right_preview">
                     <Image
                         id="PreviewImage"
-                        src="file://{images}/menu/p2ce-generic.png"
+                        src=""
                         class="preview_image"
                         scaling="stretch-to-cover-preserve-aspect" />
                 </Panel>
@@ -74,13 +74,13 @@
 
                         <!-- CHECKS -->
                         <Panel id="ChecksColumn" class="info_column">
-                            <Label class="info_header" text="#Archipelago_Map_Checks" />
+                            <Label id="ChecksHeader" class="info_header" text="#Archipelago_Map_Checks" style="visibility:collapse;" />
                             <Label id="MapStatusIconsPreview" class="map_status_preview_label" text="" html="true" />
                         </Panel>
 
                         <!-- REQUIREMENTS -->
                         <Panel id="RequirementsColumn" class="info_column">
-                            <Label class="info_header" text="#Archipelago_Map_MissingItems" />
+                            <Label id="MissingItemsHeader" class="info_header" text="#Archipelago_Map_MissingItems" style="visibility:collapse;" />
                             <Label id="MapSubtitleLabel_Secondary" class="map_subtitle_label" text="" html="true" />
                         </Panel>
                     </Panel>
@@ -89,6 +89,7 @@
                     <Panel id="PlayButtonSpacer" class="footer_spacer" />
 
                     <Button id="PlayButton"
+                            style="visibility:collapse;"
                             class="play_button"
                             onmouseover="$.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
                             onactivate="$.PlaySoundEvent('UIPanorama.P2CE.MenuAccept'); ArchipelagoMapSelect.playSelectedMap()">

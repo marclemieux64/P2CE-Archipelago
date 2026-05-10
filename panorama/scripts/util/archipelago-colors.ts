@@ -96,7 +96,7 @@ class ArchipelagoColors {
      * Determines the status of a map check indicator.
      */
     static getIndicatorStatus(char: string, mapCmdName: string, mItems: string, charIndex: number, fullStatus: string): { isCompleted: boolean, isAvailable: boolean } {
-        const isCompleted = (char === "✓" || char === "★");
+        const isCompleted = (char === "£" || char === "★");
 
         if (isCompleted) {
             return { isCompleted: true, isAvailable: true };
@@ -172,7 +172,7 @@ class ArchipelagoColors {
 
             let color = "#ffffff";
             // Only actual checkmarks represent 'Completed' state (Yellow)
-            const isCompletionChar = (resultChar === "✓" || resultChar === "★");
+            const isCompletionChar = (resultChar === "£" || resultChar === "★");
             
             // Only Portal Guns keep their color even when Locked
             const isPortalGun = (resultChar === "ý" || resultChar === "þ" || resultChar === "ǫ");

@@ -79,8 +79,6 @@
 		"Archipelago_Settings_HideLocationCounts_info" "Cache le nombre de validations des chapitres et des niveaux."
 		"Archipelago_Settings_CompletionSymbol" "Symbole de niveau/chapitre complété"
 		"Archipelago_Settings_CompletionSymbol_info" "Choisissez un symbole pour représenter un niveau/chapitre terminé complètement."
-		"Archipelago_Settings_Symbol_Checkmark" "Crochet <font color='#ffff44' face='apportalb'>✓</font>"
-		"Archipelago_Settings_Symbol_Star"      "Étoile <font color='#ffff44' face='apportalb'>★</font>"
 		"Archipelago_Settings_TransitionType"   "Type de changement de niveau"
 		"Archipelago_Settings_TransitionType_info"		"Choisissez ce qu'il se passe après avoir terminé un niveau.\n<h2>Retour au menu</h2>Retourne au menu de sélection de niveau d'Archipelago après avoir complété un niveau.\n<h2>Transition intelligente</h2>Passe automatiquement à un autre niveau. Un niveau qui peut être terminé au complet sera toujours priorisé. Si aucun niveau ne peut être terminé au complet, un niveau pouvant être terminé partiellement sera choisi au hasard."
 		"Archipelago_Settings_Transition_Menu"   "Retour au menu"

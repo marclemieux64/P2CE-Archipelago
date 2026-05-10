@@ -17,7 +17,7 @@ void TriggerMotionBlurTrap(float duration = 20.0f) {
         
         // 2. Activate blur
         v.SetFloat(1.0f);
-        lpp.FireInput("SetMotionBlurAmount", v, 0.0f, null, null);
+        lpp.FireInput("-", v, 0.0f, null, null);
 
         // 3. Set up timed reset
         v.SetFloat(0.0f);

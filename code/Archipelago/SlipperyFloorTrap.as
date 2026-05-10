@@ -2,7 +2,7 @@
 // =============================================================
 // ARCHIPELAGO SLIPPERY FLOOR TRAP
 // =============================================================
-void TriggerSlipperyFloorTrap(float duration = 15.0f) {
+void TriggerSlipperyFloorTrap(float duration = 30.0f) {
     CallVScript("SendToPanorama(\"ArchipelagoTrapTriggered\", \"SlipperyFloor|" + duration + "\")");
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
     if (player !is null) {

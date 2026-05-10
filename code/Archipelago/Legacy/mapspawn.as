@@ -49,6 +49,13 @@ void ResetPersistentSystems() {
         
 
         // Reset Visuals (Motion Blur Trap)
+        v.SetString("sv_friction 4");
+        cmd.FireInput("Command", v, 30.0f, null, null, 0);
+        
+        v.SetString("ent_fire !player AddOutput \"friction 1\"");
+        cmd.FireInput("Command", v, 0.1f, null, null, 0);
+        
+        // Reset Visuals (Motion Blur Trap)
         v.SetString("mat_motion_blur_enabled 1"); // Assuming default is 1
         cmd.FireInput("Command", v, 0.0f, null, null, 0);
 

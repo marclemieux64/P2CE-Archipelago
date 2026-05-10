@@ -1,5 +1,6 @@
 ﻿namespace Legacy {
 void ButterFingersTrap(float duration = 30.0f) {
+    CallVScript("SendToPanorama(\"ArchipelagoTrapTriggered\", \"ButterFingers|" + duration + "\")");
         // 1. Nettoyage des anciennes entités
         CBaseEntity@ oldInterval = EntityList().FindByName(null, "butter fingers");
         if (oldInterval !is null) oldInterval.Remove();

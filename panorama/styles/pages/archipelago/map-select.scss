@@ -102,7 +102,7 @@
 }
 
 .map_button {
-    width: 84%;
+    width: 80%;
     min-height: 50px;
     height: fit-children;
     margin-top: 5px;
@@ -143,6 +143,7 @@
     font-family: "Lexend Deca", Bold;
     font-size: 26px;
     color: #eeeeee;
+    padding-right: 10px;
 
     .map_button--deactivated & {
         color: #ffffff08; // Faded/darker text for locked maps

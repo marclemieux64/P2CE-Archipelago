@@ -35,11 +35,22 @@ void AddMapCheck() {
                 else if (current_map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 2.0f) { is_target = true; targetVec = Vector(-3152, -1928, -240); }
                 
                 // Exception : Wakeup
-                else if (current_map == "sp_a1_wakeup" && pos.DistTo(Vector(6144, 3456, 904)) < 2.0f) { 
+                else if (current_map == "sp_a1_wakeup" && pos.DistTo(Vector(6144, 3456, 904)) < 50.0f) { 
                     is_target = true; 
                     targetVec = Vector(6144, 3456, 904); 
                     targetAng = QAngle(0, 270, 90); 
                     animate_holo = false; // Wakeup = Statique
+                }
+                // --- CORRECTION POUR SP_A3_PORTAL_INTRO ---
+                else if (current_map == "sp_a3_portal_intro") {
+                    Vector center = tr.WorldSpaceCenter();
+                    
+                    // On donne une énorme marge (400) et on vérifie à la fois l'origine et le centre de la boîte
+                    if (pos.DistTo(Vector(3839.99, 348.80, 5674.67)) < 400.0f || center.DistTo(Vector(3839.99, 348.80, 5674.67)) < 400.0f) {
+                        is_target = true; 
+                        // On le force à spawner exactement à vos coordonnées getpos pour qu'il soit bien visible !
+                        targetVec = Vector(3839.99, 348.80, 5674.67); 
+                    }
                 }
 
                 if (is_target) {
@@ -51,7 +62,7 @@ void AddMapCheck() {
         
         // 2. Named Transition Hooks
         array<string> transTargets = { 
-            "transition_trigger", "trigger_transition", "@transition_from_map", "relay_transition"
+         "trigger_transition", "@transition_from_map", "relay_transition"
         };
         
         for (uint s = 0; s < transTargets.length(); s++) {

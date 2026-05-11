@@ -323,7 +323,28 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         if (orange) EntFire("weapon_portalgun", "AddOutput", "CanFirePortal2 0");
     }
 
-    void DisableEntityPickup(string target) {
+void PreventPickupForModel(string model_keyword) {
+    // 1. Recherche dans les objets physiques normaux
+    CBaseEntity@ prop = null;
+    while ((@prop = EntityList().FindByClassname(prop, "prop_physics")) !is null) {
+        if (prop.GetModelName().tolower().locate(model_keyword) != uint(-1)) {
+            // Retire la physique dynamique, ce qui désactive instantanément la surbrillance et le ramassage
+            prop.SetMoveType(MOVETYPE_NONE);
+        }
+    }
+
+    // 2. Recherche dans les objets physiques forcés (override)
+    CBaseEntity@ override_prop = null;
+    while ((@override_prop = EntityList().FindByClassname(override_prop, "prop_physics_override")) !is null) {
+        if (override_prop.GetModelName().tolower().locate(model_keyword) != uint(-1)) {
+            // Retire la physique dynamique
+            override_prop.SetMoveType(MOVETYPE_NONE);
+        }
+    }
+}
+
+
+  void DisableEntityPickup(string target) {
     array<CBaseEntity@> targets = FindEntities(target);
 
     for (uint i = 0; i < targets.length(); i++) {
@@ -646,11 +667,9 @@ void RemovePotatOS() {
     void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale, int skin = 0) {
         string scenarioName = TranslateButtonName(name);
 
-        // Ratman Dens default to skin 0 as requested
         if (scenarioName.locate("rd") == 0) skin = 0;
 
-    // 0. CLEANUP & IDEMPOTENCY
-        array<CBaseEntity@> entsToRemove; // On crée un tableau temporaire
+        array<CBaseEntity@> entsToRemove;
         CBaseEntity@ entCheck = null;
         
         while ((@entCheck = EntityList().FindInSphere(entCheck, position, 24.0f)) !is null) {
@@ -660,21 +679,21 @@ void RemovePotatOS() {
             if (entName == scenarioName + "_model" || entName.locate("ap_") == 0) return;
             
             if (cls.locate("button") != uint(-1) || cls.locate("switch") != uint(-1) || cls.locate("dynamic") != uint(-1)) {
-                // Au lieu de Remove(), on l'ajoute à la liste d'attente
                 entsToRemove.insertLast(entCheck); 
             }
         }
 
-        // MAINTENANT qu'on a fini de chercher, on peut les supprimer en toute sécurité !
         for (uint i = 0; i < entsToRemove.length(); i++) {
             entsToRemove[i].Remove();
         }
 
         string uid = "ap_" + RandomInt(1000, 9999);
+        
         CBaseEntity@ body = util::CreateEntityByName("prop_dynamic");
         if (body !is null) {
             body.KeyValue("targetname", scenarioName + "_model");
             body.SetModel("models/props/switch001.mdl");
+            body.KeyValue("solid", "6");
             body.SetAbsOrigin(position);
             body.SetAbsAngles(angle);
             body.Spawn();
@@ -705,6 +724,11 @@ void RemovePotatOS() {
             brain.KeyValue("targetname", scenarioName);
             brain.KeyValue("spawnflags", "1025");
             brain.KeyValue("wait", "0.5");
+            
+            // L'ASTUCE : On lui donne un modèle pour que le moteur "accepte" de calculer ses collisions...
+            brain.SetModel("models/props/switch001.mdl");
+            // ... Mais on le rend 100% invisible pour qu'on ne voie que votre prop_dynamic !
+            brain.KeyValue("rendermode", "10");
         
             SafeAddOutput(brain, "OnPressed", "InitCmd", "Command", "ReportAPButton " + scenarioName, 0.1f, -1);
             SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "down", 0.0f, -1);
@@ -712,12 +736,19 @@ void RemovePotatOS() {
             SafeAddOutput(brain, "OnPressed", uid + "_dn", "PlaySound", "", 0.0f, -1);
             SafeAddOutput(brain, "OnPressed", uid + "_up", "PlaySound", "", 0.5f, -1);
         
+            // ON ÉCRASE LA TAILLE DU MODÈLE : On le force à être un cube
+            brain.SetSolid(SOLID_BBOX);
+            
+            // VOTRE CUBE GÉANT : Va de -30 à +30 = Un gros cube de 60x60x60 !
+            brain.SetCollisionBounds(Vector(-30.0f, -30.0f, -30.0f), Vector(30.0f, 30.0f, 30.0f));
+            
             brain.Spawn();
             brain.SetParent(body);
-            brain.SetLocalOrigin(Vector(0, 0, 40)); 
+            
+            // On centre ce cube géant exactement au milieu du plastique
+            brain.SetLocalOrigin(Vector(0, 0, 0)); 
         }
 
-        // Use local offset relative to the button body
         Vector localPos = Vector(0, 0, 90.0f);
         QAngle localAng = QAngle(0, 90, 0);
         CreateAPHologram(localPos, localAng, holo_scale, body, "", skin, name);
@@ -946,42 +977,50 @@ void RemovePotatOS() {
 }
 
     void DoMapSpecificSetup() {
-        if (current_map == "sp_a1_intro3") {
-            // Portal Gun pickup trigger (Primary - by Vector)
-            AddEntityOutputScriptAtPos(Vector(25, 1958, -299), "trigger_once", "OnStartTouch", "PrintItem Portal Gun", 0.0f, 1);
-            // Portal Gun pickup trigger (Backup for speedrun pickup)
-            AddEntityOutputScriptAtPos(Vector(-704, 1856, -32), "trigger_multiple", "OnStartTouch", "PrintItem Portal Gun", 0.0f, 1);
-        } else if (current_map == "sp_a2_intro") {
-            // Upgraded Portal Gun (By Name)
-            CBaseEntity@ gun_trigger = EntityList().FindByName(null, "player_near_portalgun");
-            if (gun_trigger !is null) {
-                SafeAddOutput(gun_trigger, "OnStartTouch", "InitCmd", "Command", "PrintItem Upgraded Portal Gun", 0.0f, 1);
-            }
-            // Upgraded Portal Gun (Backup - by Vector)
-            AddEntityOutputScriptAtPos(Vector(-360, 440, -10680), "trigger_once", "OnStartTouch", "PrintItem Upgraded Portal Gun", 0.0f, 1);
-       } else if (current_map == "sp_a3_transition01") {
-            CBaseEntity@ potatos_btn = EntityList().FindByName(null, "sphere_entrance_potatos_button");
-            if (potatos_btn !is null) {
-                // 1. On garde l'envoi du signal Archipelago quand le joueur appuie dessus
-                SafeAddOutput(potatos_btn, "OnPressed", "InitCmd", "Command", "PrintItem PotatOS", 0.0f, -1);
-                
-                // 2. NOUVEAU : On déverrouille le bouton immédiatement !
-                potatos_btn.FireInput("Unlock", Variant(), 1.0f, null, null, 0);
-            }
-        } else if (current_map == "sp_a2_laser_intro") {
-            CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
-            if (cmd !is null) {
-                // Parent the Emitter & Catcher to the doors so they move when the puzzle is solved
-                Variant v1;
-                v1.SetString("ent_fire laser_emitter_door_holo SetParent laser_emitter_door:0.8:-1");
-                cmd.FireInput("Command", v1, 0.5f, null, null, 0);
-                
-                Variant v2;
-                v2.SetString("ent_fire laser_catcher_door_holo SetParent laser_catcher_door:0.8:-1");
-                cmd.FireInput("Command", v2, 0.5f, null, null, 0);
-            }
+    if (current_map == "sp_a1_intro3") {
+        // Portal Gun pickup trigger (Primary - by Vector)
+        AddEntityOutputScriptAtPos(Vector(25, 1958, -299), "trigger_once", "OnStartTouch", "PrintItem Portal Gun", 0.0f, 1);
+        // Portal Gun pickup trigger (Backup for speedrun pickup)
+        AddEntityOutputScriptAtPos(Vector(-704, 1856, -32), "trigger_multiple", "OnStartTouch", "PrintItem Portal Gun", 0.0f, 1);
+        
+    } else if (current_map == "sp_a1_intro4") {
+        // Remplacement magique de la bouteille
+        PreventPickupForModel("water_bottle.mdl");
+
+    } else if (current_map == "sp_a2_intro") {
+        // Upgraded Portal Gun (By Name)
+        CBaseEntity@ gun_trigger = EntityList().FindByName(null, "player_near_portalgun");
+        if (gun_trigger !is null) {
+            SafeAddOutput(gun_trigger, "OnStartTouch", "InitCmd", "Command", "PrintItem Upgraded Portal Gun", 0.0f, 1);
+        }
+        // Upgraded Portal Gun (Backup - by Vector)
+        AddEntityOutputScriptAtPos(Vector(-360, 440, -10680), "trigger_once", "OnStartTouch", "PrintItem Upgraded Portal Gun", 0.0f, 1);
+        
+    } else if (current_map == "sp_a2_trust_fling") {
+        // Remplacement magique de la boîte et de la bouteille
+        PreventPickupForModel("food_can_open.mdl");
+        PreventPickupForModel("water_bottle.mdl");
+        
+    } else if (current_map == "sp_a3_transition01") {
+        CBaseEntity@ potatos_btn = EntityList().FindByName(null, "sphere_entrance_potatos_button");
+        if (potatos_btn !is null) {
+            SafeAddOutput(potatos_btn, "OnPressed", "InitCmd", "Command", "PrintItem PotatOS", 0.0f, -1);
+            potatos_btn.FireInput("Unlock", Variant(), 1.0f, null, null, 0);
+        }
+        
+    } else if (current_map == "sp_a2_laser_intro") {
+        CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
+        if (cmd !is null) {
+            Variant v1;
+            v1.SetString("ent_fire laser_emitter_door_holo SetParent laser_emitter_door:0.8:-1");
+            cmd.FireInput("Command", v1, 0.5f, null, null, 0);
+            
+            Variant v2;
+            v2.SetString("ent_fire laser_catcher_door_holo SetParent laser_catcher_door:0.8:-1");
+            cmd.FireInput("Command", v2, 0.5f, null, null, 0);
         }
     }
+}
 
     void CreateMapSpecificHolos() {
         if (current_map == "sp_a1_intro3") CreateAPHologram(Vector(25, 1958, -299), QAngle(0, 0, 0), 0.66f, null, "", 0, "intro3_portalgun_holo"); else if (current_map == "sp_a2_intro") {

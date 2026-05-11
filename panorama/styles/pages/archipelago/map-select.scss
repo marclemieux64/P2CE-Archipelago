@@ -206,6 +206,14 @@
     background-color: #00000000; // Fully transparent by default
 }
 
+.footer_content {
+    min-height: 93px;
+    max-height: 93px;
+    width: fill-parent-flow(3.0);
+    flow-children: right;
+    margin: 24px 0px 0px 0px;
+}
+
 .map_info_container {
     flow-children: right;
     vertical-align: center;

@@ -146,7 +146,7 @@
 		"Archipelago_Settings_CompletionSymbol" "Full Completion Symbol"
 		"Archipelago_Settings_CompletionSymbol_info" "Choose the symbol used to indicate a completed map or chapter."
 		"Archipelago_Settings_Symbol_Checkmark" "Checkmark <font color='#ffff44' face='APPortal-bold'>£</font>"
-"Archipelago_Settings_Symbol_Star"      "Star <font color='#ffff44' face='APPortal-bold'>★</font>"
+		"Archipelago_Settings_Symbol_Star"      "Star <font color='#ffff44' face='APPortal-bold'>★</font>"
 		"Archipelago_Settings_TransitionType"   "Transition Type"
 		"Archipelago_Settings_TransitionType_info"		"Choose what happens after finishing a level.\n<h2>Return to Menu</h2>Return to the Archipelago level selection menu after completing a level.\n<h2>Smart Transition</h2>Automatically transition to the next available level if possible, otherwise return to the menu."
 		"Archipelago_Settings_Transition_Menu"   "Return to Menu"
@@ -224,6 +224,16 @@
 		"Archipelago_Hints_Done" "Completed"
 		"Archipelago_Hints_Title" "Hints"
 		"Archipelago_Hints_Tooltip" "Check or lookup hints"
+		"Archipelago_Points"    "Points"
+		"Archipelago_Cost"      "Cost"
+
+		//archipelago Map transition 
+		"Archipelago_HUD_Warp_Title"      "SMART WARP"
+		"Archipelago_HUD_Warp_Menu_Title" "WARP TO MENU"
+		"Archipelago_HUD_Warp_Dest"       "Destination: %s1"
+		"Archipelago_HUD_Warp_Delay"      "Warping in 3 seconds..."
+		"Archipelago_HUD_Warp_NoMaps"     "No doable maps found."
+		"Archipelago_HUD_Warp_Loading"    "Returning to map select... Loading..."
 		
 		"COOP_PRESENCE_WAITING_DEFAULT"			"Waiting for Partner"
 		"COOP_PRESENCE_WAITING_SPLITSCREEN"		"Splitscreen"

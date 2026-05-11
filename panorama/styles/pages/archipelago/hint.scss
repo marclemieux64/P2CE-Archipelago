@@ -120,14 +120,14 @@
     
     // Positionné de manière absolue par rapport au MainBox
     vertical-align: bottom;
-    margin-bottom: 96px; // Passe exactement au-dessus du footer (qui fait 93px)
-    margin-left: 145px;  // S'aligne parfaitement avec l'endroit où le texte commence
+    margin-bottom: 100px; // Passe exactement au-dessus du footer (qui fait 93px)
+    margin-left: 112px;  // S'aligne parfaitement avec l'endroit où le texte commence
 
     &.hide { visibility: collapse; }
 }
 
 .archipelago_input_wrapper {
-    width: 100%;
+    width: fill-parent-flow(1.0); /* <--- REMPLACEZ "100%" PAR CECI */
     height: 45px;
     flow-children: right;
     vertical-align: center; 
@@ -165,4 +165,37 @@
             font-weight: bold;
         }
     }   
+}
+.hint-feedback {
+    /* Positionnement absolu flottant au-dessus du reste */
+    vertical-align: bottom;
+    horizontal-align: center;
+    
+    /* Pousse le message vers le haut pour qu'il soit juste au-dessus de la barre de saisie */
+    margin-bottom: 115px; /* Ajustez ce nombre selon la hauteur de votre footer */
+    
+    z-index: 105; /* Assure que le message est au premier plan */
+    
+    /* Design de la bulle d'erreur */
+    background-color: #000000DD;
+    padding: 12px 20px;
+    border-radius: 6px;
+    border: 2px solid #552222;
+    box-shadow: #000000AA 0px 5px 15px 5px;
+    
+    /* Texte */
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff5555;
+    text-align: center;
+
+    /* Animation d'apparition/disparition fluide */
+    transition-property: opacity, transform;
+    transition-duration: 0.2s;
+
+    &.hide {
+        opacity: 0.0;
+        transform: translateY(15px); /* Donne un petit effet de glissement vers le bas en disparaissant */
+        visibility: collapse;
+    }
 }

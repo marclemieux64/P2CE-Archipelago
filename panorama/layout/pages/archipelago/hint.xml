@@ -31,18 +31,27 @@
                 </Panel>
 
                 <Panel id="FullWidthFooter" class="preview_bottom_row">
-                    <Panel id="FooterContent" class="footer_content">
-                    <Label class="console_prompt" text="#Archipelago_Hints_Label" />
-                        <Panel id="ArchipelagoInputWrapper" class="archipelago_input_wrapper">
-                            <TextEntry id="ArchipelagoInput" 
-                                       class="archipelago_input" />
-                        </Panel>
-                    </Panel> 
-                </Panel>
+                    
+                    <Panel style="width: 100%; vertical-align: center; flow-children: down;">
+                        
+                        <Panel id="FooterContent" class="footer_content" style="width: 100%; height: fit-children; flow-children: right;">
+                            <Label class="console_prompt" text="#Archipelago_Hints_Label" />
+                            <Panel id="ArchipelagoInputWrapper" class="archipelago_input_wrapper">
+                                <TextEntry id="ArchipelagoInput" class="archipelago_input" />
+                            </Panel>
+                        </Panel> 
 
+                        <Label id="HintPointsLabel" text="" style="color: #44ff44; font-size: 18px; font-weight: bold; margin-top: 5px;" />
+                        
+                    </Panel>
+                    
+                </Panel>
+                
             </Panel>
 
             <Panel id="SuggestionBox" class="suggestion-box hide" />
+            
+            <Label id="HintFeedback" class="hint-feedback hide" text="" />
 
         </Panel>
     </Panel>

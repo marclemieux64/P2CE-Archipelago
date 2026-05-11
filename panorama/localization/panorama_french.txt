@@ -103,6 +103,16 @@
 		"Archipelago_Hints_Done" "Terminés"
 		"Archipelago_Hints_Title" "Indices"
 		"Archipelago_Hints_Tooltip" "Vérifier ou obtenir des indices"
+		"Archipelago_Points"    "Points"
+		"Archipelago_Cost"      "Coût"
+
+		//archipelago Map transition
+		"Archipelago_HUD_Warp_Title"      "WARP INTELLIGENT"
+		"Archipelago_HUD_Warp_Menu_Title" "WARP VERS LE MENU"
+		"Archipelago_HUD_Warp_Dest"       "Destination: %s1"
+		"Archipelago_HUD_Warp_Delay"      "Retour au menu dans 3 secondes..."
+		"Archipelago_HUD_Warp_NoMaps"     "Aucune carte faisable trouvée."
+		"Archipelago_HUD_Warp_Loading"    "Retour à la sélection de carte... Chargement..."
 
 
 

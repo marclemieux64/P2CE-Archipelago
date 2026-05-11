@@ -59,45 +59,43 @@ function SmartWarpNextMap(currentMapName: string) {
     const notifyFn = (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify;
 
     if (targetMap && targetMap.command) {
-        // --- LOGIQUE DE NOM LOCALISÉ (comme dans le HUD) ---
-        const technicalName = targetMap.command.replace("map ", "").trim();
-        const mapToken = `#portal2_MapName_${technicalName}`;
-        const localizedMapName = $.Localize(mapToken);
-        const mapNameDisplay = (localizedMapName !== mapToken) ? localizedMapName : (targetMap.title || technicalName);
+    const technicalName = targetMap.command.replace("map ", "").trim();
+    const mapToken = `#portal2_MapName_${technicalName}`;
+    const localizedMapName = $.Localize(mapToken);
+    const mapNameDisplay = (localizedMapName !== mapToken) ? localizedMapName : (targetMap.title || technicalName);
 
-        $.Msg("[AP] Smart Warp Success: Sending player to " + mapNameDisplay);
-        
-        if (notifyFn) {
-            notifyFn(JSON.stringify({
-                title: "SMART WARP",
-                html: "Destination: <font color='#00ffff'>" + mapNameDisplay + "</font><br/><font color='#aaaaaa'><i>Warping in 3 seconds...</i></font>",
-                type: "0 255 255", // Cyan
-                play_sound: true
-            }));
-        }
+    // Localisation des chaînes de caractères
+    const locTitle = $.Localize("#Archipelago_HUD_Warp_Title");
+    const locDest = $.Localize("#Archipelago_HUD_Warp_Dest").replace("%s1", "<font color='#00ffff'>" + mapNameDisplay + "</font>");
+    const locDelay = $.Localize("#Archipelago_HUD_Warp_Delay");
+
+    if (notifyFn) {
+        notifyFn(JSON.stringify({
+            title: locTitle,
+            html: `${locDest}<br/><font color='#aaaaaa'><i>${locDelay}</i></font>`,
+            type: "0 255 255", 
+            play_sound: true
+        }));
+    }
 
         $.Schedule(3.0, () => {
             GameInterfaceAPI.ConsoleCommand(targetMap.command);
         });
 
     } else {
-        // --- CAS : AUCUNE CARTE TROUVÉE ---
-        $.Msg("[AP] Smart Warp: No doable maps found. Returning to menu.");
-        
-        if (notifyFn) {
-            notifyFn(JSON.stringify({
-                title: "WARP TO MENU",
-                html: "Aucun niveau disponible.<br/><font color='#aaaaaa'><i>Retour au menu...</i></font>",
-                type: "198 33 223", // Violet (cohérent avec le menu)
-                play_sound: true
-            }));
-        }
+    const locTitle = $.Localize("#Archipelago_HUD_Warp_Menu_Title");
+    const locNoMaps = $.Localize("#Archipelago_HUD_Warp_NoMaps");
+    const locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
 
-        // On attend 1.5s pour que le joueur puisse lire le message d'échec avant de déconnecter
-        $.Schedule(1.5, () => {
-            GameInterfaceAPI.ConsoleCommand("disconnect");
-        });
+    if (notifyFn) {
+        notifyFn(JSON.stringify({
+            title: locTitle,
+            html: `${locNoMaps}<br/><font color='#aaaaaa'><i>${locLoading}</i></font>`,
+            type: "198 33 223", 
+            play_sound: true
+        }));
     }
+
 }
 
 (UiToolkitAPI.GetGlobalObject() as any).SmartWarpNextMap = SmartWarpNextMap;

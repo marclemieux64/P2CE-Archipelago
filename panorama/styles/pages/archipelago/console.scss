@@ -46,7 +46,6 @@
     max-height: 93px;
     width: fill-parent-flow(3.0);
     flow-children: right;
-    margin: 24px 0px 0px 0px;
 }
 
 //=============================================================================
@@ -102,8 +101,8 @@
     
     // Positionnement absolu
     vertical-align: bottom;
-    margin-bottom: 96px; // Passe exactement au-dessus du footer
-    margin-left: 50px;   // S'aligne avec le début du champ texte après le ">"
+    margin-bottom: 104px; // Passe exactement au-dessus du footer
+    margin-left: 25px;   // S'aligne avec le début du champ texte après le ">"
 
     &.hide { visibility: collapse; }
 }

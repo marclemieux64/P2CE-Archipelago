@@ -9,20 +9,16 @@ import typing
 import json
 
 # --- STANDALONE FIX ---
-# On remonte de 3 dossiers pour atteindre la racine "archipelago"
-# (client -> portal2_p2ce -> worlds -> archipelago)
 archipelago_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 if archipelago_root not in sys.path:
     sys.path.insert(0, archipelago_root)
 
 os.environ['SKIP_REQUIREMENTS_UPDATE'] = '1'
 
-# Imports généraux Archipelago
 from CommonClient import CommonContext, server_loop, ClientCommandProcessor, logger, gui_enabled
 from NetUtils import ClientStatus, NetworkItem
 from Utils import async_start, init_logging
 
-# Imports absolus (Adaptés au nom exact de ton dossier "portal2_p2ce")
 import worlds
 from worlds.portal2_p2ce import Portal2World
 from worlds.portal2_p2ce.mod_helpers.ItemHandling import add_ratman_commands, handle_item, handle_map_start, handle_trap, portal_gun_upgrade_not_inplace, potatos_not_inplace
@@ -31,7 +27,6 @@ from worlds.portal2_p2ce.client.DeathMessages import get_death_message
 from worlds.portal2_p2ce.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
 from worlds.portal2_p2ce.Options import GameModeOption
 
-# Manually overwrite the "Portal 2" data package with our mod's data
 worlds.network_data_package["games"]["Portal 2"] = Portal2World.get_data_package_data()
 
 logger = logging.getLogger("Portal2Client")
@@ -41,31 +36,24 @@ class Portal2CommandProcessor(ClientCommandProcessor):
         super().__init__(ctx)
 
     def _cmd_help(self, *args):
-        """Display this help message"""
         self.output("Portal 2 Archipelago Client Commands:")
         super()._cmd_help()
 
     def _cmd_check_connection(self):
-        """Responds with the status of the client's connection to the Portal 2 mod"""
         self.ctx.alert_game_connection()
 
     def _cmd_command(self, *command):
-        """Sends a command to the game. Should not be used unless you get softlocked"""
         self.ctx.command_queue.append(' '.join(command) + "\n")
 
     def _cmd_deathlink(self):
-        """Toggles death link for this client"""
         self.ctx.death_link_active = not self.ctx.death_link_active
         async_start(self.ctx.update_death_link(self.ctx.death_link_active), "set_deathlink")
-        # FIX: Single quotes inside the f-string
         self.output(f"Death link has been {'enabled' if self.ctx.death_link_active else 'disabled'}")
 
     def _cmd_refresh_menu(self):
-        """Refreshed the in game menu in case of maps being inaccessible when they should be"""
         self.ctx.refresh_menu()
 
     def _cmd_received(self):
-        """Display the list of received items (Console only)"""
         self.ctx.is_processing_received_cmd = True
         try:
             super()._cmd_received()
@@ -73,16 +61,12 @@ class Portal2CommandProcessor(ClientCommandProcessor):
             self.ctx.is_processing_received_cmd = False
 
     def _cmd_message_in_game(self, message: str, *color_string):
-        """Send a message to be displayed in game (only works while in a map). 
-        message can be any text 
-        color_string is an optional RGB string e.g. 255 100 0"""
         if len(color_string) == 3:
             self.ctx.add_to_in_game_message_queue(message, ' '.join(color_string))
         else:
             self.ctx.add_to_in_game_message_queue(message)
 
     def _cmd_needed(self, *location_name):
-        """Get the requirements for the map separated by all requirements and ones not yet acquired"""
         message = "Location not found, use /locations to get a list of locations"
         location_name_str = ' '.join(location_name)
         for location in location_names_to_map_codes.keys():
@@ -92,7 +76,6 @@ class Portal2CommandProcessor(ClientCommandProcessor):
                 requirements.sort()
                 requirements_not_collected.sort()
 
-                # FIX: Syntax error with quotes fixed
                 message = ("Required Items: \n"
                            f"{', '.join(requirements)}\n"
                            f"{'All items acquired' if not requirements_not_collected else 'Still needed: \n' + ', '.join(requirements_not_collected)}")
@@ -107,7 +90,6 @@ class Portal2Context(CommonContext):
     game_connection_task: typing.Optional["asyncio.Task[None]"] = None
     
     def __init__(self, server_address: str = None, password: str = None):
-        # 1. Setup a temporary handler to catch logs during initialization (before loop is ready)
         class QueuingLogHandler(logging.Handler):
             def __init__(self):
                 super().__init__()
@@ -119,7 +101,6 @@ class Portal2Context(CommonContext):
         self.temp_handler.setFormatter(logging.Formatter('%(message)s'))
         logging.getLogger().addHandler(self.temp_handler)
 
-        # 2. Setup the real Panorama handler
         class PanoramaLogHandler(logging.Handler):
             def __init__(self, ctx):
                 super().__init__()
@@ -132,7 +113,6 @@ class Portal2Context(CommonContext):
                     msg = self.format(record)
                     if getattr(self.ctx, 'loop', None):
                         msg_lower = msg.lower()
-                        # On ne met JAMAIS les logs techniques ou d'info serveur dans le HUD
                         noise_keywords = ["serving on", "connected to", "logged in", "connecting to", "connection closed", 
                                           "room information", "server protocol", "permission", "hint cost", "!hint", "enter slot", "lost connection"]
                         
@@ -140,8 +120,6 @@ class Portal2Context(CommonContext):
                             self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg, None, None, False)
                             return
 
-                        # Par défaut, les logs bruts (non-JSON) ne vont PAS au HUD pour éviter le spam
-                        # Seuls les messages importants (via PrintJSON) ou les messages explicites y vont.
                         self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg, None, None, False)
                 except Exception:
                     pass
@@ -150,11 +128,9 @@ class Portal2Context(CommonContext):
         self.panorama_handler.setFormatter(logging.Formatter('%(message)s'))
         logging.getLogger().addHandler(self.panorama_handler)
 
-        # Call super only once
         super().__init__(server_address, password)
 
     def flush_init_logs(self):
-        """Flushes the logs captured during initialization to the Panorama console"""
         if hasattr(self, 'temp_handler') and self.temp_handler:
             for msg in self.temp_handler.queue:
                 self.on_print_silently(msg)
@@ -162,10 +138,10 @@ class Portal2Context(CommonContext):
             self.temp_handler = None
 
     game = "Portal 2"
-    items_handling = 0b111  # receive all items for /received
+    items_handling = 0b111 
 
     HOST = "127.0.0.1"
-    PORT = 3000  # Default Portal 2 netcon port
+    PORT = 3000
 
     death_link_active = False
     goal_map_code = ""
@@ -183,7 +159,6 @@ class Portal2Context(CommonContext):
     location_name_to_id: dict[str, int] = None
     menu: Menu = None
     
-    # Live API State
     chat_log: list[dict] = []
     hint_log: list[dict] = []
     last_api_update: float = 0
@@ -193,7 +168,6 @@ class Portal2Context(CommonContext):
     def on_input(self, command: str):
         command = command.strip()
         try:
-            # Vérifie si le client attend une réponse directe (ex: mot de passe)
             if getattr(self, "input_requests", 0) > 0:
                 self.input_requests -= 1
                 self.input_queue.put_nowait(command)
@@ -204,14 +178,11 @@ class Portal2Context(CommonContext):
                 proc = self.command_processor(self)
                 proc(command)
             
-            # --- AJOUT POUR LES COMMANDES SERVEUR (!) ---
             elif command.startswith("!"):
                 logger.info(f"Sending server command: {command}")
-                # Les commandes commençant par ! sont envoyées via le protocole 'Say' d'Archipelago
                 async_start(self.send_msgs([{"cmd": "Say", "text": command}]))
             
             else:
-                # Tout le reste est envoyé à la console de Portal 2
                 self.command_queue.append(command + "\n")
                 
         except Exception as e:
@@ -219,7 +190,6 @@ class Portal2Context(CommonContext):
             self.on_print(f"Error: {e}")
 
     def request_hints_sync(self):
-        """Envoie une requête Get pour récupérer tous les indices du serveur"""
         if self.team is not None and self.slot:
             key = f"_read_hints_{self.team}_{self.slot}"
             async_start(self.send_msgs([{"cmd": "Get", "keys": [key]}]))
@@ -231,27 +201,20 @@ class Portal2Context(CommonContext):
             self.on_print_silently("Disconnected from Portal 2. Make sure the mod is open and the `-netconport 3000` launch option is set", mirror_to_hud=False)
 
     def on_print(self, text: str):
-        """Hook for client output to capture it for the Panorama API (Silent by default)"""
         self.on_print_silently(text, mirror_to_hud=False)
 
     def output(self, text: str):
-        """Standard output method for Archipelago contexts"""
         self.on_print(text)
 
     def on_print_silently(self, text: str, rich_data: list = None, html_text: str = None, mirror_to_hud: bool = False):
-        """Méthode de log centrale : Gère l'affichage CMD, le HUD et l'API Panorama"""
-        # 1. VISIBILITÉ CMD : On affiche tout dans la fenêtre noire pour le débug
         print(f"[DEBUG] {text}")
 
-        # 2. FILTRE DE BRUIT : On ignore les messages système pour l'historique F6
         text_lower = text.lower()
         noise_filters = ["changed tags from", "now that you are connected", "room information", 
                          "server protocol", "permission", "hint cost", "!hint", "enter slot", "lost connection"]
         if any(noise.lower() in text_lower for noise in noise_filters):
-            # On logue quand même dans le chat_log pour l'historique console (F6), mais sans HUD
             mirror_to_hud = False
 
-        # 3. GÉNÉRATION DU HTML : Pour les couleurs dans Panorama
         if rich_data and not html_text:
             color_map = {
                 "player_id": "#ff7f50", "player_name": "#ff7f50", "magenta": "#ee82ee",
@@ -267,11 +230,9 @@ class Portal2Context(CommonContext):
                 color = color_map.get(p_type) or color_map.get(p_color) or p_color
                 html_text += f"<font color='{color}'>{p_text}</font>" if color else p_text
 
-        # 4. VISIBILITÉ HUD (Netcon) : Uniquement si mirror_to_hud est True
         if mirror_to_hud:
             logger.info(f"[HUD] {text}")
 
-        # 5. STOCKAGE API PANORAMA (Le JavaScript lira 'priority' pour le son)
         self._msg_id_counter += 1
         no_notification = getattr(self, 'is_processing_received_cmd', False)
         self.chat_log.append({
@@ -280,7 +241,7 @@ class Portal2Context(CommonContext):
             "html": html_text if html_text else text,
             "data": rich_data,
             "type": "text" if rich_data is None else "json",
-            "priority": mirror_to_hud,  # <--- Définit si le JS fait un son
+            "priority": mirror_to_hud,  
             "no_notification": no_notification,
             "time": time.time()
         })
@@ -288,9 +249,8 @@ class Portal2Context(CommonContext):
             self.chat_log.pop(0)
 
     def print_json(self, data: typing.List[typing.Dict[str, str]], mirror_to_hud: bool = False):
-        """Hook for Archipelago formatted messages with name resolution"""
         resolved_data = []
-        is_trap_msg = False # On suit si le message contient un piège
+        is_trap_msg = False 
         
         for part in data:
             if not isinstance(part, dict):
@@ -302,17 +262,14 @@ class Portal2Context(CommonContext):
             part_type = part.get("type")
             
             try:
-                # FIX: Check if the packet specifies an owner, otherwise default to our slot
                 owner_id = part.get("player", self.slot)
 
                 if part_type == "player_id":
                     new_part["text"] = self.player_names[int(text)]
                 elif part_type == "item_id":
-                    # Look up using the owner_id instead of self.slot
                     item_name = self.item_names.lookup_in_slot(int(text), owner_id)
                     new_part["text"] = item_name
                     
-                    # --- DÉTECTION DU PIÈGE ---
                     trap_cmd = handle_trap(item_name)
                     if trap_cmd:
                         new_part["is_trap"] = True
@@ -321,37 +278,29 @@ class Portal2Context(CommonContext):
                             self.command_queue.append(trap_cmd)
                         
                 elif part_type == "location_id":
-                    # Look up using the owner_id instead of self.slot
                     new_part["text"] = self.location_names.lookup_in_slot(int(text), owner_id)
             except Exception:
                 pass 
             
             resolved_data.append(new_part)
 
-        # Conversion en texte brut
         text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in resolved_data)
-        
-        # On force l'affichage sur le HUD si c'est un piège
         self.on_print_silently(text, resolved_data, mirror_to_hud=(mirror_to_hud or is_trap_msg))
 
     def on_print_json(self, args: dict):
-        """Surcharge pour filtrer les messages : Vos items = Son + HUD, les autres = Silence"""
         if not isinstance(args, dict):
             return
             
         msg_type = args.get("type", "")
         is_essential = False
 
-        # On ne met priority=True QUE pour les items entrants pour notre slot
         if msg_type == "ItemSend":
             if args.get("receiving") == self.slot:
                 is_essential = True
-        # On garde la priorité pour la complétion de l'objectif
         elif msg_type == "Goal":
             is_essential = True
             
         if "data" in args:
-            # mirror_to_hud ici devient le flag 'priority' dans on_print_silently
             self.print_json(args["data"], mirror_to_hud=is_essential)
             
     def update_menu(self, location_id: int = None):
@@ -366,7 +315,6 @@ class Portal2Context(CommonContext):
         self.update_menu()
 
     def add_to_in_game_message_queue(self, message: str, color_string: str = None) -> None:
-        """Processes /message_in_game and generates a colored notification"""
         if color_string:
             try:
                 rgb = [int(x) for x in color_string.split()]
@@ -379,7 +327,6 @@ class Portal2Context(CommonContext):
         self.on_print_silently(message)
 
     async def p2_connection_loop(self):
-        '''Single loop to handle both reading and writing to Portal 2 via netcon'''
         await asyncio.sleep(1)
         attempt_count = 0
         while not self.exit_event.is_set():
@@ -394,7 +341,6 @@ class Portal2Context(CommonContext):
                 self.alert_game_connection()
 
                 while not self.exit_event.is_set():
-                    # 1. Handle Outgoing Commands
                     while self.command_queue:
                         cmd = self.command_queue.pop(0)
                         if cmd:
@@ -402,7 +348,6 @@ class Portal2Context(CommonContext):
                             writer.write(cmd.encode())
                             await writer.drain()
 
-                    # 2. Handle Incoming Messages (Non-blocking read)
                     try:
                         data = await asyncio.wait_for(reader.read(4096), timeout=0.1)
                         if not data:
@@ -445,11 +390,10 @@ class Portal2Context(CommonContext):
                 self.listener_active = False
 
     def start_api_server(self):
-        """Lance le serveur HTTP pour communiquer avec Panorama"""
         import threading
         from http.server import BaseHTTPRequestHandler, HTTPServer
         from urllib.parse import parse_qs
-        from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened # <--- NOUVEL IMPORT
+        from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened 
         client_self = self
 
         class APIHandler(BaseHTTPRequestHandler):
@@ -461,7 +405,6 @@ class Portal2Context(CommonContext):
                 if self.path == '/status':
                     is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
                     
-                    # NOUVEAU : On convertit la liste complète des objets manquants en symboles
                     missing_str = ""
                     if hasattr(client_self, "item_list"):
                         missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list])
@@ -471,7 +414,9 @@ class Portal2Context(CommonContext):
                         "game_connected": client_self.check_game_connection(), 
                         "slot": client_self.slot, 
                         "checked_locations": list(client_self.checked_locations), 
-                        "missing_items": missing_str, # <--- ON ENVOIE L'INFO AU HUD
+                        "missing_items": missing_str, 
+                        "hint_points": getattr(client_self, "hint_points", 0), 
+                        "hint_cost": getattr(client_self, "hint_cost", 0), 
                         "menu": client_self.menu.to_dict() if client_self.menu else None
                     })
                 elif self.path == '/chat':
@@ -486,7 +431,6 @@ class Portal2Context(CommonContext):
                     content_length = int(self.headers.get('Content-Length', 0))
                     body = self.rfile.read(content_length).decode('utf-8')
                     
-                    # Détection du format (JSON ou Formulaire)
                     command = None
                     try:
                         data = json.loads(body)
@@ -511,17 +455,14 @@ class Portal2Context(CommonContext):
 
         def run_server():
             try:
-                # Création propre du serveur sur le port 8910
                 server = HTTPServer(('0.0.0.0', 8910), APIHandler)
                 server.serve_forever()
             except Exception as e: 
                 print(f"API Server Error: {e}")
 
-        # Lancement de l'unique thread serveur
         threading.Thread(target=run_server, daemon=True).start()
 
     def send_level_begin_commands(self):
-        '''Sends each item removal command individually to avoid netcon/buffer limits'''
         for cmd in self.item_remove_commands:
             if cmd:
                 self.command_queue.append(cmd + "\n")
@@ -575,7 +516,6 @@ class Portal2Context(CommonContext):
                 
                 await self.send_death(death_text=death_message)
                 
-                # AJOUT DU TAG SECRET : "is_death": True
                 fake_data = [{"text": death_message, "is_death": True}]
                 self.on_print_silently(death_message, fake_data, mirror_to_hud=True)
 
@@ -590,7 +530,6 @@ class Portal2Context(CommonContext):
         
         cause = data.get("cause", "Un joueur est mort.")
         
-        # AJOUT DU TAG SECRET : "is_death": True
         fake_data = [{"text": cause, "is_death": True}]
         self.on_print_silently(cause, fake_data, mirror_to_hud=True)
         
@@ -676,9 +615,13 @@ class Portal2Context(CommonContext):
         self.refresh_menu()
 
     def on_package(self, cmd, args):
+        if cmd in ("RoomInfo", "RoomUpdate"):
+            if "hint_points" in args:
+                self.hint_points = args["hint_points"]
+            if "hint_cost" in args:
+                self.hint_cost = args["hint_cost"]
+
         def update_item_list():
-            # NOUVEAU : On importe dynamiquement le dictionnaire depuis MapMenu
-            # Cela garantit que la liste contient exactement ce que le HUD attend
             if not getattr(self, "full_item_list_loaded", False):
                 from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened
                 self.item_list = list(items_shortened.keys())
@@ -689,19 +632,15 @@ class Portal2Context(CommonContext):
             self.refresh_menu()
 
         if cmd == "Retrieved":
-            # NOUVEAU : On ignore le groupe "Everything" du serveur qui est instable, 
-            # et on calcule la liste manquante directement
             update_item_list()
             self.update_item_remove_commands()
             
-            # --- FIX : ACCÈS DICTIONNAIRE POUR LES INDICES ---
             hkey = f"_read_hints_{self.team}_{self.slot}"
             if hkey in args["keys"]:
                 raw_hints = args["keys"][hkey]
                 self.hint_log = []
                 for h in raw_hints:
                     try:
-                        # On utilise .get() ou ["key"] car 'h' est un dictionnaire
                         rec_id = h.get("receiving_player")
                         find_id = h.get("finding_player")
                         item_id = h.get("item")
@@ -714,7 +653,6 @@ class Portal2Context(CommonContext):
                         
                         txt = f"<font color='#ff7f50'>{rec}</font>'s <font color='#00ffff'>{item_name}</font> is at <font color='#00ff00'>{loc_name}</font> in <font color='#ff7f50'>{find}</font>'s World"
                     except Exception: 
-                        # Fallback sécurisé en cas d'erreur de résolution de nom
                         txt = f"Hint: Item {h.get('item', '???')} at {h.get('location', '???')}"
                     
                     self.hint_log.append({
@@ -805,7 +743,6 @@ async def main(args: argparse.Namespace):
     ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
     ctx.game_connection_task = asyncio.create_task(ctx.p2_connection_loop(), name="netcon loop")
     
-    # Démarrage du serveur API local pour le HUD Panorama
     ctx.start_api_server()
     ctx.flush_init_logs()
 

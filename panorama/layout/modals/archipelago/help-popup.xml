@@ -35,14 +35,14 @@
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="✓" style="color: #ffff44;" />
+						<Label class="help-popup__icon" text="£" style="color: #ffff44;" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Status_Goal" />
 					</Panel>
 
 					<Panel class="help-popup__row">
 						<Panel class="help-popup__icon-container">
 							<Label class="help-popup__icon help-popup__icon--stacked" text="★" style="color: #ffff44;" />
-							<Label class="help-popup__icon help-popup__icon--stacked" text="✓" style="color: #ffff44;" />
+							<Label class="help-popup__icon help-popup__icon--stacked" text="£" style="color: #ffff44;" />
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Status_Full" />
 					</Panel>

@@ -230,11 +230,24 @@ class Portal2Context(CommonContext):
                 color = color_map.get(p_type) or color_map.get(p_color) or p_color
                 html_text += f"<font color='{color}'>{p_text}</font>" if color else p_text
 
+        # --- NOUVELLE GESTION DU TAG AP ---
+        ap_msg_type = getattr(self, "_current_ap_msg_type", "default")
+        if getattr(self, "_current_ap_msg_priority", False):
+            mirror_to_hud = True
+
+        if "DeathLink" in text or "mort" in text_lower:
+            mirror_to_hud = True
+            ap_msg_type = "deathlink"
+        elif "Trap" in text:
+            mirror_to_hud = True
+            ap_msg_type = "trap"
+
         if mirror_to_hud:
             logger.info(f"[HUD] {text}")
 
         self._msg_id_counter += 1
         no_notification = getattr(self, 'is_processing_received_cmd', False)
+        
         self.chat_log.append({
             "id": self._msg_id_counter, 
             "text": text,
@@ -243,9 +256,10 @@ class Portal2Context(CommonContext):
             "type": "text" if rich_data is None else "json",
             "priority": mirror_to_hud,  
             "no_notification": no_notification,
+            "ap_msg_type": ap_msg_type,
             "time": time.time()
         })
-        if len(self.chat_log) > 50:
+        if len(self.chat_log) > 100:
             self.chat_log.pop(0)
 
     def print_json(self, data: typing.List[typing.Dict[str, str]], mirror_to_hud: bool = False):
@@ -288,21 +302,70 @@ class Portal2Context(CommonContext):
         self.on_print_silently(text, resolved_data, mirror_to_hud=(mirror_to_hud or is_trap_msg))
 
     def on_print_json(self, args: dict):
-        if not isinstance(args, dict):
-            return
-            
+        ap_msg_type = "default"
+        priority = False
         msg_type = args.get("type", "")
-        is_essential = False
-
+        
         if msg_type == "ItemSend":
-            if args.get("receiving") == self.slot:
-                is_essential = True
-        elif msg_type == "Goal":
-            is_essential = True
+            receiving = args.get("receiving", 0)
             
+            # On cherche qui a trouvé l'objet de manière sécurisée
+            finder = 0
+            for part in args.get("data", []):
+                if isinstance(part, dict) and part.get("type") == "player_id":
+                    try:
+                        finder = int(part.get("text", 0))
+                    except ValueError:
+                        pass
+                    break 
+            
+            if receiving == self.slot and finder == self.slot:
+                priority = True
+                ap_msg_type = "found"
+            elif receiving == self.slot:
+                priority = True
+                ap_msg_type = "receive"
+            elif finder == self.slot:
+                priority = True
+                ap_msg_type = "send"
+                
+        elif msg_type == "Hint":
+            # Si notre ID de joueur est mentionné n'importe où dans l'indice, ça nous concerne !
+            for part in args.get("data", []):
+                if isinstance(part, dict) and part.get("type") == "player_id":
+                    try:
+                        if int(part.get("text", 0)) == self.slot:
+                            priority = True
+                            ap_msg_type = "hint"
+                            break
+                    except ValueError:
+                        pass
+
+        # Traps et Deathlink
+        text_lower = args.get("text", "").lower()
+        if "deathlink" in text_lower or "mort" in text_lower:
+            priority = True
+            ap_msg_type = "deathlink"
+        elif "trap" in text_lower:
+            priority = True
+            ap_msg_type = "trap"
+
+        # On applique le tag temporaire pour que la fonction d'enregistrement le capte
+        self._current_ap_msg_type = ap_msg_type
+        self._current_ap_msg_priority = priority
+        
+        # On demande à Archipelago de construire le texte final avec toutes les couleurs
         if "data" in args:
-            self.print_json(args["data"], mirror_to_hud=is_essential)
-            
+            self.print_json(args["data"], mirror_to_hud=priority)
+        else:
+            text = args.get("text", "")
+            if text:
+                self.on_print_silently(text, mirror_to_hud=priority)
+                
+        # On nettoie le tag une fois terminé
+        self._current_ap_msg_type = "default"
+        self._current_ap_msg_priority = False
+    
     def update_menu(self, location_id: int = None):
         if self.menu and location_id is not None:
             self.menu.complete_check(location_id)

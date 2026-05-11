@@ -71,6 +71,11 @@ void ResetPersistentSystems() {
         cmd.FireInput("Command", v, 0.0f, null, null, 0);
         v.SetString("snd_setmixer gladosVO vol 0.7");
         cmd.FireInput("Command", v, 0.0f, null, null, 0);
+
+        CallVScript("MutePotatOSSubtitles(false)");
+
+
+
         
         ArchipelagoLog("[Archipelago] Persistent systems have been sanitized for the new session.");
     }

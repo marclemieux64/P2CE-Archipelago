@@ -106,13 +106,22 @@
 		"Archipelago_Points"    "Points"
 		"Archipelago_Cost"      "Coût"
 
-		//archipelago Map transition
+		//archipelago HUD message
 		"Archipelago_HUD_Warp_Title"      "Transition Intelligente"
 		"Archipelago_HUD_Warp_Dest"       "Destination : %s1"
 		"Archipelago_HUD_Warp_Delay"      "Transfert dans 3 secondes..."
 		"Archipelago_HUD_Warp_Menu_Title" "RETOUR AU MENU"
 		"Archipelago_HUD_Warp_NoMaps"     "Aucune salle disponible."
 		"Archipelago_HUD_Warp_Loading"    "Retour au choix de salle... Chargement..."
+		"Archipelago_HUD_Deathlink"    "LIEN DE MORT"
+		"Archipelago_HUD_Trap"         "PIÈGE ACTIVÉ"
+		"Archipelago_HUD_Warp_Menu"    "RETOUR AU MENU"
+		"Archipelago_HUD_Default"   "ARCHIPELAGO"
+		"Archipelago_HUD_Found"     "OBJET TROUVÉ"
+		"Archipelago_HUD_Receive"   "OBJET REÇU"
+		"Archipelago_HUD_Send"      "OBJET ENVOYÉ"
+		"Archipelago_HUD_Hint"      "NOUVEL INDICE"
+
 
 		//Archipelago Mapselect
 		"Archipelago_Status_NoClient"     "CLIENT ARCHIPELAGO NON DÉTECTÉ"
@@ -120,10 +129,6 @@
 		"Archipelago_Status_NotConnected" "PAS CONNECTÉ AU SERVEUR"
 		"Archipelago_Status_Loading"      "Chargement des données Archipelago..."
 
-		"Archipelago_HUD_Deathlink"    "LIEN DE MORT"
-		"Archipelago_HUD_Trap"         "PIÈGE ACTIVÉ"
-		"Archipelago_HUD_Warp_Menu"    "RETOUR AU MENU"
-		"Archipelago_HUD_Default"      "ARCHIPELAGO"
 
 
 		"X_STRINGID_TITLENAME"					"Portal 2"

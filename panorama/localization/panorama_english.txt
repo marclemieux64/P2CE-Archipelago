@@ -227,7 +227,7 @@
 		"Archipelago_Points"    "Points"
 		"Archipelago_Cost"      "Cost"
 
-		//archipelago Map transition 
+		//archipelago HUD Messages
 		"Archipelago_HUD_Warp_Title"      "SMART WARP"
 		"Archipelago_HUD_Warp_Dest"       "Destination: %s1"
 		"Archipelago_HUD_Warp_Delay"      "Warping in 3 seconds..."
@@ -238,6 +238,10 @@
 		"Archipelago_HUD_Trap"            "TRAP TRIGGERED"
 		"Archipelago_HUD_Warp_Menu"       "WARP TO MENU"
 		"Archipelago_HUD_Default"         "ARCHIPELAGO"
+		"Archipelago_HUD_Found"           "ITEM FOUND"
+		"Archipelago_HUD_Receive"         "ITEM RECEIVED"
+		"Archipelago_HUD_Send"            "ITEM SENT"
+		"Archipelago_HUD_Hint"            "NEW HINT"
 
 		//Archipelago Mapselect
 		"Archipelago_Status_NoClient"     "ARCHIPELAGO CLIENT NOT DETECTED"

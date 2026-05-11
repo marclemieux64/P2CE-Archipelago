@@ -37,9 +37,8 @@ try {
     $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch with fade buffer");
 } catch (e) {}
 
-// CORRECTION : Un seul '$' au lieu de '$$'
 $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
-    if (isWarpPending) return; // SÉCURITÉ : Empêche le jeu de déclencher l'événement en double
+    if (isWarpPending) return; 
     
     isWarpPending = true;
     pendingWarpMapName = content;
@@ -49,7 +48,6 @@ $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
     const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
     
     if (useSmartWarp !== "1" && useSmartWarp !== 1) {
-        // Fallbacks de sécurité pour la localisation
         let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu");
         if (locTitle === "#Archipelago_HUD_Warp_Menu") locTitle = "WARP TO MENU";
         
@@ -73,7 +71,6 @@ function ProcessQueue() {
         if (isWarpPending) {
             $.persistentStorage.setItem("ap_return_to_map_select", "true");
             $.Schedule(0.5, () => {
-                // CORRECTION : On désactive le verrou isWarpPending ici pour éviter les doublons
                 isWarpPending = false; 
                 
                 const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
@@ -126,42 +123,97 @@ $.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (json: string) => {
                 return;
             }
 
+            // --- NOUVEAU : Récupération des couleurs du joueur ---
+            let playerPrimaryColor = "64 160 255";   // Fallback : Blue
+            let playerSecondaryColor = "255 160 32"; // Fallback : Orange
+            try {
+                if (typeof GameInterfaceAPI.GetSettingString === "function") {
+                    const pColor = GameInterfaceAPI.GetSettingString("cl_portal_sp_primary_color");
+                    if (pColor && pColor.trim() !== "") playerPrimaryColor = pColor;
+                    
+                    const sColor = GameInterfaceAPI.GetSettingString("cl_portal_sp_secondary_color");
+                    if (sColor && sColor.trim() !== "") playerSecondaryColor = sColor;
+                }
+            } catch (e) {
+                $.Msg("[AP] Impossible de lire les couleurs du joueur, utilisation des valeurs par défaut.");
+            }
+
             for (const msg of chat) {
                 if (msg.id > lastId) {
                     lastId = msg.id;
                     api.setLastNotificationId(lastId);
 
                     if (msg.priority === true && !msg.no_notification) { 
-                        let finalMessage = msg.text || "";
-                        let isDeathMsg = false;
-                        let isTrapMsg = false;
-
+                        let finalHtml = msg.text || "";
+                        
+                        // RECONSTRUCTION DE LA PHRASE COMPLÈTE (Avec couleurs !)
                         if (msg.type === "json" && Array.isArray(msg.data)) {
-                            finalMessage = msg.data.map((p: any) => p.text || "").join("");
-                            isDeathMsg = msg.data.some((p: any) => p.is_death === true);
-                            isTrapMsg = msg.data.some((p: any) => p.is_trap === true);
-                        }
-
-                        if (!isDeathMsg && !isTrapMsg) {
-                            isDeathMsg = finalMessage.includes("DeathLink") || finalMessage.includes("mort");
-                            isTrapMsg = finalMessage.includes("Trap");
+                            finalHtml = msg.data.map((p: any) => {
+                                let t = p.text || "";
+                                t = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                                
+                                if (p.color) {
+                                    const cMap: Record<string, string> = {
+                                        "red": "#ff5555", "green": "#55ff55", "yellow": "#ffff55",
+                                        "blue": "#77aaff", "magenta": "#ee82ee", "cyan": "#55ffff",
+                                        "plum": "#dda0dd", "salmon": "#fa8072"
+                                    };
+                                    const c = cMap[p.color] || "#ffffff";
+                                    return `<font color='${c}'>${t}</font>`;
+                                } else if (p.type === "player_id" || p.type === "player_name") {
+                                    return `<font color='#ff7f50'>${t}</font>`; // Joueur = Orange
+                                } else if (p.type === "item_id" || p.type === "item_name") {
+                                    return `<font color='#55ffff'>${t}</font>`; // Objet = Cyan
+                                } else if (p.type === "location_id" || p.type === "location_name") {
+                                    return `<font color='#55ff55'>${t}</font>`; // Lieu = Vert
+                                }
+                                return t;
+                            }).join("");
                         }
                         
+                        // SÉLECTION DU TITRE ET DE LA COULEUR SELON LE TAG
                         let notifyTitle = $.Localize("#Archipelago_HUD_Default");
+                        if (notifyTitle === "#Archipelago_HUD_Default") notifyTitle = "ARCHIPELAGO"; 
                         let notifyType = "success"; 
+                        
+                        const apType = msg.ap_msg_type || "default";
 
-                        if (isDeathMsg) {
+                        if (apType === "deathlink" || finalHtml.includes("DeathLink") || finalHtml.includes("mort")) {
                             notifyTitle = $.Localize("#Archipelago_HUD_Deathlink");
+                            if (notifyTitle === "#Archipelago_HUD_Deathlink") notifyTitle = "DEATHLINK";
                             notifyType = "255 50 50"; // Rouge
-                        } else if (isTrapMsg) {
+                            
+                        } else if (apType === "trap" || finalHtml.includes("Trap")) {
                             notifyTitle = $.Localize("#Archipelago_HUD_Trap");
+                            if (notifyTitle === "#Archipelago_HUD_Trap") notifyTitle = "TRAP";
                             notifyType = "255 150 0"; // Orange
+                            
+                        } else if (apType === "found") {
+                            notifyTitle = $.Localize("#Archipelago_HUD_Found");
+                            if (notifyTitle === "#Archipelago_HUD_Found") notifyTitle = "ITEM FOUND";
+                            notifyType = "50 255 50"; // Vert vif (propre objet)
+                            
+                        } else if (apType === "receive") {
+                            notifyTitle = $.Localize("#Archipelago_HUD_Receive");
+                            if (notifyTitle === "#Archipelago_HUD_Receive") notifyTitle = "ITEM RECEIVED";
+                            // On utilise la Primary Color configurée par le joueur
+                            notifyType = playerPrimaryColor; 
+                            
+                        } else if (apType === "send") {
+                            notifyTitle = $.Localize("#Archipelago_HUD_Send");
+                            if (notifyTitle === "#Archipelago_HUD_Send") notifyTitle = "ITEM SENT";
+                            // On utilise la Secondary Color configurée par le joueur
+                            notifyType = playerSecondaryColor; 
+                            
+                        } else if (apType === "hint") {
+                            notifyTitle = $.Localize("#Archipelago_HUD_Hint");
+                            if (notifyTitle === "#Archipelago_HUD_Hint") notifyTitle = "NEW HINT";
+                            notifyType = "255 255 50"; // Jaune (indice)
                         }
 
                         OnArchipelagoNotify(JSON.stringify({
                             title: notifyTitle,
-                            message: finalMessage,
-                            html: msg.html || "",
+                            html: finalHtml,
                             type: notifyType,
                             play_sound: true 
                         }));
@@ -174,6 +226,30 @@ $.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (json: string) => {
     }
 });
 
+function PlayCustomSoundAtUIVolume(soundName: string) {
+    let uiVol = 1.0; 
+    
+    try {
+        // Utilisation exacte de l'API selon le Wiki de Strata Source
+        uiVol = GameInterfaceAPI.GetSettingFloat("snd_volume_ui");
+    } catch (e) {
+        $.Msg("[AP Audio] Erreur avec GetSettingFloat : " + e);
+    }
+
+    // Sécurisation de la valeur (au cas où le jeu renvoie null ou un texte)
+    if (isNaN(uiVol) || uiVol < 0.0) uiVol = 1.0;
+    if (uiVol > 1.0) uiVol = 1.0;
+
+    // Formatage propre (ex: 0.50)
+    const finalVol = uiVol.toFixed(2); 
+    
+    // Message de débogage CRUCIAL
+    $.Msg(`[AP Audio] Application du volume : playvol ${soundName} ${finalVol}`);
+
+    // Exécution de la commande
+    GameInterfaceAPI.ConsoleCommand(`playvol ${soundName} ${finalVol}`);
+}
+
 function OnArchipelagoNotify(payload: string) {
     const container = $.GetContextPanel();
     if (!container) return;
@@ -183,15 +259,20 @@ function OnArchipelagoNotify(payload: string) {
         const entry = $.CreatePanel('Panel', container, '');
         if (!entry) return;
 
+        // --- MISE À JOUR : Utilisation de la nouvelle fonction pour les sons ---
         if (data.play_sound) {
             if (data.type === "255 50 50") { 
-                $.PlaySoundEvent('Player.FallGib'); 
+                // Deathlink (Son en jeu forcé au volume UI)
+                PlayCustomSoundAtUIVolume("physics/body/body_medium_break2.wav"); 
             } else if (data.type === "255 150 0") { 
-                GameInterfaceAPI.ConsoleCommand("snd_playsounds Error");
+                // Trap (Son en jeu forcé au volume UI)
+                PlayCustomSoundAtUIVolume('Error');
             } else if (data.type === "0 255 255" || data.type === "198 33 223") { 
-                $.PlaySoundEvent('Portal.elevator_chime');
+                // Warp (Son UI natif, gère déjà snd_volume_ui automatiquement)
+                PlayCustomSoundAtUIVolume("ambient/alarms/portal_elevator_chime.wav");
             } else {
-                $.PlaySoundEvent('Instructor.LessonStart');
+                // Défaut (Son UI natif, gère déjà snd_volume_ui automatiquement)
+                PlayCustomSoundAtUIVolume("#ui/beepclear.wav");
             }
         }
 
@@ -238,5 +319,4 @@ function OnArchipelagoNotify(payload: string) {
     }
 }
 
-// Export the notification system so Smart Warp can use it
 (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify = OnArchipelagoNotify;

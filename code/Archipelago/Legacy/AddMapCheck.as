@@ -51,8 +51,7 @@ void AddMapCheck() {
         
         // 2. Named Transition Hooks
         array<string> transTargets = { 
-            "transition_trigger", "trigger_transition", "@transition_from_map", 
-            "potatos_end_relay", "relay_transition"
+            "transition_trigger", "trigger_transition", "@transition_from_map", "relay_transition"
         };
         
         for (uint s = 0; s < transTargets.length(); s++) {

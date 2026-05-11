@@ -268,8 +268,8 @@ void PrintItemLegacyCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("InciniratorDisablePortalGun", "Bridge from VScript/Client")]
-void InciniratorDisablePortalGunCmd(const CommandArgs@ args) {
+[ServerCommand("IncineratorDisablePortalGun", "Bridge from VScript/Client")]
+void IncineratorDisablePortalGunCmd(const CommandArgs@ args) {
     Legacy::IncineratorDisablePortalGun();
 }
 

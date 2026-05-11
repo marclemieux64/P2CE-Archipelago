@@ -1,3 +1,5 @@
+'use strict';
+
 const notificationQueue: Panel[] = [];
 let isTimerRunning = false;
 let isWarpPending = false;
@@ -21,8 +23,8 @@ $.DefineEvent("ArchipelagoQueueUpdated", 0);
 $.DefineEvent("ArchipelagoNotify", 1, "payload");
 $.DefineEvent("ArchipelagoHideNotifications", 1, "time");
 $.DefineEvent("ArchipelagoDeath", 1, "message");
+
 $.RegisterForUnhandledEvent("ArchipelagoDeath", (msg: string) => {
-    // Le HUD construit le JSON lui-même de manière sécurisée
     OnArchipelagoNotify(JSON.stringify({
         title: "DEATHLINK",
         message: msg,
@@ -43,20 +45,16 @@ $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
 
     const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
     
-    // CONDITION : N'afficher "WARP TO MENU" ici que si le Smart Warp est OFF
-    // --- Dans notification.ts (Événement Archipelago_WarpToMenu) ---
-
-if (useSmartWarp !== "1" && useSmartWarp !== 1) {
-    const locTitle = $.Localize("#Archipelago_HUD_Warp_Menu"); // Utilisation de la nouvelle clé
-    const locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
-    OnArchipelagoNotify(JSON.stringify({
-        title: locTitle,
-        html: locLoading,
-        type: "198 33 223",
-        play_sound: true
-    }));
-}else {
-        // Si Smart Warp est ON, on lance ProcessQueue immédiatement pour traiter le Warp sans message initial
+    if (useSmartWarp !== "1" && useSmartWarp !== 1) {
+        const locTitle = $.Localize("#Archipelago_HUD_Warp_Menu");
+        const locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
+        OnArchipelagoNotify(JSON.stringify({
+            title: locTitle,
+            html: locLoading,
+            type: "198 33 223",
+            play_sound: true
+        }));
+    } else {
         if (!isTimerRunning) ProcessQueue();
     }
 });
@@ -65,8 +63,6 @@ function ProcessQueue() {
     if (notificationQueue.length === 0) {
         isTimerRunning = false;
         if (isWarpPending) {
-            // CRITICAL FIX: Reset the flag immediately so we don't infinite loop 
-            // if Smart Warp adds a new notification to the queue!
             isWarpPending = false; 
             
             $.persistentStorage.setItem("ap_return_to_map_select", "true");
@@ -106,123 +102,91 @@ function ProcessQueue() {
     });
 }
 
-const API_BASE = "http://127.0.0.1:8910";
-
-function PollForNotifications() {
+$.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (json: string) => {
     const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
-    
-    $.AsyncWebRequest(API_BASE + "/chat", {
-        type: 'GET',
-        complete: (res: any) => {
-            if (res.status === 200 && res.responseText) {
-                try {
-                    const cleanJson = res.responseText.trim().replace(/\0/g, '');
-                    const chat = JSON.parse(cleanJson);
-                    
-                    if (Array.isArray(chat) && chat.length > 0) {
-                        let lastId = api ? api.getLastNotificationId() : -1;
+    if (!api) return;
+
+    try {
+        const chat = JSON.parse(json);
+        if (Array.isArray(chat) && chat.length > 0) {
+            let lastId = api.getLastNotificationId();
+            
+            if (lastId === -1) {
+                lastId = chat[chat.length - 1].id;
+                api.setLastNotificationId(lastId);
+                return;
+            }
+
+            for (const msg of chat) {
+                if (msg.id > lastId) {
+                    lastId = msg.id;
+                    api.setLastNotificationId(lastId);
+
+                    if (msg.priority === true && !msg.no_notification) { 
+                        let finalMessage = msg.text || "";
+                        let isDeathMsg = false;
+                        let isTrapMsg = false;
+
+                        if (msg.type === "json" && Array.isArray(msg.data)) {
+                            finalMessage = msg.data.map((p: any) => p.text || "").join("");
+                            isDeathMsg = msg.data.some((p: any) => p.is_death === true);
+                            isTrapMsg = msg.data.some((p: any) => p.is_trap === true);
+                        }
+
+                        if (!isDeathMsg && !isTrapMsg) {
+                            isDeathMsg = finalMessage.includes("DeathLink") || finalMessage.includes("mort");
+                            isTrapMsg = finalMessage.includes("Trap");
+                        }
                         
-                        if (lastId === -1) {
-                            lastId = chat[chat.length - 1].id;
-                            if (api) api.setLastNotificationId(lastId);
-                            $.Schedule(0.25, PollForNotifications);
-                            return;
+                        let notifyTitle = $.Localize("#Archipelago_HUD_Default");
+                        let notifyType = "success"; 
+
+                        if (isDeathMsg) {
+                            notifyTitle = $.Localize("#Archipelago_HUD_Deathlink");
+                            notifyType = "255 50 50"; // Rouge
+                        } else if (isTrapMsg) {
+                            notifyTitle = $.Localize("#Archipelago_HUD_Trap");
+                            notifyType = "255 150 0"; // Orange
                         }
 
-                        for (const msg of chat) {
-                            if (msg.id > lastId) {
-                                lastId = msg.id;
-                                if (api) api.setLastNotificationId(lastId);
-
-                                // Seuls les messages prioritaires (Items, Goal, Mort, Trap) vont au HUD
-                                if (msg.priority === true && !msg.no_notification) { 
-                                    
-                                    let finalMessage = msg.text || "";
-                                    let isDeathMsg = false;
-                                    let isTrapMsg = false;
-
-                                    // Extraction propre du texte et vérification des tags secrets
-                                    if (msg.type === "json" && Array.isArray(msg.data)) {
-                                        finalMessage = msg.data.map((p: any) => p.text || "").join("");
-                                        
-                                        // Détection des tags envoyés par Portal2Client.py
-                                        isDeathMsg = msg.data.some((p: any) => p.is_death === true);
-                                        isTrapMsg = msg.data.some((p: any) => p.is_trap === true);
-                                    }
-
-                                    // Sécurité par mots-clés si les tags sont absents
-                                    if (!isDeathMsg && !isTrapMsg) {
-                                        isDeathMsg = finalMessage.includes("DeathLink") || finalMessage.includes("mort");
-                                        isTrapMsg = finalMessage.includes("Trap");
-                                    }
-                                    
-                                    // Détermination du style visuel
-                                   // --- Dans notification.ts (Fonction PollForNotifications) ---
-
-// Détermination du style visuel et du titre localisé
-let notifyTitle = $.Localize("#Archipelago_HUD_Default");
-let notifyType = "success"; 
-
-if (isDeathMsg) {
-    notifyTitle = $.Localize("#Archipelago_HUD_Deathlink");
-    notifyType = "255 50 50"; // Rouge
-} else if (isTrapMsg) {
-    notifyTitle = $.Localize("#Archipelago_HUD_Trap");
-    notifyType = "255 150 0"; // Orange
-}
-
-OnArchipelagoNotify(JSON.stringify({
-    title: notifyTitle,
-    message: finalMessage,
-    html: msg.html || "",
-    type: notifyType,
-    play_sound: true 
-}));
-                                }
-                            }
-                        }
+                        OnArchipelagoNotify(JSON.stringify({
+                            title: notifyTitle,
+                            message: finalMessage,
+                            html: msg.html || "",
+                            type: notifyType,
+                            play_sound: true 
+                        }));
                     }
-                } catch (e) {
-                    $.Warning("[AP] Error parsing chat: " + e);
                 }
             }
-            $.Schedule(0.25, PollForNotifications);
-        },
-        error: () => {
-            $.Schedule(2.0, PollForNotifications);
         }
-    });
-}
+    } catch (e) {
+        $.Warning("[AP] Error parsing chat for notifications: " + e);
+    }
+});
 
 function OnArchipelagoNotify(payload: string) {
     const container = $.GetContextPanel();
-    if (!container) return; // Si le HUD est crashé ou absent, pas de son.
+    if (!container) return;
 
     try {
         const data = JSON.parse(payload);
-        
-        // On ne crée le panel QUE maintenant
         const entry = $.CreatePanel('Panel', container, '');
         if (!entry) return;
 
-        // LE SON : On le joue uniquement si le panel a pu être créé
-        // LE SON : Choix selon le titre
         if (data.play_sound) {
-            if (data.title === "DEATHLINK") {
+            if (data.type === "255 50 50") { 
                 $.PlaySoundEvent('Player.FallGib'); 
-            } else if (data.title === "TRAP TRIGGERED") {
-                // Son de fizzle/erreur pour les pièges
+            } else if (data.type === "255 150 0") { 
                 GameInterfaceAPI.ConsoleCommand("snd_playsounds Error");
-            } else if (data.title === "SMART WARP" || data.title === "WARP TO MENU") {
-                // smart warp and warp to menu sound
+            } else if (data.type === "0 255 255" || data.type === "198 33 223") { 
                 $.PlaySoundEvent('Portal.elevator_chime');
-                
             } else {
                 $.PlaySoundEvent('Instructor.LessonStart');
             }
         }
 
-        entry.AddClass('notify-entry');;
+        entry.AddClass('notify-entry');
 
         const accentBar = $.CreatePanel('Panel', entry, 'AccentBar');
         accentBar.AddClass('accent-bar');
@@ -264,13 +228,6 @@ function OnArchipelagoNotify(payload: string) {
         $.Msg("Logic Error: " + e);
     }
 }
-
-(function () {
-    const context = $.GetContextPanel();
-    if (context) {
-        PollForNotifications();
-    }
-})();
 
 // Export the notification system so Smart Warp can use it
 (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify = OnArchipelagoNotify;

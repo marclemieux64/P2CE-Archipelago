@@ -402,6 +402,43 @@ class Portal2Context(CommonContext):
                 self.send_response(200); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers()
 
             def do_GET(self):
+                # --- NOUVELLE ROUTE OPTIMISÉE ---
+                if self.path == '/status_full':
+                    is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
+                    
+                    missing_str = ""
+                    if hasattr(client_self, "item_list"):
+                        missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list])
+
+                    full_data = {
+                        "status": {
+                            "connected": is_conn, 
+                            "game_connected": client_self.check_game_connection(), 
+                            "slot": client_self.slot, 
+                            "checked_locations": list(client_self.checked_locations), 
+                            "missing_items": missing_str, 
+                            "hint_points": getattr(client_self, "hint_points", 0), 
+                            "hint_cost": getattr(client_self, "hint_cost", 0), 
+                            "menu": client_self.menu.to_dict() if client_self.menu else None
+                        },
+                        "chat": client_self.chat_log,
+                        "hints": client_self.hint_log
+                    }
+                    
+                    # On convertit en texte et on génère une empreinte unique (Hash)
+                    json_body = json.dumps(full_data)
+                    current_hash = str(hash(json_body))
+
+                    # On envoie la réponse avec le Hash dans le header
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('X-Data-Hash', current_hash)
+                    self.end_headers()
+                    self.wfile.write(json_body.encode('utf-8'))
+                    return
+
+                # --- ANCIENNES ROUTES (Conservées pour éviter de casser le reste) ---
                 if self.path == '/status':
                     is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
                     
@@ -425,7 +462,6 @@ class Portal2Context(CommonContext):
                     self._send_json(client_self.hint_log)
                 else:
                     self.send_error(404)
-
             def do_POST(self):
                 try:
                     content_length = int(self.headers.get('Content-Length', 0))

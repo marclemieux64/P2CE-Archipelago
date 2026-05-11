@@ -90,15 +90,23 @@ class ArchipelagoMapSelect {
             }
         }
 
-        if (!api || !status) {
+        if (!api || (status && status.client_offline)) {
             overlay.RemoveClass('hide');
             if (content) content.AddClass('hide');
             if (overlayButton) overlayButton.AddClass('hide'); 
             
             if (overlayLabel) {
-                // TEXTE LOCALISÉ ICI
                 overlayLabel.text = $.Localize("#Archipelago_Status_NoClient") + "\n" + $.Localize("#Archipelago_Status_LaunchClient");
                 overlayLabel.style.color = "#ffbb00"; 
+            }
+        } else if (!status) {
+            overlay.RemoveClass('hide');
+            if (content) content.AddClass('hide');
+            if (overlayButton) overlayButton.AddClass('hide'); 
+            
+            if (overlayLabel) {
+                overlayLabel.text = $.Localize("#Archipelago_Status_Loading");
+                overlayLabel.style.color = "#eeeeee"; 
             }
         } else if (!status.connected) {
             overlay.RemoveClass('hide');
@@ -430,9 +438,12 @@ class ArchipelagoMapSelect {
             entry.AddClass('error_entry');
             const label = $.CreatePanel('Label', entry, '');
             
-            if (!api || !status) {
+            if (!api || (status && status.client_offline)) {
                 label.text = $.Localize("#Archipelago_Status_NoClient") + "\n" + $.Localize("#Archipelago_Status_LaunchClient");
                 label.style.color = "#ffbb00"; 
+            } else if (!status) {
+                label.text = $.Localize("#Archipelago_Status_Loading");
+                label.style.color = "#eeeeee";
             } else if (!isConnected) {
                 label.text = $.Localize("#Archipelago_Status_NotConnected");
                 label.style.color = "#ff4444"; 
@@ -449,6 +460,7 @@ class ArchipelagoMapSelect {
             return;
         }
 
+        const completionSymbol = ArchipelagoMapSelect.getCompletionSymbol();
         const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));
 
         for (const chId of sortedKeys) {
@@ -489,16 +501,31 @@ class ArchipelagoMapSelect {
 
             let chapterGreenCount = 0;
             let chapterTotalCount = 0;
-            let starCount = 0;
+            let mapsWithIconsCount = 0;
+            let mapsCompletedCount = 0;
+
+            // PREMIER PASSAGE : on calcule les stats complètes du chapitre
             chapter.maps.forEach((map: any) => {
                 if (map.command_deactivated) return;
+                
                 const rawTitle = map.title || "Unknown Map";
                 let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
                 if (!statusIcons && rawTitle.length > 4 && (rawTitle.startsWith("~") || rawTitle.startsWith("-") || rawTitle.startsWith("═"))) {
                     statusIcons = rawTitle.substring(0, 4).replace(/[~\-]/g, "").trim();
                 }
-                const symbol = ArchipelagoMapSelect.getCompletionSymbol();
-                if (statusIcons.length > 0 && statusIcons.replace(new RegExp(symbol, 'g'), "").length === 0) starCount++;
+
+                if (statusIcons.length > 0) {
+                    mapsWithIconsCount++;
+                    
+                    // On supprime tous les symboles de victoire possibles pour voir s'il reste quelque chose
+                    const cleanStatus = statusIcons.split(completionSymbol).join("").split("★").join("").split("£").join("").split("✓").join("");
+                    if (cleanStatus.length === 0) {
+                        mapsCompletedCount++;
+                        map._isComplete = true; // Flag pour simplifier la création des cartes plus bas
+                    } else {
+                        map._isComplete = false;
+                    }
+                }
 
                 const fullCommand = map.command || map.command_deactivated || "";
                 let mapCmdName = "";
@@ -518,9 +545,10 @@ class ArchipelagoMapSelect {
                 }
             });
 
-            if (starCount === chapter.maps.length && chapter.maps.length > 0) {
+            // AFFICHAGE DU HEADER DU CHAPITRE
+            if (mapsCompletedCount === mapsWithIconsCount && mapsWithIconsCount > 0) {
                 const chStarLabel = $.CreatePanel('Label', entry, '');
-                chStarLabel.text = ArchipelagoMapSelect.getCompletionSymbol();
+                chStarLabel.text = completionSymbol;
                 chStarLabel.style.color = "#ffff44";
                 chStarLabel.style.fontSize = "26px";
                 chStarLabel.style.fontFamily = "APPortal-bold";
@@ -556,6 +584,7 @@ class ArchipelagoMapSelect {
             mapList.AddClass('map_list');
             mapList.AddClass('hide');
 
+            // DEUXIÈME PASSAGE : Création des cartes individuelles
             chapter.maps.forEach((map: any) => {
                 const mapBtn = $.CreatePanel('Panel', mapList, '');
                 mapBtn.AddClass('map_button');
@@ -623,9 +652,10 @@ class ArchipelagoMapSelect {
                     progressLabel.style.fontFamily = "APPortal-bold";
                     progressLabel.style.verticalAlign = "center";
                     progressLabel.style.marginRight = "10px";
-                } else if (statusIcons.length > 0 && (statusIcons.replace(/★/g, "").length === 0 || statusIcons.replace(/£/g, "").length === 0)) {
+                } else if (map._isComplete && !map.command_deactivated) {
+                    // Utilisation du flag _isComplete qu'on a défini plus haut pour garantir la cohérence
                     const starLabel = $.CreatePanel('Label', mapBtn, '');
-                    starLabel.text = ArchipelagoMapSelect.getCompletionSymbol();
+                    starLabel.text = completionSymbol;
                     starLabel.style.color = "#ffff44";
                     starLabel.style.fontSize = "26px";
                     starLabel.style.fontFamily = "APPortal-bold";

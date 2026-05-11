@@ -670,7 +670,6 @@ void RemovePotatOS() {
         if (body !is null) {
             body.KeyValue("targetname", scenarioName + "_model");
             body.SetModel("models/props/switch001.mdl");
-            body.KeyValue("solid", "6");
             body.SetAbsOrigin(position);
             body.SetAbsAngles(angle);
             body.Spawn();

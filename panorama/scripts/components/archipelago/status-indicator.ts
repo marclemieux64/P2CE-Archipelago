@@ -3,10 +3,12 @@
 class ArchipelagoStatusIndicator {
     static init() {
         $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", (payload: string) => {
-            this.updateStatus(JSON.parse(payload));
+            try {
+                this.updateStatus(JSON.parse(payload));
+            } catch (e) { }
         });
 
-        // Initial check if API is already populated
+        // Vérification initiale si l'API est déjà peuplée
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api && api.getStatus()) {
             this.updateStatus(api.getStatus());
@@ -14,17 +16,23 @@ class ArchipelagoStatusIndicator {
     }
 
     static updateStatus(status: any) {
+        if (!status) return;
+
         const serverDot = $('#ServerDot');
         const gameDot = $('#GameDot');
 
+        // L'astuce est le "!!" : cela transforme undefined ou null en false, 
+        // et une valeur existante en true. Cela règle l'erreur V8ParamToPanoramaType.
         if (serverDot) {
-            serverDot.SetHasClass('ap-status__dot--connected', status.connected);
-            serverDot.SetHasClass('ap-status__dot--disconnected', !status.connected);
+            const isServerConnected = !!status.connected;
+            serverDot.SetHasClass('ap-status__dot--connected', isServerConnected);
+            serverDot.SetHasClass('ap-status__dot--disconnected', !isServerConnected);
         }
 
         if (gameDot) {
-            gameDot.SetHasClass('ap-status__dot--connected', status.game_connected);
-            gameDot.SetHasClass('ap-status__dot--disconnected', !status.game_connected);
+            const isGameConnected = !!status.game_connected;
+            gameDot.SetHasClass('ap-status__dot--connected', isGameConnected);
+            gameDot.SetHasClass('ap-status__dot--disconnected', !isGameConnected);
         }
     }
 }

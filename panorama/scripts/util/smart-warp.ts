@@ -95,7 +95,8 @@ function SmartWarpNextMap(currentMapName: string) {
             play_sound: true
         }));
     }
-
+    // ... reste du code ...
+}
 }
 
 (UiToolkitAPI.GetGlobalObject() as any).SmartWarpNextMap = SmartWarpNextMap;

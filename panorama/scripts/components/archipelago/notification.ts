@@ -44,14 +44,18 @@ $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
     const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
     
     // CONDITION : N'afficher "WARP TO MENU" ici que si le Smart Warp est OFF
-    if (useSmartWarp !== "1" && useSmartWarp !== 1) {
-        OnArchipelagoNotify(JSON.stringify({
-            title: "WARP TO MENU",
-            html: "Retour à la sélection de niveau...<br/><font color='#aaaaaa'><i>Chargement...</i></font>",
-            type: "198 33 223",
-            play_sound: true
-        }));
-    } else {
+    // --- Dans notification.ts (Événement Archipelago_WarpToMenu) ---
+
+if (useSmartWarp !== "1" && useSmartWarp !== 1) {
+    const locTitle = $.Localize("#Archipelago_HUD_Warp_Menu"); // Utilisation de la nouvelle clé
+    const locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
+    OnArchipelagoNotify(JSON.stringify({
+        title: locTitle,
+        html: locLoading,
+        type: "198 33 223",
+        play_sound: true
+    }));
+}else {
         // Si Smart Warp est ON, on lance ProcessQueue immédiatement pour traiter le Warp sans message initial
         if (!isTimerRunning) ProcessQueue();
     }
@@ -153,24 +157,27 @@ function PollForNotifications() {
                                     }
                                     
                                     // Détermination du style visuel
-                                    let notifyTitle = "ARCHIPELAGO";
-                                    let notifyType = "success"; 
-                                    
-                                    if (isDeathMsg) {
-                                        notifyTitle = "DEATHLINK";
-                                        notifyType = "255 50 50"; // Rouge
-                                    } else if (isTrapMsg) {
-                                        notifyTitle = "TRAP TRIGGERED";
-                                        notifyType = "255 150 0"; // Orange
-                                    }
+                                   // --- Dans notification.ts (Fonction PollForNotifications) ---
 
-                                    OnArchipelagoNotify(JSON.stringify({
-                                        title: notifyTitle,
-                                        message: finalMessage,
-                                        html: msg.html || "",
-                                        type: notifyType,
-                                        play_sound: true 
-                                    }));
+// Détermination du style visuel et du titre localisé
+let notifyTitle = $.Localize("#Archipelago_HUD_Default");
+let notifyType = "success"; 
+
+if (isDeathMsg) {
+    notifyTitle = $.Localize("#Archipelago_HUD_Deathlink");
+    notifyType = "255 50 50"; // Rouge
+} else if (isTrapMsg) {
+    notifyTitle = $.Localize("#Archipelago_HUD_Trap");
+    notifyType = "255 150 0"; // Orange
+}
+
+OnArchipelagoNotify(JSON.stringify({
+    title: notifyTitle,
+    message: finalMessage,
+    html: msg.html || "",
+    type: notifyType,
+    play_sound: true 
+}));
                                 }
                             }
                         }

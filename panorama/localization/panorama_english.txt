@@ -229,15 +229,15 @@
 
 		//archipelago Map transition 
 		"Archipelago_HUD_Warp_Title"      "SMART WARP"
-		"Archipelago_HUD_Warp_Menu_Title" "WARP TO MENU"
 		"Archipelago_HUD_Warp_Dest"       "Destination: %s1"
 		"Archipelago_HUD_Warp_Delay"      "Warping in 3 seconds..."
+		"Archipelago_HUD_Warp_Menu_Title" "WARP TO MENU"
 		"Archipelago_HUD_Warp_NoMaps"     "No doable maps found."
 		"Archipelago_HUD_Warp_Loading"    "Returning to map select... Loading..."
-		"Archipelago_HUD_Deathlink"    "DEATHLINK"
-		"Archipelago_HUD_Trap"         "TRAP TRIGGERED"
-		"Archipelago_HUD_Warp_Menu"    "WARP TO MENU"
-		"Archipelago_HUD_Default"      "ARCHIPELAGO"
+		"Archipelago_HUD_Deathlink"       "DEATHLINK"
+		"Archipelago_HUD_Trap"            "TRAP TRIGGERED"
+		"Archipelago_HUD_Warp_Menu"       "WARP TO MENU"
+		"Archipelago_HUD_Default"         "ARCHIPELAGO"
 
 		//Archipelago Mapselect
 		"Archipelago_Status_NoClient"     "ARCHIPELAGO CLIENT NOT DETECTED"

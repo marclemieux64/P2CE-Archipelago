@@ -12,23 +12,23 @@ class PauseMenu {
             hovered: () => { },
             focusIsHover: true
         },
-        {
-            id: 'ArchipelagoConsoleBtn',
-            headline: '#Archipelago_Console_Title',
-            tagline: '#Archipelago_Console_Tagline',
+          {
+            id: 'ArchipelagoHintBtn',
+            headline: '#Archipelago_Hints_Title',
+            tagline: '#Archipelago_Hints_Tooltip',
             activated: () => {
-                $.DispatchEvent('MainMenuOpenNestedPage', 'ap_console', 'archipelago/console', undefined);
+                $.DispatchEvent('MainMenuOpenNestedPage', 'ap_hint', 'archipelago/hint', undefined);
             },
             hovered: () => { },
             unhovered: () => { },
             focusIsHover: true
         },
         {
-            id: 'ArchipelagoHintBtn',
-            headline: '#Archipelago_Hints_Title',
-            tagline: '#Archipelago_Hints_Tooltip',
+            id: 'ArchipelagoConsoleBtn',
+            headline: '#Archipelago_Console_Title',
+            tagline: '#Archipelago_Console_Tagline',
             activated: () => {
-                $.DispatchEvent('MainMenuOpenNestedPage', 'ap_hint', 'archipelago/hint', undefined);
+                $.DispatchEvent('MainMenuOpenNestedPage', 'ap_console', 'archipelago/console', undefined);
             },
             hovered: () => { },
             unhovered: () => { },

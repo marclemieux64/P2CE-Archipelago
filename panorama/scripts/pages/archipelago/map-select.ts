@@ -248,50 +248,58 @@ class ArchipelagoMapSelect {
         const duration = 0.3;
         const startTime = Date.now();
 
+        // FIX : Vérification d'intégrité avant de lire les hauteurs
         const openStartH = 0;
-        const openEndH = openPanel ? openPanel.actuallayoutheight : 0;
-        const closeStartH = closePanel ? closePanel.actuallayoutheight : 0;
+        const openEndH = (openPanel && openPanel.IsValid()) ? openPanel.actuallayoutheight : 0;
+        const closeStartH = (closePanel && closePanel.IsValid()) ? closePanel.actuallayoutheight : 0;
         const closeEndH = 0;
 
-        const scrollBar: any = scrollContainer.FindChildTraverse('VerticalScrollBar');
-        const startScroll = scrollBar ? scrollBar.ScrollPosition : 0;
+        const scrollBar: any = (scrollContainer && scrollContainer.IsValid()) ? scrollContainer.FindChildTraverse('VerticalScrollBar') : null;
+        const startScroll = (scrollBar && scrollBar.IsValid()) ? scrollBar.ScrollPosition : 0;
 
-        const entryScreenY = clickedEntry.GetPositionWithinWindow().y;
-        const containerScreenY = scrollContainer.GetPositionWithinWindow().y;
+        const entryScreenY = (clickedEntry && clickedEntry.IsValid()) ? clickedEntry.GetPositionWithinWindow().y : 0;
+        const containerScreenY = (scrollContainer && scrollContainer.IsValid()) ? scrollContainer.GetPositionWithinWindow().y : 0;
         const targetScroll = startScroll + (entryScreenY - containerScreenY) - 10;
 
         const step = () => {
+            // FIX CRITIQUE : Si les panneaux ont été détruits par un rafraichissement pendant l'animation, on annule l'animation !
+            if ((closePanel && !closePanel.IsValid()) || (openPanel && !openPanel.IsValid())) {
+                return;
+            }
+
             const now = Date.now();
             const elapsed = (now - startTime) / 1000;
             const progress = Math.min(elapsed / duration, 1.0);
             const ease = progress * (2 - progress);
 
-            if (closePanel) {
+            if (closePanel && closePanel.IsValid()) {
                 closePanel.style.height = `${closeStartH + (closeEndH - closeStartH) * ease}px`;
                 closePanel.style.opacity = `${1.0 - progress}`;
             }
 
-            if (openPanel) {
+            if (openPanel && openPanel.IsValid()) {
                 openPanel.style.height = `${openStartH + (openEndH - openStartH) * ease}px`;
                 openPanel.style.opacity = `${progress}`;
             }
 
-            if (scrollBar) {
+            if (scrollBar && scrollBar.IsValid()) {
                 scrollBar.ScrollPosition = startScroll + (targetScroll - startScroll) * ease;
             }
 
             if (progress < 1.0) {
                 $.Schedule(0.0, step);
             } else {
-                if (closePanel) {
+                if (closePanel && closePanel.IsValid()) {
                     closePanel.AddClass('hide');
                     closePanel.style.height = '0px';
                 }
-                if (openPanel) {
+                if (openPanel && openPanel.IsValid()) {
                     openPanel.style.height = 'fit-children';
                     openPanel.style.opacity = '1.0';
                 }
-                clickedEntry.SetFocus();
+                if (clickedEntry && clickedEntry.IsValid()) {
+                    clickedEntry.SetFocus();
+                }
             }
         };
         step();
@@ -331,9 +339,11 @@ class ArchipelagoMapSelect {
                 mapList.style.opacity = '1.0';
 
                 $.Schedule(0.01, () => {
-                    mapList.style.height = '0px';
-                    mapList.style.opacity = '0.0';
-                    this.runTransition(mapList, activePanel, entry, scrollContainer);
+                    if (mapList.IsValid()) {
+                        mapList.style.height = '0px';
+                        mapList.style.opacity = '0.0';
+                        this.runTransition(mapList, activePanel, entry, scrollContainer);
+                    }
                 });
             } else {
                 this.g_OpenChapterId = ''; 
@@ -517,11 +527,10 @@ class ArchipelagoMapSelect {
                 if (statusIcons.length > 0) {
                     mapsWithIconsCount++;
                     
-                    // On supprime tous les symboles de victoire possibles pour voir s'il reste quelque chose
                     const cleanStatus = statusIcons.split(completionSymbol).join("").split("★").join("").split("£").join("").split("✓").join("");
                     if (cleanStatus.length === 0) {
                         mapsCompletedCount++;
-                        map._isComplete = true; // Flag pour simplifier la création des cartes plus bas
+                        map._isComplete = true; 
                     } else {
                         map._isComplete = false;
                     }
@@ -653,7 +662,6 @@ class ArchipelagoMapSelect {
                     progressLabel.style.verticalAlign = "center";
                     progressLabel.style.marginRight = "10px";
                 } else if (map._isComplete && !map.command_deactivated) {
-                    // Utilisation du flag _isComplete qu'on a défini plus haut pour garantir la cohérence
                     const starLabel = $.CreatePanel('Label', mapBtn, '');
                     starLabel.text = completionSymbol;
                     starLabel.style.color = "#ffff44";

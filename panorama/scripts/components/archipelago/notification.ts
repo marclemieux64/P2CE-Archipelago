@@ -37,7 +37,10 @@ try {
     $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch with fade buffer");
 } catch (e) {}
 
+// CORRECTION : Un seul '$' au lieu de '$$'
 $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
+    if (isWarpPending) return; // SÉCURITÉ : Empêche le jeu de déclencher l'événement en double
+    
     isWarpPending = true;
     pendingWarpMapName = content;
     const hud = GetHudRoot();
@@ -46,8 +49,13 @@ $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
     const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
     
     if (useSmartWarp !== "1" && useSmartWarp !== 1) {
-        const locTitle = $.Localize("#Archipelago_HUD_Warp_Menu");
-        const locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
+        // Fallbacks de sécurité pour la localisation
+        let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu");
+        if (locTitle === "#Archipelago_HUD_Warp_Menu") locTitle = "WARP TO MENU";
+        
+        let locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
+        if (locLoading === "#Archipelago_HUD_Warp_Loading") locLoading = "Returning to map select... Loading...";
+
         OnArchipelagoNotify(JSON.stringify({
             title: locTitle,
             html: locLoading,
@@ -63,10 +71,11 @@ function ProcessQueue() {
     if (notificationQueue.length === 0) {
         isTimerRunning = false;
         if (isWarpPending) {
-            isWarpPending = false; 
-            
             $.persistentStorage.setItem("ap_return_to_map_select", "true");
             $.Schedule(0.5, () => {
+                // CORRECTION : On désactive le verrou isWarpPending ici pour éviter les doublons
+                isWarpPending = false; 
+                
                 const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
                 if (useSmartWarp === "1" || useSmartWarp === 1) {
                     (UiToolkitAPI.GetGlobalObject() as any).SmartWarpNextMap(pendingWarpMapName);

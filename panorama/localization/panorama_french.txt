@@ -107,22 +107,23 @@
 		"Archipelago_Cost"      "Coût"
 
 		//archipelago Map transition
-		"Archipelago_HUD_Warp_Title"      "WARP INTELLIGENT"
-		"Archipelago_HUD_Warp_Menu_Title" "WARP VERS LE MENU"
-		"Archipelago_HUD_Warp_Dest"       "Destination: %s1"
-		"Archipelago_HUD_Warp_Delay"      "Retour au menu dans 3 secondes..."
-		"Archipelago_HUD_Warp_NoMaps"     "Aucune carte faisable trouvée."
-		"Archipelago_HUD_Warp_Loading"    "Retour à la sélection de carte... Chargement..."
-		"Archipelago_HUD_Deathlink"    "LIEN DE MORT"
-		"Archipelago_HUD_Trap"         "PIÈGE ACTIVÉ"
-		"Archipelago_HUD_Warp_Menu"    "RETOUR AU MENU"
-		"Archipelago_HUD_Default"      "ARCHIPELAGO"
+		"Archipelago_HUD_Warp_Title"      "Transition Intelligente"
+		"Archipelago_HUD_Warp_Dest"       "Destination : %s1"
+		"Archipelago_HUD_Warp_Delay"      "Transfert dans 3 secondes..."
+		"Archipelago_HUD_Warp_Menu_Title" "RETOUR AU MENU"
+		"Archipelago_HUD_Warp_NoMaps"     "Aucune salle disponible."
+		"Archipelago_HUD_Warp_Loading"    "Retour au choix de salle... Chargement..."
 
 		//Archipelago Mapselect
 		"Archipelago_Status_NoClient"     "CLIENT ARCHIPELAGO NON DÉTECTÉ"
 		"Archipelago_Status_LaunchClient" "Veuillez lancer Portal2Client.py"
 		"Archipelago_Status_NotConnected" "PAS CONNECTÉ AU SERVEUR"
 		"Archipelago_Status_Loading"      "Chargement des données Archipelago..."
+
+		"Archipelago_HUD_Deathlink"    "LIEN DE MORT"
+		"Archipelago_HUD_Trap"         "PIÈGE ACTIVÉ"
+		"Archipelago_HUD_Warp_Menu"    "RETOUR AU MENU"
+		"Archipelago_HUD_Default"      "ARCHIPELAGO"
 
 
 		"X_STRINGID_TITLENAME"					"Portal 2"

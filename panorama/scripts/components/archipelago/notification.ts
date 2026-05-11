@@ -93,7 +93,7 @@ function ProcessQueue() {
         return;
     }
 
-    $.Schedule(4.0, () => {
+    $.Schedule(5.0, () => {
         if (topPanel && topPanel.IsValid()) {
             topPanel.AddClass('exit-anim');
             $.Schedule(0.35, () => {

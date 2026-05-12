@@ -56,6 +56,12 @@ class ArchipelagoAPI {
 
                         if (data.status) {
                             this.m_Status = data.status;
+                            
+                            // --- NOUVEAU : Sauvegarde de la difficulté logique en mémoire ---
+                            if (data.status.logic_difficulty !== undefined) {
+                                $.persistentStorage.setItem("ArchipelagoLogicDifficulty", data.status.logic_difficulty);
+                            }
+
                             $.DispatchEvent("ArchipelagoAPI_StatusUpdated", JSON.stringify(this.m_Status));
                         }
                         if (data.chat) {
@@ -64,7 +70,6 @@ class ArchipelagoAPI {
                         }
                         if (data.hints) {
                             this.m_Hints = data.hints;
-                            // Cet événement fonctionnera maintenant car il est déclaré en haut !
                             $.DispatchEvent("ArchipelagoAPI_HintsUpdated", JSON.stringify(this.m_Hints));
                         }
                         

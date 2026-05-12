@@ -482,6 +482,7 @@ class Portal2Context(CommonContext):
                             "missing_items": missing_str, 
                             "hint_points": getattr(client_self, "hint_points", 0), 
                             "hint_cost": getattr(client_self, "hint_cost", 0), 
+                            "logic_difficulty": getattr(client_self, "logic_difficulty", 0), # <--- AJOUT ICI
                             "menu": client_self.menu.to_dict() if client_self.menu else None
                         },
                         "chat": client_self.chat_log,
@@ -679,6 +680,12 @@ class Portal2Context(CommonContext):
 
         if "location_name_to_id" in slot_data:
             self.location_name_to_id = slot_data["location_name_to_id"]
+
+        # --- NOUVEAU : Récupération de la difficulté logique ---
+        if "logic_difficulty" in slot_data:
+            self.logic_difficulty = slot_data["logic_difficulty"]
+        else:
+            self.logic_difficulty = 0
 
         if "chapter_dict" in slot_data:
             if "logic_difficulty" in slot_data:

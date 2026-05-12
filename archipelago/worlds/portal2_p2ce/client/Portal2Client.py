@@ -235,7 +235,15 @@ class Portal2Context(CommonContext):
         if getattr(self, "_current_ap_msg_priority", False):
             mirror_to_hud = True
 
-        if "DeathLink" in text or "mort" in text_lower:
+        # --- CORRECTION DEATHLINK : On cherche le flag exact, plus les mots ! ---
+        is_death_event = False
+        if rich_data:
+            for part in rich_data:
+                if isinstance(part, dict) and part.get("is_death"):
+                    is_death_event = True
+                    break
+
+        if is_death_event:
             mirror_to_hud = True
             ap_msg_type = "deathlink"
         elif "Trap" in text:
@@ -309,7 +317,6 @@ class Portal2Context(CommonContext):
         if msg_type == "ItemSend":
             receiving = args.get("receiving", 0)
             
-            # On cherche qui a trouvé l'objet de manière sécurisée
             finder = 0
             for part in args.get("data", []):
                 if isinstance(part, dict) and part.get("type") == "player_id":
@@ -330,7 +337,6 @@ class Portal2Context(CommonContext):
                 ap_msg_type = "send"
                 
         elif msg_type == "Hint":
-            # Si notre ID de joueur est mentionné n'importe où dans l'indice, ça nous concerne !
             for part in args.get("data", []):
                 if isinstance(part, dict) and part.get("type") == "player_id":
                     try:
@@ -341,20 +347,15 @@ class Portal2Context(CommonContext):
                     except ValueError:
                         pass
 
-        # Traps et Deathlink
+        # --- CORRECTION : On retire la détection de texte "deathlink" ici ---
         text_lower = args.get("text", "").lower()
-        if "deathlink" in text_lower or "mort" in text_lower:
-            priority = True
-            ap_msg_type = "deathlink"
-        elif "trap" in text_lower:
+        if "trap" in text_lower:
             priority = True
             ap_msg_type = "trap"
 
-        # On applique le tag temporaire pour que la fonction d'enregistrement le capte
         self._current_ap_msg_type = ap_msg_type
         self._current_ap_msg_priority = priority
         
-        # On demande à Archipelago de construire le texte final avec toutes les couleurs
         if "data" in args:
             self.print_json(args["data"], mirror_to_hud=priority)
         else:
@@ -362,7 +363,6 @@ class Portal2Context(CommonContext):
             if text:
                 self.on_print_silently(text, mirror_to_hud=priority)
                 
-        # On nettoie le tag une fois terminé
         self._current_ap_msg_type = "default"
         self._current_ap_msg_priority = False
     

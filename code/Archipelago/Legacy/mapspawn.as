@@ -1000,14 +1000,14 @@ void RemovePotatOS() {
         // Remplacement magique de la boîte et de la bouteille
         PreventPickupForModel("food_can_open.mdl");
         PreventPickupForModel("water_bottle.mdl");
-        
-    } else if (current_map == "sp_a3_transition01") {
+        } else if (current_map == "sp_a3_transition01") {
         CBaseEntity@ potatos_btn = EntityList().FindByName(null, "sphere_entrance_potatos_button");
         if (potatos_btn !is null) {
-            SafeAddOutput(potatos_btn, "OnPressed", "InitCmd", "Command", "PrintItem PotatOS", 0.0f, -1);
+            // On envoie les DEUX commandes à la console en même temps
+            SafeAddOutput(potatos_btn, "OnPressed", "InitCmd", "Command", "PrintItem PotatOS; RemovePotatosFromGun", 0.0f, -1);
+            
             potatos_btn.FireInput("Unlock", Variant(), 1.0f, null, null, 0);
         }
-        
     } else if (current_map == "sp_a2_laser_intro") {
         CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
         if (cmd !is null) {

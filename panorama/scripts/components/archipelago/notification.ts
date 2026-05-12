@@ -178,7 +178,8 @@ $.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (json: string) => {
                         
                         const apType = msg.ap_msg_type || "default";
 
-                        if (apType === "deathlink" || finalHtml.includes("DeathLink") || finalHtml.includes("mort")) {
+                        // --- CORRECTION : On ne se fie plus au texte, uniquement au flag natif ! ---
+                        if (apType === "deathlink") {
                             notifyTitle = $.Localize("#Archipelago_HUD_Deathlink");
                             if (notifyTitle === "#Archipelago_HUD_Deathlink") notifyTitle = "DEATHLINK";
                             notifyType = "255 50 50"; // Rouge
@@ -191,26 +192,24 @@ $.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (json: string) => {
                         } else if (apType === "found") {
                             notifyTitle = $.Localize("#Archipelago_HUD_Found");
                             if (notifyTitle === "#Archipelago_HUD_Found") notifyTitle = "ITEM FOUND";
-                            notifyType = "50 255 50"; // Vert vif (propre objet)
+                            notifyType = "50 255 50"; // Vert vif
                             
                         } else if (apType === "receive") {
                             notifyTitle = $.Localize("#Archipelago_HUD_Receive");
                             if (notifyTitle === "#Archipelago_HUD_Receive") notifyTitle = "ITEM RECEIVED";
-                            // On utilise la Primary Color configurée par le joueur
                             notifyType = playerPrimaryColor; 
                             
                         } else if (apType === "send") {
                             notifyTitle = $.Localize("#Archipelago_HUD_Send");
                             if (notifyTitle === "#Archipelago_HUD_Send") notifyTitle = "ITEM SENT";
-                            // On utilise la Secondary Color configurée par le joueur
                             notifyType = playerSecondaryColor; 
                             
                         } else if (apType === "hint") {
                             notifyTitle = $.Localize("#Archipelago_HUD_Hint");
                             if (notifyTitle === "#Archipelago_HUD_Hint") notifyTitle = "NEW HINT";
-                            notifyType = "255 255 50"; // Jaune (indice)
+                            notifyType = "255 255 50"; // Jaune
                         }
-
+                        
                         OnArchipelagoNotify(JSON.stringify({
                             title: notifyTitle,
                             html: finalHtml,

@@ -55,15 +55,14 @@ void AddTractorBeamFrameLegacyCmd(const CommandArgs@ args) {
 [ServerCommand("MakeFaithPlateFaulty", "Legacy MakeFaithPlateFaulty command")]
 void MakeFaithPlateFaultyLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-
-    // On récupère le nom passé par la console
+    
     string entName = args.Arg(1);
+    // AJOUTEZ CE LOG ICI POUR VOIR LA RÉCEPTION
+    Legacy::ArchipelagoLog("[AP RECV] MakeFaithPlateFaulty: " + entName); 
 
-    // On cherche l'entité correspondante
     CBaseEntity@ target = EntityList().FindByName(null, entName);
     if (target is null) @target = EntityList().FindByClassname(null, entName);
 
-    // Si on l'a trouvée, on lance la fonction
     if (target !is null) {
         Legacy::MakeFaithPlateFaulty(target);
     }

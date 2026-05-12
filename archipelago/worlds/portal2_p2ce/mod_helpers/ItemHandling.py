@@ -42,8 +42,6 @@ def handle_item(item_name: str) -> list[str]:
             return_commands.append(f'AddFloorButtonFrame "{ent_name}"')
         elif item_name == funnel:
             return_commands.append(f'AddTractorBeamFrame "{ent_name}"')
-        elif item_name == faith_plate:
-            return_commands.append(f'MakeFaithPlateFaulty"{ent_name}"')
         else:
             return_commands.append(f'DeleteEntity "{ent_name}"')
     

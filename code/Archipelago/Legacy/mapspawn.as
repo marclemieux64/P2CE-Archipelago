@@ -217,17 +217,13 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
     if (trigger.GetClassname() != "trigger_catapult") return;
 
     string current_map = ConVarRef("host_map").GetString();
-    bool isFlingMap = false;
     
+    // Vérification de la liste des Fling Maps (protection des triggers système)
     for (uint f = 0; f < scripted_fling_levels.length(); f++) {
-        if (scripted_fling_levels.opIndex(f) == current_map) { 
-            isFlingMap = true; 
-            break; 
+        if (scripted_fling_levels[f] == current_map) {
+            Legacy::ArchipelagoLog("[AP] Fling Map detected: Protection active for " + current_map);
+            return; 
         }
-    }
-    
-    if (isFlingMap) {
-        return; 
     }
 
     bool foundPlate = false;
@@ -235,20 +231,22 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
     string targetPlateName = "";
     
     CBaseEntity@ p = null;
-    // On garde un rayon raisonnable (64 à 128 max pour éviter de chopper la mauvaise plaque)
-    while ((@p = EntityList().FindInSphere(p, trigger.GetAbsOrigin(), 128.0f)) !is null) {
+    // On augmente le rayon à 256 pour les grandes zones de propulsion
+    while ((@p = EntityList().FindInSphere(p, trigger.GetAbsOrigin(), 256.0f)) !is null) {
         string pModel = p.GetModelName().tolower();
         
-        if (pModel == "models/props/faith_plate.mdl" || pModel == "models/props/faith_plate_128.mdl") {
+        // Recherche plus flexible du modèle de la plaque
+        if (pModel.locate("faith_plate") != uint(-1)) {
             targetPlateName = p.GetEntityName();
             if (targetPlateName == "") {
                 targetPlateName = "ap_faith_plate_" + trigger.GetEntityIndex();
                 p.KeyValue("targetname", targetPlateName);
             }
 
-            // Stabilisation physique de la plaque
+     // Force physical solidity (Legacy Archi "Win" logic)
             p.KeyValue("solid", "2");
             p.SetSolid(SOLID_BBOX);
+            p.SetMoveType(MOVETYPE_PUSH);
             p.FireInput("EnableCollision", Variant(), 0.0f, null, null, 0);
 
             @targetPlate = p;
@@ -257,27 +255,27 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         }
     }
 
-    // --- CORRECTION CRITIQUE ICI ---
     if (!foundPlate) {
-        // Si on ne trouve pas de plaque physique, c'est un trigger système.
-        // On NE fait RIEN (on ne le tue pas), pour qu'il reste fonctionnel.
+        // C'est un "fling trigger" invisible : on le laisse intact
+        Legacy::ArchipelagoLog("[AP] No physical plate found for trigger " + trigger.GetEntityIndex() + ". Skipping.");
         return; 
     }
 
-    // --- À partir d'ici, on sait qu'on a une plaque, on peut remplacer le trigger ---
+    // --- CRÉATION DU SABOTAGE ---
     
-    // Feedback Audio
+    // Audio : On place le son sur la plaque
     string sndUid = "ap_cat_snd_" + targetPlateName;
     CBaseEntity@ snd = util::CreateEntityByName("ambient_generic");
     if (snd !is null) {
         snd.KeyValue("targetname", sndUid);
         snd.KeyValue("message", "World.RobotNegInteractPitchedUp");
-        snd.KeyValue("spawnflags", "48"); 
+        snd.KeyValue("health", "10"); // Volume
+        snd.KeyValue("spawnflags", "48"); // Start Silent + Is NOT Looping
         snd.SetAbsOrigin(targetPlate.GetAbsOrigin());
         snd.Spawn();
     }
 
-    // Feedback Visuel (Hint)
+    // Hint Visuel
     string hintUid = "ap_hint_" + targetPlateName;
     CBaseEntity@ hint = util::CreateEntityByName("env_instructor_hint");
     if (hint !is null) {
@@ -286,25 +284,31 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
         hint.KeyValue("hint_caption", "#AP_Item_AerialFaithPlate_Hint");
         hint.KeyValue("hint_icon_onscreen", "icon_alert");
         hint.KeyValue("hint_color", "255 50 50");
+        hint.KeyValue("hint_allow_nodraw_target", "1");
+        hint.SetAbsOrigin(targetPlate.GetAbsOrigin());
         hint.Spawn();
     }
 
-    // Création du Proxy (pour détecter le joueur et afficher les alertes)
+    // Proxy Trigger : On copie la taille exacte de l'original
     CBaseEntity@ proxy = util::CreateEntityByName("trigger_multiple");
     if (proxy !is null) {
         proxy.KeyValue("targetname", "ap_prox_" + trigger.GetEntityIndex());
-        proxy.KeyValue("spawnflags", "1");
-        proxy.KeyValue("wait", "1.0");
+        proxy.KeyValue("spawnflags", "1"); // Clients (Players) only
+        proxy.KeyValue("wait", "2"); // Évite de spammer le bip
         proxy.SetAbsOrigin(trigger.GetAbsOrigin());
-        proxy.SetModel(trigger.GetModelName());
+        proxy.SetModel(trigger.GetModelName()); // Copie la forme du trigger original
         proxy.Spawn();
 
         SafeAddOutput(proxy, "OnTrigger", hintUid, "ShowHint", "", 0.0f, -1);
         SafeAddOutput(proxy, "OnTrigger", sndUid, "PlaySound", "", 0.0f, -1);
+
+        SafeAddOutput(proxy, "OnTrigger", targetPlateName, "Skin", "1", 0.0f, -1);
+        SafeAddOutput(proxy, "OnTrigger", targetPlateName, "Skin", "0", 0.5f, -1);
     }
 
-    // Maintenant qu'on a un proxy pour l'alerte, on peut supprimer l'original
+    // On retire la fonction de propulsion
     trigger.Remove();
+    Legacy::ArchipelagoLog("[AP] Faith Plate sabotaged: " + targetPlateName);
 }
 
 

@@ -105,11 +105,11 @@
 						<Label class="help-popup__icon" text="û" style="color: #ff6a00;" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_PGun" />
 					</Panel>
-
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="à" style="color: #00a5ff;" />
+						<Label class="help-popup__icon" text="à" html="true" style="color: #00a5ff;" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelBlue" />
 					</Panel>
+							
 
 					<Panel class="help-popup__row">
 						<Label class="help-popup__icon" text="á" style="color: #ff6a00;" />

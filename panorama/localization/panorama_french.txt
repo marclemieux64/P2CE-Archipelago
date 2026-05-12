@@ -970,7 +970,7 @@
 		"MainMenu_Navigation_Addons"					"Extension"
 		"MainMenu_Navigation_Addons_Tagline"			"Gérer les modules complémentaires installés et les jeux montés"
 		"MainMenu_Navigation_Options"					"Paramètres"
-		"MainMenu_Navigation_Options_Tagline"			"Ajustez les raccourcis clavier, les éléments audiovisuels et les paramètres de compatibilité"
+		"MainMenu_Navigation_Options_Tagline"			"Ajustez vos raccourcis, l'audio, la vidéo et la compatibilité"
 		"MainMenu_Navigation_QuitGame"					"Quitter le jeu"
 		"MainMenu_Navigation_QuitGame_Tagline"			"Laisser tester un autre jour"
 		"MainMenu_Navigation_Disconnect"				"Retour"

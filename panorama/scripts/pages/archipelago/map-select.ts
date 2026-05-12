@@ -12,6 +12,10 @@ class ArchipelagoMapSelect {
     static g_LastApiJson: string = '';
     static g_OpenChapterId: string = '';
 
+    // --- MÉMOIRE DE SÉLECTION & ANTI-CLIGNOTEMENT ---
+    static g_SelectedMapData: any = null;
+    static g_ResetSchedule: any = null;
+
     static isController() {
         let p = $.GetContextPanel();
         while (p) {
@@ -126,6 +130,12 @@ class ArchipelagoMapSelect {
     static onLoad() {
         $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
 
+        const contextPanel = $.GetContextPanel();
+        if (contextPanel) {
+            contextPanel.SetAcceptsFocus(true);
+            contextPanel.SetFocus();
+        }
+
         const syncInputMode = () => {
             $.GetContextPanel().SetHasClass('is-controller-mode', this.isController());
             $.Schedule(1.0, syncInputMode);
@@ -175,6 +185,16 @@ class ArchipelagoMapSelect {
 
                             this.generateList();
 
+                            $.Schedule(0.05, () => {
+                                const container = $('#LeftListInner');
+                                if (container && container.GetChildCount() > 0) {
+                                    container.GetChild(0).SetFocus(); 
+                                } else if (contextPanel) {
+                                    contextPanel.SetAcceptsFocus(true);
+                                    contextPanel.SetFocus();
+                                }
+                            });
+
                             if (savedChapter) {
                                 const mapList = $('#ChapterMaps_' + savedChapter);
                                 const entry = $('#ChapterEntry_' + savedChapter);
@@ -210,13 +230,16 @@ class ArchipelagoMapSelect {
                                             const localizedMapName = $.Localize(mapToken);
                                             const finalMapName = (localizedMapName !== mapToken) ? localizedMapName : cleanName;
 
-                                            this.selectMap({ 
+                                            const mapData = { 
                                                 ...map, 
                                                 title: finalMapName, 
                                                 subtitle: map.subtitle || "", 
                                                 status: statusIcons, 
+                                                command: cmd,
                                                 is_chapter: false 
-                                            });
+                                            };
+                                            this.g_SelectedMapData = mapData; // Mise en mémoire
+                                            this.selectMap(mapData, true);
                                             break;
                                         }
                                     }
@@ -239,6 +262,9 @@ class ArchipelagoMapSelect {
             $.RegisterKeyBind(mainBox, "key_c", () => {
                 this.toggleConsole();
             });
+            $.RegisterKeyBind(mainBox, "pad_y", () => {
+                if (this.isController()) this.toggleConsole();
+            });
         }
 
         this.updateConnectionState();
@@ -248,7 +274,6 @@ class ArchipelagoMapSelect {
         const duration = 0.3;
         const startTime = Date.now();
 
-        // FIX : Vérification d'intégrité avant de lire les hauteurs
         const openStartH = 0;
         const openEndH = (openPanel && openPanel.IsValid()) ? openPanel.actuallayoutheight : 0;
         const closeStartH = (closePanel && closePanel.IsValid()) ? closePanel.actuallayoutheight : 0;
@@ -262,7 +287,6 @@ class ArchipelagoMapSelect {
         const targetScroll = startScroll + (entryScreenY - containerScreenY) - 10;
 
         const step = () => {
-            // FIX CRITIQUE : Si les panneaux ont été détruits par un rafraichissement pendant l'animation, on annule l'animation !
             if ((closePanel && !closePanel.IsValid()) || (openPanel && !openPanel.IsValid())) {
                 return;
             }
@@ -360,11 +384,11 @@ class ArchipelagoMapSelect {
                 status: "",
                 command_deactivated: true,
                 is_chapter: true
-            });
+            }, false); 
         }
     }
 
-    static selectMap(mapData: any) {
+    static selectMap(mapData: any, bShowPlayButton: boolean = true) {
         const previewImage = $('#PreviewImage') as ImagePanel;
         const statusLabel = $('#MapStatusIconsPreview') as LabelPanel;
         const mapSubtitleLabel = $('#MapSubtitleLabel') as LabelPanel;
@@ -413,7 +437,8 @@ class ArchipelagoMapSelect {
         if (reqs) reqs.visible = showDetails;
         if (missingItemsHeader) missingItemsHeader.style.visibility = showDetails ? 'visible' : 'collapse';
         if (checksHeader) checksHeader.style.visibility = showDetails ? 'visible' : 'collapse';
-        if (playButton) playButton.visible = showDetails;
+
+        if (playButton) playButton.visible = showDetails && bShowPlayButton;
 
         if (playButton) {
             this.g_SelectedMapCommand = mapData.command || mapData.command_deactivated || "";
@@ -479,11 +504,23 @@ class ArchipelagoMapSelect {
             entry.AddClass('chapter_entry');
             (entry as any).canfocus = true;
 
-            entry.SetPanelEvent('onmouseover', () => $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus'));
+            entry.SetPanelEvent('onmouseover', () => {
+                if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
+                $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus');
+            });
+            entry.SetPanelEvent('onmouseout', () => {
+                if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
+                this.g_ResetSchedule = $.Schedule(0.15, () => {
+                    if (this.g_SelectedMapData) this.selectMap(this.g_SelectedMapData, true);
+                    this.g_ResetSchedule = null;
+                });
+            });
+
             entry.SetPanelEvent('onactivate', () => {
                 $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
                 this.toggleChapter(chId);
             });
+
             entry.SetPanelEvent('onfocus', () => {
                 this.selectMap({
                     pic: chapter.pic,
@@ -492,7 +529,7 @@ class ArchipelagoMapSelect {
                     status: "",
                     command_deactivated: true,
                     is_chapter: true
-                });
+                }, false);
             });
 
             const uniqueMaps: any[] = [];
@@ -514,10 +551,8 @@ class ArchipelagoMapSelect {
             let mapsWithIconsCount = 0;
             let mapsCompletedCount = 0;
 
-            // PREMIER PASSAGE : on calcule les stats complètes du chapitre
             chapter.maps.forEach((map: any) => {
                 if (map.command_deactivated) return;
-                
                 const rawTitle = map.title || "Unknown Map";
                 let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
                 if (!statusIcons && rawTitle.length > 4 && (rawTitle.startsWith("~") || rawTitle.startsWith("-") || rawTitle.startsWith("═"))) {
@@ -526,7 +561,6 @@ class ArchipelagoMapSelect {
 
                 if (statusIcons.length > 0) {
                     mapsWithIconsCount++;
-                    
                     const cleanStatus = statusIcons.split(completionSymbol).join("").split("★").join("").split("£").join("").split("✓").join("");
                     if (cleanStatus.length === 0) {
                         mapsCompletedCount++;
@@ -554,7 +588,6 @@ class ArchipelagoMapSelect {
                 }
             });
 
-            // AFFICHAGE DU HEADER DU CHAPITRE
             if (mapsCompletedCount === mapsWithIconsCount && mapsWithIconsCount > 0) {
                 const chStarLabel = $.CreatePanel('Label', entry, '');
                 chStarLabel.text = completionSymbol;
@@ -593,7 +626,6 @@ class ArchipelagoMapSelect {
             mapList.AddClass('map_list');
             mapList.AddClass('hide');
 
-            // DEUXIÈME PASSAGE : Création des cartes individuelles
             chapter.maps.forEach((map: any) => {
                 const mapBtn = $.CreatePanel('Panel', mapList, '');
                 mapBtn.AddClass('map_button');
@@ -621,16 +653,67 @@ class ArchipelagoMapSelect {
                 const localizedMapName = $.Localize(mapToken);
                 const finalMapName = (localizedMapName !== mapToken) ? localizedMapName : cleanName;
 
-                const onSelect = () => {
-                    this.selectMap({ ...map, title: finalMapName, subtitle: map.subtitle || "", status: statusIcons, is_chapter: false });
+                const mapData = { 
+                    ...map, 
+                    title: finalMapName, 
+                    subtitle: map.subtitle || "", 
+                    status: statusIcons, 
+                    command: fullCommand,
+                    is_chapter: false 
                 };
-                mapBtn.SetPanelEvent('onmouseover', () => $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus'));
+
+                // --- FEEDBACK VISUEL : Class de sélection ---
+                if (this.g_SelectedMapData && this.g_SelectedMapData.command === mapData.command) {
+                    mapBtn.AddClass('map_button--selected');
+                }
+
+                mapBtn.SetPanelEvent('onmouseover', () => {
+                    if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
+                    $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus');
+                    this.selectMap(mapData, false); 
+                });
+
+                mapBtn.SetPanelEvent('onmouseout', () => {
+                    if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
+                    this.g_ResetSchedule = $.Schedule(0.15, () => {
+                        if (this.g_SelectedMapData) this.selectMap(this.g_SelectedMapData, true);
+                        this.g_ResetSchedule = null;
+                    });
+                });
+
                 mapBtn.SetPanelEvent('onactivate', () => {
+                    if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                     $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
-                    onSelect();
+                    this.g_SelectedMapData = mapData; 
+                    this.selectMap(mapData, true);
+
+                    // Mise à jour visuelle globale de la sélection
+                    const listInner = $('#LeftListInner');
+                    if (listInner) {
+                        for (let i = 0; i < listInner.GetChildCount(); i++) {
+                            const child = listInner.GetChild(i);
+                            if (child && child.HasClass('map_list')) {
+                                for (let j = 0; j < child.GetChildCount(); j++) {
+                                    child.GetChild(j).RemoveClass('map_button--selected');
+                                }
+                            }
+                        }
+                    }
+                    mapBtn.AddClass('map_button--selected');
+
                     if (this.isController()) this.playSelectedMap();
                 });
-                mapBtn.SetPanelEvent('onfocus', onSelect);
+                
+                mapBtn.SetPanelEvent('oncancel', () => {
+                    $.PlaySoundEvent('UIPanorama.P2CE.MenuCancel');
+                    this.toggleChapter(chId);
+                    entry.SetFocus();
+                });
+
+                mapBtn.SetPanelEvent('onfocus', () => {
+                    if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
+                    this.selectMap(mapData, false);
+                });
 
                 const mapContent = $.CreatePanel('Panel', mapBtn, '');
                 mapContent.AddClass('map-title-container');

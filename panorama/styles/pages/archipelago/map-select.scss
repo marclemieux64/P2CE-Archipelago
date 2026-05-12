@@ -1,5 +1,4 @@
 
-
 //=============================================================================
 // 1. LEFT SIDE: NAVIGATION & SCROLLBAR
 //=============================================================================
@@ -132,6 +131,25 @@
         background-color: #1a1a1a; // Solid dark grey for unlocked
     }
 }
+
+//=============================================================================
+// 4. MAP BUTTONS & SELECTION STATE (HEX ONLY)
+//=============================================================================
+
+.map_button--selected {
+    // 1. Fond blanc solide pour une visibilité maximale
+    background-color: #ffffff; 
+    
+    // 2. Bordure fine tout autour (pas de barre latérale déformante)
+    border: 2px solid #ec6726; 
+    
+    // 3. On enlève les transformations et ombres
+    transform: none; 
+    box-shadow: none;
+
+}
+
+
 
 .map-title-container {
     flow-children: down;

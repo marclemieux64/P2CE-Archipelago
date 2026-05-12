@@ -84,7 +84,7 @@
 					text="[PH] Page Tagline"
 				/>
 				<Panel id="PageInsert" class="mainmenu__page-insert" tabindex="auto" selectionpos="auto" />
-				<Panel
+			<Panel
 					id="PageActions"
 					class="mainmenu__page-actions mainmenu__page-controls mainmenu__page-controls__t-prop"
 					tabindex="auto"
@@ -99,18 +99,26 @@
 						<Label class="button__text" text="#Action_Back" />
 					</Button>
 					<Panel class="flow-right vertical-align-center ControllerOnly">
-						<Image
+						<SteamInputAction
 							id="SelectSteamAction"
-							class="mr-1 steam-button-glyph"
-							src="file://{images}/archipelago/controller_a.svg"
+							class="mr-1"
+							actionset="MenuControls"
+							action="menu_select"
+							separatortext="/"
+							controllernumber="1"
+							glyphsize="large"
 						/> 
 						<SteamInputActionLabel actionset="MenuControls" action="menu_select" class="steam-action-name font-weight-bold" />
 					</Panel>
 					<Panel class="flow-right vertical-align-center ml-2 ControllerOnly">
-						<Image
+						<SteamInputAction
+							class="mr-1"
 							id="BackSteamAction"
-							class="mr-1 steam-button-glyph"
-							src="file://{images}/archipelago/controller_b.svg"
+							actionset="MenuControls"
+							action="menu_cancel"
+							separatortext="/"
+							controllernumber="1"
+							glyphsize="large"
 						/> 
 						<Label class="vertical-align-center" text="#Action_Back" />
 					</Panel>

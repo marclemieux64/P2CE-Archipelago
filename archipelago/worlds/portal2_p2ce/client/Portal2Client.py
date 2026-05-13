@@ -442,7 +442,6 @@ class Portal2Context(CommonContext):
                     try:
                         data = await asyncio.wait_for(reader.read(4096), timeout=0.1)
                         if not data:
-                            logger.warning("Portal 2 connection closed by peer")
                             break
                         
                         messages = data.decode(errors="ignore").replace("\'", "").split('\n')
@@ -595,7 +594,6 @@ class Portal2Context(CommonContext):
     async def handle_message(self, message: str):
         msg_lower = message.lower()
         
-        # --- RÉPONSE AU PING ---
         if "client ping times" in msg_lower or "ms :" in msg_lower or "ping:" in msg_lower:
             if self.ping_sent_time > 0:
                 if self.pending_validation_events:
@@ -610,18 +608,16 @@ class Portal2Context(CommonContext):
             self.send_level_begin_commands()
             self.command_queue += handle_map_start(map_name, self.item_list, self.get_wheatley_monitor_names(self.checked_locations), self.get_ratman_den_names(self.checked_locations))
             
-            # --- LE MARQUEUR D'ÉCHO ---
-            # Confirme quand le chargement est physiquement terminé
-            self.command_queue.append("echo Archipelago_Ready_To_Process\n")
-
-        elif "archipelago_ready_to_process" in msg_lower:
-            # Le jeu est apparu, on peut déclencher les alertes !
-            all_evs = self.deferred_events + self.pending_validation_events
-            for ev in all_evs:
-                self.process_event(ev)
-            self.deferred_events.clear()
-            self.pending_validation_events.clear()
-            self.ping_sent_time = 0
+            if self.deferred_events:
+                for ev in self.deferred_events:
+                    self.process_event(ev)
+                self.deferred_events.clear()
+            
+            if self.pending_validation_events:
+                for ev in self.pending_validation_events:
+                    self.process_event(ev)
+                self.pending_validation_events.clear()
+                self.ping_sent_time = 0
 
         elif message.startswith("map_complete:"):
             done_map = message.split(':', 1)[1]
@@ -679,12 +675,8 @@ class Portal2Context(CommonContext):
         cause = data.get("cause", "Un joueur est mort.")
         text = f"DEATHLINK: {cause}"
         
-        # ÉTAPE 1 : On envoie le texte au chat IMMÉDIATEMENT
-        # Cela permet à l'UI de le voir dès le prochain polling (0.5s)
         self.on_print_silently(text, [{"text": text, "is_death": True}], mirror_to_hud=True)
 
-        # ÉTAPE 2 : On planifie la mort avec validation de présence in-game
-        # La fonction process_event attendra 4 secondes avant de tuer
         self.execute_in_game_event({
             "command": "kill\n"
         })
@@ -791,6 +783,18 @@ class Portal2Context(CommonContext):
             recv_names = [self.item_names.lookup_in_game(i.item, self.game) for i in self.items_received]
             self.item_list = list(set(self.item_list) - set(recv_names))
             self.refresh_menu()
+            
+            # --- LOGIQUE FEU VERT (GO MODE) ---
+            finale_loc_name = map_codes_to_location_names.get("sp_a4_finale4")
+            if finale_loc_name and finale_loc_name in all_locations_table:
+                requirements = all_locations_table[finale_loc_name].required_items
+                missing = [item for item in requirements if item in self.item_list]
+                
+                if not missing and not getattr(self, "go_mode_announced", False):
+                    self.go_mode_announced = True
+                    self._current_ap_msg_type = "go_mode"
+                    self.on_print_silently("FEU VERT : Tous les objets pour la finale sont réunis !", mirror_to_hud=True)
+                    self._current_ap_msg_type = "default"
 
         if cmd == "Retrieved":
             update_item_list()
@@ -827,10 +831,8 @@ class Portal2Context(CommonContext):
                 if index >= len(self.items_received) and (item.flags & 0b100):
                     trap_cmd = handle_trap(self.item_names.lookup_in_game(item.item, self.game))
                     if trap_cmd:
-                        # Ajout d'un délai de 3.5s pour les pièges aussi
                         self.execute_in_game_event({
-                            "command": trap_cmd + "\n",
-                            "delay": 3.5
+                            "command": trap_cmd + "\n"
                         })
                 index += 1
             super().on_package(cmd, args)
@@ -869,7 +871,7 @@ class Portal2Context(CommonContext):
         from kvui import GameManager
 
         class Portal2TextManager(GameManager):
-            base_title = "Portal 2 Text Client"
+            base_title = "Portal 2 Archipelago Client"
             def __init__(self, ctx):
                 super().__init__(ctx)
                 self.icon = r"worlds/portal2/data/Portalpelago.png"

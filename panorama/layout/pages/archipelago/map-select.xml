@@ -16,7 +16,6 @@
     <Panel class="archipelago__page mainmenu__page mainmenu" onload="ArchipelagoMapSelect.onLoad()">
         <Panel id="MainBox" class="main_box" style="flow-children: none;">
             
-            <!-- NOT CONNECTED STATE -->
             <Panel id="NotConnectedOverlay" class="not_connected_overlay hide">
                 <Image src="file://{images}/archipelago/warning_orange_v3.png" class="warning_icon" scaling="stretch-to-fit-preserve-aspect" />
                 <Label class="warning_title" text="#Archipelago_Status_NotConnected" />
@@ -27,12 +26,10 @@
 
             <Panel id="ConnectedContent" style="width: 100%; height: 100%; flow-children: down;">
                 <Panel id="ColumnsWrapper" class="columns_wrapper">
-                <!-- LEFT COLUMN -->
                 <Panel id="LeftList" class="left_list_container">
                     <Panel id="LeftListInner" class="left_list_inner" />
                 </Panel>
 
-                <!-- RIGHT PREVIEW -->
                 <Panel id="RightPreview" class="right_preview">
                     <Image
                         id="PreviewImage"
@@ -42,50 +39,73 @@
                 </Panel>
             </Panel>
 
-            <!-- FULL WIDTH CONTROL BAR -->
             <Panel id="FullWidthFooter" class="preview_bottom_row">
                 
-                <!-- ALIGNMENT SPACER -->
                 <Panel id="FooterAlignmentSpacer" class="footer_alignment_spacer">
                     <Panel class="help_button_wrapper">
+                        
                         <Panel class="button_with_tooltip">
-                            <Panel id="ManualHelpTooltip" class="manual_tooltip">
+                            <Panel id="ConsoleTooltip" class="manual_tooltip">
+                                <Label text="#Archipelago_Console_Tooltip" />
+                                <Panel class="manual_tooltip_arrow" />
+                            </Panel>
+                            <Button id="ConsoleButton"
+                                    class="help_button"
+                                    onmouseover="$( '#ConsoleTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
+                                    onmouseout="$( '#ConsoleTooltip' ).RemoveClass('visible')"
+                                    onactivate="$.PlaySoundEvent('UIPanorama.P2CE.MenuAccept'); ArchipelagoMapSelect.toggleConsole()">
+                                <Image class="help_button_icon" src="file://{images}/archipelago/terminal-solid.svg" />
+                            </Button>
+                        </Panel>
+
+                        <Panel class="button_with_tooltip">
+                            <Panel id="HintTooltip" class="manual_tooltip">
+                                <Label text="#Archipelago_Hints_Tooltip" />
+                                <Panel class="manual_tooltip_arrow" />
+                            </Panel>
+                            <Button id="HintButton"
+                                    class="help_button"
+                                    onmouseover="$( '#HintTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
+                                    onmouseout="$( '#HintTooltip' ).RemoveClass('visible')"
+                                    onactivate="$.PlaySoundEvent('UIPanorama.P2CE.MenuAccept'); $.DispatchEvent('MainMenuOpenNestedPage', 'ap_hint', 'archipelago/hint', undefined);">
+                                <Image class="help_button_icon" src="file://{images}/archipelago/list-solid.svg" />
+                            </Button>
+                        </Panel>
+
+                        <Panel class="button_with_tooltip">
+                            <Panel id="HelpTooltip" class="manual_tooltip">
                                 <Label text="#Archipelago_Help_Tooltip" />
                                 <Panel class="manual_tooltip_arrow" />
                             </Panel>
                             <Button id="HelpButton"
                                     class="help_button"
-                                    onmouseover="$( '#ManualHelpTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
-                                    onmouseout="$( '#ManualHelpTooltip' ).RemoveClass('visible')"
+                                    onmouseover="$( '#HelpTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
+                                    onmouseout="$( '#HelpTooltip' ).RemoveClass('visible')"
                                     onactivate="$.PlaySoundEvent('UIPanorama.P2CE.MenuAccept'); ArchipelagoMapSelect.showHelp()">
                                 <Image class="help_button_icon" src="file://{images}/learn.svg" />
                             </Button>
                         </Panel>
+
                     </Panel>
                 </Panel>
 
-                <!-- CONTENT STARTING UNDER PICTURE -->
                 <Panel id="FooterContent" class="footer_content">
                     <Panel id="MapInfoContainer" class="map_info_container">
-                        <!-- CHAPTER/TITLE LABEL -->
                         <Panel id="TitleColumn" class="title_column">
                             <Label id="MapSubtitleLabel" class="map_subtitle_label" text="" />
                         </Panel>
 
-                        <!-- CHECKS -->
                         <Panel id="ChecksColumn" class="info_column">
                             <Label id="ChecksHeader" class="info_header" text="#Archipelago_Map_Checks" style="visibility:collapse;" />
                             <Label id="MapStatusIconsPreview" class="map_status_preview_label" text="" html="true" />
                         </Panel>
 
-                        <!-- REQUIREMENTS -->
                         <Panel id="RequirementsColumn" class="info_column">
                             <Label id="MissingItemsHeader" class="info_header" text="#Archipelago_Map_MissingItems" style="visibility:collapse;" />
                             <Label id="MapSubtitleLabel_Secondary" class="map_subtitle_label" text="" html="true" />
                         </Panel>
                     </Panel>
 
-                    <!-- PUSHES PLAY BUTTON TO THE RIGHT -->
                     <Panel id="PlayButtonSpacer" class="footer_spacer" />
 
                     <Button id="PlayButton"
@@ -101,6 +121,4 @@
             </Panel>
         </Panel>
     </Panel>
-
-    
 </Root>

@@ -165,6 +165,33 @@ class Portal2Context(CommonContext):
     has_ever_connected: bool = False
     _msg_id_counter: int = 0
 
+    # --- IN-GAME EVENTS QUEUE ---
+    deferred_events: list[dict] = []
+    pending_validation_events: list[dict] = []
+    ping_sent_time: float = 0
+
+    def execute_in_game_event(self, event_data: dict):
+        self.pending_validation_events.append(event_data)
+        if self.ping_sent_time == 0:
+            self.command_queue.append("ping\n")
+            self.ping_sent_time = time.time()
+
+    def process_event(self, ev: dict):
+        # 1. On affiche le texte (S'il n'a pas déjà été affiché par on_deathlink)
+        if ev.get("text"):
+            self.on_print_silently(ev["text"], ev.get("data"), mirror_to_hud=ev.get("mirror_to_hud", False))
+            
+        # 2. On applique un délai de sécurité de 4 secondes pour l'action physique
+        if ev.get("command"):
+            async def delayed_action():
+                await asyncio.sleep(4.0) 
+                self.command_queue.append(ev["command"])
+            
+            if self.loop:
+                self.loop.create_task(delayed_action())
+            else:
+                self.command_queue.append(ev["command"])
+
     def on_input(self, command: str):
         command = command.strip()
         try:
@@ -230,12 +257,10 @@ class Portal2Context(CommonContext):
                 color = color_map.get(p_type) or color_map.get(p_color) or p_color
                 html_text += f"<font color='{color}'>{p_text}</font>" if color else p_text
 
-        # --- NOUVELLE GESTION DU TAG AP ---
         ap_msg_type = getattr(self, "_current_ap_msg_type", "default")
         if getattr(self, "_current_ap_msg_priority", False):
             mirror_to_hud = True
 
-        # --- CORRECTION DEATHLINK : On cherche le flag exact, plus les mots ! ---
         is_death_event = False
         if rich_data:
             for part in rich_data:
@@ -296,8 +321,6 @@ class Portal2Context(CommonContext):
                     if trap_cmd:
                         new_part["is_trap"] = True
                         is_trap_msg = True
-                        if mirror_to_hud:
-                            self.command_queue.append(trap_cmd)
                         
                 elif part_type == "location_id":
                     new_part["text"] = self.location_names.lookup_in_slot(int(text), owner_id)
@@ -347,7 +370,6 @@ class Portal2Context(CommonContext):
                     except ValueError:
                         pass
 
-        # --- CORRECTION : On retire la détection de texte "deathlink" ici ---
         text_lower = args.get("text", "").lower()
         if "trap" in text_lower:
             priority = True
@@ -404,10 +426,16 @@ class Portal2Context(CommonContext):
                 self.alert_game_connection()
 
                 while not self.exit_event.is_set():
+                    
+                    if self.ping_sent_time > 0 and (time.time() - self.ping_sent_time) > 1.5:
+                        if self.pending_validation_events:
+                            self.deferred_events.extend(self.pending_validation_events)
+                            self.pending_validation_events.clear()
+                        self.ping_sent_time = 0
+                    
                     while self.command_queue:
                         cmd = self.command_queue.pop(0)
                         if cmd:
-                            logger.debug(f"Sending command to game: {cmd.strip()}")
                             writer.write(cmd.encode())
                             await writer.drain()
 
@@ -465,7 +493,6 @@ class Portal2Context(CommonContext):
                 self.send_response(200); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers()
 
             def do_GET(self):
-                # --- NOUVELLE ROUTE OPTIMISÉE ---
                 if self.path == '/status_full':
                     is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
                     
@@ -482,18 +509,16 @@ class Portal2Context(CommonContext):
                             "missing_items": missing_str, 
                             "hint_points": getattr(client_self, "hint_points", 0), 
                             "hint_cost": getattr(client_self, "hint_cost", 0), 
-                            "logic_difficulty": getattr(client_self, "logic_difficulty", 0), # <--- AJOUT ICI
+                            "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
                             "menu": client_self.menu.to_dict() if client_self.menu else None
                         },
                         "chat": client_self.chat_log,
                         "hints": client_self.hint_log
                     }
                     
-                    # On convertit en texte et on génère une empreinte unique (Hash)
                     json_body = json.dumps(full_data)
                     current_hash = str(hash(json_body))
 
-                    # On envoie la réponse avec le Hash dans le header
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
                     self.send_header('Access-Control-Allow-Origin', '*')
@@ -502,7 +527,6 @@ class Portal2Context(CommonContext):
                     self.wfile.write(json_body.encode('utf-8'))
                     return
 
-                # --- ANCIENNES ROUTES (Conservées pour éviter de casser le reste) ---
                 if self.path == '/status':
                     is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
                     
@@ -526,6 +550,7 @@ class Portal2Context(CommonContext):
                     self._send_json(client_self.hint_log)
                 else:
                     self.send_error(404)
+
             def do_POST(self):
                 try:
                     content_length = int(self.headers.get('Content-Length', 0))
@@ -568,10 +593,35 @@ class Portal2Context(CommonContext):
                 self.command_queue.append(cmd + "\n")
 
     async def handle_message(self, message: str):
+        msg_lower = message.lower()
+        
+        # --- RÉPONSE AU PING ---
+        if "client ping times" in msg_lower or "ms :" in msg_lower or "ping:" in msg_lower:
+            if self.ping_sent_time > 0:
+                if self.pending_validation_events:
+                    for ev in self.pending_validation_events:
+                        self.process_event(ev)
+                    self.pending_validation_events.clear()
+                self.ping_sent_time = 0
+            return
+
         if message.startswith("map_name:"):
             map_name = message.split(':', 1)[1]
             self.send_level_begin_commands()
             self.command_queue += handle_map_start(map_name, self.item_list, self.get_wheatley_monitor_names(self.checked_locations), self.get_ratman_den_names(self.checked_locations))
+            
+            # --- LE MARQUEUR D'ÉCHO ---
+            # Confirme quand le chargement est physiquement terminé
+            self.command_queue.append("echo Archipelago_Ready_To_Process\n")
+
+        elif "archipelago_ready_to_process" in msg_lower:
+            # Le jeu est apparu, on peut déclencher les alertes !
+            all_evs = self.deferred_events + self.pending_validation_events
+            for ev in all_evs:
+                self.process_event(ev)
+            self.deferred_events.clear()
+            self.pending_validation_events.clear()
+            self.ping_sent_time = 0
 
         elif message.startswith("map_complete:"):
             done_map = message.split(':', 1)[1]
@@ -626,12 +676,18 @@ class Portal2Context(CommonContext):
         await self.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
     def on_deathlink(self, data: typing.Dict[str, typing.Any]):
-        self.command_queue.append("kill\n")
-        
         cause = data.get("cause", "Un joueur est mort.")
+        text = f"DEATHLINK: {cause}"
         
-        fake_data = [{"text": cause, "is_death": True}]
-        self.on_print_silently(cause, fake_data, mirror_to_hud=True)
+        # ÉTAPE 1 : On envoie le texte au chat IMMÉDIATEMENT
+        # Cela permet à l'UI de le voir dès le prochain polling (0.5s)
+        self.on_print_silently(text, [{"text": text, "is_death": True}], mirror_to_hud=True)
+
+        # ÉTAPE 2 : On planifie la mort avec validation de présence in-game
+        # La fonction process_event attendra 4 secondes avant de tuer
+        self.execute_in_game_event({
+            "command": "kill\n"
+        })
         
         return super().on_deathlink(data)
 
@@ -681,7 +737,6 @@ class Portal2Context(CommonContext):
         if "location_name_to_id" in slot_data:
             self.location_name_to_id = slot_data["location_name_to_id"]
 
-        # --- NOUVEAU : Récupération de la difficulté logique ---
         if "logic_difficulty" in slot_data:
             self.logic_difficulty = slot_data["logic_difficulty"]
         else:
@@ -765,13 +820,18 @@ class Portal2Context(CommonContext):
                         "found": h.get("found", False), 
                         "text": txt
                     })
-                print(f"[AP] {len(self.hint_log)} indices mis à jour.")
 
         if cmd == "ReceivedItems":
             index = args["index"]
             for item in args["items"]:
                 if index >= len(self.items_received) and (item.flags & 0b100):
-                    self.command_queue.append(handle_trap(self.item_names.lookup_in_game(item.item, self.game)) + "\n")
+                    trap_cmd = handle_trap(self.item_names.lookup_in_game(item.item, self.game))
+                    if trap_cmd:
+                        # Ajout d'un délai de 3.5s pour les pièges aussi
+                        self.execute_in_game_event({
+                            "command": trap_cmd + "\n",
+                            "delay": 3.5
+                        })
                 index += 1
             super().on_package(cmd, args)
             update_item_list()

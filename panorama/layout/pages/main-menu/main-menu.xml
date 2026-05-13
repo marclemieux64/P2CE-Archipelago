@@ -143,5 +143,8 @@
 
 		<!-- Doesn't actually include the notifications, but we use its position to figure out where to show them -->
 		<Panel id="SteamNotificationsPlaceholder" hittest="false" />
+		<Frame id="ArchipelagoNotificationFrame" src="file://{resources}/layout/components/archipelago/notification.xml" hittest="false" />
+
+		<Panel id="SteamNotificationsPlaceholder" hittest="false" />
 	</MainMenu>
 </root>

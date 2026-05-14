@@ -82,7 +82,7 @@
                                     onmouseover="$( '#HelpTooltip' ).AddClass('visible'); $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus')"
                                     onmouseout="$( '#HelpTooltip' ).RemoveClass('visible')"
                                     onactivate="$.PlaySoundEvent('UIPanorama.P2CE.MenuAccept'); ArchipelagoMapSelect.showHelp()">
-                                <Image class="help_button_icon" src="file://{images}/learn.svg" />
+                                <Image class="help_button_icon" src="file://{images}/archipelago/graduation-cap-solid.svg" />
                             </Button>
                         </Panel>
 

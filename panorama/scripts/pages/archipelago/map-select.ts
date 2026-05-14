@@ -856,11 +856,11 @@ class ArchipelagoMapSelect {
                 const mLock = mapBtn.FindChildTraverse(`MapLock_${chId}_${index}`) as ImagePanel;
                 if (mLock && mLock.IsValid()) {
                     if (map.command_deactivated) {
-                        mLock.SetImage('file://{images}/archipelago/lock-solid.tga');
+                        mLock.SetImage('file://{images}/archipelago/lock-solid.svg');
                         mLock.AddClass('icon--locked');
                         mLock.RemoveClass('icon--unlocked');
                     } else {
-                        mLock.SetImage('file://{images}/archipelago/unlock-solid.tga');
+                        mLock.SetImage('file://{images}/archipelago/unlock-solid.svg');
                         mLock.AddClass('icon--unlocked');
                         mLock.RemoveClass('icon--locked');
                     }

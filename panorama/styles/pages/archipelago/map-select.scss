@@ -155,6 +155,7 @@
     flow-children: down;
     width: fill-parent-flow(1.0);
     vertical-align: center;
+    
 }
 
 .MapPrimaryName {
@@ -169,20 +170,22 @@
 }
 
 .MapLockIcon {
-    width: 28px;
-    height: 28px;
     vertical-align: center;
     horizontal-align: right;
     margin-right: 15px;
-    overflow: noclip;
     texture-sampling: normal;
 
     &.icon--locked {
         wash-color: white; // Keep TGA red
+        width: 18px;
+        height: 24px;
     }
 
     &.icon--unlocked {
         wash-color: white; // Keep TGA green
+        width: 18px;
+        height: 24px;
+    
     }
 }
 

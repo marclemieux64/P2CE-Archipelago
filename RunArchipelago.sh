@@ -25,7 +25,7 @@ done
 
 if [ -z "$PYTHON_BASE" ]; then
     echo "[Archipelago] ERROR: Compatible Python (3.11, 3.12, or 3.13) is NOT installed."
-    echo "Your default Python 3.14 is too new for Archipelago."
+    echo "Your default Python 3.14 is too new for Archipelago.Please install python3.13 or python3.12 or python3.11"
     exit 1
 fi
 

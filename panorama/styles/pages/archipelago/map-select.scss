@@ -1,4 +1,3 @@
-
 //=============================================================================
 // 1. LEFT SIDE: NAVIGATION & SCROLLBAR
 //=============================================================================
@@ -138,13 +137,13 @@
 
 .map_button--selected {
     // 1. Fond blanc solide pour une visibilité maximale
-    background-color: #ffffff; 
-    
+    background-color: #ffffff;
+
     // 2. Bordure fine tout autour (pas de barre latérale déformante)
-    border: 2px solid #ec6726; 
-    
+    border: 2px solid #ec6726;
+
     // 3. On enlève les transformations et ombres
-    transform: none; 
+    transform: none;
     box-shadow: none;
 
 }
@@ -155,7 +154,7 @@
     flow-children: down;
     width: fill-parent-flow(1.0);
     vertical-align: center;
-    
+
 }
 
 .MapPrimaryName {
@@ -164,8 +163,16 @@
     color: #eeeeee;
     padding-right: 10px;
 
+    // --- LE CORRECTIF EST ICI ---
+    // Force le texte très long à afficher "..." au lieu de s'étendre
+    // et de pousser le cadenas en dehors de l'écran.
+    width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    // ----------------------------
+
     .map_button--deactivated & {
-        color: #ffffff08; // Faded/darker text for locked maps
+        color: #ffffff08;
     }
 }
 
@@ -173,19 +180,17 @@
     vertical-align: center;
     horizontal-align: right;
     margin-right: 15px;
-    texture-sampling: normal;
 
     &.icon--locked {
-        wash-color: white; // Keep TGA red
+        /* wash-color: white; <--- REMOVED */
         width: 18px;
         height: 24px;
     }
 
     &.icon--unlocked {
-        wash-color: white; // Keep TGA green
+        /* wash-color: white; <--- REMOVED */
         width: 18px;
         height: 24px;
-    
     }
 }
 
@@ -448,6 +453,7 @@
         brightness: 1.2;
     }
 }
+
 //=============================================================================
 // 8. NOT CONNECTED OVERLAY
 //=============================================================================

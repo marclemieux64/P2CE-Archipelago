@@ -37,7 +37,7 @@ class ArchipelagoMapSelect {
                 }
             }
         }
-        return false; 
+        return false;
     }
 
     static onConsoleFocus() {
@@ -57,7 +57,7 @@ class ArchipelagoMapSelect {
 
     static toggleConsole() {
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
-        if (!api || !api.getStatus()) return; 
+        if (!api || !api.getStatus()) return;
 
         $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
         $.DispatchEvent('MainMenuOpenNestedPage', 'ap_console', 'archipelago/console', undefined);
@@ -65,7 +65,7 @@ class ArchipelagoMapSelect {
 
     static onConsoleLoad() {
         $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Console_Title'), $.Localize('#Archipelago_Console_Tagline'));
-        
+
         const global = (UiToolkitAPI.GetGlobalObject() as any);
         if (global.ArchipelagoConsole) {
             global.ArchipelagoConsole.init();
@@ -80,13 +80,13 @@ class ArchipelagoMapSelect {
         const globalObj = (UiToolkitAPI.GetGlobalObject() as any);
         const api = globalObj.ArchipelagoAPI;
         const status = api ? api.getStatus() : null;
-        
+
         const root = $.GetContextPanel();
         if (!root || !root.IsValid()) return;
 
         const overlay = root.FindChildTraverse('NotConnectedOverlay');
         const content = root.FindChildTraverse('ConnectedContent');
-        
+
         if (!overlay || !overlay.IsValid()) return;
 
         let overlayLabel = overlay.FindChildTraverse('NotConnectedLabel') as LabelPanel;
@@ -105,29 +105,29 @@ class ArchipelagoMapSelect {
         if (!api || (status && status.client_offline)) {
             overlay.RemoveClass('hide');
             if (content && content.IsValid()) content.AddClass('hide');
-            if (overlayButton && overlayButton.IsValid()) overlayButton.AddClass('hide'); 
-            
+            if (overlayButton && overlayButton.IsValid()) overlayButton.AddClass('hide');
+
             if (overlayLabel && overlayLabel.IsValid()) {
                 overlayLabel.text = $.Localize("#Archipelago_Status_NoClient") + "\n" + $.Localize("#Archipelago_Status_LaunchClient");
-                overlayLabel.style.color = "#ffbb00"; 
+                overlayLabel.style.color = "#ffbb00";
             }
         } else if (!status) {
             overlay.RemoveClass('hide');
             if (content && content.IsValid()) content.AddClass('hide');
-            if (overlayButton && overlayButton.IsValid()) overlayButton.AddClass('hide'); 
-            
+            if (overlayButton && overlayButton.IsValid()) overlayButton.AddClass('hide');
+
             if (overlayLabel && overlayLabel.IsValid()) {
                 overlayLabel.text = $.Localize("#Archipelago_Status_Loading");
-                overlayLabel.style.color = "#eeeeee"; 
+                overlayLabel.style.color = "#eeeeee";
             }
         } else if (!status.connected) {
             overlay.RemoveClass('hide');
             if (content && content.IsValid()) content.AddClass('hide');
-            if (overlayButton && overlayButton.IsValid()) overlayButton.RemoveClass('hide'); 
-            
+            if (overlayButton && overlayButton.IsValid()) overlayButton.RemoveClass('hide');
+
             if (overlayLabel && overlayLabel.IsValid()) {
                 overlayLabel.text = $.Localize("#Archipelago_Status_NotConnected");
-                overlayLabel.style.color = "#ff4444"; 
+                overlayLabel.style.color = "#ff4444";
             }
         } else {
             overlay.AddClass('hide');
@@ -137,7 +137,7 @@ class ArchipelagoMapSelect {
 
     static onLoad() {
         this.g_LastApiJson = '';
-        
+
         $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
 
         const contextPanel = $.GetContextPanel();
@@ -191,22 +191,20 @@ class ArchipelagoMapSelect {
                         }
 
                         if (status.menu) {
-                            // FIX: Permet de savoir s'il s'agit du tout premier chargement pour ne pas voler le focus du joueur.
                             const isFirstLoad = Object.keys(this.g_ChapterData).length === 0;
 
                             this.g_ChapterData = syncHelper ? syncHelper.parseApiStatus(status) : {};
-                            
+
                             const savedChapter = this.g_OpenChapterId;
                             const savedCommand = this.g_SelectedMapCommand;
 
                             this.generateList();
 
-                            // Ne forcer le focus sur le premier élément qu'au premier chargement.
                             if (isFirstLoad) {
                                 $.Schedule(0.05, () => {
                                     const container = $('#LeftListInner');
                                     if (container && container.IsValid() && container.GetChildCount() > 0) {
-                                        container.GetChild(0).SetFocus(); 
+                                        container.GetChild(0).SetFocus();
                                     } else {
                                         const cp = $.GetContextPanel();
                                         if (cp && cp.IsValid()) {
@@ -232,7 +230,7 @@ class ArchipelagoMapSelect {
                                 this.restoreSelection(savedCommand);
                             }
                         }
-                    } 
+                    }
                 } catch (e) {
                     $.Warning("[AP] Error updating MapSelect from API: " + e);
                 }
@@ -262,29 +260,29 @@ class ArchipelagoMapSelect {
                     const rawTitle = map.title || $.Localize("#Archipelago_Map_Unknown");
                     let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
                     let cleanName = rawTitle;
-                    
+
                     if (!statusIcons && rawTitle.length > 4 && (rawTitle.startsWith("~") || rawTitle.startsWith("-") || rawTitle.startsWith("═"))) {
                         statusIcons = rawTitle.substring(0, 4).replace(/[~\-]/g, "").trim();
                         cleanName = rawTitle.substring(4).trim();
                     }
-                    
+
                     let mapCmdName = "";
                     if (cmd) {
                         const parts = cmd.split(" ");
                         if (parts.length >= 2) mapCmdName = parts[1].trim().toLowerCase();
                     }
-                    
+
                     const mapToken = `#portal2_MapName_${mapCmdName}`;
                     const localizedMapName = $.Localize(mapToken);
                     const finalMapName = (localizedMapName !== mapToken) ? localizedMapName : cleanName;
 
-                    const mapData = { 
-                        ...map, 
-                        title: finalMapName, 
-                        subtitle: map.subtitle || "", 
-                        status: statusIcons, 
+                    const mapData = {
+                        ...map,
+                        title: finalMapName,
+                        subtitle: map.subtitle || "",
+                        status: statusIcons,
                         command: cmd,
-                        is_chapter: false 
+                        is_chapter: false
                     };
                     this.g_SelectedMapData = mapData;
                     this.selectMap(mapData, true);
@@ -371,7 +369,7 @@ class ArchipelagoMapSelect {
             }
 
             if (bOpening) {
-                this.g_OpenChapterId = chapterId; 
+                this.g_OpenChapterId = chapterId;
                 if (entry && entry.IsValid()) entry.AddClass('chapter_entry--active');
                 mapList.RemoveClass('hide');
                 mapList.style.height = 'fit-children';
@@ -385,7 +383,7 @@ class ArchipelagoMapSelect {
                     }
                 });
             } else {
-                this.g_OpenChapterId = ''; 
+                this.g_OpenChapterId = '';
                 this.runTransition(null, mapList, entry, scrollContainer);
             }
         }
@@ -399,7 +397,7 @@ class ArchipelagoMapSelect {
                 status: "",
                 command_deactivated: true,
                 is_chapter: true
-            }, false); 
+            }, false);
         }
     }
 
@@ -443,25 +441,23 @@ class ArchipelagoMapSelect {
                 finalStatusHtml += `<font color="${iconData.color}">${iconData.char}</font>`;
             }
             statusLabel.text = finalStatusHtml;
-            statusLabel.style.color = "#eeeeee"; 
+            statusLabel.style.color = "#eeeeee";
         }
-        
+
         if (mapSubtitleLabel && mapSubtitleLabel.IsValid()) {
             mapSubtitleLabel.text = mapData.title || "";
         }
 
         const showDetails = !mapData.is_chapter;
 
-        // --- POPULATION SÉCURISÉE DES CHECKS (SMART UPDATE) ---
         if (checks && checks.IsValid()) {
-            // Nettoie uniquement les labels dynamiques pour protéger le XML
             const children = checks.Children();
             for (let i = children.length - 1; i >= 0; i--) {
                 if (children[i].id && children[i].id.startsWith("DynamicLoc_")) {
                     children[i].DeleteAsync(0);
                 }
             }
-            
+
             if (showDetails && mapData.location_names) {
                 mapData.location_names.forEach((loc: string, index: number) => {
                     const l = $.CreatePanel('Label', checks, `DynamicLoc_${index}`);
@@ -472,16 +468,14 @@ class ArchipelagoMapSelect {
             checks.visible = showDetails ? true : false;
         }
 
-        // --- POPULATION SÉCURISÉE DES REQUIREMENTS (SMART UPDATE) ---
         if (reqs && reqs.IsValid()) {
-            // Nettoie uniquement les labels dynamiques pour protéger le XML
             const children = reqs.Children();
             for (let i = children.length - 1; i >= 0; i--) {
                 if (children[i].id && children[i].id.startsWith("DynamicReq_")) {
                     children[i].DeleteAsync(0);
                 }
             }
-            
+
             if (showDetails && mapData.required_items) {
                 mapData.required_items.forEach((item: string, index: number) => {
                     const l = $.CreatePanel('Label', reqs, `DynamicReq_${index}`);
@@ -518,7 +512,6 @@ class ArchipelagoMapSelect {
         }
     }
 
-    // --- MISE À JOUR INTELLIGENTE DE LA LISTE ---
     static generateList() {
         const container = $('#LeftListInner');
         if (!container || !container.IsValid()) return;
@@ -529,22 +522,22 @@ class ArchipelagoMapSelect {
         const isConnected = status && status.connected;
 
         if (!this.g_ChapterData || Object.keys(this.g_ChapterData).length === 0) {
-            container.RemoveAndDeleteChildren(); 
+            container.RemoveAndDeleteChildren();
             const entry = $.CreatePanel('Panel', container, 'ErrorEntry');
             entry.AddClass('error_entry');
             const label = $.CreatePanel('Label', entry, '') as LabelPanel;
-            
+
             if (!api || (status && status.client_offline)) {
                 label.text = $.Localize("#Archipelago_Status_NoClient") + "\n" + $.Localize("#Archipelago_Status_LaunchClient");
-                label.style.color = "#ffbb00"; 
+                label.style.color = "#ffbb00";
             } else if (!isConnected) {
                 label.text = $.Localize("#Archipelago_Status_NotConnected");
-                label.style.color = "#ff4444"; 
+                label.style.color = "#ff4444";
             } else {
                 label.text = $.Localize("#Archipelago_Status_Loading");
                 label.style.color = "#eeeeee";
             }
-            
+
             label.style.fontSize = "22px";
             label.style.fontWeight = "bold";
             label.style.width = "100%";
@@ -561,7 +554,7 @@ class ArchipelagoMapSelect {
 
         for (const chId of sortedKeys) {
             const chapter = this.g_ChapterData[chId];
-            
+
             let entry = container.FindChild(`ChapterEntry_${chId}`);
             if (!entry || !entry.IsValid()) {
                 entry = $.CreatePanel('Panel', container, `ChapterEntry_${chId}`);
@@ -601,10 +594,10 @@ class ArchipelagoMapSelect {
                 const textWrapper = $.CreatePanel('Panel', entry, '');
                 textWrapper.style.flowChildren = "down";
                 textWrapper.style.verticalAlign = "center";
-                
+
                 const title = $.CreatePanel('Label', textWrapper, `ChapterTitle_${chId}`) as LabelPanel;
                 title.AddClass('ChapterTitle');
-                
+
                 const desc = $.CreatePanel('Label', textWrapper, `ChapterSubtitle_${chId}`) as LabelPanel;
                 desc.AddClass('ChapterSubtitle');
 
@@ -612,7 +605,6 @@ class ArchipelagoMapSelect {
                 statusLabel.style.verticalAlign = "center";
                 statusLabel.style.horizontalAlign = "right";
                 statusLabel.style.marginRight = "15px";
-                statusLabel.style.fontFamily = "APPortal-bold";
             }
 
             const uniqueMaps: any[] = [];
@@ -647,7 +639,7 @@ class ArchipelagoMapSelect {
                     const cleanStatus = statusIcons.split(completionSymbol).join("").split("★").join("").split("£").join("").split("✓").join("");
                     if (cleanStatus.length === 0) {
                         mapsCompletedCount++;
-                        map._isComplete = true; 
+                        map._isComplete = true;
                     } else {
                         map._isComplete = false;
                     }
@@ -677,10 +669,12 @@ class ArchipelagoMapSelect {
                     chStatus.text = completionSymbol;
                     chStatus.style.color = "#ffff44";
                     chStatus.style.fontSize = "26px";
+                    chStatus.style.fontFamily = "APPortal-bold";
                 } else if (chapterTotalCount > 0 && ($.persistentStorage.getItem('HideLocationCounts') ?? 0) === 0) {
                     chStatus.text = `${chapterGreenCount}/${chapterTotalCount}`;
                     chStatus.style.color = (chapterGreenCount === chapterTotalCount) ? "#44ff44" : (chapterGreenCount > 0 ? "#ffff44" : "#ff4444");
                     chStatus.style.fontSize = "22px";
+                    chStatus.style.fontFamily = '"Lexend Deca", Bold';
                 } else {
                     chStatus.text = "";
                 }
@@ -718,13 +712,13 @@ class ArchipelagoMapSelect {
                 const localizedMapName = $.Localize(mapToken);
                 const finalMapName = (localizedMapName !== mapToken) ? localizedMapName : cleanName;
 
-                const mapData = { 
-                    ...map, 
-                    title: finalMapName, 
-                    subtitle: map.subtitle || "", 
-                    status: statusIcons, 
+                const mapData = {
+                    ...map,
+                    title: finalMapName,
+                    subtitle: map.subtitle || "",
+                    status: statusIcons,
                     command: fullCommand,
-                    is_chapter: false 
+                    is_chapter: false
                 };
 
                 let mapBtn = mapList.FindChild(`MapButton_${chId}_${index}`);
@@ -737,7 +731,7 @@ class ArchipelagoMapSelect {
                         const currentData = (mapBtn as any).m_MapData;
                         if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                         $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus');
-                        this.selectMap(currentData, false); 
+                        this.selectMap(currentData, false);
                     });
 
                     mapBtn.SetPanelEvent('onmouseout', () => {
@@ -752,7 +746,7 @@ class ArchipelagoMapSelect {
                         const currentData = (mapBtn as any).m_MapData;
                         if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                         $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
-                        this.g_SelectedMapData = currentData; 
+                        this.g_SelectedMapData = currentData;
                         this.selectMap(currentData, true);
 
                         const listInner = $('#LeftListInner');
@@ -771,7 +765,7 @@ class ArchipelagoMapSelect {
 
                         if (this.isController()) this.playSelectedMap();
                     });
-                    
+
                     mapBtn.SetPanelEvent('oncancel', () => {
                         $.PlaySoundEvent('UIPanorama.P2CE.MenuCancel');
                         this.toggleChapter(chId);
@@ -793,7 +787,6 @@ class ArchipelagoMapSelect {
                     const progressLabel = $.CreatePanel('Label', mapBtn, `MapProgress_${chId}_${index}`) as LabelPanel;
                     progressLabel.style.verticalAlign = "center";
                     progressLabel.style.marginRight = "10px";
-                    progressLabel.style.fontFamily = "APPortal-bold";
 
                     const lockIcon = $.CreatePanel('Image', mapBtn, `MapLock_${chId}_${index}`) as ImagePanel;
                     lockIcon.AddClass('MapLockIcon');
@@ -837,16 +830,18 @@ class ArchipelagoMapSelect {
                 if (mProg && mProg.IsValid()) {
                     if (mapTotalLeft > 0 && ($.persistentStorage.getItem('HideLocationCounts') ?? 0) === 0 && !map.command_deactivated) {
                         mProg.text = `${mapGreenCount}/${mapTotalLeft}`;
-                        let color = "#ff4444"; 
-                        if (mapGreenCount === mapTotalLeft) color = "#44ff44"; 
-                        else if (mapGreenCount > 0) color = "#ffff44"; 
+                        let color = "#ff4444";
+                        if (mapGreenCount === mapTotalLeft) color = "#44ff44";
+                        else if (mapGreenCount > 0) color = "#ffff44";
                         mProg.style.color = color;
-                        mProg.style.fontSize = "22px";
+                        mProg.style.fontSize = "24px";
+                        mProg.style.fontFamily = '"Lexend Deca", Bold';
                         mProg.visible = true;
                     } else if (map._isComplete && !map.command_deactivated) {
                         mProg.text = completionSymbol;
                         mProg.style.color = "#ffff44";
                         mProg.style.fontSize = "26px";
+                        mProg.style.fontFamily = "APPortal-bold";
                         mProg.visible = true;
                     } else {
                         mProg.visible = false;

@@ -15,21 +15,20 @@
 		<Panel class="help-popup__scroll">
 			<Panel class="help-popup__content">
 				
-				<!-- LEFT COLUMN: STATUS & CHECKS -->
 				<Panel class="help-popup__column">
 					
 					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Access" />
 
 					<Panel class="help-popup__row">
 						<Panel class="help-popup__icon">
-							<Image class="help-popup__icon-img" src="file://{images}/archipelago/lock-solid.tga" style="wash-color: #ff4444;" />
+							<Image class="help-popup__icon-img" src="file://{images}/archipelago/lock-solid.svg" texturewidth="96" textureheight="96" style="wash-color: #ff4444;" />
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Status_Locked" />
 					</Panel>
 
 					<Panel class="help-popup__row">
 						<Panel class="help-popup__icon">
-							<Image class="help-popup__icon-img" src="file://{images}/archipelago/unlock-solid.tga" style="wash-color: #44ff44;" />
+							<Image class="help-popup__icon-img" src="file://{images}/archipelago/unlock-solid.svg" texturewidth="96" textureheight="96" style="wash-color: #44ff44;" />
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Status_Unlocked" />
 					</Panel>
@@ -97,7 +96,6 @@
 					</Panel>
 				</Panel>
 
-				<!-- RIGHT COLUMN: INVENTORY ITEMS -->
 				<Panel class="help-popup__column">
 					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Items" />
 					

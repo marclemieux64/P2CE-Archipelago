@@ -121,6 +121,9 @@
 		"Archipelago_HUD_Receive"   "OBJET REÇU"
 		"Archipelago_HUD_Send"      "OBJET ENVOYÉ"
 		"Archipelago_HUD_Hint"      "NOUVEL INDICE"
+		"Archipelago_HUD_GoMode"          "FEU VERT"
+		"Archipelago_HUD_GoMode_Msg"      "Tous les objets requis ont été rassemblés!"
+		
 
 
 		//Archipelago Mapselect

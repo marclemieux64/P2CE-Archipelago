@@ -1,6 +1,9 @@
 'use strict';
 
-class ArchipelagoMapStatusHUD {
+declare var $: any;
+declare var UiToolkitAPI: any;
+
+var ArchipelagoMapStatusHUD = class {
     static m_HideSchedule: any = null;
     static m_Debug: boolean = false;
     static m_CurrentMapName: string = "";
@@ -83,37 +86,46 @@ class ArchipelagoMapStatusHUD {
 
         if (!container.HasClass('visible')) return;
 
-        const titleLabel = $('#MapTitle') as LabelPanel;
-        const mapToken = `#portal2_MapName_${currentMapName}`;
+        // --- CORRECTION 1: Extraction robuste du nom de la carte (comme dans map-select.ts) ---
+        let mapCmdName = currentMapName;
+        const fullCommand = currentMapData.command || currentMapData.command_deactivated || "";
+        if (fullCommand) {
+            const parts = fullCommand.split(" ");
+            if (parts.length >= 2) mapCmdName = parts[1].trim().toLowerCase();
+        }
+
+        const titleLabel = $('#MapTitle');
+        const mapToken = `#portal2_MapName_${mapCmdName}`;
         titleLabel.text = $.Localize(mapToken) !== mapToken ? $.Localize(mapToken) : currentMapData.id;
 
-        // --- 1. GESTION DES CHECKS (Section du haut - Toujours visible) ---
         const statusIconsRaw = (currentMapData.statusIcons || currentMapData.info || "").replace(/[~\-]/g, "").trim();
         const mItemsRaw = currentMapData.subtitle || "";
-        const currentStatusKey = statusIconsRaw + mItemsRaw;
+        
+        // --- CORRECTION 2: Ajout du statut "en jeu" dans la clé pour forcer le HUD à se rafraîchir ---
+        const mapStatusFromEngine = $.persistentStorage.getItem("ArchipelagoLastMapStatus") || 0;
+        const currentStatusKey = statusIconsRaw + mItemsRaw + mapCmdName + mapStatusFromEngine;
 
         if (this.m_LastStatusKey !== currentStatusKey) {
-    this.m_LastStatusKey = currentStatusKey;
-    const iconsContainer = $('#StatusIcons');
-    iconsContainer.RemoveAndDeleteChildren();
-    
-    const formattedIcons = logicHelper.getFormattedIcons(statusIconsRaw, currentMapName, mItemsRaw);
-    for (const iconData of formattedIcons) {
-        const icon = $.CreatePanel('Label', iconsContainer, '');
-        icon.text = iconData.char;
-        icon.AddClass('status-icon');
-        
-        // CRUCIAL : Appliquer la couleur calculée par ArchipelagoLogic
-        icon.style.color = iconData.color; 
+            this.m_LastStatusKey = currentStatusKey;
+            const iconsContainer = $('#StatusIcons');
+            iconsContainer.RemoveAndDeleteChildren();
+            
+            // On utilise mapCmdName (strict) au lieu du nom brut
+            const formattedIcons = logicHelper.getFormattedIcons(statusIconsRaw, mapCmdName, mItemsRaw);
+            for (const iconData of formattedIcons) {
+                const icon = $.CreatePanel('Label', iconsContainer, '');
+                icon.text = iconData.char;
+                icon.AddClass('status-icon');
+                
+                icon.style.color = iconData.color; 
 
-        if (iconData.isCompleted) {
-            icon.AddClass('status-icon--completed');
-            // Optionnel : forcer le jaune si complété, sinon garder la couleur de l'API
-            icon.style.color = "#ffff44"; 
+                if (iconData.isCompleted) {
+                    icon.AddClass('status-icon--completed');
+                }
+            }
         }
-    }
-}
-        // --- 2. GESTION DES MISSING ITEMS (Section du bas - Masquable) ---
+
+        // --- GESTION DES MISSING ITEMS (Section du bas - Masquable) ---
         const missingItemsList = logicHelper.getMissingItemsList(mItemsRaw);
         let currentMissingKey = "";
         let redCount = 0;
@@ -142,12 +154,12 @@ class ArchipelagoMapStatusHUD {
             }
         }
 
-        // On cache le label et le container si redCount est à 0
         if (missingLabel && missingContainer) {
             const shouldCollapse = (redCount === 0);
             missingLabel.SetHasClass('collapse', shouldCollapse);
             missingContainer.SetHasClass('collapse', shouldCollapse);
         }
     }
-}
+};
+
 ArchipelagoMapStatusHUD.init();

@@ -25,8 +25,11 @@ $.DefineEvent("ArchipelagoHideNotifications", 1, "time");
 $.DefineEvent("ArchipelagoDeath", 1, "message");
 
 $.RegisterForUnhandledEvent("ArchipelagoDeath", (msg: string) => {
+    let locTitle = $.Localize("#Archipelago_HUD_Deathlink");
+    if (locTitle === "#Archipelago_HUD_Deathlink") locTitle = "DEATHLINK";
+
     OnArchipelagoNotify(JSON.stringify({
-        title: "DEATHLINK",
+        title: locTitle,
         message: msg,
         type: "255 50 50",
         play_sound: true
@@ -48,8 +51,8 @@ $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
     const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
     
     if (useSmartWarp !== "1" && useSmartWarp !== 1) {
-        let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu");
-        if (locTitle === "#Archipelago_HUD_Warp_Menu") locTitle = "WARP TO MENU";
+        let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu_Title");
+        if (locTitle === "#Archipelago_HUD_Warp_Menu_Title") locTitle = "WARP TO MENU";
         
         let locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
         if (locLoading === "#Archipelago_HUD_Warp_Loading") locLoading = "Returning to map select... Loading...";
@@ -210,8 +213,14 @@ function ProcessChat(json: string) {
                         notifyType = "255 150 0"; 
                         
                     } else if (isGoModeText || apType === "go_mode") {
+                        // --- GO MODE: TITLE AND CUSTOM OVERRIDE MESSAGE ---
                         notifyTitle = $.Localize("#Archipelago_HUD_GoMode");
-                        if (notifyTitle === "#Archipelago_HUD_GoMode") notifyTitle = "FEU VERT (GO MODE)";
+                        if (notifyTitle === "#Archipelago_HUD_GoMode") notifyTitle = "GO MODE";
+                        
+                        let goModeMsg = $.Localize("#Archipelago_HUD_GoMode_Msg");
+                        if (goModeMsg === "#Archipelago_HUD_GoMode_Msg") goModeMsg = "All victory conditions have been met!";
+                        
+                        finalHtml = goModeMsg; // Overrides the server's message completely!
                         notifyType = "rainbow"; 
                         
                     } else if (apType === "found") {
@@ -296,7 +305,11 @@ function OnArchipelagoNotify(payload: string) {
 
         const titleLabel = $.CreatePanel('Label', content, 'Title') as LabelPanel;
         titleLabel.AddClass('title');
-        titleLabel.text = data.title || "ARCHIPELAGO";
+        
+        // Ensure absolute fallback is also localized
+        let defaultTitle = $.Localize("#Archipelago_HUD_Default");
+        if (defaultTitle === "#Archipelago_HUD_Default") defaultTitle = "ARCHIPELAGO";
+        titleLabel.text = data.title || defaultTitle;
 
         const messageContainer = $.CreatePanel('Panel', content, 'MessageArea');
         messageContainer.style.flowChildren = 'right';
@@ -313,7 +326,6 @@ function OnArchipelagoNotify(payload: string) {
             msgLabel.text = data.message || "";
         }
 
-        // --- APPLIQUE LES CLASSES CSS D'ANIMATION ARC-EN-CIEL ---
         if (accentBar && titleLabel) {
             if (data.type === "rainbow") {
                 accentBar.AddClass('rainbow-bg');

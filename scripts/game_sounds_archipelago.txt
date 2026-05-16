@@ -1,0 +1,48 @@
+// ==========================================
+// ARCHIPELAGO CUSTOM SOUND EVENTS
+// ==========================================
+
+"Archipelago.Trap"
+{
+    "channel"       "CHAN_STATIC"
+    "volume"        "1.0"
+    "pitch"         "100"
+    "soundlevel"    "SNDLVL_NONE"
+    "wave"          "error.wav"  
+}
+
+"Archipelago.Warp"
+{
+    "channel"       "CHAN_STATIC"
+    "volume"        "1.0"
+    "pitch"         "100"
+    "soundlevel"    "SNDLVL_NONE"
+    "wave"          "ambient/alarms/portal_elevator_chime.wav"
+}
+
+"Archipelago.Deathlink"
+{
+    "channel"       "CHAN_STATIC"
+    "volume"        "1.0"
+    "pitch"         "100"
+    "soundlevel"    "SNDLVL_NONE"
+    "wave"          "physics/body/body_medium_break2.wav"
+}
+
+"Archipelago.Default"
+{
+    "channel"       "CHAN_STATIC"
+    "volume"        "1.0"
+    "pitch"         "100"
+    "soundlevel"    "SNDLVL_NONE"
+    "wave"          "ui/beepclear.wav"
+}
+
+"Archipelago.GoMode"
+{
+    "channel"       "CHAN_STATIC"
+    "volume"        "1.0"
+    "pitch"         "100"
+    "soundlevel"    "SNDLVL_NONE"
+    "wave"          "vo/wheatley/bw_a4_finale01_smash03.wav" 
+}

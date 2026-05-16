@@ -213,14 +213,13 @@ function ProcessChat(json: string) {
                         notifyType = "255 150 0"; 
                         
                     } else if (isGoModeText || apType === "go_mode") {
-                        // --- GO MODE: TITLE AND CUSTOM OVERRIDE MESSAGE ---
                         notifyTitle = $.Localize("#Archipelago_HUD_GoMode");
                         if (notifyTitle === "#Archipelago_HUD_GoMode") notifyTitle = "GO MODE";
                         
                         let goModeMsg = $.Localize("#Archipelago_HUD_GoMode_Msg");
                         if (goModeMsg === "#Archipelago_HUD_GoMode_Msg") goModeMsg = "All victory conditions have been met!";
                         
-                        finalHtml = goModeMsg; // Overrides the server's message completely!
+                        finalHtml = goModeMsg; 
                         notifyType = "rainbow"; 
                         
                     } else if (apType === "found") {
@@ -258,20 +257,6 @@ function ProcessChat(json: string) {
     }
 }
 
-function PlayCustomSoundAtUIVolume(soundName: string) {
-    let uiVol = 1.0; 
-    
-    try {
-        uiVol = GameInterfaceAPI.GetSettingFloat("snd_volume_ui");
-    } catch (e) { }
-
-    if (isNaN(uiVol) || uiVol < 0.0) uiVol = 1.0;
-    if (uiVol > 1.0) uiVol = 1.0;
-
-    const finalVol = uiVol.toFixed(2); 
-    GameInterfaceAPI.ConsoleCommand(`playvol ${soundName} ${finalVol}`);
-}
-
 function OnArchipelagoNotify(payload: string) {
     const container = $.GetContextPanel();
     if (!container) return;
@@ -281,21 +266,16 @@ function OnArchipelagoNotify(payload: string) {
         const entry = $.CreatePanel('Panel', container, '');
         if (!entry) return;
 
-        if (data.play_sound) {
-            if (data.type === "255 50 50") { 
-                PlayCustomSoundAtUIVolume("physics/body/body_medium_break2.wav"); 
-            } else if (data.type === "255 150 0") { 
-                PlayCustomSoundAtUIVolume('Error');
-            } else if (data.type === "0 255 255" || data.type === "198 33 223") { 
-                PlayCustomSoundAtUIVolume("ambient/alarms/portal_elevator_chime.wav");
-            } else if (data.type === "rainbow") { 
-                PlayCustomSoundAtUIVolume("sphere03.bw_a4_finale01_smash03");
-            } else {
-                PlayCustomSoundAtUIVolume("#ui/beepclear.wav");
-            }
-        }
-
         entry.AddClass('notify-entry');
+
+        // --- DELEGATION DU SON AU CSS VIA L'AJOUT DE CLASSES ---
+        if (data.play_sound) {
+            if (data.type === "255 50 50") entry.AddClass('sound-deathlink');
+            else if (data.type === "255 150 0") entry.AddClass('sound-trap');
+            else if (data.type === "0 255 255" || data.type === "198 33 223") entry.AddClass('sound-warp');
+            else if (data.type === "rainbow") entry.AddClass('sound-rainbow');
+            else entry.AddClass('sound-default');
+        }
 
         const accentBar = $.CreatePanel('Panel', entry, 'AccentBar');
         accentBar.AddClass('accent-bar');
@@ -306,7 +286,6 @@ function OnArchipelagoNotify(payload: string) {
         const titleLabel = $.CreatePanel('Label', content, 'Title') as LabelPanel;
         titleLabel.AddClass('title');
         
-        // Ensure absolute fallback is also localized
         let defaultTitle = $.Localize("#Archipelago_HUD_Default");
         if (defaultTitle === "#Archipelago_HUD_Default") defaultTitle = "ARCHIPELAGO";
         titleLabel.text = data.title || defaultTitle;

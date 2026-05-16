@@ -77,6 +77,9 @@ game_sounds_manifest
 	"precache_file"				"scripts/game_sounds_dlc1_world.txt"
 	"precache_file"				"scripts/game_sounds_dlc2_cave.txt"
 
+	//Archipelago sounds
+	"precache_file"				"scripts/game_sounds_archipelago.txt"
+
 	// HL2 Stuff
 
 	// E3 level sounds

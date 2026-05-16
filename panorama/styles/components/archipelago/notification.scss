@@ -8,7 +8,6 @@
     margin-bottom: 8px;
     border: 1px solid rgba(255, 255, 255, 0.05);
 
-    // FIX: Only transition the properties Panorama explicitly supports
     transition-property: transform, opacity, height;
     transition-duration: 0.35s;
     transition-timing-function: linear;
@@ -16,6 +15,21 @@
     animation-name: enter-anim;
     animation-duration: 0.35s;
     animation-timing-function: ease-out;
+
+    // ==========================================
+    // --- SONS DÉCLENCHÉS À L'APPARITION ---
+    // ==========================================
+    &.sound-deathlink { sound: "Archipelago.Deathlink"; }
+    &.sound-trap { sound: "Archipelago.Trap"; }
+    &.sound-warp { sound: "Archipelago.Warp"; }
+    &.sound-rainbow { sound: "Archipelago.GoMode"; }
+    &.sound-default { sound: "Archipelago.Default"; }
+
+    // Garde l'animation de sortie sans le son
+    &.exit-anim {
+        transform: translateX(100%);
+        opacity: 0;
+    }
 }
 
 .accent-bar {

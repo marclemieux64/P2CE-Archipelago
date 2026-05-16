@@ -50,7 +50,7 @@
     min-height: 60px;
     flow-children: down;
     background-color: #1a1a1a;
-    padding: 8px 15px;
+    padding: 10px 10px;
     margin-bottom: 5px;
     height: fit-children;
     border: 1px solid #ffffff11;
@@ -62,14 +62,17 @@
     .InputController &:not(.chapter_entry--active):focus {
         border: 1px solid #ec6726; // Brand Orange
         transform: translateX(8px);
-        box-shadow: fill #ec672611 -4px 0px 12px 0px;
+        box-shadow: fill #ec672611 0px 0px 12px 0px;
     }
 
     &--active {
-        background-color: #ffffff22;
+        background-color: #ffffff06;
         border: 1px solid #ec6726;
+        margin-bottom: 0px;
+        // Target the subtitle inside the active entry to make it brighter
     }
 }
+
 
 .ChapterTitle {
     font-family: "Lexend Deca", Bold;
@@ -91,7 +94,7 @@
     flow-children: down;
     margin-left: 20px;
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     height: fit-children;
 
     &.hide {
@@ -108,7 +111,6 @@
     border: 1px solid #ffffff11;
     border-radius: 4px;
     flow-children: right;
-    padding: 0px 15px;
     transition-property: background-color, border, transform;
     transition-duration: 0.1s;
     overflow: noclip; // Prevent children from being culled during transitions
@@ -161,14 +163,13 @@
     font-family: "Lexend Deca", Bold;
     font-size: 26px;
     color: #eeeeee;
-    padding-right: 10px;
+    padding: 10px 0px 10px 10px;
+    margin-right: 10px;
 
     // --- LE CORRECTIF EST ICI ---
     // Force le texte très long à afficher "..." au lieu de s'étendre
     // et de pousser le cadenas en dehors de l'écran.
     width: 100%;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     // ----------------------------
 
     .map_button--deactivated & {
@@ -179,7 +180,7 @@
 .MapLockIcon {
     vertical-align: center;
     horizontal-align: right;
-    margin-right: 15px;
+    margin-right: 10px;
 
     &.icon--locked {
         /* wash-color: white; <--- REMOVED */
@@ -284,6 +285,7 @@
     font-family: "APPortal-bold";
     font-size: 28px;
     text-shadow: 0px 0px 8px #ffffff11;
+    letter-spacing: 5px;
 }
 
 //=============================================================================

@@ -10,14 +10,14 @@
     
     &__container {
         flow-children: right;
-        background-color: rgba(0, 0, 0, 0.6);
-        padding: 6px 12px;
+        background-color: #141414ee;
         border-radius: 4px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     }
     
     &__label {
+        padding: 7px;
         font-size: 14px;
         font-weight: bold;
         color: #cccccc;
@@ -30,13 +30,14 @@
     &__dots {
         flow-children: right;
         vertical-align: center;
+        margin-right: 10px;
     }
     
     &__dot {
         width: 10px;
         height: 10px;
         border-radius: 50%;
-        margin-left: 6px;
+        margin-left: 10px;
         border: 1px solid rgba(0, 0, 0, 0.3);
         
         transition-property: background-color, box-shadow;
@@ -44,7 +45,7 @@
         
         &--connected {
             background-color: #44ff44;
-            box-shadow: 0 0 8px #44ff44aa;
+            box-shadow: 0 0 3px #44ff44aa;
         }
         
         &--partial {

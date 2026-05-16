@@ -40,6 +40,8 @@
     flow-children: down;
     padding: 12px 16px;
     width: fill-parent-flow(1.0);
+    transition-property: height;
+    transition-duration: 0.2s;
 }
 
 .section-label {
@@ -63,8 +65,17 @@
 
 .status-icons {
     width: 100%;
-    flow-children: right;
+    flow-children: right-wrap;
     vertical-align: center;
+    min-height: 24px;
+}
+
+#MissingLabel {
+    margin-top: 8px; /* Espace constant au-dessus du label */
+}
+
+.collapse {
+    visibility: collapse;
 }
 
 .status-icon {

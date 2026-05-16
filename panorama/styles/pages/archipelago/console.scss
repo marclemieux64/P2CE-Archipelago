@@ -134,3 +134,44 @@
     }   
 }
 
+//=============================================================================
+// 4. INPUT BOX & PLACEHOLDER FIX
+//=============================================================================
+
+.archipelago_input_wrapper {
+    width: fill-parent-flow(1.0); 
+    height: 45px;
+    flow-children: right;
+    vertical-align: center; 
+    background-color: #00000066;
+    border: 1px solid #ffffff1a;
+    padding: 0px 10px;
+    border-radius: 4px;
+}
+
+TextEntry {
+    width: 100%;
+    
+    // --- THE FIX ---
+    height: fit-children;   // Lets the box shrink to wrap the 20px text tightly
+    vertical-align: center; // Centers the tightly-wrapped box inside the 45px wrapper
+    // ---------------
+    
+    background-color: transparent;
+    border: 0px; 
+    color: #ffffff;
+    font-family: "LexendDeca";
+    font-size: 20px;
+
+    #PlaceholderText {
+        color: #ffffff55; 
+        transition-property: opacity;
+        transition-duration: 0.15s;
+    }
+
+    &.HasInput #PlaceholderText,
+    &:focus #PlaceholderText {
+        opacity: 0;
+        visibility: collapse;
+    }
+}

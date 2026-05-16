@@ -1,24 +1,22 @@
 'use strict';
 
-// --- GESTION LOCALE POUR ÉVITER LES CONFLITS HUD/MENU ---
-let localLastId = -1;
 const notificationQueue: Panel[] = [];
 let isTimerRunning = false;
 let isWarpPending = false;
 let pendingWarpMapName = "";
 
-function GetRoot(): Panel | null {
+function GetHudRoot(): Panel | null {
     let p = $.GetContextPanel();
     while (p) {
-        if (p.id === "Hud" || p.id === "MainMenu" || p.id === "MenuMode_MainMenu") return p;
+        if (p.id === "Hud") return p;
         p = p.GetParent();
     }
     return null;
 }
 
 (function () {
-    const root = GetRoot();
-    if (root) root.RemoveClass("fade-active");
+    const hud = GetHudRoot();
+    if (hud) hud.RemoveClass("fade-active");
 })();
 
 $.DefineEvent("ArchipelagoQueueUpdated", 0);
@@ -35,28 +33,52 @@ $.RegisterForUnhandledEvent("ArchipelagoDeath", (msg: string) => {
     }));
 });
 
+try {
+    $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch with fade buffer");
+} catch (e) {}
+
 $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
     if (isWarpPending) return; 
+    
     isWarpPending = true;
     pendingWarpMapName = content;
-    const root = GetRoot();
-    if (root) root.AddClass("fade-active");
+    const hud = GetHudRoot();
+    if (hud) hud.AddClass("fade-active");
 
-    OnArchipelagoNotify(JSON.stringify({
-        title: "RETOUR AU MENU",
-        html: "Chargement de la sélection de cartes...",
-        type: "198 33 223",
-        play_sound: true
-    }));
+    const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
+    
+    if (useSmartWarp !== "1" && useSmartWarp !== 1) {
+        let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu");
+        if (locTitle === "#Archipelago_HUD_Warp_Menu") locTitle = "WARP TO MENU";
+        
+        let locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
+        if (locLoading === "#Archipelago_HUD_Warp_Loading") locLoading = "Returning to map select... Loading...";
+
+        OnArchipelagoNotify(JSON.stringify({
+            title: locTitle,
+            html: locLoading,
+            type: "198 33 223",
+            play_sound: true
+        }));
+    } else {
+        if (!isTimerRunning) ProcessQueue();
+    }
 });
 
 function ProcessQueue() {
     if (notificationQueue.length === 0) {
         isTimerRunning = false;
         if (isWarpPending) {
+            $.persistentStorage.setItem("ap_return_to_map_select", "true");
             $.Schedule(0.5, () => {
                 isWarpPending = false; 
-                GameInterfaceAPI.ConsoleCommand("disconnect");
+                
+                const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
+                if (useSmartWarp === "1" || useSmartWarp === 1) {
+                    (UiToolkitAPI.GetGlobalObject() as any).SmartWarpNextMap(pendingWarpMapName);
+                } else {
+                    GameInterfaceAPI.ConsoleCommand("disconnect");
+                }
             });
         }
         return;
@@ -64,13 +86,14 @@ function ProcessQueue() {
 
     isTimerRunning = true;
     const topPanel = notificationQueue[0];
+
     if (!topPanel || !topPanel.IsValid()) {
         notificationQueue.shift();
         ProcessQueue();
         return;
     }
 
-    $.Schedule(5.0, () => {
+    $.Schedule(4.0, () => {
         if (topPanel && topPanel.IsValid()) {
             topPanel.AddClass('exit-anim');
             $.Schedule(0.35, () => {
@@ -85,83 +108,158 @@ function ProcessQueue() {
     });
 }
 
+// --- ÉCOUTE DU CHAT ---
 $.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (json: string) => {
     const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
     if (!api) return;
 
+    const isHud = GetHudRoot() !== null;
+
+    if (isHud) {
+        ProcessChat(json);
+    } else {
+        $.Schedule(0.1, () => {
+            ProcessChat(json);
+        });
+    }
+});
+
+function ProcessChat(json: string) {
     try {
         const chat = JSON.parse(json);
-        if (Array.isArray(chat) && chat.length > 0) {
-            
-            // INITIALISATION : On synchronise le premier polling
-            if (localLastId === -1) {
-                localLastId = chat[chat.length - 1].id;
-                return;
+        if (!Array.isArray(chat) || chat.length === 0) return;
+
+        const globalObj: any = UiToolkitAPI.GetGlobalObject();
+
+        let lastId = globalObj.AP_SharedNotificationId;
+        if (lastId === undefined) lastId = -1;
+
+        const latestMsgId = chat[chat.length - 1].id;
+
+        if (lastId !== -1 && latestMsgId < lastId) {
+            lastId = -1;
+        }
+
+        if (lastId === -1) {
+            globalObj.AP_SharedNotificationId = latestMsgId;
+            return;
+        }
+
+        let playerPrimaryColor = "64 160 255";   
+        let playerSecondaryColor = "255 160 32"; 
+        try {
+            if (typeof GameInterfaceAPI.GetSettingString === "function") {
+                const pColor = GameInterfaceAPI.GetSettingString("cl_portal_sp_primary_color");
+                if (pColor && pColor.trim() !== "") playerPrimaryColor = pColor;
+                
+                const sColor = GameInterfaceAPI.GetSettingString("cl_portal_sp_secondary_color");
+                if (sColor && sColor.trim() !== "") playerSecondaryColor = sColor;
             }
+        } catch (e) { }
 
-            const inGame = GameInterfaceAPI.GetMapName() !== "";
-            const root = GetRoot();
-            const isHud = root && root.id === "Hud";
+        for (const msg of chat) {
+            if (msg.id > lastId) {
+                lastId = msg.id;
+                globalObj.AP_SharedNotificationId = lastId;
 
-            // Sécurité : Le HUD ne traite pas les messages si on est au menu, et vice versa
-            if (isHud && !inGame) return;
-            if (!isHud && inGame) return;
-
-            for (const msg of chat) {
-                if (msg.id > localLastId) {
-                    localLastId = msg.id;
-
-                    if (msg.priority === true && !msg.no_notification) { 
-                        let finalHtml = msg.text || "";
-                        if (msg.type === "json" && Array.isArray(msg.data)) {
-                            finalHtml = msg.data.map((p: any) => {
-                                let t = p.text || "";
-                                t = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                                if (p.color) {
-                                    const cMap: Record<string, string> = {
-                                        "red": "#ff5555", "green": "#55ff55", "yellow": "#ffff55",
-                                        "blue": "#77aaff", "magenta": "#ee82ee", "cyan": "#55ffff"
-                                    };
-                                    return `<font color='${cMap[p.color] || "#ffffff"}'>${t}</font>`;
-                                }
-                                return t;
-                            }).join("");
-                        }
+                let finalHtml = msg.text || "";
+                
+                if (msg.type === "json" && Array.isArray(msg.data)) {
+                    finalHtml = msg.data.map((p: any) => {
+                        let t = p.text || "";
+                        t = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                         
-                        let notifyTitle = "ARCHIPELAGO"; 
-                        let notifyType = "success"; 
-                        const apType = msg.ap_msg_type || "default";
-
-                        if (apType === "deathlink") {
-                            notifyTitle = "DEATHLINK";
-                            notifyType = "255 50 50"; 
-                        } else if (apType === "trap") {
-                            notifyTitle = "PIÈGE";
-                            notifyType = "255 150 0"; 
-                        } else if (apType === "go_mode") {
-                            // --- GO MODE (FEU VERT) ---
-                            notifyTitle = "FEU VERT (GO MODE)";
-                            notifyType = "rainbow"; 
+                        if (p.color) {
+                            const cMap: Record<string, string> = {
+                                "red": "#ff5555", "green": "#55ff55", "yellow": "#ffff55",
+                                "blue": "#77aaff", "magenta": "#ee82ee", "cyan": "#55ffff",
+                                "plum": "#dda0dd", "salmon": "#fa8072"
+                            };
+                            const c = cMap[p.color] || "#ffffff";
+                            return `<font color='${c}'>${t}</font>`;
+                        } else if (p.type === "player_id" || p.type === "player_name") {
+                            return `<font color='#ff7f50'>${t}</font>`; 
+                        } else if (p.type === "item_id" || p.type === "item_name") {
+                            return `<font color='#55ffff'>${t}</font>`; 
+                        } else if (p.type === "location_id" || p.type === "location_name") {
+                            return `<font color='#55ff55'>${t}</font>`; 
                         }
+                        return t;
+                    }).join("");
+                }
+                
+                const apType = msg.ap_msg_type || "default";
+                const isGoModeText = finalHtml.toLowerCase().includes("go mode") || finalHtml.toLowerCase().includes("feu vert");
+
+                const isImportant = (msg.priority === true) || isGoModeText || (apType === "go_mode");
+
+                if (isImportant && !msg.no_notification) { 
+                    
+                    let notifyTitle = $.Localize("#Archipelago_HUD_Default");
+                    if (notifyTitle === "#Archipelago_HUD_Default") notifyTitle = "ARCHIPELAGO"; 
+                    let notifyType = "success"; 
+
+                    if (apType === "deathlink" || finalHtml.includes("DeathLink") || finalHtml.includes("mort")) {
+                        notifyTitle = $.Localize("#Archipelago_HUD_Deathlink");
+                        if (notifyTitle === "#Archipelago_HUD_Deathlink") notifyTitle = "DEATHLINK";
+                        notifyType = "255 50 50"; 
                         
-                        OnArchipelagoNotify(JSON.stringify({
-                            title: notifyTitle,
-                            html: finalHtml,
-                            type: notifyType,
-                            play_sound: true 
-                        }));
+                    } else if (apType === "trap" || finalHtml.includes("Trap")) {
+                        notifyTitle = $.Localize("#Archipelago_HUD_Trap");
+                        if (notifyTitle === "#Archipelago_HUD_Trap") notifyTitle = "TRAP";
+                        notifyType = "255 150 0"; 
+                        
+                    } else if (isGoModeText || apType === "go_mode") {
+                        notifyTitle = $.Localize("#Archipelago_HUD_GoMode");
+                        if (notifyTitle === "#Archipelago_HUD_GoMode") notifyTitle = "FEU VERT (GO MODE)";
+                        notifyType = "rainbow"; 
+                        
+                    } else if (apType === "found") {
+                        notifyTitle = $.Localize("#Archipelago_HUD_Found");
+                        if (notifyTitle === "#Archipelago_HUD_Found") notifyTitle = "ITEM FOUND";
+                        notifyType = "50 255 50"; 
+                        
+                    } else if (apType === "receive") {
+                        notifyTitle = $.Localize("#Archipelago_HUD_Receive");
+                        if (notifyTitle === "#Archipelago_HUD_Receive") notifyTitle = "ITEM RECEIVED";
+                        notifyType = playerPrimaryColor; 
+                        
+                    } else if (apType === "send") {
+                        notifyTitle = $.Localize("#Archipelago_HUD_Send");
+                        if (notifyTitle === "#Archipelago_HUD_Send") notifyTitle = "ITEM SENT";
+                        notifyType = playerSecondaryColor; 
+                        
+                    } else if (apType === "hint") {
+                        notifyTitle = $.Localize("#Archipelago_HUD_Hint");
+                        if (notifyTitle === "#Archipelago_HUD_Hint") notifyTitle = "NEW HINT";
+                        notifyType = "255 255 50"; 
                     }
+
+                    OnArchipelagoNotify(JSON.stringify({
+                        title: notifyTitle,
+                        html: finalHtml,
+                        type: notifyType,
+                        play_sound: true 
+                    }));
                 }
             }
         }
-    } catch (e) { }
-});
+    } catch (e) {
+        $.Warning("[AP] Error parsing chat for notifications: " + e);
+    }
+}
 
 function PlayCustomSoundAtUIVolume(soundName: string) {
     let uiVol = 1.0; 
-    try { uiVol = GameInterfaceAPI.GetSettingFloat("snd_volume_ui"); } catch (e) { }
+    
+    try {
+        uiVol = GameInterfaceAPI.GetSettingFloat("snd_volume_ui");
+    } catch (e) { }
+
     if (isNaN(uiVol) || uiVol < 0.0) uiVol = 1.0;
-    const finalVol = (uiVol > 1.0 ? 1.0 : uiVol).toFixed(2); 
+    if (uiVol > 1.0) uiVol = 1.0;
+
+    const finalVol = uiVol.toFixed(2); 
     GameInterfaceAPI.ConsoleCommand(`playvol ${soundName} ${finalVol}`);
 }
 
@@ -175,42 +273,64 @@ function OnArchipelagoNotify(payload: string) {
         if (!entry) return;
 
         if (data.play_sound) {
-            if (data.type === "255 50 50") PlayCustomSoundAtUIVolume("physics/body/body_medium_break2.wav"); 
-            else if (data.type === "rainbow") {
-                // --- SON SMASH WHEATLEY ---
+            if (data.type === "255 50 50") { 
+                PlayCustomSoundAtUIVolume("physics/body/body_medium_break2.wav"); 
+            } else if (data.type === "255 150 0") { 
+                PlayCustomSoundAtUIVolume('Error');
+            } else if (data.type === "0 255 255" || data.type === "198 33 223") { 
+                PlayCustomSoundAtUIVolume("ambient/alarms/portal_elevator_chime.wav");
+            } else if (data.type === "rainbow") { 
                 PlayCustomSoundAtUIVolume("sphere03.bw_a4_finale01_smash03");
-            } else PlayCustomSoundAtUIVolume("#ui/beepclear.wav");
+            } else {
+                PlayCustomSoundAtUIVolume("#ui/beepclear.wav");
+            }
         }
 
         entry.AddClass('notify-entry');
+
         const accentBar = $.CreatePanel('Panel', entry, 'AccentBar');
         accentBar.AddClass('accent-bar');
+
         const content = $.CreatePanel('Panel', entry, '');
         content.AddClass('content');
-        const titleLabel = $.CreatePanel('Label', content, 'Title');
+
+        const titleLabel = $.CreatePanel('Label', content, 'Title') as LabelPanel;
         titleLabel.AddClass('title');
         titleLabel.text = data.title || "ARCHIPELAGO";
 
         const messageContainer = $.CreatePanel('Panel', content, 'MessageArea');
-        const msgLabel = $.CreatePanel('Label', messageContainer, 'Message');
-        msgLabel.AddClass('body');
-        msgLabel.html = true;
-        msgLabel.text = data.html || data.message || "";
+        messageContainer.style.flowChildren = 'right';
+        messageContainer.style.width = '100%';
 
-        // --- EFFET ARC-EN-CIEL ---
-        if (data.type === "rainbow") {
-            accentBar.style.backgroundColor = "gradient( linear, 0% 0%, 0% 100%, from( #f00 ), color-stop( 0.2, #ff0 ), color-stop( 0.4, #0f0 ), color-stop( 0.6, #0ff ), color-stop( 0.8, #00f ), to( #f0f ) )";
-            titleLabel.style.color = "white";
-            titleLabel.style.textShadow = "0px 0px 10px #ffffffaa";
-        } else if (data.type && data.type.includes(" ")) {
-            const rgb = "rgb(" + data.type.replace(/ /g, ",") + ")";
-            accentBar.style.backgroundColor = rgb;
-            titleLabel.style.color = rgb;
+        if (data.html) {
+            const msgLabel = $.CreatePanel('Label', messageContainer, 'Message') as LabelPanel;
+            msgLabel.AddClass('body');
+            msgLabel.html = true;
+            msgLabel.text = data.html;
+        } else {
+            const msgLabel = $.CreatePanel('Label', messageContainer, 'Message') as LabelPanel;
+            msgLabel.AddClass('body');
+            msgLabel.text = data.message || "";
+        }
+
+        // --- APPLIQUE LES CLASSES CSS D'ANIMATION ARC-EN-CIEL ---
+        if (accentBar && titleLabel) {
+            if (data.type === "rainbow") {
+                accentBar.AddClass('rainbow-bg');
+                titleLabel.AddClass('rainbow-text');
+            } else if (data.type && data.type.includes(" ")) {
+                const rgb = "rgb(" + data.type.replace(/ /g, ",") + ")";
+                accentBar.style.backgroundColor = rgb;
+                titleLabel.style.color = rgb;
+            }
         }
 
         notificationQueue.push(entry);
         if (!isTimerRunning) ProcessQueue();
-    } catch (e) { }
+
+    } catch (e) {
+        $.Msg("Logic Error: " + e);
+    }
 }
 
 (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify = OnArchipelagoNotify;

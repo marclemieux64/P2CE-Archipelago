@@ -23,6 +23,7 @@ import worlds
 from worlds.portal2_p2ce import Portal2World
 from worlds.portal2_p2ce.mod_helpers.ItemHandling import add_ratman_commands, handle_item, handle_map_start, handle_trap, portal_gun_upgrade_not_inplace, potatos_not_inplace
 from worlds.portal2_p2ce.mod_helpers.MapMenu import Menu
+from worlds.portal2_p2ce.mod_helpers.Notifications import NotificationManager
 from worlds.portal2_p2ce.client.DeathMessages import get_death_message
 from worlds.portal2_p2ce.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
 from worlds.portal2_p2ce.Options import GameModeOption
@@ -40,20 +41,25 @@ class Portal2CommandProcessor(ClientCommandProcessor):
         super()._cmd_help()
 
     def _cmd_check_connection(self):
+        """Responds with the status of the client's connection to the Portal 2 mod"""
         self.ctx.alert_game_connection()
 
     def _cmd_command(self, *command):
+        """Sends a command to the game. Should not be used unless you get softlocked"""
         self.ctx.command_queue.append(' '.join(command) + "\n")
 
     def _cmd_deathlink(self):
+        """Toggles death link for this client"""
         self.ctx.death_link_active = not self.ctx.death_link_active
         async_start(self.ctx.update_death_link(self.ctx.death_link_active), "set_deathlink")
         self.output(f"Death link has been {'enabled' if self.ctx.death_link_active else 'disabled'}")
 
     def _cmd_refresh_menu(self):
+        """Refreshed the in game menu in case of maps being inaccessible when they should be"""
         self.ctx.refresh_menu()
 
     def _cmd_received(self):
+        """Lists all items received"""
         self.ctx.is_processing_received_cmd = True
         try:
             super()._cmd_received()
@@ -61,12 +67,16 @@ class Portal2CommandProcessor(ClientCommandProcessor):
             self.ctx.is_processing_received_cmd = False
 
     def _cmd_message_in_game(self, message: str, *color_string):
+        """Send a message to be displayed in game (only works while in a map). 
+        message can be any text 
+        color_string is an optional RGB string e.g. 255 100 0"""
         if len(color_string) == 3:
-            self.ctx.add_to_in_game_message_queue(message, ' '.join(color_string))
+            self.ctx.notifier.add_in_game_message(message, ' '.join(color_string))
         else:
-            self.ctx.add_to_in_game_message_queue(message)
+            self.ctx.notifier.add_in_game_message(message)
 
     def _cmd_needed(self, *location_name):
+        """Get the requirements for the map separated by all requirements and ones not yet acquired"""
         message = "Location not found, use /locations to get a list of locations"
         location_name_str = ' '.join(location_name)
         for location in location_names_to_map_codes.keys():
@@ -90,6 +100,8 @@ class Portal2Context(CommonContext):
     game_connection_task: typing.Optional["asyncio.Task[None]"] = None
     
     def __init__(self, server_address: str = None, password: str = None):
+        self.notifier = NotificationManager(self)
+        
         class QueuingLogHandler(logging.Handler):
             def __init__(self):
                 super().__init__()
@@ -117,10 +129,10 @@ class Portal2Context(CommonContext):
                                           "room information", "server protocol", "permission", "hint cost", "!hint", "enter slot", "lost connection"]
                         
                         if any(noise.lower() in msg_lower for noise in noise_keywords):
-                            self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg, None, None, False)
+                            self.ctx.loop.call_soon_threadsafe(self.ctx.notifier.on_print_silently, msg, None, None, False)
                             return
 
-                        self.ctx.loop.call_soon_threadsafe(self.ctx.on_print_silently, msg, None, None, False)
+                        self.ctx.loop.call_soon_threadsafe(self.ctx.notifier.on_print_silently, msg, None, None, False)
                 except Exception:
                     pass
 
@@ -133,7 +145,7 @@ class Portal2Context(CommonContext):
     def flush_init_logs(self):
         if hasattr(self, 'temp_handler') and self.temp_handler:
             for msg in self.temp_handler.queue:
-                self.on_print_silently(msg)
+                self.notifier.on_print_silently(msg)
             logging.getLogger().removeHandler(self.temp_handler)
             self.temp_handler = None
 
@@ -159,13 +171,9 @@ class Portal2Context(CommonContext):
     location_name_to_id: dict[str, int] = None
     menu: Menu = None
     
-    chat_log: list[dict] = []
-    hint_log: list[dict] = []
     last_api_update: float = 0
     has_ever_connected: bool = False
-    _msg_id_counter: int = 0
 
-    # --- IN-GAME EVENTS QUEUE ---
     deferred_events: list[dict] = []
     pending_validation_events: list[dict] = []
     ping_sent_time: float = 0
@@ -177,11 +185,9 @@ class Portal2Context(CommonContext):
             self.ping_sent_time = time.time()
 
     def process_event(self, ev: dict):
-        # 1. On affiche le texte (S'il n'a pas déjà été affiché par on_deathlink)
         if ev.get("text"):
-            self.on_print_silently(ev["text"], ev.get("data"), mirror_to_hud=ev.get("mirror_to_hud", False))
+            self.notifier.on_print_silently(ev["text"], ev.get("data"), mirror_to_hud=ev.get("mirror_to_hud", False))
             
-        # 2. On applique un délai de sécurité de 4 secondes pour l'action physique
         if ev.get("command"):
             async def delayed_action():
                 await asyncio.sleep(4.0) 
@@ -214,7 +220,7 @@ class Portal2Context(CommonContext):
                 
         except Exception as e:
             logger.error(f"Command Error ({command}): {e}")
-            self.on_print(f"Error: {e}")
+            self.notifier.on_print(f"Error: {e}")
 
     def request_hints_sync(self):
         if self.team is not None and self.slot:
@@ -223,171 +229,13 @@ class Portal2Context(CommonContext):
 
     def alert_game_connection(self):
         if self.check_game_connection():
-            self.on_print_silently("Connection to Portal 2 is up and running", mirror_to_hud=False)
+            self.notifier.on_print_silently("Connection to Portal 2 is up and running", mirror_to_hud=False)
+            logger.info("Connection to Portal 2 is up and running")
         else:
-            self.on_print_silently("Disconnected from Portal 2. Make sure the mod is open and the `-netconport 3000` launch option is set", mirror_to_hud=False)
+            msg = f"Disconnected from Portal 2. Make sure the mod is open and the `-netconport {self.PORT}` launch option is set"
+            self.notifier.on_print_silently(msg, mirror_to_hud=False)
+            logger.info(msg)
 
-    def on_print(self, text: str):
-        self.on_print_silently(text, mirror_to_hud=False)
-
-    def output(self, text: str):
-        self.on_print(text)
-
-    def on_print_silently(self, text: str, rich_data: list = None, html_text: str = None, mirror_to_hud: bool = False):
-        print(f"[DEBUG] {text}")
-
-        text_lower = text.lower()
-        noise_filters = ["changed tags from", "now that you are connected", "room information", 
-                         "server protocol", "permission", "hint cost", "!hint", "enter slot", "lost connection"]
-        if any(noise.lower() in text_lower for noise in noise_filters):
-            mirror_to_hud = False
-
-        if rich_data and not html_text:
-            color_map = {
-                "player_id": "#ff7f50", "player_name": "#ff7f50", "magenta": "#ee82ee",
-                "item_id": "#00ffff", "item_name": "#00ffff", "cyan": "#00ffff",
-                "location_id": "#00ff00", "location_name": "#00ff00", "green": "#00ff00",
-                "entrance_id": "#da70d6", "gold": "#ffd700", "yellow": "#ffff00", "red": "#ff0000", "blue": "#0000ff"
-            }
-            html_text = ""
-            for part in rich_data:
-                p_text = part.get("text", "") if isinstance(part, dict) else str(part)
-                p_type = part.get("type") if isinstance(part, dict) else None
-                p_color = part.get("color") if isinstance(part, dict) else None
-                color = color_map.get(p_type) or color_map.get(p_color) or p_color
-                html_text += f"<font color='{color}'>{p_text}</font>" if color else p_text
-
-        ap_msg_type = getattr(self, "_current_ap_msg_type", "default")
-        if getattr(self, "_current_ap_msg_priority", False):
-            mirror_to_hud = True
-
-        is_death_event = False
-        if rich_data:
-            for part in rich_data:
-                if isinstance(part, dict) and part.get("is_death"):
-                    is_death_event = True
-                    break
-
-        if is_death_event:
-            mirror_to_hud = True
-            ap_msg_type = "deathlink"
-        elif "Trap" in text:
-            mirror_to_hud = True
-            ap_msg_type = "trap"
-
-        if mirror_to_hud:
-            logger.info(f"[HUD] {text}")
-
-        self._msg_id_counter += 1
-        no_notification = getattr(self, 'is_processing_received_cmd', False)
-        
-        self.chat_log.append({
-            "id": self._msg_id_counter, 
-            "text": text,
-            "html": html_text if html_text else text,
-            "data": rich_data,
-            "type": "text" if rich_data is None else "json",
-            "priority": mirror_to_hud,  
-            "no_notification": no_notification,
-            "ap_msg_type": ap_msg_type,
-            "time": time.time()
-        })
-        if len(self.chat_log) > 100:
-            self.chat_log.pop(0)
-
-    def print_json(self, data: typing.List[typing.Dict[str, str]], mirror_to_hud: bool = False):
-        resolved_data = []
-        is_trap_msg = False 
-        
-        for part in data:
-            if not isinstance(part, dict):
-                resolved_data.append(part)
-                continue
-                
-            new_part = part.copy()
-            text = part.get("text", "")
-            part_type = part.get("type")
-            
-            try:
-                owner_id = part.get("player", self.slot)
-
-                if part_type == "player_id":
-                    new_part["text"] = self.player_names[int(text)]
-                elif part_type == "item_id":
-                    item_name = self.item_names.lookup_in_slot(int(text), owner_id)
-                    new_part["text"] = item_name
-                    
-                    trap_cmd = handle_trap(item_name)
-                    if trap_cmd:
-                        new_part["is_trap"] = True
-                        is_trap_msg = True
-                        
-                elif part_type == "location_id":
-                    new_part["text"] = self.location_names.lookup_in_slot(int(text), owner_id)
-            except Exception:
-                pass 
-            
-            resolved_data.append(new_part)
-
-        text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in resolved_data)
-        self.on_print_silently(text, resolved_data, mirror_to_hud=(mirror_to_hud or is_trap_msg))
-
-    def on_print_json(self, args: dict):
-        ap_msg_type = "default"
-        priority = False
-        msg_type = args.get("type", "")
-        
-        if msg_type == "ItemSend":
-            receiving = args.get("receiving", 0)
-            
-            finder = 0
-            for part in args.get("data", []):
-                if isinstance(part, dict) and part.get("type") == "player_id":
-                    try:
-                        finder = int(part.get("text", 0))
-                    except ValueError:
-                        pass
-                    break 
-            
-            if receiving == self.slot and finder == self.slot:
-                priority = True
-                ap_msg_type = "found"
-            elif receiving == self.slot:
-                priority = True
-                ap_msg_type = "receive"
-            elif finder == self.slot:
-                priority = True
-                ap_msg_type = "send"
-                
-        elif msg_type == "Hint":
-            for part in args.get("data", []):
-                if isinstance(part, dict) and part.get("type") == "player_id":
-                    try:
-                        if int(part.get("text", 0)) == self.slot:
-                            priority = True
-                            ap_msg_type = "hint"
-                            break
-                    except ValueError:
-                        pass
-
-        text_lower = args.get("text", "").lower()
-        if "trap" in text_lower:
-            priority = True
-            ap_msg_type = "trap"
-
-        self._current_ap_msg_type = ap_msg_type
-        self._current_ap_msg_priority = priority
-        
-        if "data" in args:
-            self.print_json(args["data"], mirror_to_hud=priority)
-        else:
-            text = args.get("text", "")
-            if text:
-                self.on_print_silently(text, mirror_to_hud=priority)
-                
-        self._current_ap_msg_type = "default"
-        self._current_ap_msg_priority = False
-    
     def update_menu(self, location_id: int = None):
         if self.menu and location_id is not None:
             self.menu.complete_check(location_id)
@@ -399,17 +247,14 @@ class Portal2Context(CommonContext):
             self.menu.complete_check(location_id)
         self.update_menu()
 
-    def add_to_in_game_message_queue(self, message: str, color_string: str = None) -> None:
-        if color_string:
-            try:
-                rgb = [int(x) for x in color_string.split()]
-                if len(rgb) == 3:
-                    hex_color = '#%02x%02x%02x' % (rgb[0], rgb[1], rgb[2])
-                    self.on_print_silently(message, [{"text": message, "color": hex_color}])
-                    return
-            except Exception:
-                pass
-        self.on_print_silently(message)
+    def on_print(self, text: str):
+        self.notifier.on_print(text)
+
+    def output(self, text: str):
+        self.notifier.on_print(text)
+        
+    def on_print_json(self, args: dict):
+        self.notifier.on_print_json(args)
 
     async def p2_connection_loop(self):
         await asyncio.sleep(1)
@@ -453,7 +298,7 @@ class Portal2Context(CommonContext):
                         pass
                     except Exception as e:
                         logger.error(f"Error reading from Portal 2: {e}")
-                        self.add_to_in_game_message_queue(f"Error reading from Portal 2: {e}", "error")
+                        self.notifier.add_in_game_message(f"Error reading from Portal 2: {e}", "error")
                         break
 
             except ConnectionRefusedError:
@@ -511,8 +356,8 @@ class Portal2Context(CommonContext):
                             "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
                             "menu": client_self.menu.to_dict() if client_self.menu else None
                         },
-                        "chat": client_self.chat_log,
-                        "hints": client_self.hint_log
+                        "chat": client_self.notifier.chat_log,
+                        "hints": client_self.notifier.hint_log
                     }
                     
                     json_body = json.dumps(full_data)
@@ -544,9 +389,9 @@ class Portal2Context(CommonContext):
                         "menu": client_self.menu.to_dict() if client_self.menu else None
                     })
                 elif self.path == '/chat':
-                    self._send_json(client_self.chat_log)
+                    self._send_json(client_self.notifier.chat_log)
                 elif self.path == '/hints':
-                    self._send_json(client_self.hint_log)
+                    self._send_json(client_self.notifier.hint_log)
                 else:
                     self.send_error(404)
 
@@ -587,9 +432,8 @@ class Portal2Context(CommonContext):
         threading.Thread(target=run_server, daemon=True).start()
 
     def send_level_begin_commands(self):
-        for cmd in self.item_remove_commands:
-            if cmd:
-                self.command_queue.append(cmd + "\n")
+        if self.item_remove_commands:
+            self.command_queue.append(f"{';'.join(self.item_remove_commands)}\n")
 
     async def handle_message(self, message: str):
         msg_lower = message.lower()
@@ -663,7 +507,7 @@ class Portal2Context(CommonContext):
                 await self.send_death(death_text=death_message)
                 
                 fake_data = [{"text": death_message, "is_death": True}]
-                self.on_print_silently(death_message, fake_data, mirror_to_hud=True)
+                self.notifier.on_print_silently(death_message, fake_data, mirror_to_hud=True)
 
     async def handle_goal_completion(self):
         if getattr(self, 'finished_game', False):
@@ -675,7 +519,7 @@ class Portal2Context(CommonContext):
         cause = data.get("cause", "Un joueur est mort.")
         text = f"DEATHLINK: {cause}"
         
-        self.on_print_silently(text, [{"text": text, "is_death": True}], mirror_to_hud=True)
+        self.notifier.on_print_silently(text, [{"text": text, "is_death": True}], mirror_to_hud=True)
 
         self.execute_in_game_event({
             "command": "kill\n"
@@ -775,16 +619,13 @@ class Portal2Context(CommonContext):
                 self.hint_cost = args["hint_cost"]
 
         def update_item_list():
-            if not getattr(self, "full_item_list_loaded", False):
-                from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened
-                self.item_list = list(items_shortened.keys())
-                self.full_item_list_loaded = True
-                
+            from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened
+            
+            full_list = list(items_shortened.keys())
             recv_names = [self.item_names.lookup_in_game(i.item, self.game) for i in self.items_received]
-            self.item_list = list(set(self.item_list) - set(recv_names))
+            self.item_list = list(set(full_list) - set(recv_names))
             self.refresh_menu()
             
-            # --- LOGIQUE FEU VERT (GO MODE) ---
             finale_loc_name = map_codes_to_location_names.get("sp_a4_finale4")
             if finale_loc_name and finale_loc_name in all_locations_table:
                 requirements = all_locations_table[finale_loc_name].required_items
@@ -792,38 +633,17 @@ class Portal2Context(CommonContext):
                 
                 if not missing and not getattr(self, "go_mode_announced", False):
                     self.go_mode_announced = True
-                    self._current_ap_msg_type = "go_mode"
-                    self.on_print_silently("FEU VERT : Tous les objets pour la finale sont réunis !", mirror_to_hud=True)
-                    self._current_ap_msg_type = "default"
+                    self.notifier.trigger_go_mode()
 
         if cmd == "Retrieved":
+            if f"_read_item_name_groups_{self.game}" in args["keys"]:
+                self.item_list = args["keys"][f"_read_item_name_groups_{self.game}"]["Everything"]
             update_item_list()
             self.update_item_remove_commands()
             
             hkey = f"_read_hints_{self.team}_{self.slot}"
             if hkey in args["keys"]:
-                raw_hints = args["keys"][hkey]
-                self.hint_log = []
-                for h in raw_hints:
-                    try:
-                        rec_id = h.get("receiving_player")
-                        find_id = h.get("finding_player")
-                        item_id = h.get("item")
-                        loc_id = h.get("location")
-                        
-                        rec = self.player_names[rec_id]
-                        find = self.player_names[find_id]
-                        item_name = self.item_names.lookup_in_slot(item_id, rec_id)
-                        loc_name = self.location_names.lookup_in_slot(loc_id, find_id)
-                        
-                        txt = f"<font color='#ff7f50'>{rec}</font>'s <font color='#00ffff'>{item_name}</font> is at <font color='#00ff00'>{loc_name}</font> in <font color='#ff7f50'>{find}</font>'s World"
-                    except Exception: 
-                        txt = f"Hint: Item {h.get('item', '???')} at {h.get('location', '???')}"
-                    
-                    self.hint_log.append({
-                        "found": h.get("found", False), 
-                        "text": txt
-                    })
+                self.notifier.process_hints(args["keys"][hkey])
 
         if cmd == "ReceivedItems":
             index = args["index"]
@@ -839,9 +659,27 @@ class Portal2Context(CommonContext):
             update_item_list()
             self.update_item_remove_commands()
             return
+            
+        if cmd == "PrintJSON":
+            if "type" in args:
+                if args["type"] == "ItemSend" and args["receiving"] == self.slot:
+                    item: NetworkItem = args["item"]
+                    text = self.parse_message(args["data"], sending = item.player)
+                elif args["type"] == "Goal":
+                    text = self.parse_message(args["data"])
+                else:
+                    if args["type"] == "Collect":
+                        self.update_menu()
+                    return 
+                self.notifier.add_in_game_message(text)
         
         super().on_package(cmd, args)
+        
         if cmd == "Connected":
+            self.completed_maps.clear() 
+            self.go_mode_announced = False
+            self.notifier.reset()
+            
             self.handle_slot_data(args["slot_data"])
             self.alert_game_connection()
 
@@ -883,18 +721,18 @@ class Portal2Context(CommonContext):
         self.username = None
         self.password = None
         self.cancel_autoreconnect()
-        if self.server and self.server.socket and not self.server.socket.closed:
+        if self.server and getattr(self.server, "socket", None) and not self.server.socket.closed:
             await self.server.socket.close()
-        if self.server_task:
+        if getattr(self, "server_task", None):
             await self.server_task
-        if self.game_connection_task:
+        if getattr(self, "game_connection_task", None):
             self.game_connection_task.cancel()
 
         while self.input_requests > 0:
             self.input_queue.put_nowait(None)
             self.input_requests -= 1
         self.keep_alive_task.cancel()
-        if self.ui_task:
+        if getattr(self, "ui_task", None):
             await self.ui_task
         if getattr(self, 'input_task', None):
             self.input_task.cancel()
@@ -920,6 +758,10 @@ async def main(args: argparse.Namespace):
     
     await ctx.exit_event.wait()
     await ctx.shutdown()
+
+def launch(*args: str) -> None:
+    from .Launch import launch_portal_2_client
+    launch_portal_2_client(*args)
 
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Portal 2 Archipelago Standalone Client")

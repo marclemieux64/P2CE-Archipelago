@@ -47,7 +47,7 @@ declare var $: any;
         static g_MapRequirements: { [key: string]: string[] } = {
             "sp_a1_intro1": ["ç", "æ"], "sp_a1_intro2": ["ñ", "ç", "æ"], "sp_a1_intro3": [],
             "sp_a1_intro4": ["ç", "æ"], "sp_a1_intro5": ["ñ", "ç", "æ"], "sp_a1_intro6": ["ç", "æ"],
-            "sp_a1_intro7": [], "sp_a2_intro": ["û"], "sp_a2_laser_intro": ["û", "í", "î"],
+            "sp_a1_intro7": [], "sp_a1_wakeup": [], "sp_a2_intro": ["û"], "sp_a2_laser_intro": ["û", "í", "î"],
             "sp_a2_laser_stairs": ["û", "ì", "æ", "í", "î"], "sp_a2_dual_lasers": ["û", "ì", "í", "î"],
             "sp_a2_laser_over_goo": ["ñ", "æ", "ç", "û", "í", "î"], "sp_a2_catapult_intro": ["õ", "ñ", "ç", "æ"],
             "sp_a2_trust_fling": ["û", "õ", "ñ", "ç", "æ"], "sp_a2_pit_flings": ["û", "ç", "í", "î", "æ"],
@@ -77,25 +77,26 @@ declare var $: any;
         static g_SpeedrunRequirements: { [key: string]: string[] } = {
             "sp_a1_intro2": ["ñ", "æ"], "sp_a1_intro4": ["æ"], "sp_a1_intro5": ["æ"],
             "sp_a2_intro": [], "sp_a2_laser_intro": ["û"], "sp_a2_laser_stairs": ["û", "æ"],
-            "sp_a2_dual_lasers": ["û", "ì", "í", "î"], "sp_a2_laser_over_goo": ["û", "æ"],
+            "sp_a2_dual_lasers": ["û", "í", "î"], "sp_a2_laser_over_goo": ["û", "æ"],
             "sp_a2_catapult_intro": ["û", "æ"], "sp_a2_trust_fling": ["û", "õ", "æ"],
             "sp_a2_pit_flings": ["û"], "sp_a2_fizzler_intro": ["û"],
             "sp_a2_ricochet": ["û", "ç"], "sp_a2_bridge_intro": ["û", "æ"],
             "sp_a2_bridge_the_gap": ["ç", "ñ", "æ"], "sp_a2_turret_intro": ["æ"],
-            "sp_a2_laser_relays": ["ï", "ì", "î"], "sp_a2_turret_blocker": ["æ"],
-            "sp_a2_laser_vs_turret": ["û", "ì", "í", "î"], "sp_a2_pull_the_rug": ["æ", "ç", "¿", "û"],
-            "sp_a2_column_blocker": ["û"], "sp_a2_laser_chaining": ["î", "ì", "ï"],
-            "sp_a2_triple_laser": ["î", "û"], "sp_a2_bts1": ["û", "ñ"],
+            "sp_a2_laser_relays": ["ï", "í", "ì"], "sp_a2_turret_blocker": ["æ"],
+            "sp_a2_laser_vs_turret": ["û", "í", "î"], "sp_a2_pull_the_rug": ["æ", "ç", "¿", "û"],
+            "sp_a2_column_blocker": ["û"], "sp_a2_laser_chaining": ["ì", "í", "ï"],
+            "sp_a2_triple_laser": ["ì", "û"], "sp_a2_bts1": ["û", "ñ", "ç"],
             "sp_a2_bts2": [], "sp_a2_bts4": ["û"], "sp_a2_bts5": ["û"], "sp_a2_core": ["ó"],
-            "sp_a3_jump_intro": ["à", "é", "û"], "sp_a3_bomb_flings": ["û", "à", "ò"],
-            "sp_a3_crazy_box": ["û", "é"], "sp_a3_speed_ramp": ["û"], 
-            "sp_a3_speed_flings": ["û", "è"], "sp_a3_portal_intro": ["û"],
+            "sp_a3_jump_intro": ["à", "è", "û"], "sp_a3_bomb_flings": ["û", "à", "ò"],
+            "sp_a3_crazy_box": ["û", "è"], "sp_a3_speed_ramp": ["û"], 
+            "sp_a3_speed_flings": ["û", "é"], "sp_a3_portal_intro": ["û"], "sp_a3_end": ["û", "à"],
             "sp_a4_tb_intro": ["æ", "å"], "sp_a4_tb_trust_drop": ["æ", "ð", "ñ", "û"],
             "sp_a4_tb_wall_button": ["æ", "ð", "ñ", "û"], "sp_a4_tb_polarity": ["å"],
             "sp_a4_tb_catch": ["û"], "sp_a4_stop_the_box": ["æ", "û"], 
             "sp_a4_laser_catapult": ["û"], "sp_a4_laser_platform": ["û", "å"],
-            "sp_a4_speed_tb_catch": ["ñ", "ð"], "sp_a4_jump_polarity": ["ó", "ñ", "à", "â"],
-            "sp_a4_finale1": ["û", "ð", "õ"], "sp_a4_finale2": ["û"], "sp_a4_finale3": ["û", "å"]
+            "sp_a4_speed_tb_catch": ["ñ", "ð"], "sp_a4_jump_polarity": ["ó", "ñ", "à"],
+            "sp_a4_finale1": ["û", "ð", "õ"], "sp_a4_finale2": ["û"], "sp_a4_finale3": ["û", "å"],
+            "sp_a4_finale4": ["û", "ù", "à", "â", "A.ô", "S.ô", "F.ô"]
         };
 
         static g_RatmanRequirements: { [key: string]: string[][] } = {
@@ -108,9 +109,9 @@ declare var $: any;
             "sp_a4_tb_intro": [["û", "å", "ð"]], "sp_a4_tb_trust_drop": [["û", "ñ", "å", "ð"]],
             "sp_a4_tb_wall_button": [["û"]], "sp_a4_tb_polarity": [["ó"]],
             "sp_a4_tb_catch": [["û", "ð", "å", "õ", "ñ"], ["û", "ð", "å", "õ", "ñ"]],
-            "sp_a4_stop_the_box": [["õ"]], "sp_a4_laser_catapult": [["û", "ð", "æ", "õ", "ì", "í", "î", "å"]],
+            "sp_a4_stop_the_box": [["õ"]], "sp_a4_laser_catapult": [["û", "ð", "õ", "ì", "í", "î", "å"]],
             "sp_a4_laser_platform": [["û", "í", "î", "ì", "ñ"]], "sp_a4_speed_tb_catch": [["û"]],
-            "sp_a4_jump_polarity": [["û", "à", "â", "å", "æ", "ñ"]], "sp_a4_finale3": [["û", "á", "â"]]
+            "sp_a4_jump_polarity": [["û", "à", "â", "å", "æ", "ñ", "ó"]], "sp_a4_finale3": [["û", "á", "â"]]
         };
 
         static getIndicatorStatus(char: string, mapCmdName: string, mItems: string, charIndex: number, fullStatus: string = ""): { isCompleted: boolean, isAvailable: boolean } {
@@ -147,6 +148,7 @@ declare var $: any;
                     isAvailable = reqs.every(req => normalizedMItems.indexOf(req) === -1);
                 }
             } else if (char === "¢" || char === "ù") {
+                // S'applique aux portes vitrifiées (¢) et à PotatOS (ù)
                 isAvailable = (normalizedMItems.indexOf("û") === -1);
             } else {
                 let searchChar = char;

@@ -45,34 +45,45 @@
     border-radius: 4px;
 }
 
-.chapter_entry {
+// 1. THE STATIC WRAPPER (Hitbox)
+// 1. THE STATIC WRAPPER (Hitbox)
+.chapter_entry_wrapper {
     width: 90%;
+    height: fit-children;
+    margin-bottom: 5px;
+    flow-children: down;
+    overflow: noclip; // <-- AJOUTEZ CECI
+
+    &.chapter_wrapper--active {
+        margin-bottom: 0px; 
+    }
+
+    &:hover .chapter_entry:not(.chapter_entry--active),
+    .InputController &:focus .chapter_entry:not(.chapter_entry--active) {
+        border: 1px solid #ec6726; 
+        transform: translateX(8px);
+        box-shadow: fill #ec672611 0px 0px 12px 0px;
+    }
+}
+
+// 2. THE VISUAL ENTRY (Moves)
+.chapter_entry {
+    width: 100%;
     min-height: 60px;
     flow-children: down;
     background-color: #1a1a1a;
     padding: 10px 10px;
-    margin-bottom: 5px;
     height: fit-children;
     border: 1px solid #ffffff11;
     border-radius: 4px;
     transition-property: background-color, border, transform, box-shadow;
     transition-duration: 0.15s;
 
-    &:not(.chapter_entry--active):hover,
-    .InputController &:not(.chapter_entry--active):focus {
-        border: 1px solid #ec6726; // Brand Orange
-        transform: translateX(8px);
-        box-shadow: fill #ec672611 0px 0px 12px 0px;
-    }
-
     &--active {
         background-color: #ffffff06;
         border: 1px solid #ec6726;
-        margin-bottom: 0px;
-        // Target the subtitle inside the active entry to make it brighter
     }
 }
-
 
 .ChapterTitle {
     font-family: "Lexend Deca", Bold;
@@ -102,34 +113,39 @@
     }
 }
 
-.map_button {
+.map_button_wrapper {
     width: 80%;
-    min-height: 50px;
     height: fit-children;
     margin-top: 5px;
-    background-color: #000000aa; // Darker grey as requested
-    border: 1px solid #ffffff11;
-    border-radius: 4px;
-    flow-children: right;
-    transition-property: background-color, border, transform;
-    transition-duration: 0.1s;
-    overflow: noclip; // Prevent children from being culled during transitions
-
-    &:not(.map_button--deactivated):hover,
-    .InputController &:not(.map_button--deactivated):focus {
+    flow-children: down;
+    overflow: noclip; 
+    
+    // Le hover s'active UNIQUEMENT si le bouton n'est pas désactivé ET n'est pas sélectionné
+    &:hover .map_button:not(.map_button--deactivated):not(.map_button--selected),
+    .InputController &:focus .map_button:not(.map_button--deactivated):not(.map_button--selected) {
         border: 1px solid #ec6726;
         transform: translateX(5px);
         box-shadow: fill #ec672622 0px 0px 12px 0px;
     }
+}
+
+// 2. THE VISUAL BUTTON (Moves)
+.map_button {
+    width: 100%; // Takes up the full space of the wrapper
+    min-height: 50px;
+    height: fit-children;
+    background-color: #1a1a1a; // Default 'unlocked' state
+    border: 1px solid #ffffff11;
+    border-radius: 4px;
+    flow-children: right;
+    
+    transition-property: background-color, border, transform, box-shadow;
+    transition-duration: 0.1s;
+    overflow: noclip;
 
     &--deactivated {
         background-color: #0d0d0d; // Solid near-black for locked
         opacity: 1.0;
-    }
-
-    // Default 'unlocked' state background
-    &:not(.map_button--deactivated) {
-        background-color: #1a1a1a; // Solid dark grey for unlocked
     }
 }
 
@@ -138,16 +154,13 @@
 //=============================================================================
 
 .map_button--selected {
-    // 1. Fond blanc solide pour une visibilité maximale
-    background-color: #ffffff;
-
     // 2. Bordure fine tout autour (pas de barre latérale déformante)
     border: 2px solid #ec6726;
+    background-color: #ffffff06;
 
-    // 3. On enlève les transformations et ombres
+    // 3. On s'assure qu'il reste à sa place
     transform: none;
     box-shadow: none;
-
 }
 
 

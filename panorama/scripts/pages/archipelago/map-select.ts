@@ -218,8 +218,10 @@ class ArchipelagoMapSelect {
                             if (savedChapter) {
                                 const mapList = $('#ChapterMaps_' + savedChapter);
                                 const entry = $('#ChapterEntry_' + savedChapter);
+                                const wrapper = $('#ChapterWrapper_' + savedChapter); // NOUVEAU
                                 if (mapList && mapList.IsValid() && entry && entry.IsValid()) {
                                     entry.AddClass('chapter_entry--active');
+                                    if (wrapper && wrapper.IsValid()) wrapper.AddClass('chapter_wrapper--active'); // NOUVEAU
                                     mapList.RemoveClass('hide');
                                     mapList.style.height = 'fit-children';
                                     mapList.style.opacity = '1.0';
@@ -357,8 +359,12 @@ class ArchipelagoMapSelect {
             const entry = $('#ChapterEntry_' + chapterId);
             const bOpening = mapList.HasClass('hide');
 
-            for (const child of container.Children()) {
-                if (child.id.startsWith('ChapterEntry_')) child.RemoveClass('chapter_entry--active');
+            for (const key in this.g_ChapterData) {
+                const ce = $('#ChapterEntry_' + key);
+                if (ce && ce.IsValid()) ce.RemoveClass('chapter_entry--active');
+                
+                const cw = $('#ChapterWrapper_' + key);
+                if (cw && cw.IsValid()) cw.RemoveClass('chapter_wrapper--active');
             }
 
             let activePanel = null;
@@ -371,6 +377,10 @@ class ArchipelagoMapSelect {
             if (bOpening) {
                 this.g_OpenChapterId = chapterId;
                 if (entry && entry.IsValid()) entry.AddClass('chapter_entry--active');
+                
+                const wrapper = $('#ChapterWrapper_' + chapterId);
+                if (wrapper && wrapper.IsValid()) wrapper.AddClass('chapter_wrapper--active');
+                
                 mapList.RemoveClass('hide');
                 mapList.style.height = 'fit-children';
                 mapList.style.opacity = '1.0';
@@ -555,18 +565,33 @@ class ArchipelagoMapSelect {
         for (const chId of sortedKeys) {
             const chapter = this.g_ChapterData[chId];
 
-            let entry = container.FindChild(`ChapterEntry_${chId}`);
-            if (!entry || !entry.IsValid()) {
-                entry = $.CreatePanel('Panel', container, `ChapterEntry_${chId}`);
-                entry.AddClass('chapter_entry');
-                (entry as any).canfocus = true;
+            // REMPLACEZ CE BLOC :
+            // let entry = container.FindChild(`ChapterEntry_${chId}`);
+            // if (!entry || !entry.IsValid()) { ... }
 
-                entry.SetPanelEvent('onmouseover', () => {
+            // PAR CELUI-CI :
+            let wrapper = container.FindChild(`ChapterWrapper_${chId}`);
+            let entry: any = wrapper ? wrapper.FindChild(`ChapterEntry_${chId}`) : null;
+
+            if (!wrapper || !wrapper.IsValid() || !entry || !entry.IsValid()) {
+                if (wrapper && wrapper.IsValid()) wrapper.DeleteAsync(0);
+
+                // 1. Crée le Wrapper
+                wrapper = $.CreatePanel('Panel', container, `ChapterWrapper_${chId}`);
+                wrapper.AddClass('chapter_entry_wrapper');
+                (wrapper as any).canfocus = true; // Le focus va sur le wrapper pour ne pas bouger
+
+                // 2. Crée l'Entrée Visuelle à l'intérieur
+                entry = $.CreatePanel('Panel', wrapper, `ChapterEntry_${chId}`);
+                entry.AddClass('chapter_entry');
+
+                // 3. Attache les événements au WRAPPER (la hitbox fixe)
+                wrapper.SetPanelEvent('onmouseover', () => {
                     if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                     $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus');
                 });
 
-                entry.SetPanelEvent('onmouseout', () => {
+                wrapper.SetPanelEvent('onmouseout', () => {
                     if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                     this.g_ResetSchedule = $.Schedule(0.15, () => {
                         if (this.g_SelectedMapData) this.selectMap(this.g_SelectedMapData, true);
@@ -574,12 +599,12 @@ class ArchipelagoMapSelect {
                     });
                 });
 
-                entry.SetPanelEvent('onactivate', () => {
+                wrapper.SetPanelEvent('onactivate', () => {
                     $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
                     this.toggleChapter(chId);
                 });
 
-                entry.SetPanelEvent('onfocus', () => {
+                wrapper.SetPanelEvent('onfocus', () => {
                     this.selectMap({
                         pic: chapter.pic,
                         title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title || $.Localize("#Archipelago_Chapter_Title") + " " + chId,
@@ -721,20 +746,31 @@ class ArchipelagoMapSelect {
                     is_chapter: false
                 };
 
-                let mapBtn = mapList.FindChild(`MapButton_${chId}_${index}`);
-                if (!mapBtn || !mapBtn.IsValid()) {
-                    mapBtn = $.CreatePanel('Panel', mapList, `MapButton_${chId}_${index}`);
-                    mapBtn.AddClass('map_button');
-                    (mapBtn as any).canfocus = true;
+                // --- CRÉATION DU WRAPPER ET DU BOUTON ---
+                let wrapper = mapList.FindChild(`MapWrapper_${chId}_${index}`);
+                let mapBtn: any = wrapper ? wrapper.FindChild(`MapButton_${chId}_${index}`) : null;
 
-                    mapBtn.SetPanelEvent('onmouseover', () => {
-                        const currentData = (mapBtn as any).m_MapData;
+                if (!wrapper || !wrapper.IsValid() || !mapBtn || !mapBtn.IsValid()) {
+                    if (wrapper && wrapper.IsValid()) wrapper.DeleteAsync(0);
+
+                    // 1. Le Wrapper (Hitbox statique)
+                    wrapper = $.CreatePanel('Panel', mapList, `MapWrapper_${chId}_${index}`);
+                    wrapper.AddClass('map_button_wrapper');
+                    (wrapper as any).canfocus = true;
+
+                    // 2. Le Bouton Visuel (Bouge)
+                    mapBtn = $.CreatePanel('Panel', wrapper, `MapButton_${chId}_${index}`);
+                    mapBtn.AddClass('map_button');
+
+                    // 3. On attache tous les événements au WRAPPER
+                    wrapper.SetPanelEvent('onmouseover', () => {
+                        const currentData = (wrapper as any).m_MapData;
                         if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                         $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus');
                         this.selectMap(currentData, false);
                     });
 
-                    mapBtn.SetPanelEvent('onmouseout', () => {
+                    wrapper.SetPanelEvent('onmouseout', () => {
                         if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                         this.g_ResetSchedule = $.Schedule(0.15, () => {
                             if (this.g_SelectedMapData) this.selectMap(this.g_SelectedMapData, true);
@@ -742,8 +778,8 @@ class ArchipelagoMapSelect {
                         });
                     });
 
-                    mapBtn.SetPanelEvent('onactivate', () => {
-                        const currentData = (mapBtn as any).m_MapData;
+                    wrapper.SetPanelEvent('onactivate', () => {
+                        const currentData = (wrapper as any).m_MapData;
                         if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                         $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
                         this.g_SelectedMapData = currentData;
@@ -755,8 +791,11 @@ class ArchipelagoMapSelect {
                                 const c = listInner.GetChild(i);
                                 if (c && c.IsValid() && c.HasClass('map_list')) {
                                     for (let j = 0; j < c.GetChildCount(); j++) {
-                                        const mc = c.GetChild(j);
-                                        if (mc && mc.IsValid()) mc.RemoveClass('map_button--selected');
+                                        const w = c.GetChild(j); // Wrapper
+                                        if (w && w.IsValid()) {
+                                            const mb = w.GetChild(0); // Le mapBtn intérieur
+                                            if (mb && mb.IsValid()) mb.RemoveClass('map_button--selected');
+                                        }
                                     }
                                 }
                             }
@@ -766,19 +805,21 @@ class ArchipelagoMapSelect {
                         if (this.isController()) this.playSelectedMap();
                     });
 
-                    mapBtn.SetPanelEvent('oncancel', () => {
+                    wrapper.SetPanelEvent('oncancel', () => {
                         $.PlaySoundEvent('UIPanorama.P2CE.MenuCancel');
                         this.toggleChapter(chId);
-                        const chE = $('#ChapterEntry_' + chId);
+
+                        const chE = $('#ChapterWrapper_' + chId);
                         if (chE && chE.IsValid()) chE.SetFocus();
                     });
 
-                    mapBtn.SetPanelEvent('onfocus', () => {
-                        const currentData = (mapBtn as any).m_MapData;
+                    wrapper.SetPanelEvent('onfocus', () => {
+                        const currentData = (wrapper as any).m_MapData;
                         if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                         this.selectMap(currentData, false);
                     });
 
+                    // 4. On crée le contenu visuel dans mapBtn
                     const mapContent = $.CreatePanel('Panel', mapBtn, '');
                     mapContent.AddClass('map-title-container');
                     const nameLabel = $.CreatePanel('Label', mapContent, `MapName_${chId}_${index}`) as LabelPanel;
@@ -793,16 +834,18 @@ class ArchipelagoMapSelect {
                     lockIcon.SetAttributeString('scaling', 'stretch-to-fit-preserve-aspect');
                 }
 
-                (mapBtn as any).m_MapData = mapData;
+                // On sauvegarde les données sur le Wrapper !
+                (wrapper as any).m_MapData = mapData; 
 
+                // Gestion de l'activation/désactivation sur le Wrapper et le Bouton
                 if (map.command_deactivated) {
-                    mapBtn.enabled = false;
+                    wrapper.enabled = false;
+                    (wrapper as any).canfocus = false;
                     mapBtn.AddClass('map_button--deactivated');
-                    (mapBtn as any).canfocus = false;
                 } else {
-                    mapBtn.enabled = true;
+                    wrapper.enabled = true;
+                    (wrapper as any).canfocus = true;
                     mapBtn.RemoveClass('map_button--deactivated');
-                    (mapBtn as any).canfocus = true;
                 }
 
                 if (this.g_SelectedMapData && this.g_SelectedMapData.command === mapData.command) {
@@ -862,12 +905,6 @@ class ArchipelagoMapSelect {
                 }
             });
 
-            if (mapList && mapList.IsValid()) {
-                for (let i = chapter.maps.length; i < mapList.GetChildCount(); i++) {
-                    const toDelete = mapList.FindChild(`MapButton_${chId}_${i}`);
-                    if (toDelete && toDelete.IsValid()) toDelete.DeleteAsync(0);
-                }
-            }
         }
     }
 

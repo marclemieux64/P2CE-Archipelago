@@ -177,7 +177,10 @@ class NotificationManager:
                             break
                     except ValueError:
                         pass
-
+        elif msg_type == "Goal":
+            priority = True
+            ap_msg_type = "goal"
+            
         text_lower = args.get("text", "").lower()
         if "trap" in text_lower:
             priority = True

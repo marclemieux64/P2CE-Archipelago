@@ -242,6 +242,11 @@ function ProcessChat(json: string) {
                         if (notifyTitle === "#Archipelago_HUD_Hint") notifyTitle = "NEW HINT";
                         notifyType = "255 255 50"; 
                     }
+                    else if (apType === "goal") {
+                        notifyTitle = $.Localize("#Archipelago_HUD_Goal");
+                        if (notifyTitle === "#Archipelago_HUD_Goal") notifyTitle = "GOAL ACHIEVED";
+                        notifyType = "255 215 0"; 
+                    }
 
                     OnArchipelagoNotify(JSON.stringify({
                         title: notifyTitle,
@@ -272,6 +277,7 @@ function OnArchipelagoNotify(payload: string) {
         if (data.play_sound) {
             if (data.type === "255 50 50") entry.AddClass('sound-deathlink');
             else if (data.type === "255 150 0") entry.AddClass('sound-trap');
+            else if (data.type === "255 215 0") entry.AddClass('sound-goal');
             else if (data.type === "0 255 255" || data.type === "198 33 223") entry.AddClass('sound-warp');
             else if (data.type === "rainbow") entry.AddClass('sound-rainbow');
             else entry.AddClass('sound-default');

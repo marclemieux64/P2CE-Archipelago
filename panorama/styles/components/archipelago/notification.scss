@@ -22,6 +22,7 @@
     &.sound-deathlink { sound: "Archipelago.Deathlink"; }
     &.sound-trap { sound: "Archipelago.Trap"; }
     &.sound-warp { sound: "Archipelago.Warp"; }
+    &.sound-goal { sound: "Archipelago.Goal"; } // <-- Le "/" a été supprimé ici
     &.sound-rainbow { sound: "Archipelago.GoMode"; }
     &.sound-default { sound: "Archipelago.Default"; }
 
@@ -179,4 +180,9 @@
     animation-timing-function: linear;
     animation-iteration-count: infinite;
     text-shadow: 0px 0px 8px rgba(255, 255, 255, 0.4);
+}
+
+.sound-goal {
+    border: 2px solid #ffd700;
+    box-shadow: 0px 0px 12px #ffd70044;
 }

@@ -46,3 +46,13 @@
     "soundlevel"    "SNDLVL_NONE"
     "wave"          "vo/wheatley/bw_a4_finale01_smash03.wav" 
 }
+
+"Archipelago.Goal"
+{
+    "channel"       "CHAN_VOICE"
+    "volume"        "1.0"
+    "pitch"         "100"
+    "soundlevel"    "SNDLVL_NONE"
+    "wave"          "playonce/level/sad_party_horn_01.wav"
+
+}    

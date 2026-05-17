@@ -33,7 +33,6 @@ void AddMapCheck() {
                 else if (current_map == "sp_a1_intro4" && pos.DistTo(Vector(-5504, -4064, -256)) < 2.0f) { is_target = true; targetVec = Vector(-5504, -4064, -220); }
                 else if (current_map == "sp_a1_intro5" && pos.DistTo(Vector(-3904, -3456, -384)) < 2.0f) { is_target = true; targetVec = Vector(-3904, -3456, -350); }
                 else if (current_map == "sp_a1_intro6" && pos.DistTo(Vector(-1024, -3456, -384)) < 2.0f) { is_target = true; targetVec = Vector(-1024, -3456, -350); }
-                else if (current_map == "sp_a1_wakeup" && pos.DistTo(Vector(-512, 1088, 192)) < 2.0f) { is_target = true; targetVec = Vector(-512, 1088, 220); }
                 else if (current_map == "sp_a2_intro" && pos.DistTo(Vector(192, 128, -128)) < 2.0f) { is_target = true; targetVec = Vector(192, 128, -90); }
 
                 if (is_target) {
@@ -50,17 +49,45 @@ void AddMapCheck() {
                 CreateAPHologram(t.WorldSpaceCenter(), QAngle(0, 0, 0), 1.0f, null, "", 0, t.GetEntityName() + "map_check_trigger_holo", true);
             }
         }
+
+        // --- 3. PLACEMENTS MANUELS FORCÉS (Infaillible) ---
+        if (current_map == "sp_a1_intro7") {
+            CreateAPHologram(Vector(-2208.0f, 376.0f, 1310.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "intro7_manual_holo", true);
+        }
+        else if (current_map == "sp_a1_wakeup") {
+            CreateAPHologram(Vector(6165.0f, 3456.0f, 904.0f), QAngle(0, -90.0f, 90.0f), 1.0f, null, "", 0, "wakeup_manual_holo", false);
+        }
+        else if (current_map == "sp_a2_turret_intro") {
+            CreateAPHologram(Vector(-352.380f, 392.0f, -206.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "turret_intro_manual_holo", true);
+        }
+        else if (current_map == "sp_a2_bts1") {
+            CreateAPHologram(Vector(1264.0f, -1344.0f, -390.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "bts1_manual_holo", true);
+        }
+        else if (current_map == "sp_a2_bts2") {
+            CreateAPHologram(Vector(2208.0f, 1896.0f, 688.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "bts2_manual_holo", true);
+        }
+        else if (current_map == "sp_a2_bts3") {
+            CreateAPHologram(Vector(5952.0f, 4624.0f, -1736.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "bts3_manual_holo", true);
+        }
+        else if (current_map == "sp_a2_bts4") {
+            CreateAPHologram(Vector(-4080.0f, -7232.0f, 6328.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "bts4_manual_holo", true);
+        }
+        else if (current_map == "sp_a2_bts5") {
+            CreateAPHologram(Vector(584.0f, 512.986f, 4494.260f), QAngle(0, 90.0f, 0), 1.0f, null, "", 0, "bts5_manual_holo", false);
+        }
+
     } 
     
     // --- PARTIE 2 : ASCENSEURS ---
-    if (!isNonElevatorMap || current_map == "sp_a2_core") {
+    if (!isNonElevatorMap || current_map == "sp_a2_core" || current_map == "sp_a1_intro1") {
         CBaseEntity@ tEnt = null;
         while ((@tEnt = EntityList().FindByClassname(tEnt, "func_tracktrain")) !is null) {
             string tName = tEnt.GetEntityName();
-            if (tName.locate("exit_lift_train") != uint(-1) || tName.locate("departure_elavator") != uint(-1) || tName.locate("departure_elevator") != uint(-1) || tName.locate("exit_elevator_train") != uint(-1)) {
+            
+            if (tName.locate("exit_lift_train") != uint(-1) || tName.locate("departure_elevator-elevator") != uint(-1) || tName.locate("exit_elevator_train") != uint(-1)) {
                 
                 bool animate_elevator = true;
-                if (current_map == "sp_a2_core") {
+                if (current_map == "sp_a2_core" || current_map == "sp_a1_intro1") {
                     animate_elevator = true;
                 }
 
@@ -76,7 +103,7 @@ void AddMapCheck() {
             Vector pos = moon.GetAbsOrigin(); 
             
             // --- RÉGLAGES DES OFFSETS ---
-            float offsetX = -85.0f; // Ajustez pour éviter le Z-fighting (clignotement)
+            float offsetX = -85.0f; 
             float offsetY = 25.0f;   
             float offsetZ = 0.0f;   
             
@@ -85,14 +112,12 @@ void AddMapCheck() {
             pos.z += offsetZ;
 
             // --- RÉGLAGE DE LA TAILLE (SCALE) ---
-            float holoScale = 2.0f; // 1.0f est la taille normale, 2.0f est le double, etc.
+            float holoScale = 2.0f; 
 
             // --- ORIENTATION MANUELLE ---
-            // Basé sur vos tests : Pitch 0, Yaw -277, Roll 90
             QAngle fixed_ang(0.0f, -277.0f, 90.0f); 
 
             // Création de l'hologramme
-            // Paramètres : position, angles, scale, parent, attachment, animation_index, name, animate
             CreateAPHologram(pos, fixed_ang, holoScale, null, "", 0, "moon_holo", false);
         }
     }

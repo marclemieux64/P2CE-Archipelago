@@ -1,8 +1,7 @@
 <root>
 	<styles>
 		<include src="file://{resources}/styles/main.scss" />
-		<!-- <include src="file://{resources}/styles/pages/settings/archiepelago.scss" /> -->
-	</styles>
+		</styles>
 	<scripts>
 		<include src="file://{scripts}/pages/settings/page.js" />
 		<include src="file://{scripts}/pages/settings/archipelago.ts" />
@@ -11,13 +10,11 @@
 	<Panel class="settings-page" searchtitle="#Archipelago_Settings_Title">
 		<Panel id="SettingsPageContainer" class="settings-page__container">
 
-			<!-- Group 1: General -->
 			<Panel id="ArchipelagoGeneral" class="settings-group">
 				<Panel class="settings-group__header">
 					<Label class="settings-group__title" text="#Archipelago_Settings_General" />
 				</Panel>
 
-				<!-- Hide Location Counts -->
 				<SettingsEnum
 					id="HideCountsSetting"
 					text="#Archipelago_Settings_HideLocationCounts"
@@ -29,7 +26,6 @@
 					<RadioButton group="ap_hide_location_counts" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().UpdateCompletionSymbolStatus()" />
 				</SettingsEnum>
 
-				<!-- Completion Symbol -->
 				<SettingsEnumDropDown
 					id="CompletionSymbolSetting"
 					text="#Archipelago_Settings_CompletionSymbol"
@@ -51,7 +47,6 @@
 					<Label text="#Archipelago_Settings_Transition_Smart" value="1" id="ap_transition_smart" />
 				</SettingsEnumDropDown>
 
-				<!-- Map Status HUD -->
 				<SettingsEnum
 					id="MapStatusHUDSetting"
 					text="#Archipelago_Settings_MapStatusHUD"
@@ -67,6 +62,24 @@
 					text="#Archipelago_Settings_Key_ShowStatus"
 					bind="ShowStatus"
 				/>
+			</Panel>
+<Panel class="settings-page__spacer" />
+			<Panel id="ArchipelagoCosmetics" class="settings-group">
+				<Panel class="settings-group__header">
+					<Label class="settings-group__title" text="#Archipelago_Settings_Cosmetics" />
+				</Panel>
+
+				<SettingsEnumDropDown
+					id="PortalGunSkinSetting"
+					text="#Archipelago_Settings_PortalGunSkin"
+					infomessage="#Archipelago_Settings_PortalGunSkin_info"
+					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SavePortalGunSkinSetting()"
+					psvar="ap_portalgun_skin"
+				>
+					<Label text="#Archipelago_Skin_Default" value="0" id="ap_skin_0" />
+					<Label text="#Archipelago_Skin_1" value="1" id="ap_skin_1" />
+					<Label text="#Archipelago_Skin_2" value="2" id="ap_skin_2" />
+					</SettingsEnumDropDown>
 			</Panel>
 
 		</Panel>

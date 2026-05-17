@@ -17,9 +17,7 @@ class NotificationManager:
 
     def reset(self):
         """Réinitialise l'historique lors d'une nouvelle connexion."""
-        self.chat_log.clear()
         self.hint_log.clear()
-        self.msg_id_counter = 0
 
     def add_in_game_message(self, message: str, color_string: str = None):
         """Gère les messages envoyés depuis la console du jeu."""

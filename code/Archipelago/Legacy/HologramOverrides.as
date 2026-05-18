@@ -66,7 +66,6 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     // GELS / PAINT
     if (isGel) {
         targetAng = QAngle(90, 0, 0);
-        return;
     }
 
     // H. VITRIFIED BUTTONS

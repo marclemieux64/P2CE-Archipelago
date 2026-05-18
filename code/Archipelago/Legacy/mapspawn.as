@@ -1309,16 +1309,14 @@ void RemoveGel(Vector position, string filter = "", string object_name = "") {
                     bool nameMatch = (object_name == "" || object_name == "null" || name == object_name || name.locate(object_name) != uint(-1));
                     float dist = (searchEnt.GetAbsOrigin() - position).Length();
 
-                    // VScript autorisait la suppression SANS vérifier le nom si l'objet était à < 5 unités.
-                    // On élargit un peu à 15 unités pour compenser les éventuels arrondis Python -> AngelScript.
                     if (nameMatch || dist <= 15.0f) {
                         float score;
                         if (nameMatch && dist <= 15.0f) {
-                            score = dist; // Le candidat parfait (Nom exact + Position exacte)
+                            score = dist; // Le candidat parfait
                         } else if (nameMatch && dist > 15.0f) {
-                            score = 1000.0f + dist; // Bombe de gel qui tombe (Nom ok, mais loin)
+                            score = 1000.0f + dist; // Bombe de gel qui tombe
                         } else {
-                            score = 5000.0f + dist; // Le Fallback VScript ! (Nom cassé, mais bonne classe + bonne position)
+                            score = 5000.0f + dist; // Fallback VScript (Classe ok, position ok)
                         }
 
                         if (score < bestScore) {
@@ -1331,14 +1329,22 @@ void RemoveGel(Vector position, string filter = "", string object_name = "") {
             @searchEnt = EntityList().Next(searchEnt);
         }
 
+        // --- GÉNÉRATION DU NOM UNIQUE CONSTANT ---
+        // On utilise l'argument Python plutôt que le nom de l'entité trouvée.
+        // Ainsi, les passages multiples génèrent toujours le même nom !
+        string safeName = (object_name != "" && object_name != "null") ? object_name : filter;
+        if (safeName == "") safeName = "unknown_gel";
+        string holoName = safeName + "_" + int(position.x) + "_" + int(position.y) + "_" + int(position.z) + "_holo";
+
         // 2. EXÉCUTION ET REMPLACEMENT
         if (ent !is null) {
             string cls = ent.GetClassname();
             string originalName = ent.GetEntityName();
-            if (originalName == "" || originalName == "null") originalName = cls;
 
-            string holoName = originalName + "_" + ent.GetEntityIndex() + "_holo";
-            
+            // FIX POUR LES OVERRIDES : On renomme l'entité temporairement pour que HologramOverrides 
+            // lise le nom formaté avec les coordonnées (ex: paint_sprayer_jump_2_160_528_-168_holo)
+            ent.KeyValue("targetname", holoName); 
+
             Vector hPos(0, 0, 0);
             QAngle hAng(0, 0, 0);
             int hSkin = 4;
@@ -1347,9 +1353,10 @@ void RemoveGel(Vector position, string filter = "", string object_name = "") {
             bool hAbs = false;
             Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
 
-            // CORRECTION CRITIQUE DES COORDONNÉES :
-            // Les prop_paint_bomb bougent. Les point_template sont invisibles.
-            // On refuse d'utiliser leur vraie position, on FORCE les coordonnées écrites dans Python !
+            // FIX CRUCIAL : On RESTAURE le nom original du sprayer avant de créer l'hologramme !
+            // Cela empêche le moteur de confondre le sprayer original avec le véritable hologramme.
+            ent.KeyValue("targetname", originalName);
+
             Vector basePos = ent.GetAbsOrigin();
             if (cls == "prop_paint_bomb" || cls == "point_template" || cls == "paint_sphere") {
                 basePos = position;
@@ -1370,16 +1377,10 @@ void RemoveGel(Vector position, string filter = "", string object_name = "") {
             Legacy::CreateAPHologram(finalPos, finalAng, hScale, null, "", hSkin, holoName);
             ent.Remove();
             
-            // Legacy::ArchipelagoLog("AP: Replaced " + originalName + " with " + holoName);
         } else {
-            // ULTIME SECOURS : Failsafe si l'entité est 100% introuvable (Map modifiée, objet détruit prématurément...)
-            string safeName = (object_name != "" && object_name != "null") ? object_name : filter;
-            
-            // IL MANQUAIT CETTE LIGNE : On crée le nom unique pour le failsafe basé sur les coordonnées X/Y
-            string holoNameFailsafe = safeName + "_" + int(position.x) + "_" + int(position.y) + "_holo";
-            
+            // ULTIME SECOURS
             Legacy::ArchipelagoLog("AP WARNING: Gel entity [" + safeName + "] not found. Forcing Hologram!");
-            Legacy::CreateAPHologram(position, QAngle(90, 0, 0), 1.0f, null, "", 4, holoNameFailsafe);
+            Legacy::CreateAPHologram(position, QAngle(90, 0, 0), 1.0f, null, "", 4, holoName);
         }
     }
 

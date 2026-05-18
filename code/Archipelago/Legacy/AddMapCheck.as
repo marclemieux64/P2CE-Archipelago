@@ -52,31 +52,65 @@ void AddMapCheck() {
 
         // --- 3. PLACEMENTS MANUELS FORCÉS (Infaillible) ---
         if (current_map == "sp_a1_intro7") {
-            CreateAPHologram(Vector(-2208.0f, 376.0f, 1310.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "intro7_manual_holo", true);
+            CreateAPHologram(Vector(-2208.0f, 376.0f, 1310.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a1_intro7_map_check_holo", true);
         }
         else if (current_map == "sp_a1_wakeup") {
-            CreateAPHologram(Vector(6165.0f, 3456.0f, 904.0f), QAngle(0, -90.0f, 90.0f), 1.0f, null, "", 0, "wakeup_manual_holo", false);
+            CreateAPHologram(Vector(6165.0f, 3456.0f, 904.0f), QAngle(0, -90.0f, 90.0f), 1.0f, null, "", 0, "sp_a1_wakeup_map_check_holo", false);
         }
         else if (current_map == "sp_a2_turret_intro") {
-            CreateAPHologram(Vector(-352.380f, 392.0f, -206.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "turret_intro_manual_holo", true);
+            CreateAPHologram(Vector(-352.380f, 392.0f, -206.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a2_turret_intro_map_check_holo", true);
         }
         else if (current_map == "sp_a2_bts1") {
-            CreateAPHologram(Vector(1264.0f, -1344.0f, -390.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "bts1_manual_holo", true);
+            CreateAPHologram(Vector(1264.0f, -1344.0f, -390.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a2_bts1_map_check_holo", true);
         }
         else if (current_map == "sp_a2_bts2") {
-            CreateAPHologram(Vector(2208.0f, 1896.0f, 688.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "bts2_manual_holo", true);
+            CreateAPHologram(Vector(2208.0f, 1896.0f, 688.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a2_bts2_map_check_holo", true);
         }
         else if (current_map == "sp_a2_bts3") {
-            CreateAPHologram(Vector(5952.0f, 4624.0f, -1736.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "bts3_manual_holo", true);
+            CreateAPHologram(Vector(5952.0f, 4624.0f, -1736.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a2_bts3_map_check_holo", true);
         }
         else if (current_map == "sp_a2_bts4") {
-            CreateAPHologram(Vector(-4080.0f, -7232.0f, 6328.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "bts4_manual_holo", true);
+            CreateAPHologram(Vector(-4080.0f, -7232.0f, 6328.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a2_bts4_map_check_holo", true);
         }
         else if (current_map == "sp_a2_bts5") {
-            CreateAPHologram(Vector(584.0f, 512.986f, 4494.260f), QAngle(0, 90.0f, 0), 1.0f, null, "", 0, "bts5_manual_holo", false);
+            CreateAPHologram(Vector(1592.840f, 512.986f, 4492.260f), QAngle(0, 90.0f, 0), 1.0f, null, "", 0, "sp_a2_bts5_map_check_holo", false);
         }
-
-    } 
+        else if (current_map == "sp_a2_bts6") {
+            CreateAPHologram(Vector(-2656.0f, -5120.0f, 5228.0f), QAngle(0, 90.0f, 0), 1.0f, null, "", 0, "sp_a2_bts6_map_check_holo", false);
+        }
+       else if (current_map == "sp_a3_00") {
+            // Find the specific moving tracktrain section
+            CBaseEntity@ shaft = EntityList().FindByName(null, "shaft_section_10");
+            
+            // Strictly require the shaft to exist. No static fallbacks to ruin the illusion!
+            if (shaft !is null) {
+                // Vector and Angle are LOCAL offsets relative to the center of "shaft section 10".
+                Vector localPos(0.0f, 0.0f, 350.0f);
+                QAngle localAng(0.0f, 0.0f, 90.0f);
+                
+                // Spawn and parent it directly to the shaft
+                CreateAPHologram(localPos, localAng, 1.5f, shaft, "", 0, "sp_a3_00_map_check_holo", false);
+            }
+        }
+        else if (current_map == "sp_a3_01") {
+            CreateAPHologram(Vector(6016.0f, 4496.0f, -448.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a3_01_map_check_holo", true);
+        }
+        else if (current_map == "sp_a3_portal_intro") {
+            CreateAPHologram(Vector(3839.990f, 348.800f, 5674.670f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a3_portal_intro_map_check_holo", true);
+        }
+        else if (current_map == "sp_a4_laser_platform") {
+            CreateAPHologram(Vector(3456.0f, -1024.0f, -2480.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a4_laser_platform_map_check_holo", true);
+        }
+        else if (current_map == "sp_a4_finale1") {
+            CreateAPHologram(Vector(-12832.0f, -3040.0f, -112.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a4_finale1_map_check_holo", true);
+        }
+        else if (current_map == "sp_a4_finale2") {
+            CreateAPHologram(Vector(-3152.0f, -1928.0f, -280.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a4_finale2_map_check_holo", true);
+        } 
+        else if (current_map == "sp_a4_finale3") {
+            CreateAPHologram(Vector(-616.0f, 5376.0f, 580.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a4_finale3_map_check_holo", true);
+        }    
+    }
     
     // --- PARTIE 2 : ASCENSEURS ---
     if (!isNonElevatorMap || current_map == "sp_a2_core" || current_map == "sp_a1_intro1") {

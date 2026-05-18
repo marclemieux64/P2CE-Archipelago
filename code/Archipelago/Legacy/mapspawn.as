@@ -1292,59 +1292,69 @@ if (shouldWarp) {
 }
 
 void RemoveGel(Vector position, string filter = "", string object_name = "") {
-        float radius = 64.0f; 
         CBaseEntity@ ent = null;
-        bool found = false;
+        float bestScore = 999999.0f;
 
-        // 1. PRIORITÉ : Recherche par nom (pour les entités logiques sans volume)
-        if (object_name != "" && object_name != "null") {
-            @ent = EntityList().FindByName(null, object_name);
-            if (ent !is null) {
-                if ((ent.GetAbsOrigin() - position).Length() < 128.0f) {
-                    found = true;
+        // 1. RECHERCHE HYBRIDE (VScript Fallback + Falling Bombs)
+        CBaseEntity@ searchEnt = EntityList().First();
+        while (searchEnt !is null) {
+            string name = searchEnt.GetEntityName();
+            string cls = searchEnt.GetClassname();
+
+            // On ignore nos propres hologrammes et le joueur
+            if (name.locate("_holo") == uint(-1) && cls != "player") {
+                bool classMatch = (filter == "" || filter == "null" || cls.locate(filter) != uint(-1));
+                
+                if (classMatch) {
+                    bool nameMatch = (object_name == "" || object_name == "null" || name == object_name || name.locate(object_name) != uint(-1));
+                    float dist = (searchEnt.GetAbsOrigin() - position).Length();
+
+                    // VScript autorisait la suppression SANS vérifier le nom si l'objet était à < 5 unités.
+                    // On élargit un peu à 15 unités pour compenser les éventuels arrondis Python -> AngelScript.
+                    if (nameMatch || dist <= 15.0f) {
+                        float score;
+                        if (nameMatch && dist <= 15.0f) {
+                            score = dist; // Le candidat parfait (Nom exact + Position exacte)
+                        } else if (nameMatch && dist > 15.0f) {
+                            score = 1000.0f + dist; // Bombe de gel qui tombe (Nom ok, mais loin)
+                        } else {
+                            score = 5000.0f + dist; // Le Fallback VScript ! (Nom cassé, mais bonne classe + bonne position)
+                        }
+
+                        if (score < bestScore) {
+                            bestScore = score;
+                            @ent = searchEnt;
+                        }
+                    }
                 }
             }
+            @searchEnt = EntityList().Next(searchEnt);
         }
 
-        // 2. FALLBACK : Recherche par sphère (si le nom n'a pas suffi)
-        if (!found) {
-            @ent = null; 
-            while ((@ent = EntityList().FindInSphere(ent, position, radius)) !is null) {
-                string className = ent.GetClassname();
-                string targetName = ent.GetEntityName();
-
-                bool classMatch = (filter == "" || filter == "null" || className == filter);
-                bool nameMatch = (object_name == "" || object_name == "null" || targetName == object_name);
-
-                if (classMatch && nameMatch) {
-                    found = true;
-                    break; 
-                }
-            }
-        }
-
-        // 3. EXÉCUTION AVEC LE SYSTÈME D'OVERRIDES
-        if (found && ent !is null) {
-            // RÉCUPÉRATION DU NOM DE L'ENTITÉ
+        // 2. EXÉCUTION ET REMPLACEMENT
+        if (ent !is null) {
+            string cls = ent.GetClassname();
             string originalName = ent.GetEntityName();
-            if (originalName == "" || originalName == "null") {
-                originalName = ent.GetClassname();
-            }
+            if (originalName == "" || originalName == "null") originalName = cls;
 
-            string holoName = originalName + "_holo";
-
-            // --- LECTURE DES RÈGLES (isGel s'appliquera ici) ---
+            string holoName = originalName + "_" + ent.GetEntityIndex() + "_holo";
+            
             Vector hPos(0, 0, 0);
             QAngle hAng(0, 0, 0);
             int hSkin = 4;
             float hScale = 1.0f;
             bool hParent = false;
             bool hAbs = false;
-
             Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
 
-            // --- CALCUL DE LA POSITION MONDIALE FINALE ---
-            Vector spawnPos = ent.GetAbsOrigin();
+            // CORRECTION CRITIQUE DES COORDONNÉES :
+            // Les prop_paint_bomb bougent. Les point_template sont invisibles.
+            // On refuse d'utiliser leur vraie position, on FORCE les coordonnées écrites dans Python !
+            Vector basePos = ent.GetAbsOrigin();
+            if (cls == "prop_paint_bomb" || cls == "point_template" || cls == "paint_sphere") {
+                basePos = position;
+            }
+
             QAngle spawnAng = ent.GetAbsAngles();
             Vector finalPos;
             QAngle finalAng;
@@ -1353,19 +1363,23 @@ void RemoveGel(Vector position, string filter = "", string object_name = "") {
                 finalPos = hPos;
                 finalAng = hAng;
             } else {
-                // On calcule le décalage local demandé par GetHologramVisualOverrides
-                finalPos = spawnPos + (Legacy::AnglesToForward(spawnAng) * hPos.x) + (Legacy::AnglesToRight(spawnAng) * -hPos.y) + (Legacy::AnglesToUp(spawnAng) * hPos.z);
+                finalPos = basePos + (Legacy::AnglesToForward(spawnAng) * hPos.x) + (Legacy::AnglesToRight(spawnAng) * -hPos.y) + (Legacy::AnglesToUp(spawnAng) * hPos.z);
                 finalAng = spawnAng + hAng;
             }
 
-            // Création de l'hologramme SANS PARENT (null) car l'entité va être détruite !
             Legacy::CreateAPHologram(finalPos, finalAng, hScale, null, "", hSkin, holoName);
-            
-            // Suppression de l'entité d'origine
             ent.Remove();
             
-            // Note: J'ai utilisé ArchipelagoLog (ou Msg selon ce que vous préférez)
-            ArchipelagoLog("AP: Replaced " + originalName + " with " + holoName + " at " + spawnPos.x + " " + spawnPos.y);
+            // Legacy::ArchipelagoLog("AP: Replaced " + originalName + " with " + holoName);
+        } else {
+            // ULTIME SECOURS : Failsafe si l'entité est 100% introuvable (Map modifiée, objet détruit prématurément...)
+            string safeName = (object_name != "" && object_name != "null") ? object_name : filter;
+            
+            // IL MANQUAIT CETTE LIGNE : On crée le nom unique pour le failsafe basé sur les coordonnées X/Y
+            string holoNameFailsafe = safeName + "_" + int(position.x) + "_" + int(position.y) + "_holo";
+            
+            Legacy::ArchipelagoLog("AP WARNING: Gel entity [" + safeName + "] not found. Forcing Hologram!");
+            Legacy::CreateAPHologram(position, QAngle(90, 0, 0), 1.0f, null, "", 4, holoNameFailsafe);
         }
     }
 

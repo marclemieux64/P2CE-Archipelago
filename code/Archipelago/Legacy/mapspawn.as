@@ -1330,19 +1330,16 @@ void RemoveGel(Vector position, string filter = "", string object_name = "") {
         }
 
         // --- GÉNÉRATION DU NOM UNIQUE CONSTANT ---
-        // On utilise l'argument Python plutôt que le nom de l'entité trouvée.
-        // Ainsi, les passages multiples génèrent toujours le même nom !
         string safeName = (object_name != "" && object_name != "null") ? object_name : filter;
         if (safeName == "") safeName = "unknown_gel";
         string holoName = safeName + "_" + int(position.x) + "_" + int(position.y) + "_" + int(position.z) + "_holo";
 
-        // 2. EXÉCUTION ET REMPLACEMENT
+        // 2. EXÉCUTION STRICTE (Pas de Failsafe)
         if (ent !is null) {
             string cls = ent.GetClassname();
             string originalName = ent.GetEntityName();
 
-            // FIX POUR LES OVERRIDES : On renomme l'entité temporairement pour que HologramOverrides 
-            // lise le nom formaté avec les coordonnées (ex: paint_sprayer_jump_2_160_528_-168_holo)
+            // Renommage temporaire pour lire les overrides par coordonnées
             ent.KeyValue("targetname", holoName); 
 
             Vector hPos(0, 0, 0);
@@ -1353,8 +1350,7 @@ void RemoveGel(Vector position, string filter = "", string object_name = "") {
             bool hAbs = false;
             Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
 
-            // FIX CRUCIAL : On RESTAURE le nom original du sprayer avant de créer l'hologramme !
-            // Cela empêche le moteur de confondre le sprayer original avec le véritable hologramme.
+            // Restauration du nom
             ent.KeyValue("targetname", originalName);
 
             Vector basePos = ent.GetAbsOrigin();
@@ -1376,14 +1372,8 @@ void RemoveGel(Vector position, string filter = "", string object_name = "") {
 
             Legacy::CreateAPHologram(finalPos, finalAng, hScale, null, "", hSkin, holoName);
             ent.Remove();
-            
-        } else {
-            // ULTIME SECOURS
-            Legacy::ArchipelagoLog("AP WARNING: Gel entity [" + safeName + "] not found. Forcing Hologram!");
-            Legacy::CreateAPHologram(position, QAngle(90, 0, 0), 1.0f, null, "", 4, holoName);
         }
     }
-
 
     void CreateClearGel(Vector position, float offset = -100.0f) {
         CBaseEntity@ gel = util::CreateEntityByName("prop_paint_bomb");

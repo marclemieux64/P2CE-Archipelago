@@ -6,28 +6,36 @@ namespace Legacy {
 
 [ServerCommand("ListHolograms", "Lists all active Archipelago holograms in the console")]
 void ListHologramsCmd(const CommandArgs@ args) {
-    ArchipelagoLog("--- ACTIVE ARCHIPELAGO HOLOGRAMS ---");
+    Msgl("--- ACTIVE ARCHIPELAGO HOLOGRAMS ---");
     
     CBaseEntity@ ent = EntityList().First();
     int count = 0;
     
-    // Scan all entities for the hologram model
     while (@ent !is null) {
+        // On vérifie si c'est un hologramme
         if (ent.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
             string name = ent.GetEntityName();
             string cls = ent.GetClassname();
             if (name == "") name = "[UNNAMED]";
             
             Vector pos = ent.GetAbsOrigin();
+            QAngle ang = ent.GetAbsAngles();
             
-            ArchipelagoLog(" -> [" + ent.GetEntityIndex() + "] Name: " + name + " | Class: " + cls + " | Pos: " + pos.x + " " + pos.y + " " + pos.z);
+            // On cast l'entité en CBaseAnimating pour accéder à GetSkin()
+            CBaseAnimating@ animEnt = cast<CBaseAnimating>(ent);
+            int skin = 0;
+            if (animEnt !is null) {
+                skin = animEnt.GetSkin();
+            }
+            
+            Msgl(" -> [" + ent.GetEntityIndex() + "] Name: " + name + " | Class: " + cls + " | Pos: " + pos.x + " " + pos.y + " " + pos.z + " | Ang: " + ang.x + " " + ang.y + " " + ang.z + " | Skin: " + skin);
             count++;
         }
         @ent = EntityList().Next(ent);
     }
     
-    ArchipelagoLog("------------------------------------");
-    ArchipelagoLog("Total Holograms Found: " + count);
+    Msgl("------------------------------------");
+    Msgl("Total Holograms Found: " + count);
 }
 
 [ServerCommand("FindEntity", "Lists all entities matching the search term")]

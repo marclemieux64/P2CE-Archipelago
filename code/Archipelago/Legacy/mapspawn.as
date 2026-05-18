@@ -312,20 +312,41 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
 }
 
 
-    bool portalgun_2_disabled = false;
+// La fonction de base
+bool portalgun_2_disabled = false; 
 
-    void DisablePortalGun(bool blue, bool orange) {
-        if (current_map == "sp_a3_01") {
-            EntFire("weapon_portalgun", "AddOutput", "CanFirePortal2 0", 13.0f);
+void DisablePortalGun(bool blue, bool orange) {
+    CBaseEntity@ gun = EntityList().FindByClassname(null, "weapon_portalgun");
+    
+    // 1. The 13-second delay specific to map sp_a3_01
+    if (current_map == "sp_a3_01") {
+        if (gun !is null) {
+            Variant vDelay;
+            vDelay.SetString("CanFirePortal2 0");
+            gun.FireInput("AddOutput", vDelay, 13.0f, null, null, 0); 
         }
-
-        if (current_map == "sp_a2_intro") {
-            portalgun_2_disabled = true;
-        }
-
-        if (blue) EntFire("weapon_portalgun", "AddOutput", "CanFirePortal1 0");
-        if (orange) EntFire("weapon_portalgun", "AddOutput", "CanFirePortal2 0");
     }
+
+    // 2. The Incinerator sequence tracking
+    if (current_map == "sp_a2_intro") {
+        portalgun_2_disabled = true;
+    }
+
+    // 3. THIS WAS MISSING: The actual logic that disables the gun right now!
+    if (gun !is null) {
+        if (blue) {
+            Variant vB; 
+            vB.SetString("CanFirePortal1 0");
+            gun.FireInput("AddOutput", vB, 0.0f, null, null, 0);
+        }
+        if (orange) {
+            Variant vO; 
+            vO.SetString("CanFirePortal2 0");
+            gun.FireInput("AddOutput", vO, 0.0f, null, null, 0);
+        }
+    }
+}
+
 
 void PreventPickupForModel(string model_keyword) {
     // 1. Recherche dans les objets physiques normaux
@@ -590,12 +611,18 @@ void PreventPickupForModel(string model_keyword) {
     }
 
    void IncineratorDisablePortalGun() {
-        CBaseEntity@ trigger = EntityList().FindByName(null, "player_near_portalgun");
-        if (trigger !is null) {
-            Variant v;
-            // Arguments: blue=0 (off), orange=(portalgun_2_disabled ? 1 : 0), isDelayed=0
+    CBaseEntity@ trigger = EntityList().FindByName(null, "player_near_portalgun");
+    if (trigger !is null) {
+        Variant v;
+        
+        // On récupère "1" ou "0"
         string orangeVal = portalgun_2_disabled ? "1" : "0";
-        v.SetString("OnStartTouch InitCmd:Command:DisablePortalGun 0 " + orangeVal + " 0:0.25:-1");
+        
+        // On demande au trigger d'utiliser VOTRE ServerCommand déjà existante : DisablePortalGun
+        // Syntaxe : Output Target:Input:Parameter:Delay:MaxTimes
+        string outputStr = "OnStartTouch InitCmd:Command:DisablePortalGun 0 " + orangeVal + ":0.25:-1";
+        
+        v.SetString(outputStr);
         trigger.FireInput("AddOutput", v, 0.0f, null, null, 0);
     }
 }

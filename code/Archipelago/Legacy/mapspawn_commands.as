@@ -383,8 +383,22 @@ void ButterFingersTrapCmd(const CommandArgs@ args) {
     // Maintenant cette ligne compilera car Legacy::ButterFingersTrap(float) existe !
     Legacy::ButterFingersTrap(duration);
 }
+[ServerCommand("AP_UpdateGunSkin", "Updates the skin of the portal gun safely")]
+void AP_UpdateGunSkinCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    string skinVal = args.Arg(1);
 
+    // 1. Update the physical gun in the world (if it exists)
+    CBaseEntity@ worldGun = EntityList().FindByClassname(null, "weapon_portalgun");
+    if (worldGun !is null) {
+        worldGun.KeyValue("skin", skinVal);
+    }
 
-
+    // 2. Update the viewmodel (the gun in the player's hands on screen)
+    CBaseEntity@ viewModel = EntityList().FindByClassname(null, "viewmodel");
+    if (viewModel !is null) {
+        viewModel.KeyValue("skin", skinVal);
+    }
+}
 
 } // namespace Legacy

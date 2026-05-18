@@ -75,8 +75,8 @@ function SavePortalGunSkinSetting() {
                 const val = selected.GetAttributeInt('value', 0);
                 $.persistentStorage.setItem('ap_portalgun_skin', val);
                 
-                // UTILISATION DE CONSOLECOMMAND (Plus robuste pour r_skin)
-                GameInterfaceAPI.ConsoleCommand('r_skin ' + val);
+                // INSTEAD OF r_skin, CALL A CUSTOM ANGELSCRIPT COMMAND
+                GameInterfaceAPI.ConsoleCommand('AP_UpdateGunSkin ' + val);
                 $.Msg(`[AP] Portal Gun Skin saved and applied: ${val}`);
             }
         }
@@ -105,7 +105,7 @@ function LoadArchipelagoSettings() {
     if (skinDropdown) skinDropdown.SetSelected('ap_skin_' + skinVal);
     
     // Applique le skin au moteur de jeu immédiatement au chargement
-    GameInterfaceAPI.ConsoleCommand('r_skin ' + skinVal);
+    GameInterfaceAPI.ConsoleCommand('AP_UpdateGunSkin ' + skinVal)
 
     UpdateMapStatusHUDKeyBinder();
 }

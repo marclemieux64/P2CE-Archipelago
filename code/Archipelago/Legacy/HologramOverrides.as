@@ -53,7 +53,9 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         else if (name.locate("3") != uint(-1)) targetSkin = 3; 
         else targetSkin = 4;
         
-        targetPos = ent.GetAbsOrigin() + Vector(0, 0, 0.0f);
+        // CORRECTIF : On n'utilise plus ent.GetAbsOrigin() ! 
+        // On utilise un simple décalage local de zéro.
+        targetPos = Vector(0, 0, 0.0f);
         targetAng = QAngle(0, 0, 0);
         absoluteAngles = true;
         shouldParent = false;
@@ -132,7 +134,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
             targetScale = 0.66f;
         }
     } else if (classname == "prop_tractor_beam") {
-        targetSkin = 0; // <-- AJOUT CRUCIAL pour forcer le bleu sur les rayons tracteurs
+        targetSkin = 4; // <-- AJOUT CRUCIAL pour forcer le bleu sur les rayons tracteurs
         targetPos = Vector(80.0f, 0, 0); 
         targetAng = QAngle(90.0f, 0, 0); 
     }

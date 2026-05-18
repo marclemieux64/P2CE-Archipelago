@@ -193,14 +193,11 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
 
             QAngle angles = ent.GetAbsAngles();
             Vector spawnPos = ent.GetAbsOrigin();
-            Vector finalPos;
+            Vector finalPos = spawnPos + (AnglesToForward(angles) * hPos.x) + (AnglesToRight(angles) * -hPos.y) + (AnglesToUp(angles) * hPos.z);
             QAngle finalAng;
-            
             if (hAbs) {
-                finalPos = hPos;
                 finalAng = hAng;
             } else {
-                finalPos = spawnPos + (AnglesToForward(angles) * hPos.x) + (AnglesToRight(angles) * -hPos.y) + (AnglesToUp(angles) * hPos.z);
                 finalAng = angles + hAng;
             }
 
@@ -386,7 +383,8 @@ void PreventPickupForModel(string model_keyword) {
         }
     }
 
-    void AddFloorButtonFrame(string entity_name) {
+    
+void AddFloorButtonFrame(string entity_name) {
         array<CBaseEntity@> targets = FindEntities(entity_name);
         for (uint i = 0; i < targets.length(); i++) {
             CBaseEntity@ ent = targets[i];
@@ -394,6 +392,7 @@ void PreventPickupForModel(string model_keyword) {
             QAngle angles = ent.GetAbsAngles();
             string originalModel = ent.GetModelName();
 
+            // 1. Spawn le cadre personnalisé
             CBaseEntity@ box = util::CreateEntityByName("prop_dynamic");
             if (box !is null) {
                 box.KeyValue("targetname", entity_name + "_frame");
@@ -403,6 +402,19 @@ void PreventPickupForModel(string model_keyword) {
                 box.SetAbsAngles(angles);
                 box.Spawn();
             }
+
+            // 2. Spawn le Faux Bouton Inerte (Dummy) EN PREMIER
+            CBaseEntity@ dummy = util::CreateEntityByName("prop_dynamic");
+            if (dummy !is null) {
+                // Pas de targetname pour le cacher des scripts
+                dummy.KeyValue("model", originalModel);
+                dummy.KeyValue("solid", "6"); 
+                dummy.SetAbsOrigin(position);
+                dummy.SetAbsAngles(angles);
+                dummy.Spawn();
+            }
+
+            // 3. Spawn l'Hologramme et l'attacher au DUMMY
             string holoName = entity_name + "_" + ent.GetEntityIndex() + "_holo";
             if (EntityList().FindByName(null, holoName) is null) {
                 Vector hPos(0, 0, 0);
@@ -415,31 +427,25 @@ void PreventPickupForModel(string model_keyword) {
                 
                 Vector finalPos;
                 QAngle finalAng;
-                CBaseEntity@ finalParent = hParent ? ent : null;
-                if (hParent) { finalPos = hPos; finalAng = hAng; } else { 
-                    finalPos = position + (AnglesToUp(angles) * hPos.z); // Simple vertical fallback
+                
+                // CRUCIAL : Si on parente, on l'attache au Dummy qui va survivre !
+                CBaseEntity@ finalParent = hParent ? dummy : null;
+                
+                if (hParent) { 
+                    finalPos = hPos; 
+                    finalAng = hAng; 
+                } else { 
+                    // Mathématiques parfaites réparées
+                    finalPos = position + (AnglesToForward(angles) * hPos.x) + (AnglesToRight(angles) * -hPos.y) + (AnglesToUp(angles) * hPos.z);
                     finalAng = hAbs ? hAng : (angles + hAng);
                 }
 
                 CreateAPHologram(finalPos, finalAng, hScale, finalParent, "", hSkin, holoName);
             }
-      // 3. Spawn the Inert "Dummy" Replacement
-        CBaseEntity@ dummy = util::CreateEntityByName("prop_dynamic");
-        if (dummy !is null) {
-            // We intentionally leave the targetname blank so scripts can't find it
-            dummy.KeyValue("model", originalModel);
-            dummy.KeyValue("solid", "6"); // Keep VPhysics collisions
-            dummy.SetAbsOrigin(position);
-            dummy.SetAbsAngles(angles);
-            dummy.Spawn();
-        }
 
-        // 4. Murder the real, functioning tractor beam
-        ent.Remove();
-    }
-    
-    // We completely removed DeleteEntity(entity_name, false) from here!
-    // The original tractor beams are already dead and replaced by dummies.
+            // 4. Détruire le vrai bouton fonctionnel (L'hologramme survit car il est sur le Dummy)
+            ent.Remove();
+        }
     }
 
     void AddButtonFrame(string entity_name) {
@@ -450,6 +456,7 @@ void PreventPickupForModel(string model_keyword) {
             QAngle angles = ent.GetAbsAngles();
             string originalModel = ent.GetModelName();
         
+            // 1. Spawn le cadre
             CBaseEntity@ box = util::CreateEntityByName("prop_dynamic");
             if (box !is null) {
                 box.KeyValue("targetname", entity_name + "_frame");
@@ -459,7 +466,18 @@ void PreventPickupForModel(string model_keyword) {
                 box.SetAbsAngles(angles);
                 box.Spawn();
             }
+
+            // 2. Spawn le Faux Bouton Inerte (Dummy) EN PREMIER
+            CBaseEntity@ dummy = util::CreateEntityByName("prop_dynamic");
+            if (dummy !is null) {
+                dummy.KeyValue("model", originalModel);
+                dummy.KeyValue("solid", "6"); 
+                dummy.SetAbsOrigin(position);
+                dummy.SetAbsAngles(angles);
+                dummy.Spawn();
+            }
         
+            // 3. Spawn l'Hologramme et l'attacher au DUMMY
             string holoName = entity_name + "_" + ent.GetEntityIndex() + "_holo";
             if (EntityList().FindByName(null, holoName) is null) {
                 Vector hPos(0, 0, 0);
@@ -472,33 +490,27 @@ void PreventPickupForModel(string model_keyword) {
 
                 Vector finalPos;
                 QAngle finalAng;
-                CBaseEntity@ finalParent = hParent ? ent : null;
-                if (hParent) { finalPos = hPos; finalAng = hAng; } else { 
-                    finalPos = position + (AnglesToForward(angles) * hPos.x) + (AnglesToUp(angles) * hPos.z);
+                
+                // CRUCIAL : Si on parente, on l'attache au Dummy !
+                CBaseEntity@ finalParent = hParent ? dummy : null;
+
+                if (hParent) { 
+                    finalPos = hPos; 
+                    finalAng = hAng; 
+                } else { 
+                    // Mathématiques parfaites réparées
+                    finalPos = position + (AnglesToForward(angles) * hPos.x) + (AnglesToRight(angles) * -hPos.y) + (AnglesToUp(angles) * hPos.z);
                     finalAng = hAbs ? hAng : (angles + hAng);
                 }
 
                 CreateAPHologram(finalPos, finalAng, hScale, finalParent, "", hSkin, holoName);
             }
 
-           // 3. Spawn the Inert "Dummy" Replacement
-        CBaseEntity@ dummy = util::CreateEntityByName("prop_dynamic");
-        if (dummy !is null) {
-            // We intentionally leave the targetname blank so scripts can't find it
-            dummy.KeyValue("model", originalModel);
-            dummy.KeyValue("solid", "6"); // Keep VPhysics collisions
-            dummy.SetAbsOrigin(position);
-            dummy.SetAbsAngles(angles);
-            dummy.Spawn();
+            // 4. Détruire le vrai bouton fonctionnel
+            ent.Remove();
         }
-
-        // 4. Murder the real, functioning tractor beam
-        ent.Remove();
     }
-    
-    // We completely removed DeleteEntity(entity_name, false) from here!
-    // The original tractor beams are already dead and replaced by dummies.
-}
+
     void AddTractorBeamFrame(string entity_name) {
     array<CBaseEntity@> targets = FindEntities(entity_name);
     for (uint i = 0; i < targets.length(); i++) {

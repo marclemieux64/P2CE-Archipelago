@@ -131,13 +131,14 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
     array<CBaseEntity@> entsToDelete;
     CBaseEntity@ searchEnt = null;
 
+    // A. Recherche par Modèle 3D (.mdl)
     if (entity_name.locate(".mdl") != uint(-1)) {
         while ((@searchEnt = EntityList().FindByModel(searchEnt, entity_name)) !is null) {
             entsToDelete.insertLast(searchEnt);
         }
     } 
     else {
-        // On cherche par le nom original (@core01) ET le nom propre (core01)
+        // B. Recherche par Nom (Original et Nettoyé)
         array<string> searchNames = { entity_name, cleanName };
         for (uint s = 0; s < searchNames.length(); s++) {
             @searchEnt = null;
@@ -150,11 +151,30 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
             }
         }
 
-        // Si on n'a toujours rien, on cherche par Classname
+        // C. Recherche par Classname générique fourni
         if (entsToDelete.length() == 0) {
             @searchEnt = null;
             while ((@searchEnt = EntityList().FindByClassname(searchEnt, entity_name)) !is null) {
                 entsToDelete.insertLast(searchEnt);
+            }
+        }
+    }
+
+    // D. FILET DE SÉCURITÉ POUR LES CUBES ANONYMES
+    if (entsToDelete.length() == 0 && (entity_name.locate("cube") != uint(-1) || entity_name.locate("box") != uint(-1) || entity_name.locate(".mdl") != uint(-1))) {
+        @searchEnt = null;
+        while ((@searchEnt = EntityList().FindByClassname(searchEnt, "prop_weighted_cube")) !is null) {
+            bool alreadyIn = false;
+            for (uint j = 0; j < entsToDelete.length(); j++) {
+                if (entsToDelete[j] is searchEnt) { alreadyIn = true; break; }
+            }
+            if (!alreadyIn) {
+                string currentModel = searchEnt.GetModelName().tolower();
+                if (entity_name.locate("metal_box") != uint(-1) && currentModel.locate("metal_box") != uint(-1)) entsToDelete.insertLast(searchEnt);
+                else if (entity_name.locate("reflection_cube") != uint(-1) && currentModel.locate("reflection_cube") != uint(-1)) entsToDelete.insertLast(searchEnt);
+                else if (entity_name.locate("mp_ball") != uint(-1) && currentModel.locate("mp_ball") != uint(-1)) entsToDelete.insertLast(searchEnt);
+                else if (entity_name.locate("underground_weighted_cube") != uint(-1) && currentModel.locate("underground_weighted_cube") != uint(-1)) entsToDelete.insertLast(searchEnt);
+                else if (entity_name.locate(".mdl") != uint(-1)) entsToDelete.insertLast(searchEnt);
             }
         }
     }
@@ -175,25 +195,51 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
 
         if (create_holo) {
             string originalName = ent.GetEntityName();
-            string holoName = (originalName != "") ? originalName + "_holo" : entity_name + "_holo";
+            string holoName;
+            
+            Vector spawnPos = ent.GetAbsOrigin();
 
-            // --- CORRECTION ICI ---
+            if (originalName != "") {
+                holoName = originalName + "_" + int(spawnPos.x) + "_" + int(spawnPos.y) + "_" + int(spawnPos.z) + "_holo";
+            } else {
+                string shortModelName = ent.GetModelName();
+                int lastSlash = -1;
+                
+                int len = shortModelName.length();
+                for (int c = len - 1; c >= 0; c--) {
+                    if (shortModelName[c] == 47) { 
+                        lastSlash = c;
+                        break;
+                    }
+                }
+                
+                // CORRECTIF STABILITÉ MÉMOIRE : On évite le substr() optionnel qui faisait crash l'allocateur
+                if (lastSlash != -1) {
+                    shortModelName = shortModelName.substr(lastSlash + 1);
+                }
+
+                // On assemble le nom de manière totalement sécurisée pour mimalloc
+                holoName = "ap_" + shortModelName + "_" + int(spawnPos.x) + "_" + int(spawnPos.y) + "_" + int(spawnPos.z) + "_holo";
+            }
+
             Vector hPos(0, 0, 0);
             QAngle hAng(0, 0, 0);
             int hSkin = 4;
-            float hScale = 1.0f; // ON FORCE 1.0 PAR DÉFAUT
+            float hScale = 1.0f; 
             bool hParent = false;
             bool hAbs = false;
 
-            // On appelle tes règles (qui peuvent ou non changer le hScale)
+            // On appelle tes règles d'override
             Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
 
-            // Sécurité supplémentaire : si après l'override le scale est toujours suspect
             if (hScale <= 0.001f) hScale = 1.0f; 
 
             QAngle angles = ent.GetAbsAngles();
-            Vector spawnPos = ent.GetAbsOrigin();
-            Vector finalPos = spawnPos + (AnglesToForward(angles) * hPos.x) + (AnglesToRight(angles) * -hPos.y) + (AnglesToUp(angles) * hPos.z);
+            
+            Vector forward, right, up;
+            AngleVectors(angles, forward, right, up);
+            
+            Vector finalPos = spawnPos + (forward * hPos.x) + (right * hPos.y) + (up * hPos.z);
             QAngle finalAng;
             if (hAbs) {
                 finalAng = hAng;

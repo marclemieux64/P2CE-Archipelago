@@ -164,14 +164,26 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         }
 
         if (::current_map == "sp_a3_end") {
-            
-            // Attrape les 6 hologrammes paint_trickle (Bleu, Orange et Blanc) d'un coup
             if (name.locate("paint_trickle") != uint(-1)) {
+                targetPos = Vector(35, 0, 0);
+                targetAng = QAngle(90, 0, 0);
+                absoluteAngles = false;
+            }
+            // Les Ducts
+            else if (name.locate("paint_duct_1") != uint(-1) || name.locate("paint_duct_2") != uint(-1)) {
+                targetPos = ent.GetAbsOrigin();
+                targetAng = QAngle(90, -90, 0); 
+                absoluteAngles = true; 
+            }
             
+            // Les Ducts 3 et 4 : On force des valeurs absolues directes et stables sans "nativeAng"
+            else if (name.locate("paint_duct_3") != uint(-1) || name.locate("paint_duct_4") != uint(-1)) {
+                targetPos = ent.GetAbsOrigin();
+                targetAng = QAngle(180, 0, 0); 
+                
+                absoluteAngles = true; 
             }
         }
-        
-        // 3. On quitte la fonction proprement
         return;
     }
 

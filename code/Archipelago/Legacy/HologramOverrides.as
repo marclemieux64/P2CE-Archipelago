@@ -35,8 +35,12 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     bool isTurret = (classname == "npc_portal_turret_floor" || model.locate("turret.mdl") != uint(-1));
     
     // LE CORRECTIF EST ICI : On ajoute des exclusions strictes pour éviter les faux positifs !
-    bool isGel = (classname == "info_paint_sprayer" || classname == "prop_paint_bomb" || classname == "paint_sphere" || (name.locate("paint") != uint(-1) && !isButton && !isCube && !isLaser && !isFaithPlate));
-
+    bool isGel = (classname == "info_paint_sprayer" || 
+                  classname == "prop_paint_bomb" || 
+                  classname == "paint_sphere" || 
+                  name.locate("trigger_to_drop") != uint(-1) ||
+                  name.locate("template_artillery") != uint(-1) ||
+                  (name.locate("paint") != uint(-1) && !isButton && !isCube && !isLaser && !isFaithPlate));
     // WHEATLEY SCREENS
     if (isWheatleyScreen) {
         targetPos = Vector(30.0f, 0.0f, 100.0f);
@@ -164,24 +168,107 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         }
 
         if (::current_map == "sp_a3_end") {
+            
+            // Les Trickles
             if (name.locate("paint_trickle") != uint(-1)) {
-                targetPos = Vector(35, 0, 0);
-                targetAng = QAngle(90, 0, 0);
-                absoluteAngles = false;
+                
+                // Exception stricte pour le trickle bleu 1
+                if (name.locate("paint_trickle_blue_1") != uint(-1)) {
+                    targetPos = Vector(35, 0, -10); 
+                    targetAng = QAngle(90, 0, 0);
+                    absoluteAngles = false; 
+                } 
+                // FIX : else if lie correctement la deuxième exception
+                else if (name.locate("paint_trickle_white_2") != uint(-1)) {
+                    targetPos = Vector(50, 0, 0); 
+                    targetAng = QAngle(90, 0, 0);
+                    absoluteAngles = false; 
+                }
+                // S'applique uniquement si ce n'est ni le bleu 1, ni le blanc 2
+                else {
+                    targetPos = Vector(35, 0, 0);
+                    targetAng = QAngle(90, 0, 0);
+                    absoluteAngles = false; 
+                }
             }
             // Les Ducts
-            else if (name.locate("paint_duct_1") != uint(-1) || name.locate("paint_duct_2") != uint(-1)) {
+            else if (name.locate("paint_duct") != uint(-1)) {
                 targetPos = ent.GetAbsOrigin();
                 targetAng = QAngle(90, -90, 0); 
                 absoluteAngles = true; 
             }
+        }
+        if (::current_map == "sp_a4_speed_tb_catch") {
+            if (name == "AutoInstance1-paint_sprayer_256_1376_552_holo") {
+                targetPos = Vector(135, 0, 0);
+                targetAng = QAngle(90, 0, 0); 
+            }
+        }
+         if (::current_map == "sp_a4_jump_polarity") {
+            if (name.locate("paint_meSilly_1902_65_188_holo") != uint(-1) || 
+                name.locate("paint_meSilly_1742_-62_140_holo") != uint(-1)) {
+                targetPos = Vector(0, 0, 0);
+                targetAng = QAngle(0, 0, 0); 
+                absoluteAngles = false;
+            }
+            else if (name.locate("paint_sprayer_-576_-64_640_holo") != uint(-1)) {
+                targetPos = Vector(320, 0, 0);
+                targetAng = QAngle(90, 0, 0); 
+                absoluteAngles = false; 
+            }
+        }
+         if (::current_map == "sp_a4_finale1") {
             
-            // Les Ducts 3 et 4 : On force des valeurs absolues directes et stables sans "nativeAng"
-            else if (name.locate("paint_duct_3") != uint(-1) || name.locate("paint_duct_4") != uint(-1)) {
-                targetPos = ent.GetAbsOrigin();
-                targetAng = QAngle(180, 0, 0); 
-                
-                absoluteAngles = true; 
+            // Le groupe des 9 sprayers de portails (636 à 644)
+            if (name.locate("paint_sprayer_portal_") != uint(-1)) {
+                targetPos = Vector(0, 0, 0);
+                targetAng = QAngle(-90, 0, 0); 
+            }
+            // Le platform_sprayer isolé (635)
+            else if (name.locate("platform_sprayer") != uint(-1)) {
+                targetPos = Vector(0, 0, 0);
+                targetAng = QAngle(0, 0, 0); 
+            }
+            
+        }
+        if (::current_map == "sp_a4_finale2") {
+            string lowerName = name.tolower();
+            
+            if (lowerName.locate("paint_sprayer_jump_-1710_") != uint(-1)) {
+                targetPos = Vector(0, 0, 0);
+                targetAng = QAngle(-90, 0, 0); 
+                absoluteAngles = false;
+            }
+            // Maintenant que isGel les intercepte, trigger_to_drop va se faire proprement éjecter ici
+            else if (lowerName.locate("trigger_to_drop") != uint(-1) || lowerName.locate("template_artillery") != uint(-1)) {
+                targetScale = 0.0f;                 
+                targetPos = Vector(0, 0, -5000.0f); 
+                shouldParent = false;               
+                absoluteAngles = true;              
+            }
+            else if (lowerName.locate("bomb_") != uint(-1)) { 
+                targetPos = Vector(0, 0, 215.0f);    
+            }
+        }
+        if (::current_map == "sp_a4_finale3") {
+            
+            // 1. Le practice_paint_sprayer (410) : On applique ton offset
+            if (name.locate("practice_paint_sprayer_") != uint(-1)) {
+                targetPos = Vector(100, 100, 0);
+                targetAng = QAngle(90, 0, 90); 
+            }
+            // 2. Le paint_sprayer_break unique qu'on veut GARDER (412)
+            else if (name.locate("paint_sprayer_2_-960_113_-70_holo") != uint(-1)) {
+                // Définis ici l'offset spécifique si tu veux ajuster l'hologramme 412 :
+                targetPos = Vector(135, 0, 145);
+                targetAng = QAngle(0, 0, 0); // Reprend la règle générale par défaut
+            }
+            // 3. Tout le reste (413, 422, 424, etc.) : On masque et on éjecte de la map
+            else {
+                targetScale = 0.0f;
+                targetPos = Vector(0, 0, -5000.0f);
+                shouldParent = false;
+
             }
         }
         return;

@@ -804,14 +804,14 @@ void RemovePotatOS() {
         @h = EntityList().FindByName(null, name);
     }
 
-    // --- BLOC DE MISE À JOUR CORRECTIF ---
+    // BLOC DE MISE À JOUR CORRECTIF POUR LE RELOAD
     if (h !is null) {
         if (h.GetModelName().locate("archipelago_hologram") != uint(-1)) {
             if (Legacy::cv_ArchipelagoDebug.GetBool()) {
                 Legacy::ArchipelagoLog("[AP DEBUG] Updating Hologram '" + name + "' to " + angles.x + " " + angles.y + " " + angles.z + " | Skin: " + skin);
             }
             
-            // 1. Gestion propre du reparentage / déparentage pour éviter les conflits de matrice
+            // 1. Re-parentage et gestion d'origine stricte à chaque snapshot pour contrer le reload
             if (parent !is null) {
                 h.SetParent(parent);
                 h.SetLocalOrigin(position);
@@ -823,7 +823,6 @@ void RemovePotatOS() {
                     h.FireInput("SetParentAttachment", v, 0.01f, null, null, 0);
                 }
             } else {
-                // Si l'objet avait un parent, on brise le lien pour appliquer le Vector absolu en toute sécurité
                 if (h.GetMoveParent() !is null) {
                     h.SetParent(null); 
                 }
@@ -831,12 +830,12 @@ void RemovePotatOS() {
                 h.SetAbsAngles(angles);
             }
             
-            // 2. FIX CRUCIAL DU SKIN : Utilisation de l'API CBaseAnimating au lieu de KeyValue
+            // 2. Refresh instantané du matériau via CBaseAnimating
             CBaseAnimating@ animH = cast<CBaseAnimating>(h);
             if (animH !is null) {
                 animH.SetSkin(skin);
             } else {
-                h.KeyValue("skin", "" + skin); // Fallback au cas où
+                h.KeyValue("skin", "" + skin); 
             }
             
             h.KeyValue("modelscale", "" + scale);
@@ -844,7 +843,7 @@ void RemovePotatOS() {
         }
     }
 
-    // --- BLOC DE CRÉATION INITIALE (INCHANGÉ MAIS SÛR) ---
+    // BLOC DE CRÉATION INITIALE 
     @h = util::CreateEntityByName("prop_dynamic");
     if (h !is null) {
         h.KeyValue("model", "models/effects/ap/archipelago_hologram.mdl");
@@ -880,7 +879,6 @@ void RemovePotatOS() {
     }
     return h;
 }
-
     void AttachHologramToEntity(string entity_name, string attachment_point, float holo_scale, float offset, int skin = 0) {
     array<CBaseEntity@> targets = FindEntities(entity_name);
     

@@ -181,7 +181,6 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
             else if (name.locate("_-1712_holo") != uint(-1)) {
                 targetPos = Vector(0, 0, 20);
                 targetAng = QAngle(0, 270, 0); 
-                
             }
             // 5a. Premier paint sprayer isolé (Ang d'origine: 270 0 0)
             else if (name == "paint_sprayer_1_32_99_144_holo") {
@@ -195,7 +194,8 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
 
             // 5b. Deuxième paint sprayer isolé (Ang d'origine: 225 180 0)
             else if (name == "paint_sprayer_2_287_192_292_holo") {
-                targetPos = ent.GetAbsOrigin(); 
+                // Modifie le Vector ajouté ici pour déplacer l'hologramme dans la map (X, Y, Z)
+                targetPos = ent.GetAbsOrigin() + Vector(-80.0f, 0.0f, -80.0f); 
                 QAngle nativeAng = ent.GetAbsAngles(); 
                 
                 // Modifiez les offsets ici indépendamment du premier (Pitch, Yaw, Roll)

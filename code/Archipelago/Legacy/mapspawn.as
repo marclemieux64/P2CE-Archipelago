@@ -520,6 +520,10 @@ void AddFloorButtonFrame(string entity_name) {
         Vector position = ent.GetAbsOrigin();
         QAngle angles = ent.GetAbsAngles();
         string originalModel = ent.GetModelName(); 
+        
+        // Calcul des vecteurs directionnels basés sur l'angle natif du prop_wall_projector
+        Vector forward, right, up;
+        AngleVectors(angles, forward, right, up);
     
         // 1. Spawn the custom Archipelago frame
         CBaseEntity@ box = util::CreateEntityByName("prop_dynamic");
@@ -527,7 +531,10 @@ void AddFloorButtonFrame(string entity_name) {
             box.KeyValue("targetname", entity_name + "_frame");
             box.KeyValue("model", "models/props/archipelago/ap_proptractorbeamframe.mdl");
             box.KeyValue("solid", "6");
-            box.SetAbsOrigin(position);
+            
+            // FIX ANTI-CLIPPING : On décale la position du cadre de 3 unités vers l'avant (hors du mur)
+            Vector frameOffsetPos = position + (forward * 3.0f);
+            box.SetAbsOrigin(frameOffsetPos);
             
             QAngle angleOffset(90.0f, 0.0f, 0.0f);
             QAngle finalFrameAngles = angles + angleOffset;
@@ -548,9 +555,6 @@ void AddFloorButtonFrame(string entity_name) {
             
             // We still get overrides, but we ignore what it says about hParent
             Legacy::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
-
-            Vector forward, right, up;
-            AngleVectors(angles, forward, right, up);
             
             Vector finalPos = position + (forward * hPos.x) + (right * hPos.y) + (up * hPos.z);
             QAngle finalAng = hAbs ? hAng : (angles + hAng);
@@ -572,9 +576,6 @@ void AddFloorButtonFrame(string entity_name) {
         // 4. Murder the real, functioning tractor beam
         ent.Remove();
     }
-    
-    // We completely removed DeleteEntity(entity_name, false) from here!
-    // The original tractor beams are already dead and replaced by dummies.
 }
 
     void DeleteCoreOnOutput(string core_name, string target_name, string output) {

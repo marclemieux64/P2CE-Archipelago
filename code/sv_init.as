@@ -35,9 +35,6 @@ bool InitializeArchipelago() {
         cmd.PrecacheModel("models/props/archipelago/ap_floorbuttonframe.mdl");
         cmd.PrecacheModel("models/props/archipelago/ap_proptractorbeamframe.mdl");
         cmd.PrecacheModel("models/effects/ap/archipelago_hologram.mdl");
-        cmd.PrecacheModel("models/props/switch001.mdl");
-        cmd.PrecacheModel("models/props/metal_box.mdl");
-        cmd.PrecacheModel("models/props_underground/underground_weighted_cube.mdl");
         
         // --- INITIALIZE LEGACY SYSTEMS ---
         // Delayed to prevent null pointer exceptions during early bootstrap

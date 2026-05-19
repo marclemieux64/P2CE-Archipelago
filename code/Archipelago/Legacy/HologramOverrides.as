@@ -40,7 +40,8 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
                   classname == "paint_sphere" || 
                   name.locate("trigger_to_drop") != uint(-1) ||
                   name.locate("template_artillery") != uint(-1) ||
-                  (name.locate("paint") != uint(-1) && !isButton && !isCube && !isLaser && !isFaithPlate));
+                  (name.locate("paint") != uint(-1) && name.locate("panel") == uint(-1) && !isButton && !isCube && !isLaser && !isFaithPlate));
+                  
     // WHEATLEY SCREENS
     if (isWheatleyScreen) {
         targetPos = Vector(30.0f, 0.0f, 100.0f);
@@ -308,6 +309,114 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
 
             }
         }
+        if (::current_map == "sp_a4_finale4") {
+            
+            // BLOC A : ISOLATION ET MASQUAGE DES PANNEAUX (BLOQUANT)
+            // On utilise un if autonome. Si c'est un panneau, on le liquide et on stoppe DIRECTEMENT ici pour cet objet.
+            if (name.locate("_160_") != uint(-1)) {
+                
+                targetScale = 0.0f;                 
+                targetPos = Vector(0, 0, -500.0f); 
+                shouldParent = false;               
+                absoluteAngles = true;              
+            } 
+            // BLOC B : LES OVERRIDES DES OBJETS VISIBLES
+            // Si le script arrive ici, c'est la garantie absolue que l'objet n'est PAS un panneau !
+
+            // 1. Le sprayer de gel bleu isolé
+            if (name.locate("paint_blue_sprayer_-544_-16_320_holo") != uint(-1)) {
+                targetPos = Vector(0, 0, 0);
+                targetAng = QAngle(0, -90, 0); 
+                absoluteAngles = false;
+            }
+            
+            // 2. Le tuyau générateur de bombes de gel
+            else if (name.locate("pipe_bounce_paint_bomb_template1_") != uint(-1)) {
+                targetPos = Vector(90, 0, 0);
+                targetAng = QAngle(90, 0, 0); 
+                absoluteAngles = false;
+            }
+
+            else if (name.locate("toxin_paint_sprayer_882_256_192_holo") != uint(-1)) {
+                targetPos = Vector(105, 135, 0);
+                targetAng = QAngle(0, -90, 0); 
+                absoluteAngles = false;
+            }
+            else if (name.locate("_728_-368_60_") != uint(-1)) {
+                targetPos = Vector(0, 0, 0);
+                targetAng = QAngle(0, 0, -90); 
+                absoluteAngles = false;
+            }
+
+            else if (name.locate("_752_-368_184_") != uint(-1)) {
+                targetPos = Vector(0, 0, 0);
+                targetAng = QAngle(0, 90, 0); 
+                absoluteAngles = false;
+            }
+
+            else if (name.locate("_329_-315_443_") != uint(-1) || 
+                     name.locate("_0_-403_443_") != uint(-1) || 
+                     name.locate("_0_-325_578_") != uint(-1) || 
+                     name.locate("_-290_-247_578_") != uint(-1) || 
+                     name.locate("_-346_775_578_") != uint(-1) || 
+                     name.locate("_329_827_443_") != uint(-1) || 
+                     name.locate("_503_546_578_") != uint(-1)) {
+                
+                targetPos = Vector(0, 0, 0);
+                targetAng = QAngle(0, 0, -90); 
+                absoluteAngles = false;
+            }
+            
+            else if (name.locate("_240_0_64_") != uint(-1) || name.locate("_448_64_64_") != uint(-1)) {
+                targetPos = Vector(0, 0, -55);
+                targetAng = QAngle(0, 0, 0); 
+                absoluteAngles = false;
+            }
+
+            else if (name.locate("_544_-360_32_") != uint(-1) ) {
+                targetPos = Vector(0, 0, -10);
+                targetAng = QAngle(0, 0, 0); 
+                absoluteAngles = false;
+            }
+
+            else if (name.locate("_240_144_24_") != uint(-1) ) {
+                targetPos = Vector(0, 0, -10);
+                targetAng = QAngle(0, 0, 0); 
+                absoluteAngles = false;
+            }
+
+            else if (name.locate("_0_256_8_") != uint(-1) ) {
+                targetPos = Vector(0, 0, -10);
+                targetAng = QAngle(0, 0, 0); 
+                absoluteAngles = false;
+            }
+
+            // 3. Les sphères blanches spécifiques
+            else if (name.locate("paint_white_event_sphere1_") != uint(-1) ||
+                     name.locate("paint_white_event_sphere2_") != uint(-1) ||
+                     name.locate("paint_white_event_sphere4_") != uint(-1) ||
+                     name.locate("paint_white_event_sphere5_") != uint(-1) ||
+                     name.locate("paint_white_event_sphere7_") != uint(-1) ||
+                     name.locate("paint_white_event_sphere8_") != uint(-1) ||
+                     name.locate("paint_white_event_sphere10_") != uint(-1)) {
+                
+                targetPos = Vector(0, 0, 0);
+                targetAng = QAngle(0, 0, 0); 
+                absoluteAngles = false;
+            }
+            
+            // 4. Les sphères bleues spécifiques
+            else if (name.locate("paint_blue_event_sphere1_") != uint(-1) ||
+                     name.locate("paint_blue_event_sphere2_") != uint(-1) ||
+                     name.locate("paint_blue_event_sphere3_") != uint(-1) ||
+                     name.locate("paint_blue_event_sphere4_") != uint(-1)) {
+                
+                targetPos = Vector(0, 0, -20);
+                targetAng = QAngle(0, 0, 0); 
+                absoluteAngles = false;
+            }
+        }
+            
         return;
     }
 

@@ -72,12 +72,40 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     // GELS / PAINT
     if (isGel) {
         // 1. Règle générale (Appliquée en premier à tous les gels)
+        absoluteAngles = false; 
+        shouldParent = false;
         targetAng = QAngle(180, 0, 0);
         
         // 2. Exception globale pour la map sp_a3_jump_intro
         if (::current_map == "sp_a3_jump_intro") {
             // Écrase la règle générale : TOUS les gels de cette map seront à -90
             targetAng = QAngle(-90, 0, 0); 
+        }
+
+        if (::current_map == "sp_a3_bomb_flings") {
+            if (name == "paint_bomb_maker_-224_-64_656_holo") {
+                targetPos = Vector(0, 0, -85);
+            }
+        }
+
+        if (::current_map == "sp_a3_crazy_box") {
+            
+            // 1. Le générateur de bombes de gel (489)
+            if (name.locate("paint_bomb_template_2240_-896_656_holo") != uint(-1)) {
+                targetPos = Vector(0, 0, -350.0f);
+            }
+            // 2. Le goutte-à-goutte / drip (490)
+            else if (name.locate("paint_drip1_1716_-1772_714_holo") != uint(-1)) {
+                // Modifie ces valeurs si tu as besoin de l'ajuster
+                targetPos = Vector(25, 0, 0);
+                targetAng = QAngle(90, 0, 0); 
+            }
+            // 3. Le sprayer de saut / bounce (491)
+            else if (name.locate("paint_sprayer_bounce_1280_-1408_1776_holo") != uint(-1)) {
+                // Modifie ces valeurs si tu as besoin de l'ajuster
+                targetPos = Vector(60, 0, 0);
+                targetAng = QAngle(90, 0, 0); 
+            }
         }
         
         if (::current_map == "sp_a3_speed_ramp") {
@@ -86,31 +114,40 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
                 // Pour "annuler" ce doublon, on le réduit à 0 et on le cache sous la map
                 targetScale = 0.0f;
                 targetPos = Vector(0, 0, -5000.0f);
-            } 
-            else if (name == "paint_sprayer_576_0_696_holo" || 
-                     name == "paint_sprayer_2_-1600_-896_960_holo" || 
-                     name == "paint_sprayer_3_-1600_-384_960_holo") {
-                
+            }
+            else if (name == "paint_sprayer_576_0_696_holo") {
+                targetPos = Vector(120, 0, 0);
                 targetAng = QAngle(90, 0, 0); 
+            }
+            else if (name == "paint_sprayer_2_-1600_-896_960_holo" || 
+                     name == "paint_sprayer_3_-1600_-384_960_holo") {
+                        targetPos = Vector(65, 0, 0);
+                        targetAng = QAngle(90, 0, 0); 
             }
         }
 
         if (::current_map == "sp_a3_speed_flings") {
-            if (name == "paint_sprayer_speed_2560_-128_-152_holo" || 
-                name == "paint_sprayer_bounce_2816_-128_320_holo") {
-                
+            if (name == "paint_sprayer_bounce_2816_-128_320_holo") {
+                targetPos = Vector(260, 0, 0);
                 targetAng = QAngle(90, 0, 0); 
             }
+            else if (name == "paint_sprayer_speed_2560_-128_-152_holo") {
+                targetPos = Vector(10, 0, 0);
+                targetAng = QAngle(90, 0, 0); 
+            }
+            
         }
         if (::current_map == "sp_a3_portal_intro") {
             
             // 1. Le sprayer de gel Blanc
             if (name == "pump_machine_white_sprayer_1908_1712_-1984_holo") {
+                targetPos = Vector(15, 0, 0);
                 targetAng = QAngle(-90, 0, 0); 
             } 
             
             // 2. Le sprayer de gel Bleu
             else if (name == "pump_machine_blue_sprayer_1088_1712_-2068_holo") {
+                targetPos = Vector(10, 0, 0);
                 targetAng = QAngle(90, 0, 0); 
             }
 

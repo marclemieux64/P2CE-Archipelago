@@ -489,13 +489,6 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         targetPos = Vector(80.0f, 0, 0); 
         targetAng = QAngle(90.0f, 0, 0); 
     }
-
-    if (::current_map == "sp_a1_intro5") {
-        if (name == "cube_dropper_1-cube_dropper_box" || name == "cube_dropper_2-cube_dropper_box") {
-            targetPos = Vector(0, 0, 370);
-            targetAng = QAngle(-180, 0, 0);
-        }
-    }
 }
 
 } // namespace Legacy

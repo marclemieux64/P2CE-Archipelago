@@ -219,7 +219,7 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
                 }
 
                 // On assemble le nom de manière totalement sécurisée pour mimalloc
-                holoName = "ap_" + shortModelName + "_" + int(spawnPos.x) + "_" + int(spawnPos.y) + "_" + int(spawnPos.z) + "_holo";
+                holoName = shortModelName + "_" + int(spawnPos.x) + "_" + int(spawnPos.y) + "_" + int(spawnPos.z) + "_holo";
             }
 
             Vector hPos(0, 0, 0);

@@ -169,6 +169,69 @@ void OverrideCube(const string&in name, CBaseEntity@ ent, Vector&out targetPos, 
             targetScale = 1.0f;  
         }
     }
+    if (::current_map == "sp_a4_intro") {
+        if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+            targetPos = Vector(0, 0, -530);
+            targetAng = QAngle(180, 0, 0);  
+            targetScale = 1.0f;  
+        }
+    }
+    if (::current_map == "sp_a4_tb_intro") {
+        if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+            targetPos = Vector(0, 0, -540);
+            targetAng = QAngle(180, 0, 0);  
+            targetScale = 1.0f;  
+        }
+    }
+    if (::current_map == "sp_a4_tb_trust_drop") {
+        if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+            targetPos = Vector(0, 0, -540);
+            targetAng = QAngle(180, 0, 0);  
+            targetScale = 1.0f;  
+        }
+    }
+    if (::current_map == "sp_a4_tb_trust_drop") {
+        if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+            targetPos = Vector(0, 0, -540);
+            targetAng = QAngle(180, 0, 0);  
+            targetScale = 1.0f;  
+        }
+    }
+    if (::current_map == "sp_a4_tb_wall_button") {
+        if (lowerName.locate("cube_dropper_box_spawner") != uint(-1)) {
+            targetPos = Vector(0, 0, -500);
+            targetAng = QAngle(180, 0, 0);  
+            targetScale = 1.0f;  
+        }
+    }
+    if (::current_map == "sp_a4_tb_polarity") {
+        if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+            targetPos = Vector(0, 0, -525);
+            targetAng = QAngle(180, 0, 0);  
+            targetScale = 1.0f;  
+        }
+    }
+    if (::current_map == "sp_a4_tb_catch") {
+        if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+            targetPos = Vector(0, 0, -525);
+            targetAng = QAngle(180, 0, 0);  
+            targetScale = 1.0f;  
+        }
+    }
+    if (::current_map == "sp_a4_stop_the_box") {
+        if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+            targetPos = Vector(0, 0, -525);
+            targetAng = QAngle(180, 0, 0);  
+            targetScale = 1.0f;  
+        }
+    }
+    if (::current_map == "sp_a4_speed_tb_catch") {
+        if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+            targetPos = Vector(0, 0, -525);
+            targetAng = QAngle(180, 0, 0);  
+            targetScale = 1.0f;  
+        }
+    }
 }
 
 } // namespace Archipelago

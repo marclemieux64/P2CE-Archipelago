@@ -143,6 +143,13 @@ map_specific_commands: list[MapCommand] = [
     MapCommand("sp_a2_turret_intro", turrets, ["DisableEntityPhysics npc_portal_turret_floor\n"]),
     MapCommand("sp_a2_bts2", turrets, ["AddScriptAtPos 1514 -3898 64 trigger_once OnStartTouch \"DisableEntityPhysics npc_portal_turret_floor\" 3 1\n"]),
     MapCommand("sp_a4_finale2", turrets, ["AddScriptAtPos 11835 11776 8543 trigger_once OnStartTouch \"DisableEntityPhysics npc_portal_turret_floor\" 2.5 1\n"]),
+    MapCommand("sp_a4_intro", frankenturret, [
+        "DisableTriggerAtPos -816 64 320\n",
+        "DeleteEntity \"cube_bot_model\" 1\n"
+    ]),
+    MapCommand("sp_a4_tb_wall_button", weighted_cube, [
+        "DeleteEntity \"cube_dropper_box_spawner\" 1\n"
+    ]),
 ]
 
 # map specific gel removal commands

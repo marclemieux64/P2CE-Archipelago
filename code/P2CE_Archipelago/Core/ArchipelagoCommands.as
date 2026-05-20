@@ -383,3 +383,29 @@ void DeleteEntityHoloCmd(const CommandArgs@ args) {
     string target = args.Arg(1);
     Archipelago::DeleteEntity(target, true);
 }
+
+[ServerCommand("DisableTriggerAtPos", "Désactive un trigger à une position spécifique")]
+void DisableTriggerAtPosCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 4) return;
+    Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    
+    // Cherche le trigger_once le plus proche dans un rayon de 150 unités
+    CBaseEntity@ ent = EntityList().FindByClassnameNearest("trigger_once", pos, 150.0f);
+    
+    // Si ce n'est pas un trigger_once, on cherche un trigger_multiple par sécurité
+    if (ent is null) {
+        @ent = EntityList().FindByClassnameNearest("trigger_multiple", pos, 150.0f);
+    }
+
+    if (ent !is null) {
+        // CORRECTIF COMPILATION : On crée une variable Variant vide pour respecter la signature d'AngelScript
+        Variant emptyValue; 
+        
+        // Structure de l'appel corrigée : Input, Valeur, Délai (float), Activator, Caller
+        ent.FireInput("Disable", emptyValue, 0.0f, null, null, 0);
+        
+        Archipelago::ArchipelagoLog("[AP] DisableTriggerAtPos: Trigger désactivé avec succès à la position " + pos.x + " " + pos.y + " " + pos.z);
+    } else {
+        Archipelago::ArchipelagoLog("[AP] DisableTriggerAtPos: Aucun trigger trouvé à la position " + pos.x + " " + pos.y + " " + pos.z);
+    }
+}

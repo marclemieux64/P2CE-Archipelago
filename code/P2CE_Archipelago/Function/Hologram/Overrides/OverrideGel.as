@@ -145,11 +145,11 @@ void OverrideGel(const string&in name, CBaseEntity@ ent, Vector&out targetPos, Q
     }
 
     if (::current_map == "sp_a4_speed_tb_catch") {
-        if (name == "AutoInstance1-paint_sprayer_256_1376_552_holo") {
-            targetPos = Vector(135, 0, 0);
-            targetAng = QAngle(90, 0, 0); 
+            if (name == "AutoInstance1-paint_sprayer_256_1376_552_holo") {
+                targetPos = Vector(135, 0, 0);
+                targetAng = QAngle(90, 0, 0); 
+            }
         }
-    }
 
     if (::current_map == "sp_a4_jump_polarity") {
         if (name.locate("paint_meSilly_1902_65_188_holo") != uint(-1) || name.locate("paint_meSilly_1742_-62_140_holo") != uint(-1)) {

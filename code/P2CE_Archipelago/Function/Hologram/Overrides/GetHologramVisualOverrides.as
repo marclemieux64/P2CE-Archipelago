@@ -20,7 +20,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     string model = ent.GetModelName().tolower();
     
     // CORRECTIF SÉCURITÉ CUBES ANONYMES : Si l'entité n'a pas de nom, on recrée son nom de modèle court
-    string name = ent.GetEntityName().tolower();
+    string name = ent.GetEntityName();
     if (name == "") {
         string shortModelName = ent.GetModelName().tolower();
         int lastSlash = -1;
@@ -37,6 +37,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
             name = shortModelName;
         }
     }
+    string name_lower = name.tolower();
 
     // 1. ANALYSE UNIQUE DES CATÉGORIES (Désormais 100% insensible à la casse)
     bool isCube = (classname == "prop_weighted_cube" || 
@@ -46,10 +47,11 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
                   model.locate("reflection") != uint(-1) || 
                   model.locate("mp_ball") != uint(-1) || 
                   model.locate("underground_weighted_cube") != uint(-1) ||
-                  name.locate("metal_box") != uint(-1) ||
-                  name.locate("entity_box_maker_rm1") != uint(-1) ||
-                  name.locate("laser_cube_spawner") != uint(-1) ||
-                  name.locate("reflection_cube") != uint(-1));
+                  name_lower.locate("metal_box") != uint(-1) ||
+                  name_lower.locate("entity_box_maker_rm1") != uint(-1) ||
+                  name_lower.locate("cube_dropper_box_spawner") != uint(-1) ||
+                  name_lower.locate("laser_cube_spawner") != uint(-1) ||
+                  name_lower.locate("reflection_cube") != uint(-1));
 
     bool isLaser = (classname.locate("env_portal_laser") != uint(-1) || classname.locate("prop_laser_relay") != uint(-1) || classname.locate("prop_laser_catcher") != uint(-1));
     bool isButton = (classname.locate("button") != uint(-1));
@@ -57,15 +59,15 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     bool isBridge = (classname == "prop_wall_projector");
     bool isMonsterBox = (classname == "prop_monster_box");
     bool isWheatleyScreen = (model.locate("glados_screenborder_curve.mdl") != uint(-1));
-    bool isCore = (classname.locate("core") != uint(-1) || name.locate("core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
+    bool isCore = (classname.locate("core") != uint(-1) || name_lower.locate("core") != uint(-1) || model.locate("personality_sphere") != uint(-1));
     bool isTurret = (classname == "npc_portal_turret_floor" || model.locate("turret.mdl") != uint(-1));
     
     bool isGel = (classname == "info_paint_sprayer" || 
                   classname == "prop_paint_bomb" || 
                   classname == "paint_sphere" || 
-                  name.locate("trigger_to_drop") != uint(-1) ||
-                  name.locate("template_artillery") != uint(-1) ||
-                  (name.locate("paint") != uint(-1) && name.locate("panel") == uint(-1) && !isButton && !isCube && !isLaser && !isFaithPlate));
+                  name_lower.locate("trigger_to_drop") != uint(-1) ||
+                  name_lower.locate("template_artillery") != uint(-1) ||
+                  (name_lower.locate("paint") != uint(-1) && name_lower.locate("panel") == uint(-1) && !isButton && !isCube && !isLaser && !isFaithPlate));
 
     // 2. DISPATCHER VERS LES FICHIERS EXTERNES
     if (isGel) {
@@ -111,19 +113,19 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     }
 
-    if (name.locate("dummy_chamber_button") != uint(-1)) {
+    if (name_lower.locate("dummy_chamber_button") != uint(-1)) {
         targetSkin = 0;
         targetScale = 1.0f;
         shouldParent = true;
         absoluteAngles = true; 
 
-        if (name == "dummy_chamber_button") {
+        if (name_lower == "dummy_chamber_button") {
             if (::current_map == "sp_a3_03") { targetPos = Vector(-6.0f, -44.0f, -34.5f); targetAng = QAngle(0, 90, 0); }
             else if (::current_map == "sp_a3_transition01") { targetPos = Vector(44.0f, -6.0f, -34.5f); targetAng = QAngle(0, 180, 0); }
-        } else if (name == "dummy_chamber_button2") {
+        } else if (name_lower == "dummy_chamber_button2") {
             if (::current_map == "sp_a3_03") { targetPos = Vector(-6.0f, -44.0f, -34.5f); targetAng = QAngle(0, 90, 0); }
             else if (::current_map == "sp_a3_transition01") { targetPos = Vector(-44.0f, -6.0f, -34.5f); targetAng = QAngle(0, 180, 0); }
-        } else if (name == "dummy_chamber_button3") {
+        } else if (name_lower == "dummy_chamber_button3") {
             if (::current_map == "sp_a3_03") { targetPos = Vector(-44.0f, 5.5f, -34.5f); targetAng = QAngle(0, 0, 0); }
             else if (::current_map == "sp_a3_transition01") { targetPos = Vector(-4.05f, -45.0f, -34.5f); targetAng = QAngle(0, -90, 0); }
         }

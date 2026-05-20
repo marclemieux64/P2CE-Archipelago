@@ -51,6 +51,7 @@
 #include "P2CE_Archipelago/Function/Hologram/CreateMapSpecificHolos.as"
 #include "P2CE_Archipelago/Function/Hologram/Overrides/GetHologramVisualOverrides.as"
 #include "P2CE_Archipelago/Function/Hologram/Overrides/OverrideGel.as"
+#include "P2CE_Archipelago/Function/Hologram/Overrides/OverrideCube.as"
 
 // --- MISC ---
 #include "P2CE_Archipelago/Function/Misc/AddEntityOutputScriptAtPos.as"

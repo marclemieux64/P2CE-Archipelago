@@ -134,14 +134,15 @@ class MapCommand:
     
 map_specific_commands: list[MapCommand] = [
     MapCommand("sp_a4_finale4", potatos, ["BlockWheatleyFight\n"]),
-    MapCommand("sp_a2_laser_stairs", reflection_cube, ['AddScriptAtPos -352 -288 -32 trigger_once "OnStartTouch" "DeleteEntity reflection_cube" 0.5 1\n',
-                                                         'AddScript "prop_button" "OnPressed" "DeleteEntity reflection_cube" 0.5\n']),
-    MapCommand("sp_a2_laser_relays", reflection_cube, ['DeleteEntity "laser_cube_spawner" 0\n']),
-    MapCommand("sp_a1_intro1", weighted_cube, ['DeleteEntity "entity_box_maker_rm1" 0\n']),
-    # Turret physics disable (sometimes cannot be at start of level due to spawning times)
-    MapCommand("sp_a2_turret_intro", turrets, [f'DisableEntityPhysics npc_portal_turret_floor\n']),
-    MapCommand("sp_a2_bts2", turrets, ['AddScriptAtPos 1514 -3898 64 trigger_once "OnStartTouch" "DisableEntityPhysics npc_portal_turret_floor" 3 1\n']),
-    MapCommand("sp_a4_finale2", turrets, ['AddScriptAtPos 11835 11776 8543 trigger_once "OnStartTouch" "DisableEntityPhysics npc_portal_turret_floor" 2.5 1\n']),
+    MapCommand("sp_a2_laser_stairs", reflection_cube, [
+        "AddScriptAtPos -352 -288 -32 trigger_once OnStartTouch \"DeleteEntityHolo models/props/reflection_cube.mdl\" 0.5 1\n",
+        "AddScript prop_button OnPressed \"DeleteEntityHolo models/props/reflection_cube.mdl\" 0.5 -1\n"
+    ]),
+    MapCommand("sp_a2_laser_relays", reflection_cube, ["DeleteEntity \"laser_cube_spawner\" 1\n"]),
+    MapCommand("sp_a1_intro1", weighted_cube, ["DeleteEntity \"entity_box_maker_rm1\" 1\n"]),
+    MapCommand("sp_a2_turret_intro", turrets, ["DisableEntityPhysics npc_portal_turret_floor\n"]),
+    MapCommand("sp_a2_bts2", turrets, ["AddScriptAtPos 1514 -3898 64 trigger_once OnStartTouch \"DisableEntityPhysics npc_portal_turret_floor\" 3 1\n"]),
+    MapCommand("sp_a4_finale2", turrets, ["AddScriptAtPos 11835 11776 8543 trigger_once OnStartTouch \"DisableEntityPhysics npc_portal_turret_floor\" 2.5 1\n"]),
 ]
 
 # map specific gel removal commands

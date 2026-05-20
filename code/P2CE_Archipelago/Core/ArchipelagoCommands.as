@@ -2,7 +2,6 @@
 // ARCHIPELAGO MAPSPAWN COMMANDS
 // =============================================================
 
-
 [ServerCommand("DeleteEntity", "DeleteEntity command")]
 void DeleteEntityLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
@@ -60,7 +59,6 @@ void MakeFaithPlateFaultyLegacyCmd(const CommandArgs@ args) {
 
     CBaseEntity@ target = EntityList().FindByName(null, entName);
     if (target is null) @target = EntityList().FindByClassname(null, entName);
-
     if (target !is null) {
         Archipelago::MakeFaithPlateFaulty(target);
     }
@@ -96,7 +94,6 @@ void SetCheckedScreensCmd(const CommandArgs@ args) {
             if ((arg == "1" || arg == "2") && Archipelago::checked_screens.length() > 0) {
                 uint lastIdx = Archipelago::checked_screens.length() - 1;
                 string prev = Archipelago::checked_screens.opIndex(lastIdx);
-                
                 Archipelago::checked_screens.opIndex(lastIdx) = prev + " " + arg;
                 Archipelago::ArchipelagoLog("AP DEBUG: Merged to create -> '" + Archipelago::checked_screens.opIndex(lastIdx) + "'");
             } 
@@ -113,11 +110,9 @@ void SetCheckedScreensCmd(const CommandArgs@ args) {
 [ServerCommand("DeathLink", "Checks if the player is dead for DeathLink")]
 void DeathLinkCmd(const CommandArgs@ args) {
     if (sent_death_link) return;
-
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
     if (player !is null && player.GetHealth() <= 0) {
         sent_death_link = true;
-
         CBaseEntity@ world = EntityList().FindByClassname(null, "worldspawn");
         if (world !is null) {
             Variant v;
@@ -135,7 +130,6 @@ void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
 [ServerCommand("WarpMonitor", "Warps player on monitor break")]
 void WarpMonitorCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    
     string monitorID = args.Arg(1);
     if (args.ArgC() >= 3) {
         monitorID += " " + args.Arg(2);
@@ -164,7 +158,6 @@ void WarpToMenuLegacyCmd(const CommandArgs@ args) {
 void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("=====Archipelago=====");
     Archipelago::UpdateInternalMapName();
-
     if (::current_map == "unknown" || ::current_map == "") {
         Archipelago::ArchipelagoLog("DelayedInit: Map name unknown, skipping.");
         return;
@@ -196,6 +189,21 @@ void AddScriptLegacyCmd(const CommandArgs@ args) {
     int maxTimes = (args.ArgC() > 5) ? args.Arg(5).toInt() : -1;
     
     array<CBaseEntity@> ents = Archipelago::FindEntities(target);
+    
+    // CORRECTIF SÉCURITÉ : Recherche partielle si le nom exact échoue à cause du préfixe d'instance
+    if (ents.length() == 0) {
+        CBaseEntity@ searchEnt = null;
+        while ((@searchEnt = EntityList().FindByClassname(searchEnt, "*")) !is null) {
+            string entName = searchEnt.GetEntityName().tolower();
+            if (entName.locate(target.tolower()) != uint(-1)) {
+                ents.insertLast(searchEnt);
+            }
+        }
+    }
+
+    // Affichage clair de la commande dans tes logs console pour débugger
+    Archipelago::ArchipelagoLog("[AP RECV] AddScript: target=" + target + " (Trouvé: " + ents.length() + " entités) | Output=" + output + " | Cmd=" + cmd);
+
     for (uint i = 0; i < ents.length(); i++) {
         Archipelago::SafeAddOutput(ents[i], output, "InitCmd", "Command", cmd, delay, maxTimes);
     }
@@ -209,7 +217,7 @@ void ShowStatusLegacyCmd(const CommandArgs@ args) {
 
 [ServerCommand("RefreshMapName", "Forces a map name update to Panorama")]
 void RefreshMapNameLegacyCmd(const CommandArgs@ args) {
-    ::current_map = ""; 
+    ::current_map = "";
     Archipelago::UpdateInternalMapName();
 }
 
@@ -274,6 +282,7 @@ void SetStatusLegacyCmd(const CommandArgs@ args) {}
 void AddScriptAtPosLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 6) return;
     Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
+    Archipelago::ArchipelagoLog("[AP RECV] AddScriptAtPos à la position: " + pos.x + " " + pos.y + " " + pos.z);
     Archipelago::AddEntityOutputScriptAtPos(pos, args.Arg(4), args.Arg(5), args.Arg(6), (args.ArgC() > 7 ? args.Arg(7).toFloat() : 0.0f), (args.ArgC() > 8 ? args.Arg(8).toInt() : -1));
 }
 
@@ -368,3 +377,9 @@ void AP_UpdateGunSkinCmd(const CommandArgs@ args) {
     }
 }
 
+[ServerCommand("DeleteEntityHolo", "Version compacte sans espace pour les déclencheurs")]
+void DeleteEntityHoloCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    string target = args.Arg(1);
+    Archipelago::DeleteEntity(target, true);
+}

@@ -18,10 +18,39 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     
     string classname = ent.GetClassname();
     string model = ent.GetModelName().tolower();
-    string name = ent.GetEntityName();
+    
+    // CORRECTIF SÉCURITÉ CUBES ANONYMES : Si l'entité n'a pas de nom, on recrée son nom de modèle court
+    string name = ent.GetEntityName().tolower();
+    if (name == "") {
+        string shortModelName = ent.GetModelName().tolower();
+        int lastSlash = -1;
+        int len = shortModelName.length();
+        for (int c = len - 1; c >= 0; c--) {
+            if (shortModelName[c] == 47) { // 47 est le code ASCII de '/'
+                lastSlash = c;
+                break;
+            }
+        }
+        if (lastSlash != -1) {
+            name = shortModelName.substr(lastSlash + 1); // Contient désormais "metal_box.mdl" ou "reflection_cube.mdl"
+        } else {
+            name = shortModelName;
+        }
+    }
 
-    // 1. ANALYSE UNIQUE DES CATÉGORIES
-    bool isCube = (classname == "prop_weighted_cube" || model.locate("metal_box") != uint(-1) || model.locate("box") != uint(-1) || model.locate("cube") != uint(-1));
+    // 1. ANALYSE UNIQUE DES CATÉGORIES (Désormais 100% insensible à la casse)
+    bool isCube = (classname == "prop_weighted_cube" || 
+                  model.locate("metal_box") != uint(-1) || 
+                  model.locate("box") != uint(-1) || 
+                  model.locate("cube") != uint(-1) ||
+                  model.locate("reflection") != uint(-1) || 
+                  model.locate("mp_ball") != uint(-1) || 
+                  model.locate("underground_weighted_cube") != uint(-1) ||
+                  name.locate("metal_box") != uint(-1) ||
+                  name.locate("entity_box_maker_rm1") != uint(-1) ||
+                  name.locate("laser_cube_spawner") != uint(-1) ||
+                  name.locate("reflection_cube") != uint(-1));
+
     bool isLaser = (classname.locate("env_portal_laser") != uint(-1) || classname.locate("prop_laser_relay") != uint(-1) || classname.locate("prop_laser_catcher") != uint(-1));
     bool isButton = (classname.locate("button") != uint(-1));
     bool isFaithPlate = (model.locate("faith_plate") != uint(-1));
@@ -38,14 +67,14 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
                   name.locate("template_artillery") != uint(-1) ||
                   (name.locate("paint") != uint(-1) && name.locate("panel") == uint(-1) && !isButton && !isCube && !isLaser && !isFaithPlate));
 
-    // 2. DISPATCHER VERS LES FICHIERS EXTERNES (Uniquement pour les structures lourdes)
+    // 2. DISPATCHER VERS LES FICHIERS EXTERNES
     if (isGel) {
-        // 1. RÈGLE GÉNÉRALE PAR DÉFAUT (Appliquée à TOUS les gels du jeu)
-        absoluteAngles = false; 
+        targetPos = Vector(0, 0, 0);
+        targetAng = QAngle(180, 0, 0); 
+        targetSkin = 4;
+        targetScale = 1.0f;
         shouldParent = false;
-        targetAng = QAngle(180, 0, 0);
-
-        // 2. PASSE LE RELAIS AU FICHIER SPÉCIALISÉ (Pour les cas particuliers)
+        absoluteAngles = false;
         OverrideGel(name, ent, targetPos, targetAng, targetSkin, targetScale, shouldParent, absoluteAngles);
         return;
     }
@@ -53,12 +82,12 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     if (isCube) {
         targetScale = 0.66f;
         absoluteAngles = true;
+       
+        OverrideCube(name, ent, targetPos, targetAng, targetSkin, targetScale, shouldParent, absoluteAngles);
         return;
     }
 
-    // 3. LOGIQUE DIRECTE ET VISIBLE POUR LES OBJETS FIXES ET SIMPLES
-    
-    // WHEATLEY SCREENS (Visible directement ici !)
+    // 3. LOGIQUE DIRECTE POUR LES OBJETS FIXES ET SIMPLES
     if (isWheatleyScreen) {
         targetPos = Vector(30.0f, 0.0f, 100.0f);
         targetAng = QAngle(0.0f, 0.0f, 0.0f); 
@@ -69,13 +98,11 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     }
 
-    // CORES
     if (isCore) {
         if (name.locate("1") != uint(-1)) targetSkin = 6;
         else if (name.locate("2") != uint(-1)) targetSkin = 5; 
         else if (name.locate("3") != uint(-1)) targetSkin = 3; 
         else targetSkin = 4;
-        
         targetPos = Vector(0, 0, 0.0f);
         targetAng = QAngle(0, 0, 0);
         absoluteAngles = true;
@@ -84,7 +111,6 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     }
 
-    // VITRIFIED BUTTONS
     if (name.locate("dummy_chamber_button") != uint(-1)) {
         targetSkin = 0;
         targetScale = 1.0f;
@@ -104,23 +130,20 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     }
 
-    // FAITH PLATES
     if (isFaithPlate) {
         targetScale = 0.66f;
         absoluteAngles = true;
         return;
     } 
 
-    // BRIDGES / PONS DE LUMIÈRE
     if (isBridge) {
-        targetPos = Vector(0.0f, -40.0f, 0.0f);
+        targetPos = Vector(10.0f, 0.0f, 0.0f);
         targetAng = QAngle(90.0f, 0.0f, 0.0f);
         targetScale = 0.66f;
         shouldParent = true;
         return;
     } 
 
-    // MONSTER BOXES
     if (isMonsterBox) {
         targetPos = Vector(0, 0, 50.0f);
         targetScale = 0.8f;
@@ -129,31 +152,28 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     } 
 
-    // TURRETS
     if (isTurret) {
         targetPos = Vector(0.0f, 0.0f, 60.0f);
-        targetSkin = 2; // Rouge par défaut pour les tourelles
+        targetSkin = 2; 
         shouldParent = true;
         return;
     } 
 
-    // LASERS
     if (isLaser) {
         shouldParent = true;
         if (classname.locate("prop_laser_relay") != uint(-1)) {
-            targetPos = Vector(0, 0, 40.0f); 
+            targetPos = Vector(0, 0, 40.0f);
             targetScale = 0.66f;
         } else {
-            targetPos = Vector(32.0f, 0, 0); 
+            targetPos = Vector(32.0f, 0, 0);
             targetScale = 0.66f;
             targetAng = QAngle(90.0f, 0, 0); 
         }
         return;
     } 
 
-    // BUTTONS NORMaux
     if (isButton) {
-        shouldParent = true; 
+        shouldParent = true;
         if (classname.locate("floor") != uint(-1) || model.locate("floor_button") != uint(-1)) {
             targetPos = Vector(0, 0, 50.0f);
         } else {
@@ -163,9 +183,8 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
         return;
     } 
 
-    // TRACTOR BEAMS / FUNNELS
     if (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel") {
-        targetSkin = 4; 
+        targetSkin = 4;
         targetPos = Vector(80.0f, 0, 0); 
         targetAng = QAngle(90.0f, 0, 0); 
         return;

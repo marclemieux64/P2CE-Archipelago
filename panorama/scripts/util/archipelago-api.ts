@@ -8,7 +8,7 @@ try {
 } catch (e) { }
 
 class ArchipelagoAPI {
-    static VERSION: string = "2.0.4"; 
+    static VERSION: string = "2.0.5"; 
     static API_BASE: string = "http://127.0.0.1:8910";
     
     static m_Status: any = null;
@@ -17,8 +17,12 @@ class ArchipelagoAPI {
     
     static m_PollSchedule: any = null;
 
+    // Caches bruts pour éviter le traitement CPU inutile
+    static m_LastRawStatus: string = "";
+    static m_LastRawChat: string = "";
+
     static init() {
-        $.Msg("[AP] Initializing Compatible API");
+        $.Msg("[AP] Initializing Optimized Compatible API");
         this.startPolling();
     }
 
@@ -28,7 +32,7 @@ class ArchipelagoAPI {
         }
         
         this.pulse();
-        this.m_PollSchedule = $.Schedule(1.0, () => this.startPolling());
+        this.m_PollSchedule = $.Schedule(0.5, () => this.startPolling());
     }
 
     static pulse() {
@@ -37,8 +41,14 @@ class ArchipelagoAPI {
             type: 'GET',
             complete: (res: any) => {
                 if (res.status === 200 && res.responseText) {
+                    const cleanText = res.responseText.trim().replace(/\0/g, '');
+                    
+                    // PERFORMANCE COMPACT : Si rien n'a changé, on ignore le parsing et le Dispatch
+                    if (cleanText === this.m_LastRawStatus) return;
+                    this.m_LastRawStatus = cleanText;
+
                     try {
-                        const data = JSON.parse(res.responseText.trim().replace(/\0/g, ''));
+                        const data = JSON.parse(cleanText);
                         this.m_Status = data;
                         
                         if (data.logic_difficulty !== undefined) {
@@ -52,6 +62,7 @@ class ArchipelagoAPI {
             error: () => {
                 if (!this.m_Status || !this.m_Status.client_offline) {
                     this.m_Status = { client_offline: true };
+                    this.m_LastRawStatus = ""; // Reset du cache
                     $.DispatchEvent("ArchipelagoAPI_StatusUpdated", JSON.stringify(this.m_Status));
                 }
             }
@@ -61,14 +72,22 @@ class ArchipelagoAPI {
         this.fetchChat();
     }
 
-    // Remis en place car votre fichier console.ts en a besoin !
     static fetchChat(callback?: (chat: any) => void) {
         $.AsyncWebRequest(this.API_BASE + "/chat", {
             type: 'GET',
             complete: (res: any) => {
                 if (res.status === 200 && res.responseText) {
+                    const cleanText = res.responseText.trim().replace(/\0/g, '');
+                    
+                    // PERFORMANCE COMPACT : Si aucun nouveau message, on s'arrête
+                    if (cleanText === this.m_LastRawChat) {
+                        if (callback) callback(this.m_Chat);
+                        return;
+                    }
+                    this.m_LastRawChat = cleanText;
+
                     try {
-                        const data = JSON.parse(res.responseText.trim().replace(/\0/g, ''));
+                        const data = JSON.parse(cleanText);
                         this.m_Chat = data;
                         $.DispatchEvent("ArchipelagoAPI_ChatUpdated", JSON.stringify(this.m_Chat));
                         if (callback) callback(data);
@@ -83,7 +102,11 @@ class ArchipelagoAPI {
         $.AsyncWebRequest(this.API_BASE + "/command", {
             type: 'POST',
             data: { command: cmd },
-            complete: () => { this.pulse(); }
+            complete: () => { 
+                this.m_LastRawStatus = ""; // Force l'actualisation au prochain pulse
+                this.m_LastRawChat = "";
+                this.pulse(); 
+            }
         });
     }
 

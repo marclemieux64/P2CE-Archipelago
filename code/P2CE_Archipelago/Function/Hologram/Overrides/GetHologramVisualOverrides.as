@@ -139,12 +139,11 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     } 
 
     if (isBridge) {
-        targetPos = Vector(10.0f, 0.0f, 0.0f);
-        targetAng = QAngle(90.0f, 0.0f, 0.0f);
-        targetScale = 0.66f;
-        shouldParent = true;
+        targetPos = Vector(15.0f, 0.0f, 0.0f);
+        targetAng = QAngle(90.0f, 0.0f, 0.0f);  
+        targetScale = 0.66f;               
         return;
-    } 
+    }
 
     if (isMonsterBox) {
         targetPos = Vector(0, 0, 50.0f);

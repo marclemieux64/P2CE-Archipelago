@@ -105,7 +105,7 @@ void OverrideCube(const string&in name, CBaseEntity@ ent, Vector&out targetPos, 
     }
     if (::current_map == "sp_a2_ricochet") {
         if (lowerName.locate("reflecto_cube_dropper-cube_dropper_box") != uint(-1)) {
-            targetPos = Vector(0, 0, -530);
+            targetPos = Vector(0, 0, -500);
             targetAng = QAngle(180, 0, 0);
             targetScale = 1.0f;      
         }
@@ -131,7 +131,6 @@ void OverrideCube(const string&in name, CBaseEntity@ ent, Vector&out targetPos, 
         if (lowerName.locate("laser_cube_spawner") != uint(-1)) {
             targetPos = Vector(0, 0, -30);
             targetAng = QAngle(0, 0, 0);
-            targetScale = 1.0f;
         }
     }
     if (::current_map == "sp_a2_column_blocker") {

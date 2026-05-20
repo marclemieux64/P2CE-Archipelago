@@ -21,6 +21,9 @@ class ArchipelagoHint {
     static m_WaitingForFeedback = false;
     static m_LastMatchedMsg = ""; 
     static m_FeedbackHideSchedule: any = null;
+    
+    // Cache de rendu pour éviter d'effondrer le moteur de rendu Panorama
+    static m_LastRawHints: string = "";
 
     static init() {
         $.DispatchEvent('MainMenuSetPageLines', 
@@ -81,8 +84,6 @@ class ArchipelagoHint {
             } catch (e) { }
         });
 
-        // --- AFFICHAGE DES POINTS ET DU COÛT ---
-       // --- AFFICHAGE DES POINTS ET DU COÛT (LOCALISÉ) ---
         const updatePoints = (json: string) => {
             try {
                 const status = JSON.parse(json);
@@ -91,36 +92,21 @@ class ArchipelagoHint {
                     if (ptsLabel) {
                         const cost = status.hint_cost !== undefined ? status.hint_cost : 0;
                         
-                        // 1. Fetch the localized words
                         let locPoints = $.Localize('#Archipelago_Points');
                         let locCost = $.Localize('#Archipelago_Cost');
                         
-                        // 2. Fallback to English if the translation tokens are missing from the text files
                         if (locPoints === '#Archipelago_Points') locPoints = 'Points';
                         if (locCost === '#Archipelago_Cost') locCost = 'Cost';
 
-                        // 3. Apply them to the label
                         ptsLabel.text = `${locPoints}: ${status.hint_points} | ${locCost}: ${cost}`;
-                        
-                        // Vert si on peut payer, Rouge si on manque de points
                         ptsLabel.style.color = status.hint_points >= cost ? "#44ff44" : "#ff5555";
                     }
                 }
             } catch (e) { }
         };
 
-        // On écoute les mises à jour automatiques toutes les secondes
         $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", updatePoints);
         
-        // On force l'affichage instantané dès l'ouverture du menu !
-        if (api && api.getStatus()) {
-            updatePoints(JSON.stringify(api.getStatus()));
-        }
-
-        // On écoute les mises à jour automatiques toutes les secondes
-        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", updatePoints);
-        
-        // NOUVEAU : On force l'affichage instantané dès l'ouverture du menu !
         if (api && api.getStatus()) {
             updatePoints(JSON.stringify(api.getStatus()));
         }
@@ -240,6 +226,7 @@ class ArchipelagoHint {
         if (finalValue) {
             this.m_WaitingForFeedback = true;
             this.m_LastMatchedMsg = ""; 
+            this.m_LastRawHints = ""; // Force l'invalidation du rendu
             
             $.Schedule(5.0, () => { this.m_WaitingForFeedback = false; });
 
@@ -286,8 +273,17 @@ class ArchipelagoHint {
             type: 'GET',
             complete: (res: any) => {
                 if (res.status === 200 && res.responseText) {
+                    const cleanText = res.responseText.trim().replace(/\0/g, '');
+                    
+                    // PROTECTION ASSURÉE CONTRE LE LAG : Si la liste n'a pas bougé, on skip la reconstruction graphique !
+                    if (cleanText === ArchipelagoHint.m_LastRawHints) {
+                        $.Schedule(1.0, () => this.updateLoop());
+                        return;
+                    }
+                    ArchipelagoHint.m_LastRawHints = cleanText;
+
                     try {
-                        const hints = JSON.parse(res.responseText.trim().replace(/\0/g, ''));
+                        const hints = JSON.parse(cleanText);
                         this.render(hints);
                     } catch (e) { }
                 }

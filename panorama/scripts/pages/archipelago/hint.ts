@@ -21,9 +21,11 @@ class ArchipelagoHint {
     static m_WaitingForFeedback = false;
     static m_LastMatchedMsg = ""; 
     static m_FeedbackHideSchedule: any = null;
+    static m_RequestChatLength = 0;
     
     // Cache de rendu pour éviter d'effondrer le moteur de rendu Panorama
     static m_LastRawHints: string = "";
+    static m_UpdateSchedule: any = null;
 
     static init() {
         $.DispatchEvent('MainMenuSetPageLines', 
@@ -61,63 +63,60 @@ class ArchipelagoHint {
             $.RegisterKeyBind(input, "key_tab", () => ArchipelagoHint.autocompleteSelection());
         }
 
-        $.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (json: string) => {
-            if (!ArchipelagoHint.m_WaitingForFeedback) return;
-            try {
-                const chat = JSON.parse(json);
-                if (chat && chat.length > 0) {
-                    const startIdx = Math.max(0, chat.length - 5);
-                    for (let i = chat.length - 1; i >= startIdx; i--) {
-                        const msg = chat[i];
-                        const rawStr = JSON.stringify(msg).toLowerCase();
-                        
-                        if ((rawStr.includes("afford") || rawStr.includes("need at least")) && !rawStr.includes("!hint")) {
-                            if (rawStr !== ArchipelagoHint.m_LastMatchedMsg) {
-                                ArchipelagoHint.m_LastMatchedMsg = rawStr;
-                                
-                                let displayMsg = "You don't have enough points for this hint.";
-                                if (typeof msg === 'string') displayMsg = msg;
-                                else if (msg.text) displayMsg = msg.text;
-                                else if (msg.html) displayMsg = msg.html;
-                                else if (msg.message) displayMsg = msg.message;
-                                
-                                ArchipelagoHint.showFeedback(displayMsg);
-                                ArchipelagoHint.m_WaitingForFeedback = false;
-                                return;
+        if (api) {
+            api.registerChatListener($.GetContextPanel(), (json: string) => {
+                if (!ArchipelagoHint.m_WaitingForFeedback) return;
+                try {
+                    const chat = typeof json === 'string' ? JSON.parse(json) : json;
+                    if (chat && chat.length > ArchipelagoHint.m_RequestChatLength) {
+                        for (let i = ArchipelagoHint.m_RequestChatLength; i < chat.length; i++) {
+                            const msg = chat[i];
+                            const rawStr = JSON.stringify(msg).toLowerCase();
+                            
+                            if ((rawStr.includes("afford") || rawStr.includes("need at least")) && !rawStr.includes("!hint")) {
+                                if (rawStr !== ArchipelagoHint.m_LastMatchedMsg) {
+                                    ArchipelagoHint.m_LastMatchedMsg = rawStr;
+                                    
+                                    let displayMsg = "You don't have enough points for this hint.";
+                                    if (typeof msg === 'string') displayMsg = msg;
+                                    else if (msg.text) displayMsg = msg.text;
+                                    else if (msg.html) displayMsg = msg.html;
+                                    else if (msg.message) displayMsg = msg.message;
+                                    
+                                    ArchipelagoHint.showFeedback(displayMsg);
+                                    ArchipelagoHint.m_WaitingForFeedback = false;
+                                    return;
+                                }
                             }
                         }
                     }
-                }
-            } catch (e) { }
-        });
+                } catch (e) { }
+            });
 
-        const updatePoints = (json: string) => {
-            try {
-                let status = typeof json === 'string' ? JSON.parse(json) : json;
-                if (status && status.hint_points !== undefined) {
-                    const ptsLabel = $.GetContextPanel().FindChildTraverse('HintPointsLabel') as LabelPanel;
-                    if (ptsLabel) {
-                        const cost = status.hint_cost !== undefined ? status.hint_cost : 0;
-                        
-                        let locPoints = $.Localize('#Archipelago_Points');
-                        let locCost = $.Localize('#Archipelago_Cost');
-                        
-                        if (locPoints === '#Archipelago_Points') locPoints = 'Points';
-                        if (locCost === '#Archipelago_Cost') locCost = 'Cost';
+            const updatePoints = (json: string) => {
+                try {
+                    let status = typeof json === 'string' ? JSON.parse(json) : json;
+                    if (status && status.hint_points !== undefined) {
+                        const ptsLabel = $.GetContextPanel().FindChildTraverse('HintPointsLabel') as LabelPanel;
+                        if (ptsLabel) {
+                            const cost = status.hint_cost !== undefined ? status.hint_cost : 0;
+                            
+                            let locPoints = $.Localize('#Archipelago_Points');
+                            let locCost = $.Localize('#Archipelago_Cost');
+                            
+                            if (locPoints === '#Archipelago_Points') locPoints = 'Points';
+                            if (locCost === '#Archipelago_Cost') locCost = 'Cost';
 
-                        ptsLabel.text = `${locPoints}: ${status.hint_points} | ${locCost}: ${cost}`;
-                        ptsLabel.style.color = status.hint_points >= cost ? "#44ff44" : "#ff5555";
+                            ptsLabel.text = `${locPoints}: ${status.hint_points} | ${locCost}: ${cost}`;
+                            ptsLabel.style.color = status.hint_points >= cost ? "#44ff44" : "#ff5555";
+                        }
                     }
-                }
-            } catch (e) { }
-        };
+                } catch (e) { }
+            };
 
-        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", (payload: any) => {
-            updatePoints(payload);
-        });
-        
-        if (api && api.getStatus()) {
-            updatePoints(api.getStatus());
+            api.registerStatusListener($.GetContextPanel(), (payload: any) => {
+                updatePoints(payload);
+            });
         }
     }
 
@@ -237,6 +236,9 @@ class ArchipelagoHint {
             this.m_LastMatchedMsg = ""; 
             this.m_LastRawHints = ""; 
             
+            const currentChat = api.getChat();
+            this.m_RequestChatLength = currentChat ? currentChat.length : 0;
+            
             $.Schedule(5.0, () => { this.m_WaitingForFeedback = false; });
 
             // On utilise sendCommand qui nettoie le cache réseau instantanément
@@ -256,6 +258,11 @@ class ArchipelagoHint {
     }
 
     static updateLoop() {
+        if (this.m_UpdateSchedule) {
+            try { $.CancelScheduled(this.m_UpdateSchedule); } catch(e) {}
+            this.m_UpdateSchedule = null;
+        }
+
         if (!$.GetContextPanel().IsValid()) return;
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (!api) return;
@@ -269,11 +276,13 @@ class ArchipelagoHint {
         $.AsyncWebRequest(api.API_BASE + "/hints", {
             type: 'GET',
             complete: (res: any) => {
+                if (!$.GetContextPanel().IsValid()) return;
+
                 if (res.status === 200 && res.responseText) {
                     const cleanText = res.responseText.trim().replace(/\0/g, '');
                     
                     if (cleanText === ArchipelagoHint.m_LastRawHints) {
-                        $.Schedule(1.0, () => this.updateLoop());
+                        this.m_UpdateSchedule = $.Schedule(1.0, () => this.updateLoop());
                         return;
                     }
                     ArchipelagoHint.m_LastRawHints = cleanText;
@@ -284,7 +293,7 @@ class ArchipelagoHint {
                         this.render(hints);
                     } catch (e) { }
                 }
-                $.Schedule(1.0, () => this.updateLoop());
+                this.m_UpdateSchedule = $.Schedule(1.0, () => this.updateLoop());
             }
         });
     }

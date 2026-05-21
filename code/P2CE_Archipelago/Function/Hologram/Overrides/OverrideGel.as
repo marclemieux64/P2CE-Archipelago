@@ -110,12 +110,18 @@ void InitializeGelDatabase() {
     g_GelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "_0_256_8_", Vector(0, 0, -10), QAngle(0, 0, 0), 1.0f, false, false, 0));
     
     array<string> eventSpheres = {
-        "_329_-315_443_", "_0_-403_443_", "_0_-325_578_", "_-290_-247_578_", "_-346_775_578_", "_329_827_443_", "_503_546_578_",
-        "paint_white_event_sphere1_", "paint_white_event_sphere2_", "paint_white_event_sphere4_", "paint_white_event_sphere5_", 
-        "paint_white_event_sphere7_", "paint_white_event_sphere8_", "paint_white_event_sphere10_"
+        "_329_-315_443_", "_0_-403_443_", "_0_-325_578_", "_-290_-247_578_", "_-346_775_578_", "_329_827_443_", "_503_546_578_"
     };
     for (uint s = 0; s < eventSpheres.length(); s++) {
         g_GelDatabase.insertLast(GelOverrideData("sp_a4_finale4", eventSpheres[s], Vector(0, 0, 0), QAngle(0, 0, -90), 1.0f, false, false, 0));
+    }
+
+    array<string> whiteSpheres = {
+        "paint_white_event_sphere1_", "paint_white_event_sphere2_", "paint_white_event_sphere4_", "paint_white_event_sphere5_", 
+        "paint_white_event_sphere7_", "paint_white_event_sphere8_", "paint_white_event_sphere10_"
+    };
+    for (uint w = 0; w < whiteSpheres.length(); w++) {
+        g_GelDatabase.insertLast(GelOverrideData("sp_a4_finale4", whiteSpheres[w], Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, false, false, 0));
     }
 
     array<string> blueSpheres = { "paint_blue_event_sphere1_", "paint_blue_event_sphere2_", "paint_blue_event_sphere3_", "paint_blue_event_sphere4_" };

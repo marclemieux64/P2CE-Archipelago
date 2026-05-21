@@ -34,12 +34,14 @@ var ArchipelagoMapStatusHUD = class {
         });
 
         // --- CORRECTIF SÉCURISÉ POUR L'ÉVÉNEMENT API ---
-        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", (payload: any) => {
-            if (this.m_CurrentMapName) {
-                // L'appel direct laisse updateStatus gérer le décodage si c'est une chaîne
-                this.updateStatus(this.m_CurrentMapName, false, this.m_PendingShow);
-            }
-        });
+        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        if (api) {
+            api.registerStatusListener($.GetContextPanel(), (payload: any) => {
+                if (this.m_CurrentMapName) {
+                    this.updateStatus(this.m_CurrentMapName, false, this.m_PendingShow);
+                }
+            });
+        }
     }
 
     static updateStatus(currentMapName: string, isManual: boolean, forceShow: boolean) {

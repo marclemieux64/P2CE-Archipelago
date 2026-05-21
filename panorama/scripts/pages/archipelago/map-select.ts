@@ -266,10 +266,7 @@ class ArchipelagoMapSelect {
                 }
             };
             
-            $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", updateFromApi);
-            if (api.getStatus()) {
-                updateFromApi(api.getStatus());
-            }
+            api.registerStatusListener($.GetContextPanel(), updateFromApi);
         }
 
         const mainBox = $.GetContextPanel().FindChildTraverse('MainBox');

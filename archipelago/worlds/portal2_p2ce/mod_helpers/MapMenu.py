@@ -305,8 +305,6 @@ class ChapterMenuElement(MenuElement):
 
 
 class Menu:
-    chapters: list[ChapterMenuElement] = []
-
     def __init__(
         self,
         chapter_dict: dict[int, list[str]],
@@ -327,6 +325,7 @@ class Menu:
         self.has_ratman_dens = ratman_dens
         self.has_vitrified_doors = vitrified_doors
         self.chapter_dict = chapter_dict
+        self.chapters: list[ChapterMenuElement] = []
 
     def generate_menu(self):
         for chapter_number, map_names in self.chapter_dict.items():

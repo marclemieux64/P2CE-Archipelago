@@ -2,27 +2,17 @@
 
 class ArchipelagoStatusIndicator {
     static init() {
-        // --- CORRECTIF SÉCURISÉ POUR L'ÉVÉNEMENT API ---
-        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", (payload: any) => {
-            try {
-                // On s'adapte de manière transparente si le payload est une string brute ou un objet
-                let status = payload;
-                if (typeof payload === 'string') {
-                    status = JSON.parse(payload);
-                }
-                this.updateStatus(status);
-            } catch (e) { }
-        });
-
-        // Vérification initiale si l'API est déjà peuplée
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
-        if (api && api.getStatus()) {
-            let initialStatus = api.getStatus();
-            // Double sécurité au cas où le cache de démarrage synchrone retournerait une string
-            if (typeof initialStatus === 'string') {
-                try { initialStatus = JSON.parse(initialStatus); } catch(e) {}
-            }
-            this.updateStatus(initialStatus);
+        if (api) {
+            api.registerStatusListener($.GetContextPanel(), (payload: any) => {
+                try {
+                    let status = payload;
+                    if (typeof payload === 'string') {
+                        status = JSON.parse(payload);
+                    }
+                    this.updateStatus(status);
+                } catch (e) { }
+            });
         }
     }
 

@@ -596,11 +596,38 @@ class Portal2Context(CommonContext):
         self.refresh_menu()
 
     def on_package(self, cmd, args):
-        if cmd in ("RoomInfo", "RoomUpdate"):
+        if cmd in ("RoomInfo", "RoomUpdate", "Connected"):
+            # Update check_points if sent
+            if "location_check_points" in args:
+                self.check_points = args["location_check_points"]
+
+            # Calculate absolute cost helper
+            def get_abs_cost(pct):
+                total_locs = self.total_locations
+                return max(1, int(pct * 0.01 * total_locs)) if pct and total_locs else 0
+
+            # Store verified hints_used whenever the server sends verified points
             if "hint_points" in args:
                 self.hint_points = args["hint_points"]
+                pct = getattr(self, "hint_cost", 0)
+                cost = get_abs_cost(pct)
+                check_pts = getattr(self, "check_points", 1)
+                if cost > 0:
+                    self.hints_used = max(0, (check_pts * len(self.checked_locations) - self.hint_points) // cost)
+                else:
+                    hkey = f"_read_hints_{self.team}_{self.slot}"
+                    self.hints_used = len(self.stored_data.get(hkey, []))
+
+            # Recalculate hint_points when hint_cost changes without points update
             if "hint_cost" in args:
-                self.hint_cost = args["hint_cost"]
+                new_pct = args["hint_cost"]
+                old_pct = getattr(self, "hint_cost", 0)
+                if new_pct != old_pct and "hint_points" not in args:
+                    check_pts = getattr(self, "check_points", 1)
+                    hints_used = getattr(self, "hints_used", 0)
+                    new_cost = get_abs_cost(new_pct)
+                    self.hint_points = check_pts * len(self.checked_locations) - new_cost * hints_used
+                self.hint_cost = new_pct
 
         def update_item_list():
             from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened

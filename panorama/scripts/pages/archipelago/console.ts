@@ -82,22 +82,14 @@ class ArchipelagoConsole {
             try { ArchipelagoConsole.refreshConsoleUI(JSON.parse(cachedChat)); } catch (e) { }
         }
 
-        $.RegisterForUnhandledEvent('ArchipelagoAPI_ChatUpdated', (payload: any) => {
-            try {
-                // S'adapte au format de payload brut de l'API
-                const chat = typeof payload === 'string' ? JSON.parse(payload) : payload;
-                ArchipelagoConsole.refreshConsoleUI(chat);
-            } catch (e) { }
-        });
-
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
-            const currentChat = api.getChat();
-            if (currentChat && currentChat.length > 0) {
-                ArchipelagoConsole.refreshConsoleUI(currentChat);
-            } else {
-                api.fetchChat((chat: any[]) => ArchipelagoConsole.refreshConsoleUI(chat));
-            }
+            api.registerChatListener($.GetContextPanel(), (payload: any) => {
+                try {
+                    const chat = typeof payload === 'string' ? JSON.parse(payload) : payload;
+                    ArchipelagoConsole.refreshConsoleUI(chat);
+                } catch (e) { }
+            });
         }
     }
 

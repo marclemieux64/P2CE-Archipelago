@@ -133,23 +133,6 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
                 holoName = shortModelName + "_" + int(spawnPos.x) + "_" + int(spawnPos.y) + "_" + int(spawnPos.z) + "_holo";
             }
 
-            // --- ANTI-DOUBLON SÉCURITÉ ---
-            string coordSuffix = "_" + int(spawnPos.x) + "_" + int(spawnPos.y) + "_" + int(spawnPos.z) + "_holo";
-            CBaseEntity@ existingHolo = null;
-            bool alreadyProcessed = false;
-            
-            // Scan de sécurité : existe-t-il déjà un hologramme pour cette entité ?
-            while ((@existingHolo = EntityList().FindByName(existingHolo, holoName)) !is null) {
-                alreadyProcessed = true;
-                break;
-            }
-
-            if (alreadyProcessed) {
-                Archipelago::ArchipelagoLog("[AP] Suppression bloquée : Hologramme déjà traité pour " + holoName);
-                ent.Remove();
-                continue;
-            }
-
             Vector hPos(0, 0, 0);
             QAngle hAng(0, 0, 0);
             int hSkin = 4;
@@ -165,6 +148,38 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
             AngleVectors(angles, forward, right, up);
             Vector finalPos = spawnPos + (forward * hPos.x) + (right * hPos.y) + (up * hPos.z);
             QAngle finalAng = hAbs ? hAng : (angles + hAng);
+
+            // --- ANTI-DOUBLON SÉCURITÉ ---
+            string coordSuffix = "_" + int(spawnPos.x) + "_" + int(spawnPos.y) + "_" + int(spawnPos.z) + "_holo";
+            CBaseEntity@ existingHolo = null;
+            bool alreadyProcessed = false;
+            
+            // Scan de sécurité : existe-t-il déjà un hologramme pour cette entité ?
+            while ((@existingHolo = EntityList().FindByName(existingHolo, holoName)) !is null) {
+                alreadyProcessed = true;
+                break;
+            }
+
+            // Scan de sécurité par proximité : existe-t-il déjà un hologramme de rechange à la même position finale ?
+            if (!alreadyProcessed) {
+                CBaseEntity@ loopEnt = null;
+                while ((@loopEnt = EntityList().FindByClassname(loopEnt, "prop_dynamic")) !is null) {
+                    string loopModel = loopEnt.GetModelName().tolower();
+                    if (loopModel.locate("archipelago_hologram") != uint(-1)) {
+                        if (loopEnt.GetAbsOrigin().DistTo(finalPos) < 2.0f) {
+                            alreadyProcessed = true;
+                            Archipelago::ArchipelagoLog("[AP] Suppression bloquée : Hologramme déjà présent par proximité à " + loopEnt.GetAbsOrigin().x + " " + loopEnt.GetAbsOrigin().y);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (alreadyProcessed) {
+                Archipelago::ArchipelagoLog("[AP] Suppression bloquée : Hologramme déjà traité pour " + holoName);
+                ent.Remove();
+                continue;
+            }
 
             // --- RECHERCHE ET INTERCEPTION STRICTE PAR CARTE ---
             CBaseEntity@ targetParent = null;

@@ -61,6 +61,7 @@ void InitializeCubeDatabase() {
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_column_blocker", "cube_dropper_2-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_bts1", "cube_dropper-cube_dropper_box", Vector(0, 0, -530), QAngle(180, 0, 0), 1.0f));
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_bts1", "pre_solved_chamber-box_dropper_01-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a3_jump_intro", "cube_dropper_box", Vector(0, 25, -65), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a3_speed_flings", "cube_dropper_box", Vector(0, 25, -65), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_laser_platform", "cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));

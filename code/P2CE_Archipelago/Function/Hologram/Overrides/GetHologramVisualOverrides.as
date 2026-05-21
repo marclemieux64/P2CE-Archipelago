@@ -36,7 +36,7 @@ namespace Archipelago {
     // CASCADE DE ROUTAGE (Early-Exit pour performances)
     // =============================================================
 
-    // --- TON OVERRIDE SIMPLE POUR SP_A3_CRAZY_BOX ---
+   
         string mapName = ConVarRef("host_map").GetString();
         if (mapName == "sp_a3_crazy_box") {
         // Interception par son nom d'entité réel ou son modèle underground
@@ -57,6 +57,67 @@ namespace Archipelago {
                 return;
             }
         }
+
+    
+        if (mapName == "sp_a2_turret_blocker") {
+            if (classname == "prop_wall_projector") {
+                // =============================================================
+                // TWEAK THESE VALUES TO ADJUST THE BRIDGE HOLOGRAM!
+                // =============================================================
+                // targetPos: Offset relative to the projector (X = Forward, Y = Right, Z = Up)
+                targetPos = Vector(15.0f, 0.0f, 0.0f);
+                
+                // targetAng: Angle offset relative to the projector (Pitch, Yaw, Roll)
+                // Modify these angles to find the correct orientation for the bridge hologram
+                targetAng = QAngle(0.0f, 90.0f, 0.0f); 
+                
+                targetSkin = 4;        // Skin 4 (Rusty / Uncollected)
+                targetScale = 0.66f;   // Visual scale multiplier
+                shouldParent = false;  // Keep false so the hologram is unparented and free to rotate
+                absoluteAngles = false;// Keep false to combine relative angles properly
+                return;
+            }
+        }
+
+        if (mapName == "sp_a4_stop_the_box") {
+            if (classname == "prop_wall_projector") {
+                // =============================================================
+                // TWEAK THESE VALUES TO ADJUST THE BRIDGE HOLOGRAM!
+                // =============================================================
+                // targetPos: Offset relative to the projector (X = Forward, Y = Right, Z = Up)
+                targetPos = Vector(15.0f, 0.0f, 0.0f);
+                
+                // targetAng: Angle offset relative to the projector (Pitch, Yaw, Roll)
+                // Modify these angles to find the correct orientation for the bridge hologram
+                targetAng = QAngle(0.0f, 90.0f, 0.0f); 
+                
+                targetSkin = 4;        // Skin 4 (Rusty / Uncollected)
+                targetScale = 0.66f;   // Visual scale multiplier
+                shouldParent = false;  // Keep false so the hologram is unparented and free to rotate
+                absoluteAngles = false;// Keep false to combine relative angles properly
+                return;
+            }
+        }
+
+       if (mapName == "sp_a2_bts1") {
+        // On vérifie que c'est un bouton, mais on exclut strictement les boutons de sol ("floor")
+        if ((name_lower.locate("button") != uint(-1) || model.locate("button") != uint(-1) || classname.locate("button") != uint(-1)) && 
+            classname.locate("floor") == uint(-1) && model.locate("floor") == uint(-1) && name_lower.locate("floor") == uint(-1)) {
+            
+            // Nudge local : Avancer de 45 unités, monter de 25 unités par rapport à la face du bouton
+            targetPos = Vector(45.0f, 0.0f, 25.0f);
+            
+            // Rotation : On récupère l'orientation du bouton et on incline le Pitch de +90.0f pour faire face à toi
+            targetAng = ent.GetAbsAngles();
+            targetAng.x += 90.0f;
+            
+            targetSkin = 4;
+            targetScale = 0.66f;
+            shouldParent = false;  // Brise l'attachement d'os pour appliquer l'offset proprement
+            absoluteAngles = true; // Force AddButtonFrame à utiliser targetAng comme angle mondial absolu
+            return;
+        }
+    }
 
     // 1. CUBES (Délégation immédiate)
         if (classname == "prop_weighted_cube" || model.locate("metal_box") != uint(-1) || model.locate("box") != uint(-1) || model.locate("cube") != uint(-1) || model.locate("reflection") != uint(-1) || model.locate("mp_ball") != uint(-1) || model.locate("underground_weighted_cube") != uint(-1) || name_lower.locate("metal_box") != uint(-1) || name_lower.locate("entity_box_maker_rm1") != uint(-1) || name_lower.locate("cube_dropper_box_spawner") != uint(-1) || name_lower.locate("laser_cube_spawner") != uint(-1) || name_lower.locate("reflection_cube") != uint(-1)) {

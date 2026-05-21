@@ -239,23 +239,11 @@ class ArchipelagoHint {
             
             $.Schedule(5.0, () => { this.m_WaitingForFeedback = false; });
 
-            $.AsyncWebRequest(api.API_BASE + "/command", {
-                type: 'POST',
-                data: { command: "!hint " + finalValue },
-                complete: () => {
-                    $.Schedule(0.5, () => {
-                        $.AsyncWebRequest(api.API_BASE + "/chat", {
-                            type: 'GET',
-                            complete: (data: any) => {
-                                if (data && data.responseText) {
-                                    $.DispatchEvent("ArchipelagoAPI_ChatUpdated", data.responseText.trim().replace(/\0/g, ''));
-                                }
-                            }
-                        });
-                    });
-                    $.AsyncWebRequest(api.API_BASE + "/hints/refresh", { type: 'POST' });
-                }
+            // On utilise sendCommand qui nettoie le cache réseau instantanément
+            api.sendCommand("!hint " + finalValue, () => {
+                api.forceRefreshHints();
             });
+
             input.text = "";
             this.m_FilteredItems = [];
             box?.AddClass('hide');

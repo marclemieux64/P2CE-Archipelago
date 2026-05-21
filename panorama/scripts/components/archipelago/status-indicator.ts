@@ -2,16 +2,27 @@
 
 class ArchipelagoStatusIndicator {
     static init() {
-        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", (payload: string) => {
+        // --- CORRECTIF SÉCURISÉ POUR L'ÉVÉNEMENT API ---
+        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", (payload: any) => {
             try {
-                this.updateStatus(JSON.parse(payload));
+                // On s'adapte de manière transparente si le payload est une string brute ou un objet
+                let status = payload;
+                if (typeof payload === 'string') {
+                    status = JSON.parse(payload);
+                }
+                this.updateStatus(status);
             } catch (e) { }
         });
 
         // Vérification initiale si l'API est déjà peuplée
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api && api.getStatus()) {
-            this.updateStatus(api.getStatus());
+            let initialStatus = api.getStatus();
+            // Double sécurité au cas où le cache de démarrage synchrone retournerait une string
+            if (typeof initialStatus === 'string') {
+                try { initialStatus = JSON.parse(initialStatus); } catch(e) {}
+            }
+            this.updateStatus(initialStatus);
         }
     }
 
@@ -21,8 +32,8 @@ class ArchipelagoStatusIndicator {
         const serverDot = $('#ServerDot');
         const gameDot = $('#GameDot');
 
-        // L'astuce est le "!!" : cela transforme undefined ou null en false, 
-        // et une valeur existante en true. Cela règle l'erreur V8ParamToPanoramaType.
+        // L'astuce du "!!" convertit proprement n'importe quel type en booléen strict,
+        // ce qui évite définitivement l'erreur native V8ParamToPanoramaType.
         if (serverDot) {
             const isServerConnected = !!status.connected;
             serverDot.SetHasClass('ap-status__dot--connected', isServerConnected);

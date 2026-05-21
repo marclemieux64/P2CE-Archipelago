@@ -83,7 +83,7 @@ class NotificationManager:
             logger.info(f"[HUD] {text}")
 
         self.msg_id_counter += 1
-        no_notification = getattr(self.ctx, 'is_processing_received_cmd', False)
+        no_notification = False
         
         self.chat_log.append({
             "id": self.msg_id_counter, 

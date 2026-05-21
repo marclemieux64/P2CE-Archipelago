@@ -102,24 +102,42 @@ void MakeFaithPlateFaulty(CBaseEntity@ trigger) {
     Vector spawnPos = targetPlate.GetAbsOrigin();
     string holoName = targetPlateName + "_" + int(spawnPos.x) + "_" + int(spawnPos.y) + "_" + int(spawnPos.z) + "_holo";
 
+    // --- INTERCEPTION DE SÉCURITÉ POUR SP_A2_RICOCHET ---
+    CBaseEntity@ finalParent = targetPlate;
+    bool useAttachment = true;
+
+    if (current_map == "sp_a2_ricochet" && targetPlate.GetModelName().tolower().locate("faith_plate_128") != uint(-1)) {
+        CBaseEntity@ clipSearch = null;
+        // On cherche l'entité func_clip_vphysics superposée à la plaque de foi dans un rayon de 64 unités
+        while ((@clipSearch = EntityList().FindInSphere(clipSearch, targetPlate.GetAbsOrigin(), 64.0f)) !is null) {
+            if (clipSearch.GetClassname() == "func_clip_vphysics") {
+                @finalParent = clipSearch;
+                useAttachment = false; // Pas d'os d'animation ("panel_attach") sur un func_clip
+                break;
+            }
+        }
+    }
+
     // ÉTAPE CRUCIALE : On passe 'null' comme parent initial pour figer les coordonnées MONDIALES réelles
     CBaseEntity@ holoEnt = Archipelago::CreateAPHologram(finalPos, finalAng, hScale, null, "", hSkin, holoName);
 
-    // ÉTAPE D'ANCRAGE : On lie l'objet à chaud avec préservation stricte de la matrice du monde
-    if (holoEnt !is null && targetPlate !is null) {
+    // ÉTAPE D'ANCRAGE RE-ADAPTÉE : On lie l'objet au parent résolu (Plaque ou Clip Vphysics)
+    if (holoEnt !is null && finalParent !is null) {
         Variant v;
-        v.SetEntity(targetPlate);
-        holoEnt.FireInput("SetParent", v, 0.01f, targetPlate, holoEnt);
+        v.SetEntity(finalParent);
+        holoEnt.FireInput("SetParent", v, 0.01f, finalParent, holoEnt);
         
-        // Soudure sur l'attachement d'os d'animation mobile
-        Variant vOpt;
-        vOpt.SetString("panel_attach");
-        holoEnt.FireInput("SetParentAttachmentMaintainOffset", vOpt, 0.02f, targetPlate, holoEnt);
+        if (useAttachment) {
+            // Soudure standard sur l'attachement d'os d'animation mobile (Uniquement si ce n'est pas le clip)
+            Variant vOpt;
+            vOpt.SetString("panel_attach");
+            holoEnt.FireInput("SetParentAttachmentMaintainOffset", vOpt, 0.02f, finalParent, holoEnt);
+        }
     }
 
     // Suppression du trigger original en dernier
     trigger.Remove();
-    Archipelago::ArchipelagoLog("[AP] Faith Plate sabotaged with fixed world-aligned Holo: " + holoName);
+    Archipelago::ArchipelagoLog("[AP] Faith Plate sabotaged with fixed world-aligned Holo: " + holoName + " parented to " + finalParent.GetClassname());
 }
 
 } // namespace Archipelago

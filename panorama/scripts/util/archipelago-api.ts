@@ -7,7 +7,7 @@ try {
 } catch (e) { }
 
 class ArchipelagoAPI {
-    static VERSION: string = "2.1.0"; 
+    static VERSION: string = "2.1.1"; 
     static API_BASE: string = "http://127.0.0.1:8910";
     
     static m_Status: any = null;
@@ -15,13 +15,11 @@ class ArchipelagoAPI {
     static m_Hints: any[] = [];
     
     static m_PollSchedule: any = null;
-
-    // Stockage des jetons ETag pour court-circuiter le thread Panorama
     static m_StatusETag: string = "";
     static m_ChatETag: string = "";
 
     static init() {
-        $.Msg("[AP] Initializing High-Performance ETag-Cached API");
+        $.Msg("[AP] Initializing High-Performance ETag-Cached API with Instant-Invalidation");
         this.startPolling();
     }
 
@@ -44,7 +42,6 @@ class ArchipelagoAPI {
             type: 'GET',
             headers: headers,
             complete: (res: any) => {
-                // Si le code est 304, la structure n'a pas bougé (Économie CPU maximale)
                 if (res.status === 304) {
                     this.fetchChat();
                     return;
@@ -61,7 +58,6 @@ class ArchipelagoAPI {
                         if (data.logic_difficulty !== undefined) {
                             $.persistentStorage.setItem("ArchipelagoLogicDifficulty", data.logic_difficulty);
                         }
-                        // On distribue la chaîne propre
                         $.DispatchEvent("ArchipelagoAPI_StatusUpdated", cleanText);
                     } catch (e) { }
                 }
@@ -101,16 +97,29 @@ class ArchipelagoAPI {
         });
     }
 
-    static sendCommand(cmd: string) {
+    static sendCommand(cmd: string, callback?: () => void) {
         if (!cmd) return;
+        // CORRECTIF CACHE : Invalidation agressive immédiate pré-envoi
+        this.m_StatusETag = "";
+        this.m_ChatETag = "";
+
         $.AsyncWebRequest(this.API_BASE + "/command", {
             type: 'POST',
             data: { command: cmd },
             complete: () => { 
-                this.m_StatusETag = ""; // Invalidation immédiate pour forcer le rafraîchissement au prochain pulse
-                this.m_ChatETag = "";
+                if (callback) callback();
+                // Double vérification post-exécution pour forcer la vidange du cache Panorama
                 this.pulse(); 
             }
+        });
+    }
+
+    static forceRefreshHints() {
+        this.m_StatusETag = "";
+        this.m_ChatETag = "";
+        $.AsyncWebRequest(this.API_BASE + "/hints/refresh", { 
+            type: 'POST',
+            complete: () => { this.pulse(); }
         });
     }
 

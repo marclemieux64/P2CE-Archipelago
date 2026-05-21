@@ -36,7 +36,7 @@
 #include "P2CE_Archipelago/Function/Check/PrintMapName.as"
 
 // --- ENTITY ---
-#include "P2CE_Archipelago/Function/Entity/AddTractorBeamFrame.as"
+ #include "P2CE_Archipelago/Function/Entity/AddTractorBeamFrame.as"
 #include "P2CE_Archipelago/Function/Entity/CreateClearGel.as"
 #include "P2CE_Archipelago/Function/Entity/DeleteCoreOnOutput.as"
 #include "P2CE_Archipelago/Function/Entity/DeleteEntity.as"
@@ -87,34 +87,32 @@
 #include "P2CE_Archipelago/Utils/ItemInList.as"
 #include "P2CE_Archipelago/Utils/MathUtils.as"
 
-
 /**
  * InitializeArchipelago - Atomic setup of core bridge entities.
  */
-    bool InitializeArchipelago() {
-        Msg("[Archipelago] INITIALIZING CORE...\n");
-        CBaseEntity@ cmd = util::CreateEntityByName("point_servercommand");
-        if (cmd !is null) {
-            cmd.KeyValue("targetname", "InitCmd");
-            cmd.Spawn();
+bool InitializeArchipelago() {
+    Msg("[Archipelago] INITIALIZING CORE...\n");
+    CBaseEntity@ cmd = util::CreateEntityByName("point_servercommand");
+    if (cmd !is null) {
+        cmd.KeyValue("targetname", "InitCmd");
+        cmd.Spawn();
         
         // --- PRECACHE ARCHIPELAGO ASSETS ---
-            cmd.PrecacheModel("models/props/archipelago/ap_buttonframe.mdl");
-            cmd.PrecacheModel("models/props/archipelago/ap_floorbuttonframe.mdl");
-            cmd.PrecacheModel("models/props/archipelago/ap_proptractorbeamframe.mdl");
-            cmd.PrecacheModel("models/effects/ap/archipelago_hologram.mdl");
+        cmd.PrecacheModel("models/props/archipelago/ap_buttonframe.mdl");
+        cmd.PrecacheModel("models/props/archipelago/ap_floorbuttonframe.mdl");
+        cmd.PrecacheModel("models/props/archipelago/ap_proptractorbeamframe.mdl");
+        cmd.PrecacheModel("models/effects/ap/archipelago_hologram.mdl");
         
         // --- INITIALIZE SYSTEMS ---
-            Variant vInit;
-            vInit.SetString("RunDelayedInit");
-            cmd.FireInput("Command", vInit, 0.5f, null, null, 0);
+        Variant vInit;
+        vInit.SetString("RunDelayedInit");
+        cmd.FireInput("Command", vInit, 0.5f, null, null, 0);
         
-            Msg("[Archipelago] SUCCESS: Core Bridge Ready.\n");
-        }
-    
-        return true; 
+        Msg("[Archipelago] SUCCESS: Core Bridge Ready.\n");
     }
+    
+    return true; 
+}
 
 // Global bootstrap trigger
-    bool Init = InitializeArchipelago();
-
+bool Init = InitializeArchipelago();

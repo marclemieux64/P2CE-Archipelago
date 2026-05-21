@@ -48,6 +48,7 @@
 
 // --- HOLOGRAM ---
 #include "P2CE_Archipelago/Function/Hologram/AttachHologramToEntity.as"
+#include "P2CE_Archipelago/Function/Hologram/BTS4ConveyorLogic.as"
 #include "P2CE_Archipelago/Function/Hologram/CreateMapSpecificHolos.as"
 #include "P2CE_Archipelago/Function/Hologram/Overrides/GetHologramVisualOverrides.as"
 #include "P2CE_Archipelago/Function/Hologram/Overrides/OverrideGel.as"

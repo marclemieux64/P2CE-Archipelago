@@ -76,7 +76,9 @@ class MainMenuSettings {
 		// Still faded out when we leave? Undo it
 		$.RegisterForUnhandledEvent('MainMenuPagePreClose', () => {
 			if (this.doingGameFade) {
-				$.DispatchEvent('MainMenuSetPauseBlur', true);
+				try {
+					$.DispatchEvent('MainMenuSetPauseBlur', true);
+				} catch (e) {}
 			}
 		});
 	}
@@ -369,7 +371,9 @@ class MainMenuSettings {
 				panel.style.animation = 'FadeOut 0.1s linear 0s 1 normal forwards';
 			}
 
-			$.DispatchEvent('MainMenuSetPauseBlur', false);
+			try {
+				$.DispatchEvent('MainMenuSetPauseBlur', false);
+			} catch (e) {}
 
 			this.doingGameFade = true;
 		});
@@ -422,7 +426,9 @@ class MainMenuSettings {
 				if (panel.IsValid()) panel.style.animation = 'FadeIn 0.1s linear 0s 1 normal forwards';
 			}
 
-			$.DispatchEvent('MainMenuSetPauseBlur', true);
+			try {
+				$.DispatchEvent('MainMenuSetPauseBlur', true);
+			} catch (e) {}
 
 			this.doingGameFade = false;
 		});

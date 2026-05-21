@@ -99,7 +99,7 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
 
     // BLOC DE MISE À JOUR CORRECTIF POUR LE RELOAD
     if (h !is null) {
-        if (h.GetModelName().locate("archipelago_hologram") != uint(-1)) {
+        if (h.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
             if (Archipelago::cv_ArchipelagoDebug.GetBool()) {
                 Archipelago::ArchipelagoLog("[AP DEBUG] Updating Hologram '" + name + "' to " + angles.x + " " + angles.y + " " + angles.z + " | Skin: " + skin);
             }
@@ -135,7 +135,7 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
 
             // Apply visibility settings
             int hideOption = Archipelago::cv_ArchipelagoHideHolograms.GetInt();
-            bool shouldHide = (hideOption == 2) || (hideOption == 1 && skin == 4);
+            bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
             Variant emptyVal;
             h.KeyValue("rendermode", "0");
             if (shouldHide) {
@@ -184,7 +184,7 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
 
         // Apply visibility settings
         int hideOption = Archipelago::cv_ArchipelagoHideHolograms.GetInt();
-        bool shouldHide = (hideOption == 2) || (hideOption == 1 && skin == 4);
+        bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
         Variant emptyVal;
         h.KeyValue("rendermode", "0");
         if (shouldHide) {
@@ -201,14 +201,14 @@ void UpdateHologramsVisibility() {
     int hideOption = cv_ArchipelagoHideHolograms.GetInt();
     
     while ((@ent = EntityList().FindByClassname(ent, "prop_dynamic")) !is null) {
-        if (ent.GetModelName().locate("archipelago_hologram") != uint(-1)) {
+        if (ent.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
             int skin = 0;
             CBaseAnimating@ anim = cast<CBaseAnimating>(ent);
             if (anim !is null) {
                 skin = anim.GetSkin();
             }
             
-            bool shouldHide = (hideOption == 2) || (hideOption == 1 && skin == 4);
+            bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
             Variant emptyVal;
             ent.KeyValue("rendermode", "0");
             if (shouldHide) {

@@ -9,6 +9,17 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
         cleanName = cleanName.substr(1);
     }
 
+    if (mapName == "sp_a2_bts4") {
+        if (entity_name == "npc_portal_turret_floor" || entity_name == "initial_template_turret" || cleanName == "initial_template_turret") {
+            g_bInitialTemplateHoloActive = false;
+            cv_BTS4_InitialTemplateHoloActive.SetValue(0);
+        }
+        if (entity_name == "npc_portal_turret_floor" || entity_name == "turret_conveyor_1_template" || cleanName == "turret_conveyor_1_template") {
+            g_bConveyor1TemplateHoloActive = false;
+            cv_BTS4_Conveyor1TemplateHoloActive.SetValue(0);
+        }
+    }
+
     if (entity_name == "potatos_prop" || entity_name == "potatos" || entity_name == "models/props/potatos.mdl") {
         create_holo = false;
     }

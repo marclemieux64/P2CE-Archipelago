@@ -269,6 +269,11 @@ void AttachHologramToEntityLegacyCmd(const CommandArgs@ args) {
     Archipelago::AttachHologramToEntity(args.Arg(1), args.Arg(2), args.Arg(3).toFloat(), args.Arg(4).toFloat(), args.Arg(5).toInt());
 }
 
+[ServerCommand("AP_BTS4_ConveyorTick", "Conveyor turret ticking logic for sp_a2_bts4")]
+void AP_BTS4_ConveyorTickCmd(const CommandArgs@ args) {
+    Archipelago::AP_BTS4_ConveyorTick();
+}
+
 [ServerCommand("RemovePotatosFromGun", "Removes PotatOS from the portal gun and world")]
 void RemovePotatosFromGunLegacyCmd(const CommandArgs@ args) {
     Archipelago::ArchipelagoLog("[AP RECV] RemovePotatosFromGun");

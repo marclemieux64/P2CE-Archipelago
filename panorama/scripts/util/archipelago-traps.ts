@@ -13,6 +13,11 @@ class ArchipelagoTrapManager {
 
         // Register for trap trigger events from AngelScript
         $.RegisterForUnhandledEvent("ArchipelagoTrapTriggered", (trapName: string, duration: number) => {
+            if (typeof trapName === 'string' && trapName.indexOf('|') !== -1) {
+                const parts = trapName.split('|');
+                trapName = parts[0];
+                duration = parseFloat(parts[1]);
+            }
             this.saveTrap(trapName, duration);
         });
 

@@ -43,6 +43,26 @@ void DoMapSpecificSetup() {
             v2.SetString("ent_fire laser_catcher_door_holo SetParent laser_catcher_door:0.8:-1");
             cmd.FireInput("Command", v2, 0.5f, null, null, 0);
         }
+    } else if (current_map == "sp_a2_bts4") {
+        CBaseEntity@ existingTimer = EntityList().FindByName(null, "bts4_conveyor_timer");
+        if (existingTimer is null) {
+            // Create a logic_timer to tick the conveyor hologram check
+            CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
+            if (timer !is null) {
+                timer.KeyValue("targetname", "bts4_conveyor_timer");
+                timer.KeyValue("RefireTime", "0.1");
+                
+                // Format d'output Source: Target \x1B Input \x1B Parameter \x1B Delay \x1B MaxFires
+                string payload = "InitCmd\x1BCommand\x1BAP_BTS4_ConveyorTick\x1B0\x1B-1";
+                timer.KeyValue("OnTimer", payload);
+                
+                timer.Spawn();
+                
+                // Enable the timer
+                Variant empty;
+                timer.FireInput("Enable", empty, 0.0f, null, null, 0);
+            }
+        }
     }
 }
 

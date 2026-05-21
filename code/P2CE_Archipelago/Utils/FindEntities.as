@@ -18,6 +18,33 @@ namespace Archipelago {
         CBaseEntity@ ent = null;
     
         if (search == "") return targets;
+
+        // sp_a2_bts4 conveyor turret search mapping (prevents renaming them which breaks map physics constraints)
+        if (current_map == "sp_a2_bts4" && (search == "initial_template_turret" || search == "turret_conveyor_1_template")) {
+            CBaseEntity@ checkEnt = EntityList().First();
+            while (@checkEnt !is null) {
+                if (Archipelago::IsConveyorTurret(checkEnt)) {
+                    string name = checkEnt.GetEntityName();
+                    bool isConveyor1 = false;
+                    float dist = checkEnt.GetAbsOrigin().DistTo(Vector(1824, -7024, 6655.830f));
+                    if (name.locate("turret_conveyor_1") != uint(-1) || dist < 300.0f) {
+                        isConveyor1 = true;
+                    }
+
+                    if (search == "turret_conveyor_1_template") {
+                        if (isConveyor1) {
+                            targets.insertLast(checkEnt);
+                        }
+                    } else {
+                        if (!isConveyor1) {
+                            targets.insertLast(checkEnt);
+                        }
+                    }
+                }
+                @checkEnt = EntityList().Next(checkEnt);
+            }
+            return targets;
+        }
         string lowerSearch = search.tolower();
     
     // GLOBAL EXCLUSION: factory_target must never be processed

@@ -659,13 +659,22 @@ class Portal2Context(CommonContext):
         if cmd == "ReceivedItems":
             index = args["index"]
             for item in args["items"]:
-                if index >= len(self.items_received) and (item.flags & 0b100):
-                    trap_cmd = handle_trap(self.item_names.lookup_in_game(item.item, self.game))
-                    if trap_cmd:
-                        self.execute_in_game_event({
-                            "command": trap_cmd + "\n"
-                        })
+                # 1. Vérification : On ne traite le flag "Trap" (0b100) 
+                # que si on n'est PAS en train de traiter la commande /received
+                if (item.flags & 0b100):
+                    if not self.is_processing_received_cmd:
+                        trap_cmd = handle_trap(self.item_names.lookup_in_game(item.item, self.game))
+                        if trap_cmd:
+                            self.execute_in_game_event({
+                                "command": trap_cmd + "\n"
+                            })
+                    else:
+                        # Log optionnel pour debugger en console
+                        logger.info(f"Ignoré le piège {item.item} car /received est actif.")
+                
                 index += 1
+            
+            # On laisse le traitement normal des items de liste (update_item_list)
             super().on_package(cmd, args)
             update_item_list()
             self.update_item_remove_commands()

@@ -38,6 +38,9 @@ class NotificationManager:
 
     def on_print_silently(self, text: str, rich_data: list = None, html_text: str = None, mirror_to_hud: bool = False):
         """Cœur du système : formate le texte et l'envoie à l'interface."""
+        is_processing = getattr(self.ctx, "is_processing_received_cmd", False)
+        if is_processing:
+            mirror_to_hud = False
         print(f"[DEBUG] {text}")
 
         text_lower = text.lower()
@@ -94,7 +97,8 @@ class NotificationManager:
             "priority": mirror_to_hud,  
             "no_notification": no_notification,
             "ap_msg_type": ap_msg_type,
-            "time": time.time()
+            "time": time.time(),
+            "muted": is_processing
         })
         if len(self.chat_log) > 100:
             self.chat_log.pop(0)
@@ -122,8 +126,10 @@ class NotificationManager:
                     item_name = self.ctx.item_names.lookup_in_slot(int(text), owner_id)
                     new_part["text"] = item_name
                     
+                    # On vérifie si c'est un piège, mais on ne lève l'alerte HUD 
+                    # que si on n'est pas en train de lister l'historique /received
                     trap_cmd = handle_trap(item_name)
-                    if trap_cmd:
+                    if trap_cmd and not getattr(self.ctx, "is_processing_received_cmd", False):
                         new_part["is_trap"] = True
                         is_trap_msg = True
                         
@@ -135,6 +141,12 @@ class NotificationManager:
             resolved_data.append(new_part)
 
         text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in resolved_data)
+        
+        # Bloque la notification intempestive sur le HUD lors du /received
+        if getattr(self.ctx, "is_processing_received_cmd", False):
+            mirror_to_hud = False
+            is_trap_msg = False
+
         self.on_print_silently(text, resolved_data, mirror_to_hud=(mirror_to_hud or is_trap_msg))
 
     def on_print_json(self, args: dict):

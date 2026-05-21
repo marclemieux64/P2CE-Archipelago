@@ -165,6 +165,10 @@ function ProcessChat(json: string) {
                 lastId = msg.id;
                 globalObj.AP_SharedNotificationId = lastId;
 
+                if (msg.muted === true) {
+                    continue; 
+                }
+
                 let finalHtml = msg.text || "";
                 
                 if (msg.type === "json" && Array.isArray(msg.data)) {

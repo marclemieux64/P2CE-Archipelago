@@ -13,6 +13,7 @@ namespace Archipelago {
 
 // --- CONVARS & REFS ---
     ConVar cv_ArchipelagoDebug("ArchipelagoDebug", "0");
+    ConVar cv_ArchipelagoHideHolograms("ap_hide_holograms", "0", FCVAR_ARCHIVE);
     ConVarRef host_map("host_map");
 
 // --- BOOLEANS ---

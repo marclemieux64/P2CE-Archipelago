@@ -82,6 +82,48 @@ function SavePortalGunSkinSetting() {
     }
 }
 
+function SaveHideHologramsSetting() {
+    const dropdown = $('#HideHologramsSetting');
+    if (dropdown) {
+        const realDropdown = dropdown.FindChildTraverse('DropDown') as any;
+        if (realDropdown) {
+            const selected = realDropdown.GetSelected();
+            if (selected) {
+                const val = selected.GetAttributeInt('value', 0);
+                $.persistentStorage.setItem('ap_hide_holograms', val);
+                
+                // Mettre à jour la convar pour le moteur
+                GameInterfaceAPI.SetSettingInt('ap_hide_holograms', val);
+                
+                // Déclencher la mise à jour visuelle immédiate en jeu
+                GameInterfaceAPI.ConsoleCommand('AP_UpdateHologramsVisibility');
+                $.Msg(`[AP] Hide Holograms setting saved: ${val}`);
+            }
+        }
+    }
+}
+
+function SaveStatusIndicatorModeSetting() {
+    const dropdown = $('#StatusIndicatorModeSetting');
+    if (dropdown) {
+        const realDropdown = dropdown.FindChildTraverse('DropDown') as any;
+        if (realDropdown) {
+            const selected = realDropdown.GetSelected();
+            if (selected) {
+                const val = selected.GetAttributeInt('value', 0);
+                $.persistentStorage.setItem('ap_status_indicator_mode', val);
+                
+                // Rafraîchir immédiatement l'indicateur sur le HUD
+                const statusIndicator = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoStatusIndicator;
+                if (statusIndicator) {
+                    statusIndicator.refreshVisibility();
+                }
+                $.Msg(`[AP] Status Indicator Mode saved: ${val}`);
+            }
+        }
+    }
+}
+
 function LoadArchipelagoSettings() {
     // 1. Completion Symbol
     const compVal = $.persistentStorage.getItem('ap_completion_symbol') ?? 0;
@@ -104,6 +146,20 @@ function LoadArchipelagoSettings() {
     // Applique le skin au moteur de jeu immédiatement au chargement
     GameInterfaceAPI.ConsoleCommand('AP_UpdateGunSkin ' + skinVal)
 
+    // 5. Hide Holograms
+    const hideHoloVal = $.persistentStorage.getItem('ap_hide_holograms') ?? 0;
+    const hideHoloDropdown = $('#HideHologramsSetting')?.FindChildTraverse('DropDown') as any;
+    if (hideHoloDropdown) hideHoloDropdown.SetSelected('ap_hide_holograms_' + hideHoloVal);
+    
+    // Synchroniser la convar et rafraîchir la visibilité au chargement
+    GameInterfaceAPI.SetSettingInt('ap_hide_holograms', hideHoloVal);
+    GameInterfaceAPI.ConsoleCommand('AP_UpdateHologramsVisibility');
+
+    // 6. Status Indicator Mode
+    const statusIndVal = $.persistentStorage.getItem('ap_status_indicator_mode') ?? 0;
+    const statusIndDropdown = $('#StatusIndicatorModeSetting')?.FindChildTraverse('DropDown') as any;
+    if (statusIndDropdown) statusIndDropdown.SetSelected('ap_status_indicator_mode_' + statusIndVal);
+
     UpdateMapStatusHUDKeyBinder();
 }
 
@@ -122,6 +178,8 @@ function UpdateMapStatusHUDKeyBinder() {
 (UiToolkitAPI.GetGlobalObject() as any).SaveMapStatusHUDSetting = SaveMapStatusHUDSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveSmartWarpSetting = SaveSmartWarpSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SavePortalGunSkinSetting = SavePortalGunSkinSetting;
+(UiToolkitAPI.GetGlobalObject() as any).SaveHideHologramsSetting = SaveHideHologramsSetting;
+(UiToolkitAPI.GetGlobalObject() as any).SaveStatusIndicatorModeSetting = SaveStatusIndicatorModeSetting;
 (UiToolkitAPI.GetGlobalObject() as any).LoadArchipelagoSettings = LoadArchipelagoSettings;
 (UiToolkitAPI.GetGlobalObject() as any).UpdateMapStatusHUDKeyBinder = UpdateMapStatusHUDKeyBinder; // <-- CORRECTIF ICI
 

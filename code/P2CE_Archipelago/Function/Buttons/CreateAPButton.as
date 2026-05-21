@@ -132,6 +132,18 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
             }
             
             h.KeyValue("modelscale", "" + scale);
+
+            // Apply visibility settings
+            int hideOption = Archipelago::cv_ArchipelagoHideHolograms.GetInt();
+            bool shouldHide = (hideOption == 2) || (hideOption == 1 && skin == 4);
+            Variant emptyVal;
+            h.KeyValue("rendermode", "0");
+            if (shouldHide) {
+                h.FireInput("Disable", emptyVal, 0.0f, null, null, 0);
+            } else {
+                h.FireInput("Enable", emptyVal, 0.0f, null, null, 0);
+            }
+
             return h;
         }
     }
@@ -169,8 +181,43 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
                 h.FireInput("SetParentAttachment", v, 0.01f, null, null, 0);
             }
         }
+
+        // Apply visibility settings
+        int hideOption = Archipelago::cv_ArchipelagoHideHolograms.GetInt();
+        bool shouldHide = (hideOption == 2) || (hideOption == 1 && skin == 4);
+        Variant emptyVal;
+        h.KeyValue("rendermode", "0");
+        if (shouldHide) {
+            h.FireInput("Disable", emptyVal, 0.0f, null, null, 0);
+        } else {
+            h.FireInput("Enable", emptyVal, 0.0f, null, null, 0);
+        }
     }
     return h;
+}
+
+void UpdateHologramsVisibility() {
+    CBaseEntity@ ent = null;
+    int hideOption = cv_ArchipelagoHideHolograms.GetInt();
+    
+    while ((@ent = EntityList().FindByClassname(ent, "prop_dynamic")) !is null) {
+        if (ent.GetModelName().locate("archipelago_hologram") != uint(-1)) {
+            int skin = 0;
+            CBaseAnimating@ anim = cast<CBaseAnimating>(ent);
+            if (anim !is null) {
+                skin = anim.GetSkin();
+            }
+            
+            bool shouldHide = (hideOption == 2) || (hideOption == 1 && skin == 4);
+            Variant emptyVal;
+            ent.KeyValue("rendermode", "0");
+            if (shouldHide) {
+                ent.FireInput("Disable", emptyVal, 0.0f, null, null, 0);
+            } else {
+                ent.FireInput("Enable", emptyVal, 0.0f, null, null, 0);
+            }
+        }
+    }
 }
 
 } // namespace Archipelago

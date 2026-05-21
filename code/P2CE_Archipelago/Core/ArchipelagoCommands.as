@@ -409,3 +409,8 @@ void DisableTriggerAtPosCmd(const CommandArgs@ args) {
         Archipelago::ArchipelagoLog("[AP] DisableTriggerAtPos: Aucun trigger trouvé à la position " + pos.x + " " + pos.y + " " + pos.z);
     }
 }
+
+[ServerCommand("AP_UpdateHologramsVisibility", "Updates the visibility of all holograms based on settings")]
+void AP_UpdateHologramsVisibilityCmd(const CommandArgs@ args) {
+    Archipelago::UpdateHologramsVisibility();
+}

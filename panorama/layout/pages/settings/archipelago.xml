@@ -62,6 +62,30 @@
 					text="#Archipelago_Settings_Key_ShowStatus"
 					bind="ShowStatus"
 				/>
+
+				<SettingsEnumDropDown
+					id="HideHologramsSetting"
+					text="#Archipelago_Settings_HideHolograms"
+					infomessage="#Archipelago_Settings_HideHolograms_info"
+					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveHideHologramsSetting()"
+					psvar="ap_hide_holograms"
+				>
+					<Label text="#Archipelago_Settings_HideHolograms_0" value="0" id="ap_hide_holograms_0" />
+					<Label text="#Archipelago_Settings_HideHolograms_1" value="1" id="ap_hide_holograms_1" />
+					<Label text="#Archipelago_Settings_HideHolograms_2" value="2" id="ap_hide_holograms_2" />
+				</SettingsEnumDropDown>
+
+				<SettingsEnumDropDown
+					id="StatusIndicatorModeSetting"
+					text="#Archipelago_Settings_StatusIndicatorMode"
+					infomessage="#Archipelago_Settings_StatusIndicatorMode_info"
+					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveStatusIndicatorModeSetting()"
+					psvar="ap_status_indicator_mode"
+				>
+					<Label text="#Archipelago_Settings_StatusIndicatorMode_0" value="0" id="ap_status_indicator_mode_0" />
+					<Label text="#Archipelago_Settings_StatusIndicatorMode_1" value="1" id="ap_status_indicator_mode_1" />
+					<Label text="#Archipelago_Settings_StatusIndicatorMode_2" value="2" id="ap_status_indicator_mode_2" />
+				</SettingsEnumDropDown>
 			</Panel>
 <Panel class="settings-page__spacer" />
 			<Panel id="ArchipelagoCosmetics" class="settings-group">

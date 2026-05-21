@@ -111,7 +111,6 @@ namespace Archipelago {
         if (model.locate("faith_plate") != uint(-1)) {
             targetScale = 1.0f;
             targetPos = Vector(0, 0, 30.0f);
-            absoluteAngles = true;
             return;
         } 
 
@@ -160,11 +159,10 @@ namespace Archipelago {
             }
             return;
         } 
-
-        if (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel") {
+if (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel") {
             targetSkin = 4;
             targetPos = Vector(80.0f, 0, 0); 
-            targetAng = QAngle(90.0f, 0, 0); 
+            targetAng = QAngle(-90.0f, 0, 0); 
             return;
         }
     }

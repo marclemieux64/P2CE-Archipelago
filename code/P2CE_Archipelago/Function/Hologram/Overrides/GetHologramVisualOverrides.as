@@ -96,7 +96,8 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
     }
 
     if (model.locate("faith_plate") != uint(-1)) {
-        targetScale = 0.66f;
+        targetScale = 1.0f;
+        targetPos = Vector(0, 0, 30.0f);
         absoluteAngles = true;
         return;
     } 
@@ -134,7 +135,7 @@ void GetHologramVisualOverrides(CBaseEntity@ ent, Vector&out targetPos, QAngle&o
             targetAng = QAngle(90.0f, 0, 0); 
         }
         return;
-    } 
+    }  
 
     if (classname.locate("button") != uint(-1)) {
         shouldParent = true;

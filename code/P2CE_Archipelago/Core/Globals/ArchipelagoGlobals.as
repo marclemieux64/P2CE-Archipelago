@@ -8,6 +8,7 @@ int transition_script_count = 0;
 bool g_has_printed_map_complete = false;
 bool sent_death_link = false;
 
+
 namespace Archipelago {
 
 // --- CONVARS & REFS ---
@@ -15,7 +16,7 @@ namespace Archipelago {
     ConVarRef host_map("host_map");
 
 // --- BOOLEANS ---
-    // Moved to global scope
+bool portalgun_2_disabled = false;
 
 // --- INTEGERS ---
     dictionary g_vitrified_door_names;

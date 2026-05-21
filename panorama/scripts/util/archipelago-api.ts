@@ -1,6 +1,5 @@
 'use strict';
 
-// --- DÉCLARATION DES ÉVÉNEMENTS PANORAMA ---
 try {
     $.DefineEvent("ArchipelagoAPI_StatusUpdated", 1, "json");
     $.DefineEvent("ArchipelagoAPI_ChatUpdated", 1, "json");
@@ -8,7 +7,7 @@ try {
 } catch (e) { }
 
 class ArchipelagoAPI {
-    static VERSION: string = "2.0.5"; 
+    static VERSION: string = "2.1.0"; 
     static API_BASE: string = "http://127.0.0.1:8910";
     
     static m_Status: any = null;
@@ -17,12 +16,12 @@ class ArchipelagoAPI {
     
     static m_PollSchedule: any = null;
 
-    // Caches bruts pour éviter le traitement CPU inutile
-    static m_LastRawStatus: string = "";
-    static m_LastRawChat: string = "";
+    // Stockage des jetons ETag pour court-circuiter le thread Panorama
+    static m_StatusETag: string = "";
+    static m_ChatETag: string = "";
 
     static init() {
-        $.Msg("[AP] Initializing Optimized Compatible API");
+        $.Msg("[AP] Initializing High-Performance ETag-Cached API");
         this.startPolling();
     }
 
@@ -36,60 +35,65 @@ class ArchipelagoAPI {
     }
 
     static pulse() {
-        // 1. Requête pour le statut
+        const headers: Record<string, string> = {};
+        if (this.m_StatusETag) {
+            headers["If-None-Match"] = this.m_StatusETag;
+        }
+
         $.AsyncWebRequest(this.API_BASE + "/status", {
             type: 'GET',
+            headers: headers,
             complete: (res: any) => {
-                if (res.status === 200 && res.responseText) {
-                    const cleanText = res.responseText.trim().replace(/\0/g, '');
-                    
-                    // PERFORMANCE COMPACT : Si rien n'a changé, on ignore le parsing et le Dispatch
-                    if (cleanText === this.m_LastRawStatus) return;
-                    this.m_LastRawStatus = cleanText;
+                // Si le code est 304, la structure n'a pas bougé (Économie CPU maximale)
+                if (res.status === 304) {
+                    this.fetchChat();
+                    return;
+                }
 
+                if (res.status === 200 && res.responseText) {
+                    const eTagHeader = res.getheader ? res.getheader("ETag") : "";
+                    if (eTagHeader) this.m_StatusETag = eTagHeader;
+
+                    const cleanText = res.responseText.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").trim();
                     try {
                         const data = JSON.parse(cleanText);
                         this.m_Status = data;
-                        
                         if (data.logic_difficulty !== undefined) {
                             $.persistentStorage.setItem("ArchipelagoLogicDifficulty", data.logic_difficulty);
                         }
-
-                        $.DispatchEvent("ArchipelagoAPI_StatusUpdated", JSON.stringify(this.m_Status));
+                        // On distribue la chaîne propre
+                        $.DispatchEvent("ArchipelagoAPI_StatusUpdated", cleanText);
                     } catch (e) { }
                 }
-            },
-            error: () => {
-                if (!this.m_Status || !this.m_Status.client_offline) {
-                    this.m_Status = { client_offline: true };
-                    this.m_LastRawStatus = ""; // Reset du cache
-                    $.DispatchEvent("ArchipelagoAPI_StatusUpdated", JSON.stringify(this.m_Status));
-                }
+                this.fetchChat();
             }
         });
-
-        // 2. Requête pour le chat
-        this.fetchChat();
     }
 
     static fetchChat(callback?: (chat: any) => void) {
+        const headers: Record<string, string> = {};
+        if (this.m_ChatETag) {
+            headers["If-None-Match"] = this.m_ChatETag;
+        }
+
         $.AsyncWebRequest(this.API_BASE + "/chat", {
             type: 'GET',
+            headers: headers,
             complete: (res: any) => {
-                if (res.status === 200 && res.responseText) {
-                    const cleanText = res.responseText.trim().replace(/\0/g, '');
-                    
-                    // PERFORMANCE COMPACT : Si aucun nouveau message, on s'arrête
-                    if (cleanText === this.m_LastRawChat) {
-                        if (callback) callback(this.m_Chat);
-                        return;
-                    }
-                    this.m_LastRawChat = cleanText;
+                if (res.status === 304) {
+                    if (callback) callback(this.m_Chat);
+                    return;
+                }
 
+                if (res.status === 200 && res.responseText) {
+                    const eTagHeader = res.getheader ? res.getheader("ETag") : "";
+                    if (eTagHeader) this.m_ChatETag = eTagHeader;
+
+                    const cleanText = res.responseText.trim().replace(/\0/g, '');
                     try {
                         const data = JSON.parse(cleanText);
                         this.m_Chat = data;
-                        $.DispatchEvent("ArchipelagoAPI_ChatUpdated", JSON.stringify(this.m_Chat));
+                        $.DispatchEvent("ArchipelagoAPI_ChatUpdated", cleanText);
                         if (callback) callback(data);
                     } catch (e) { }
                 }
@@ -103,8 +107,8 @@ class ArchipelagoAPI {
             type: 'POST',
             data: { command: cmd },
             complete: () => { 
-                this.m_LastRawStatus = ""; // Force l'actualisation au prochain pulse
-                this.m_LastRawChat = "";
+                this.m_StatusETag = ""; // Invalidation immédiate pour forcer le rafraîchissement au prochain pulse
+                this.m_ChatETag = "";
                 this.pulse(); 
             }
         });

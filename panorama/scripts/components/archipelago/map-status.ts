@@ -33,8 +33,10 @@ var ArchipelagoMapStatusHUD = class {
             }
         });
 
-        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", (json: string) => {
+        // --- CORRECTIF SÉCURISÉ POUR L'ÉVÉNEMENT API ---
+        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", (payload: any) => {
             if (this.m_CurrentMapName) {
+                // L'appel direct laisse updateStatus gérer le décodage si c'est une chaîne
                 this.updateStatus(this.m_CurrentMapName, false, this.m_PendingShow);
             }
         });
@@ -52,8 +54,22 @@ var ArchipelagoMapStatusHUD = class {
         const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
         const logicHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoLogic;
         
-        const apiStatus = api ? api.getStatus() : null;
-        if (!apiStatus || !apiStatus.menu || !syncHelper || !logicHelper) {
+        let apiStatus = api ? api.getStatus() : null;
+        if (!apiStatus || !syncHelper || !logicHelper) {
+            if (forceShow) this.m_PendingShow = true;
+            return;
+        }
+
+        // --- GESTION ET ADAPTATION DU TYPE DE DONNÉES (OBJECT VS STRING) ---
+        if (typeof apiStatus === 'string') {
+            try {
+                apiStatus = JSON.parse(apiStatus);
+            } catch (e) {
+                return;
+            }
+        }
+
+        if (!apiStatus.menu) {
             if (forceShow) this.m_PendingShow = true;
             return;
         }
@@ -86,7 +102,6 @@ var ArchipelagoMapStatusHUD = class {
 
         if (!container.HasClass('visible')) return;
 
-        // --- CORRECTION 1: Extraction robuste du nom de la carte (comme dans map-select.ts) ---
         let mapCmdName = currentMapName;
         const fullCommand = currentMapData.command || currentMapData.command_deactivated || "";
         if (fullCommand) {
@@ -101,7 +116,6 @@ var ArchipelagoMapStatusHUD = class {
         const statusIconsRaw = (currentMapData.statusIcons || currentMapData.info || "").replace(/[~\-]/g, "").trim();
         const mItemsRaw = currentMapData.subtitle || "";
         
-        // --- CORRECTION 2: Ajout du statut "en jeu" dans la clé pour forcer le HUD à se rafraîchir ---
         const mapStatusFromEngine = $.persistentStorage.getItem("ArchipelagoLastMapStatus") || 0;
         const currentStatusKey = statusIconsRaw + mItemsRaw + mapCmdName + mapStatusFromEngine;
 
@@ -110,7 +124,6 @@ var ArchipelagoMapStatusHUD = class {
             const iconsContainer = $('#StatusIcons');
             iconsContainer.RemoveAndDeleteChildren();
             
-            // On utilise mapCmdName (strict) au lieu du nom brut
             const formattedIcons = logicHelper.getFormattedIcons(statusIconsRaw, mapCmdName, mItemsRaw);
             for (const iconData of formattedIcons) {
                 const icon = $.CreatePanel('Label', iconsContainer, '');
@@ -125,7 +138,7 @@ var ArchipelagoMapStatusHUD = class {
             }
         }
 
-        // --- GESTION DES MISSING ITEMS (Section du bas - Masquable) ---
+        // --- GESTION DES MISSING ITEMS ---
         const missingItemsList = logicHelper.getMissingItemsList(mItemsRaw);
         let currentMissingKey = "";
         let redCount = 0;

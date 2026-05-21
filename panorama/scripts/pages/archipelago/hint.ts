@@ -32,6 +32,13 @@ class ArchipelagoHint {
         );
 
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        
+        // --- CHARGEMENT INSTANTANÉ DE SÉCURITÉ PAR LE CACHE ---
+        const cachedHints = $.persistentStorage.getItem("ArchipelagoLastHintsCacheData");
+        if (cachedHints) {
+            try { this.render(JSON.parse(cachedHints)); } catch(e) {}
+        }
+
         if (api) {
             $.AsyncWebRequest(api.API_BASE + "/hints/refresh", { type: 'POST' });
             this.updateLoop();
@@ -86,7 +93,7 @@ class ArchipelagoHint {
 
         const updatePoints = (json: string) => {
             try {
-                const status = JSON.parse(json);
+                let status = typeof json === 'string' ? JSON.parse(json) : json;
                 if (status && status.hint_points !== undefined) {
                     const ptsLabel = $.GetContextPanel().FindChildTraverse('HintPointsLabel') as LabelPanel;
                     if (ptsLabel) {
@@ -105,10 +112,12 @@ class ArchipelagoHint {
             } catch (e) { }
         };
 
-        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", updatePoints);
+        $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", (payload: any) => {
+            updatePoints(payload);
+        });
         
         if (api && api.getStatus()) {
-            updatePoints(JSON.stringify(api.getStatus()));
+            updatePoints(api.getStatus());
         }
     }
 
@@ -226,7 +235,7 @@ class ArchipelagoHint {
         if (finalValue) {
             this.m_WaitingForFeedback = true;
             this.m_LastMatchedMsg = ""; 
-            this.m_LastRawHints = ""; // Force l'invalidation du rendu
+            this.m_LastRawHints = ""; 
             
             $.Schedule(5.0, () => { this.m_WaitingForFeedback = false; });
 
@@ -275,12 +284,12 @@ class ArchipelagoHint {
                 if (res.status === 200 && res.responseText) {
                     const cleanText = res.responseText.trim().replace(/\0/g, '');
                     
-                    // PROTECTION ASSURÉE CONTRE LE LAG : Si la liste n'a pas bougé, on skip la reconstruction graphique !
                     if (cleanText === ArchipelagoHint.m_LastRawHints) {
                         $.Schedule(1.0, () => this.updateLoop());
                         return;
                     }
                     ArchipelagoHint.m_LastRawHints = cleanText;
+                    $.persistentStorage.setItem("ArchipelagoLastHintsCacheData", cleanText);
 
                     try {
                         const hints = JSON.parse(cleanText);

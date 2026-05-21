@@ -34,16 +34,14 @@ void InitializeCubeDatabase() {
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro1", "cube_dropper_2-cube_dropper_box", Vector(0, 0, -195), QAngle(180, 0, 0), 1.0f));
     
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro4", "box_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-    g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro4", "metal_box.mdl_1307_-909_-39", Vector(0, 0, -800), QAngle(0, 0, 0), 0.8f)); // Conservé à 0.8f d'origine
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro4", "metal_box.mdl_1307_-909_-39", Vector(0, 0, -800), QAngle(0, 0, 0), 0.8f));
     
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro5", "cube_dropper_1-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro5", "cube_dropper_2-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro6", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-    
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro7", "metal_box.mdl", Vector(25, 0, 0), QAngle(0, 0, 90), 0.8f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro7", "reflection_cube.mdl", Vector(25, 0, 0), QAngle(0, 0, 90), 0.8f));
-    
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_laser_stairs", "cube_dropper_01-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_laser_over_goo", "cube_dropper_box", Vector(0, 0, -535), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_catapult_intro", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
@@ -53,11 +51,11 @@ void InitializeCubeDatabase() {
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_sphere_peek", "reflectocube_dropper_box", Vector(0, 0, -530), QAngle(180, 0, 0), 1.0f));
     
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_ricochet", "reflecto_cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-    g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_ricochet", "juggled_cube", Vector(0, 0, 35), QAngle(0, 0, 0), 0.8f)); // Conservé à 0.8f d'origine
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_ricochet", "juggled_cube", Vector(0, 0, 35), QAngle(0, 0, 0), 0.8f));
     
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_bridge_intro", "box_dropper_01-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_bridge_the_gap", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-    g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_laser_relays", "laser_cube_spawner", Vector(0, 0, -30), QAngle(0, 0, 0), 0.8f)); // Angles d'origine restaurés à (0,0,0)
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_laser_relays", "laser_cube_spawner", Vector(0, 0, -30), QAngle(0, 0, 0), 0.8f));
     
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_column_blocker", "cube_dropper_1-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_column_blocker", "cube_dropper_2-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
@@ -68,13 +66,19 @@ void InitializeCubeDatabase() {
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_laser_platform", "cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_intro", "cube_dropper_box", Vector(0, 0, -530), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_intro", "cube_dropper_box", Vector(0, 0, -540), QAngle(180, 0, 0), 1.0f));
-    g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_trust_drop", "cube_dropper_box", Vector(0, 0, -540), QAngle(180, 0, 0), 1.0f)); // Doublon nettoyé proprement
-    g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_wall_button", "cube_dropper_box_spawner", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_trust_drop", "cube_dropper_box", Vector(0, 0, -540), QAngle(180, 0, 0), 1.0f));
+    
+    // --- SCÉNARIO SP_A4_TB_WALL_BUTTON DOUBLE SÉCURITÉ ---
+    // Match par nom d'entité strict
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_wall_button", "cube_dropper_box_spawner", Vector(-1540, 0, -500), QAngle(180, 0, 0), 1.0f));
+    // Filet de sécurité : Match par sous-chaîne de modèle si l'entité résiduelle est anonyme
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_wall_button", "dropper", Vector(-1540, 0, -500), QAngle(180, 0, 0), 1.0f));
+
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_polarity", "cube_dropper_box", Vector(0, 0, -525), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_catch", "cube_dropper_box", Vector(0, 0, -525), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_stop_the_box", "cube_dropper_box", Vector(0, 0, -525), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_speed_tb_catch", "cube_dropper_box", Vector(0, 0, -525), QAngle(180, 0, 0), 1.0f));
-
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a4_finale1", "cube_dropper_box", Vector(0, 0, -540), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabaseInitialized = true;
 }
 
@@ -84,7 +88,6 @@ void UpdateActiveCubeCache() {
 
     g_ActiveCubeCache.resize(0);
     g_LastCubeCachedMap = ::current_map;
-
     for (uint i = 0; i < g_CubeDatabase.length(); i++) {
         if (g_CubeDatabase[i].map_name == g_LastCubeCachedMap) {
             g_ActiveCubeCache.insertLast(g_CubeDatabase[i]);
@@ -102,12 +105,10 @@ void OverrideCube(const string&in name, CBaseEntity@ ent, Vector&out targetPos, 
     absoluteAngles = true;
 
     UpdateActiveCubeCache();
-
     uint cacheSize = g_ActiveCubeCache.length();
     if (cacheSize == 0) return;
 
     string lowerName = name.tolower();
-
     for (uint i = 0; i < cacheSize; i++) {
         if (lowerName.locate(g_ActiveCubeCache[i].entity_substring) != uint(-1)) {
             targetPos = g_ActiveCubeCache[i].target_pos;

@@ -328,6 +328,7 @@ class Portal2Context(CommonContext):
         import threading
         from http.server import BaseHTTPRequestHandler, HTTPServer
         from urllib.parse import parse_qs
+        import hashlib
         from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened 
         client_self = self
 
@@ -337,48 +338,11 @@ class Portal2Context(CommonContext):
                 self.send_response(200); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers()
 
             def do_GET(self):
-                if self.path == '/status_full':
-                    is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
-                    
-                    missing_str = ""
-                    if hasattr(client_self, "item_list"):
-                        missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list])
+                is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
+                missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
 
-                    full_data = {
-                        "status": {
-                            "connected": is_conn, 
-                            "game_connected": client_self.check_game_connection(), 
-                            "slot": client_self.slot, 
-                            "checked_locations": list(client_self.checked_locations), 
-                            "missing_items": missing_str, 
-                            "hint_points": getattr(client_self, "hint_points", 0), 
-                            "hint_cost": getattr(client_self, "hint_cost", 0), 
-                            "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
-                            "menu": client_self.menu.to_dict() if client_self.menu else None
-                        },
-                        "chat": client_self.notifier.chat_log,
-                        "hints": client_self.notifier.hint_log
-                    }
-                    
-                    json_body = json.dumps(full_data)
-                    current_hash = str(hash(json_body))
-
-                    self.send_response(200)
-                    self.send_header('Content-Type', 'application/json')
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.send_header('X-Data-Hash', current_hash)
-                    self.end_headers()
-                    self.wfile.write(json_body.encode('utf-8'))
-                    return
-
-                if self.path == '/status':
-                    is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
-                    
-                    missing_str = ""
-                    if hasattr(client_self, "item_list"):
-                        missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list])
-
-                    self._send_json({
+                if self.path == '/status_full' or self.path == '/status':
+                    data_to_serialize = {
                         "connected": is_conn, 
                         "game_connected": client_self.check_game_connection(), 
                         "slot": client_self.slot, 
@@ -386,20 +350,42 @@ class Portal2Context(CommonContext):
                         "missing_items": missing_str, 
                         "hint_points": getattr(client_self, "hint_points", 0), 
                         "hint_cost": getattr(client_self, "hint_cost", 0), 
+                        "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
                         "menu": client_self.menu.to_dict() if client_self.menu else None
-                    })
+                    }
+                    if self.path == '/status_full':
+                        data_to_serialize["chat"] = client_self.notifier.chat_log
+                        data_to_serialize["hints"] = client_self.notifier.hint_log
+                
                 elif self.path == '/chat':
-                    self._send_json(client_self.notifier.chat_log)
+                    data_to_serialize = client_self.notifier.chat_log
                 elif self.path == '/hints':
-                    self._send_json(client_self.notifier.hint_log)
+                    data_to_serialize = client_self.notifier.hint_log
                 else:
                     self.send_error(404)
+                    return
+
+                json_body = json.dumps(data_to_serialize)
+                
+                # --- SYSTÈME ETAG / HASH POUR SÉCURISER LE FPS ---
+                response_hash = hashlib.md5(json_body.encode('utf-8')).hexdigest()
+                if self.headers.get('If-None-Match') == response_hash:
+                    self.send_response(304) # Not Modified (Zéro parsing côté Panorama)
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    return
+
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('ETag', response_hash)
+                self.end_headers()
+                self.wfile.write(json_body.encode('utf-8'))
 
             def do_POST(self):
                 try:
                     content_length = int(self.headers.get('Content-Length', 0))
                     body = self.rfile.read(content_length).decode('utf-8')
-                    
                     command = None
                     try:
                         data = json.loads(body)
@@ -409,7 +395,6 @@ class Portal2Context(CommonContext):
                         if "command" in data: command = data["command"][0]
 
                     if self.path == '/command' and command:
-                        print(f"[UI] Commande reçue : {command}")
                         client_self.loop.call_soon_threadsafe(client_self.on_input, command)
                         self._send_json({"status": "ok"})
                     elif self.path == '/hints/refresh':
@@ -426,8 +411,7 @@ class Portal2Context(CommonContext):
             try:
                 server = HTTPServer(('0.0.0.0', 8910), APIHandler)
                 server.serve_forever()
-            except Exception as e: 
-                print(f"API Server Error: {e}")
+            except Exception as e: pass
 
         threading.Thread(target=run_server, daemon=True).start()
 

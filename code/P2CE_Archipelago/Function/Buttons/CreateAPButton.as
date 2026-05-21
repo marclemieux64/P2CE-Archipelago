@@ -92,23 +92,35 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
 
     CBaseEntity@ CreateAPHologram(Vector position, QAngle angles, float scale, CBaseEntity@ parent = null, string attachment = "", int skin = 0, string name = "", bool animate = true) {
     CBaseEntity@ h = null;
-
     if (name != "") {
         @h = EntityList().FindByName(null, name);
     }
 
-    // BLOC DE MISE À JOUR CORRECTIF POUR LE RELOAD
+    // 1. BLOC DE MISE À JOUR CORRECTIF POUR LE RELOAD
     if (h !is null) {
         if (h.GetModelName().locate("archipelago_hologram") != uint(-1)) {
             if (Archipelago::cv_ArchipelagoDebug.GetBool()) {
                 Archipelago::ArchipelagoLog("[AP DEBUG] Updating Hologram '" + name + "' to " + angles.x + " " + angles.y + " " + angles.z + " | Skin: " + skin);
             }
             
-            // 1. Re-parentage et gestion d'origine stricte à chaque snapshot pour contrer le reload
+            string mapName = ConVarRef("host_map").GetString();
+            bool isMovingMap = (mapName == "sp_a4_tb_wall_button" || mapName == "sp_a2_laser_intro");
+
             if (parent !is null) {
                 h.SetParent(parent);
-                h.SetLocalOrigin(position);
-                h.SetLocalAngles(angles);
+                
+                // Si on est sur une carte avec des instances mobiles, on empêche le refresh 
+                // d'écraser la position locale pour éviter de casser l'ancrage physique stabilisé.
+                if (!isMovingMap) {
+                    h.SetLocalOrigin(position);
+                    h.SetLocalAngles(angles);
+                } else {
+                    // CORRECTIF RELOAD : On force le moteur à ré-actualiser l'attachement osseux
+                    // au cas où le lien hiérarchique a été corrompu ou lissé pendant le chargement.
+                    Variant vOpt;
+                    vOpt.SetString("panel_attach");
+                    h.FireInput("SetParentAttachmentMaintainOffset", vOpt, 0.01f, parent, h);
+                }
                 
                 if (attachment != "") {
                     Variant v;
@@ -117,18 +129,22 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
                 }
             } else {
                 if (h.GetMoveParent() !is null) {
-                    h.SetParent(null); 
+                    h.SetParent(null);
                 }
-                h.SetAbsOrigin(position);
-                h.SetAbsAngles(angles);
+                
+                // Si le parent a été perdu au reload à cause d'une désynchronisation d'index,
+                // mais qu'on sait qu'on est sur une carte mobile, on empêche de forcer AbsOrigin(0,0,0)
+                if (!isMovingMap) {
+                    h.SetAbsOrigin(position);
+                    h.SetAbsAngles(angles);
+                }
             }
             
-            // 2. Refresh instantané du matériau via CBaseAnimating
             CBaseAnimating@ animH = cast<CBaseAnimating>(h);
             if (animH !is null) {
                 animH.SetSkin(skin);
             } else {
-                h.KeyValue("skin", "" + skin); 
+                h.KeyValue("skin", "" + skin);
             }
             
             h.KeyValue("modelscale", "" + scale);
@@ -136,7 +152,7 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
         }
     }
 
-    // BLOC DE CRÉATION INITIALE 
+    // 2. BLOC DE CRÉATION INITIALE 
     @h = util::CreateEntityByName("prop_dynamic");
     if (h !is null) {
         h.KeyValue("model", "models/effects/ap/archipelago_hologram.mdl");
@@ -144,7 +160,6 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
         h.KeyValue("skin", "" + skin);
         h.KeyValue("modelscale", "" + scale);
         h.KeyValue("DefaultAnim", animate ? "idle" : "");
-
         if (parent !is null) {
             h.SetAbsOrigin(parent.GetAbsOrigin()); 
             h.SetAbsAngles(parent.GetAbsAngles());
@@ -155,14 +170,14 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
         
         h.Spawn(); 
 
+        h.KeyValue("ArchipelagoHoloProcessed", "1");
+
         h.SetSolid(SOLID_NONE);
         h.SetMoveType(MOVETYPE_NONE);
-
         if (parent !is null) {
             h.SetParent(parent);
             h.SetLocalOrigin(position); 
             h.SetLocalAngles(angles);
-            
             if (attachment != "") {
                 Variant v;
                 v.SetString(attachment);

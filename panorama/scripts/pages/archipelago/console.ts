@@ -76,9 +76,16 @@ class ArchipelagoConsole {
             if (input) input.SetFocus();
         });
 
-        $.RegisterForUnhandledEvent('ArchipelagoAPI_ChatUpdated', (json: string) => {
+        // --- CHARGEMENT INSTANTANÉ DE SÉCURITÉ DE L'HISTORIQUE DE CHAT ---
+        const cachedChat = $.persistentStorage.getItem("ArchipelagoLastChatCacheData");
+        if (cachedChat) {
+            try { ArchipelagoConsole.refreshConsoleUI(JSON.parse(cachedChat)); } catch (e) { }
+        }
+
+        $.RegisterForUnhandledEvent('ArchipelagoAPI_ChatUpdated', (payload: any) => {
             try {
-                const chat = JSON.parse(json);
+                // S'adapte au format de payload brut de l'API
+                const chat = typeof payload === 'string' ? JSON.parse(payload) : payload;
                 ArchipelagoConsole.refreshConsoleUI(chat);
             } catch (e) { }
         });
@@ -257,6 +264,9 @@ class ArchipelagoConsole {
 
         ArchipelagoConsole.g_ConsoleText = fullText;
         output.text = fullText; 
+        
+        // Sauvegarde de l'historique complet pour le démarrage instantané
+        $.persistentStorage.setItem("ArchipelagoLastChatCacheData", JSON.stringify(chat));
 
         $.Schedule(0.05, () => {
             const outputArea = $.GetContextPanel().FindChildTraverse('ConsoleOutputArea');

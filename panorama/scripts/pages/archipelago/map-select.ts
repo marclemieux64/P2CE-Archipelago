@@ -111,7 +111,8 @@ class ArchipelagoMapSelect {
                 overlayLabel.text = $.Localize("#Archipelago_Status_NoClient") + "\n" + $.Localize("#Archipelago_Status_LaunchClient");
                 overlayLabel.style.color = "#ffbb00";
             }
-        } else if (!status) {
+        } else if (!status && Object.keys(this.g_ChapterData).length === 0) {
+            // N'affiche le chargement que si le cache local est totalement vide
             overlay.RemoveClass('hide');
             if (content && content.IsValid()) content.AddClass('hide');
             if (overlayButton && overlayButton.IsValid()) overlayButton.AddClass('hide');
@@ -120,7 +121,7 @@ class ArchipelagoMapSelect {
                 overlayLabel.text = $.Localize("#Archipelago_Status_Loading");
                 overlayLabel.style.color = "#eeeeee";
             }
-        } else if (!status.connected) {
+        } else if (status && !status.connected) {
             overlay.RemoveClass('hide');
             if (content && content.IsValid()) content.AddClass('hide');
             if (overlayButton && overlayButton.IsValid()) overlayButton.RemoveClass('hide');
@@ -171,26 +172,52 @@ class ArchipelagoMapSelect {
         const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
         if (syncHelper && syncHelper.ENABLE_DEBUG) $.Msg("[AP] MapSelect using helper v" + syncHelper.VERSION);
 
+        // --- INJECTION DU CACHE INSTANTANÉ DE SÉCURITÉ ---
+        const cachedRawData = $.persistentStorage.getItem("ArchipelagoLastMenuCacheData");
+        if (cachedRawData) {
+            try {
+                const cachedStatus = JSON.parse(cachedRawData);
+                if (cachedStatus && cachedStatus.menu) {
+                    this.g_ChapterData = syncHelper ? syncHelper.parseApiStatus(cachedStatus) : {};
+                    this.generateList();
+                    this.updateConnectionState();
+                }
+            } catch(e) {}
+        }
+
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
-            const updateFromApi = (json: string) => {
-                this.updateConnectionState();
+            const updateFromApi = (payload: any) => {
+                // Sécurisation adaptative du payload (brute ou déjà parsé)
+                let status: any = null;
+                let jsonString: string = "";
 
-                if (json === this.g_LastApiJson) return;
-                this.g_LastApiJson = json;
+                if (typeof payload === 'string') {
+                    jsonString = payload;
+                    try { status = JSON.parse(payload); } catch (e) { return; }
+                } else {
+                    status = payload;
+                    try { jsonString = JSON.stringify(payload); } catch (e) { return; }
+                }
+
+                if (jsonString === this.g_LastApiJson) return;
+                this.g_LastApiJson = jsonString;
 
                 try {
-                    const status = JSON.parse(json);
                     if (status) {
                         const connected = !!status.connected;
 
                         if (!connected) {
                             this.g_ChapterData = {};
                             this.generateList();
+                            this.updateConnectionState();
                             return;
                         }
 
                         if (status.menu) {
+                            // On sauvegarde les données fraîches en cache local synchrone
+                            $.persistentStorage.setItem("ArchipelagoLastMenuCacheData", jsonString);
+
                             const isFirstLoad = Object.keys(this.g_ChapterData).length === 0;
 
                             this.g_ChapterData = syncHelper ? syncHelper.parseApiStatus(status) : {};
@@ -199,6 +226,7 @@ class ArchipelagoMapSelect {
                             const savedCommand = this.g_SelectedMapCommand;
 
                             this.generateList();
+                            this.updateConnectionState();
 
                             if (isFirstLoad) {
                                 $.Schedule(0.05, () => {
@@ -218,10 +246,10 @@ class ArchipelagoMapSelect {
                             if (savedChapter) {
                                 const mapList = $('#ChapterMaps_' + savedChapter);
                                 const entry = $('#ChapterEntry_' + savedChapter);
-                                const wrapper = $('#ChapterWrapper_' + savedChapter); // NOUVEAU
+                                const wrapper = $('#ChapterWrapper_' + savedChapter);
                                 if (mapList && mapList.IsValid() && entry && entry.IsValid()) {
                                     entry.AddClass('chapter_entry--active');
-                                    if (wrapper && wrapper.IsValid()) wrapper.AddClass('chapter_wrapper--active'); // NOUVEAU
+                                    if (wrapper && wrapper.IsValid()) wrapper.AddClass('chapter_wrapper--active');
                                     mapList.RemoveClass('hide');
                                     mapList.style.height = 'fit-children';
                                     mapList.style.opacity = '1.0';
@@ -237,9 +265,10 @@ class ArchipelagoMapSelect {
                     $.Warning("[AP] Error updating MapSelect from API: " + e);
                 }
             };
+            
             $.RegisterForUnhandledEvent("ArchipelagoAPI_StatusUpdated", updateFromApi);
             if (api.getStatus()) {
-                updateFromApi(JSON.stringify(api.getStatus()));
+                updateFromApi(api.getStatus());
             }
         }
 
@@ -540,7 +569,7 @@ class ArchipelagoMapSelect {
             if (!api || (status && status.client_offline)) {
                 label.text = $.Localize("#Archipelago_Status_NoClient") + "\n" + $.Localize("#Archipelago_Status_LaunchClient");
                 label.style.color = "#ffbb00";
-            } else if (!isConnected) {
+            } else if (status && !isConnected) {
                 label.text = $.Localize("#Archipelago_Status_NotConnected");
                 label.style.color = "#ff4444";
             } else {
@@ -565,27 +594,19 @@ class ArchipelagoMapSelect {
         for (const chId of sortedKeys) {
             const chapter = this.g_ChapterData[chId];
 
-            // REMPLACEZ CE BLOC :
-            // let entry = container.FindChild(`ChapterEntry_${chId}`);
-            // if (!entry || !entry.IsValid()) { ... }
-
-            // PAR CELUI-CI :
             let wrapper = container.FindChild(`ChapterWrapper_${chId}`);
             let entry: any = wrapper ? wrapper.FindChild(`ChapterEntry_${chId}`) : null;
 
             if (!wrapper || !wrapper.IsValid() || !entry || !entry.IsValid()) {
                 if (wrapper && wrapper.IsValid()) wrapper.DeleteAsync(0);
 
-                // 1. Crée le Wrapper
                 wrapper = $.CreatePanel('Panel', container, `ChapterWrapper_${chId}`);
                 wrapper.AddClass('chapter_entry_wrapper');
-                (wrapper as any).canfocus = true; // Le focus va sur le wrapper pour ne pas bouger
+                (wrapper as any).canfocus = true;
 
-                // 2. Crée l'Entrée Visuelle à l'intérieur
                 entry = $.CreatePanel('Panel', wrapper, `ChapterEntry_${chId}`);
                 entry.AddClass('chapter_entry');
 
-                // 3. Attache les événements au WRAPPER (la hitbox fixe)
                 wrapper.SetPanelEvent('onmouseover', () => {
                     if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                     $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus');
@@ -607,7 +628,7 @@ class ArchipelagoMapSelect {
                 wrapper.SetPanelEvent('onfocus', () => {
                     this.selectMap({
                         pic: chapter.pic,
-                        title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title || $.Localize("#Archipelago_Chapter_Title") + " " + chId,
+                        title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title || $.Localize("#Archipelago_Chapter_Title") + " " + chapterId,
                         subtitle: "",
                         status: "",
                         command_deactivated: true,
@@ -746,23 +767,19 @@ class ArchipelagoMapSelect {
                     is_chapter: false
                 };
 
-                // --- CRÉATION DU WRAPPER ET DU BOUTON ---
                 let wrapper = mapList.FindChild(`MapWrapper_${chId}_${index}`);
                 let mapBtn: any = wrapper ? wrapper.FindChild(`MapButton_${chId}_${index}`) : null;
 
                 if (!wrapper || !wrapper.IsValid() || !mapBtn || !mapBtn.IsValid()) {
                     if (wrapper && wrapper.IsValid()) wrapper.DeleteAsync(0);
 
-                    // 1. Le Wrapper (Hitbox statique)
                     wrapper = $.CreatePanel('Panel', mapList, `MapWrapper_${chId}_${index}`);
                     wrapper.AddClass('map_button_wrapper');
                     (wrapper as any).canfocus = true;
 
-                    // 2. Le Bouton Visuel (Bouge)
                     mapBtn = $.CreatePanel('Panel', wrapper, `MapButton_${chId}_${index}`);
                     mapBtn.AddClass('map_button');
 
-                    // 3. On attache tous les événements au WRAPPER
                     wrapper.SetPanelEvent('onmouseover', () => {
                         const currentData = (wrapper as any).m_MapData;
                         if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
@@ -791,9 +808,9 @@ class ArchipelagoMapSelect {
                                 const c = listInner.GetChild(i);
                                 if (c && c.IsValid() && c.HasClass('map_list')) {
                                     for (let j = 0; j < c.GetChildCount(); j++) {
-                                        const w = c.GetChild(j); // Wrapper
+                                        const w = c.GetChild(j);
                                         if (w && w.IsValid()) {
-                                            const mb = w.GetChild(0); // Le mapBtn intérieur
+                                            const mb = w.GetChild(0);
                                             if (mb && mb.IsValid()) mb.RemoveClass('map_button--selected');
                                         }
                                     }
@@ -819,7 +836,6 @@ class ArchipelagoMapSelect {
                         this.selectMap(currentData, false);
                     });
 
-                    // 4. On crée le contenu visuel dans mapBtn
                     const mapContent = $.CreatePanel('Panel', mapBtn, '');
                     mapContent.AddClass('map-title-container');
                     const nameLabel = $.CreatePanel('Label', mapContent, `MapName_${chId}_${index}`) as LabelPanel;
@@ -834,10 +850,8 @@ class ArchipelagoMapSelect {
                     lockIcon.SetAttributeString('scaling', 'stretch-to-fit-preserve-aspect');
                 }
 
-                // On sauvegarde les données sur le Wrapper !
                 (wrapper as any).m_MapData = mapData; 
 
-                // Gestion de l'activation/désactivation sur le Wrapper et le Bouton
                 if (map.command_deactivated) {
                     wrapper.enabled = false;
                     (wrapper as any).canfocus = false;

@@ -311,9 +311,15 @@ class ArchipelagoHint {
             const row = $.CreatePanel('Panel', hint.found ? done : pending, '');
             row.AddClass('hint-row');
             if (hint.found) row.AddClass('hint--found');
+            
             const lbl = $.CreatePanel('Label', row, '');
-            lbl.html = true;
-            lbl.text = hint.text;
+            
+            // FIX 1: Enable HTML rendering so the <font> tags work
+            lbl.html = true; 
+            
+            // FIX 2: Prioritize the 'html' field we added in Notifications.py, 
+            // fallback to 'text' if missing.
+            lbl.text = hint.html || hint.text; 
         });
     }
 }

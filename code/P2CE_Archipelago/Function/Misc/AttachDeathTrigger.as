@@ -1,27 +1,30 @@
+// =============================================================
+// ARCHIPELAGO DEATHLINK TRIGGER ATTACHMENT
+// =============================================================
+
 namespace Archipelago {
 
-void AttachDeathTrigger() {
+    void AttachDeathTrigger() {
         sent_death_link = false; // Réinitialise à chaque chargement de map
 
-        // Création du timer natif
+        // Création du timer natif pour la synchronisation bidirectionnelle
         CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
         if (timer !is null) {
             timer.KeyValue("targetname", "ap_deathlink_timer");
-            timer.KeyValue("RefireTime", "0.5"); // Check 2 fois par seconde (plus réactif)
+            timer.KeyValue("RefireTime", "0.25"); // Évaluation 4 fois par seconde
             
-            // Format d'output Source : Target \x1B Input \x1B Parameter \x1B Delay \x1B MaxFires
-            // On utilise l'entité "InitCmd" pour lancer notre ServerCommand
-            string payload = "InitCmd\x1BCommand\x1BDeathLink\x1B0\x1B-1";
+            // On redirige la sortie du timer vers notre nouvelle fonction centrale
+            string payload = "InitCmd\x1BCommand\x1BCheckDeathLinkQueue\x1B0\x1B-1";
             timer.KeyValue("OnTimer", payload);
             
             timer.Spawn();
             
-            // Activation du timer
+            // Activation immédiate du timer
             Variant empty;
             timer.FireInput("Enable", empty, 0.0f, null, null, 0);
         }
 
-        Msgl("DeathLink active");
+        Msgl("DeathLink continuous sync active");
     }
 
 } // namespace Archipelago

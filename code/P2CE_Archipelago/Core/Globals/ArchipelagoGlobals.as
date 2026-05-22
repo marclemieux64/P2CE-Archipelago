@@ -7,6 +7,7 @@ string current_map = "unknown";
 int transition_script_count = 0;
 bool g_has_printed_map_complete = false;
 bool sent_death_link = false;
+bool is_faking_death = false;
 
 
 namespace Archipelago {
@@ -23,13 +24,14 @@ namespace Archipelago {
 bool portalgun_2_disabled = false;
 bool g_bInitialTemplateHoloActive = false;
 bool g_bConveyor1TemplateHoloActive = false;
-int g_bts4ConveyorTickCounter = 0;
+
 
 // --- INTEGERS ---
     dictionary g_vitrified_door_names;
     ConVar cv_ArchipelagoVitrifiedStatus("ArchipelagoVitrifiedStatus", "000000", FCVAR_ARCHIVE);
     int g_ButterFingersTicks = 0;
-
+    int g_bts4ConveyorTickCounter = 0;
+    
 // --- STRINGS ---
     // Moved to global scope
 

@@ -27,7 +27,7 @@ from worlds.portal2_p2ce.mod_helpers.ItemHandling import add_ratman_commands, ha
 from worlds.portal2_p2ce.mod_helpers.MapMenu import Menu
 from worlds.portal2_p2ce.mod_helpers.Notifications import NotificationManager
 from worlds.portal2_p2ce.mod_helpers.DeathLinkHandler import DeathLinkHandler
-from worlds.portal2_p2ce.mod_helpers.TrapHandler import TrapHandler
+from worlds.portal2_p2ce.mod_helpers.APIServer import APIServer
 from worlds.portal2_p2ce.client.DeathMessages import get_death_message
 from worlds.portal2_p2ce.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
 from worlds.portal2_p2ce.Options import GameModeOption
@@ -35,10 +35,6 @@ from worlds.portal2_p2ce.Options import GameModeOption
 worlds.network_data_package["games"]["Portal 2"] = Portal2World.get_data_package_data()
 
 logger = logging.getLogger("Portal2Client")
-
-# =============================================================
-# INTEGRATED SYSTEM HELPER CLASSES
-# =============================================================
 
 class Portal2CommandProcessor(ClientCommandProcessor):
     def __init__(self, ctx: CommonContext):
@@ -101,20 +97,22 @@ class Portal2CommandProcessor(ClientCommandProcessor):
     def output(self, text: str):
         self.ctx.on_print(text)
 
-
-class LogBridge:
-    def __init__(self, ctx):
-        self.ctx = ctx
-        self.temp_handler = None
-        self.panorama_handler = None
-        self.noise_keywords = [
-            "serving on", "connected to", "logged in", "connecting to", 
-            "connection closed", "room information", "server protocol", 
-            "permission", "hint cost", "!hint", "enter slot", "lost connection"
-        ]
-
-    def setup_early_logging(self):
-        """Captures early startup logs before the asyncio loop is running."""
+class Portal2Context(CommonContext):
+    command_processor = Portal2CommandProcessor
+    game_connection_task: typing.Optional["asyncio.Task[None]"] = None
+    
+    def __init__(self, server_address: str = None, password: str = None):
+        self.notifier = NotificationManager(self)
+        self.deathlink_handler = DeathLinkHandler(self)
+        self.api_server = APIServer(self)
+        
+        self.is_processing_received_cmd = False
+        self.item_list = []
+        self.item_remove_commands = []
+        self.command_queue = []
+        self.game_message_queue = []
+        self.completed_maps = set()
+        
         class QueuingLogHandler(logging.Handler):
             def __init__(self):
                 super().__init__()
@@ -126,30 +124,26 @@ class LogBridge:
         self.temp_handler.setFormatter(logging.Formatter('%(message)s'))
         logging.getLogger().addHandler(self.temp_handler)
 
-    def setup_panorama_logging(self):
-        """Attaches the live netcon monitor stream filter onto the main logger."""
         class PanoramaLogHandler(logging.Handler):
-            def __init__(self, bridge):
+            def __init__(self, ctx):
                 super().__init__()
-                self.bridge = bridge
+                self.ctx = ctx
 
             def emit(self, record):
                 if "[Archipelago]" in record.msg or "[HUD]" in record.msg:
                     return
                 try:
                     msg = self.format(record)
-                    if getattr(self.bridge.ctx, 'loop', None):
+                    if getattr(self.ctx, 'loop', None):
                         msg_lower = msg.lower()
+                        noise_keywords = ["serving on", "connected to", "logged in", "connecting to", "connection closed", 
+                                          "room information", "server protocol", "permission", "hint cost", "!hint", "enter slot", "lost connection"]
                         
-                        if any(noise in msg_lower for noise in self.bridge.noise_keywords):
-                            self.bridge.ctx.loop.call_soon_threadsafe(
-                                self.bridge.ctx.notifier.on_print_silently, msg, None, None, False
-                            )
+                        if any(noise.lower() in msg_lower for noise in noise_keywords):
+                            self.ctx.loop.call_soon_threadsafe(self.ctx.notifier.on_print_silently, msg, None, None, False)
                             return
 
-                        self.bridge.ctx.loop.call_soon_threadsafe(
-                            self.bridge.ctx.notifier.on_print_silently, msg, None, None, False
-                        )
+                        self.ctx.loop.call_soon_threadsafe(self.ctx.notifier.on_print_silently, msg, None, None, False)
                 except Exception:
                     pass
 
@@ -157,43 +151,14 @@ class LogBridge:
         self.panorama_handler.setFormatter(logging.Formatter('%(message)s'))
         logging.getLogger().addHandler(self.panorama_handler)
 
-    def flush_init_logs(self):
-        """Flushes captured startup logs downstream into the client layout."""
-        if self.temp_handler:
-            for msg in self.temp_handler.queue:
-                self.ctx.notifier.on_print_silently(msg)
-            logging.getLogger().removeHandler(self.temp_handler)
-            self.temp_handler = None
-
-# =============================================================
-# MAIN MULTIWORLD CORE CONTEXT
-# =============================================================
-
-class Portal2Context(CommonContext):
-    command_processor = Portal2CommandProcessor
-    game_connection_task: typing.Optional["asyncio.Task[None]"] = None
-    
-    def __init__(self, server_address: str = None, password: str = None):
-        self.notifier = NotificationManager(self)
-        self.deathlink_handler = DeathLinkHandler(self)
-        self.trap_handler = TrapHandler(self)
-        self.log_bridge = LogBridge(self)
-        
-        self.is_processing_received_cmd = False
-        self.item_list = []
-        self.item_remove_commands = []
-        self.command_queue = []
-        self.game_message_queue = []
-        self.completed_maps = set()
-        
-        # FIX: Call base constructor before attaching custom logging streams
         super().__init__(server_address, password)
 
-        self.log_bridge.setup_early_logging()
-        self.log_bridge.setup_panorama_logging()
-
     def flush_init_logs(self):
-        self.log_bridge.flush_init_logs()
+        if hasattr(self, 'temp_handler') and self.temp_handler:
+            for msg in self.temp_handler.queue:
+                self.notifier.on_print_silently(msg)
+            logging.getLogger().removeHandler(self.temp_handler)
+            self.temp_handler = None
 
     game = "Portal 2"
     items_handling = 0b111 
@@ -358,95 +323,6 @@ class Portal2Context(CommonContext):
                 self.sender_active = False
                 self.listener_active = False
 
-    def start_api_server(self):
-        import threading
-        from http.server import BaseHTTPRequestHandler, HTTPServer
-        from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened 
-        client_self = self
-
-        class APIHandler(BaseHTTPRequestHandler):
-            def log_message(self, format, *args): pass 
-            def do_OPTIONS(self):
-                self.send_response(200); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers()
-
-            def do_GET(self):
-                is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
-                missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
-
-                if self.path == '/status_full' or self.path == '/status':
-                    data_to_serialize = {
-                        "connected": is_conn, 
-                        "game_connected": client_self.check_game_connection(), 
-                        "slot": client_self.slot, 
-                        "checked_locations": list(client_self.checked_locations), 
-                        "missing_items": missing_str, 
-                        "hint_points": getattr(client_self, "hint_points", 0), 
-                        "hint_cost": getattr(client_self, "hint_cost", 0), 
-                        "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
-                        "menu": client_self.menu.to_dict() if client_self.menu else None
-                    }
-                    if self.path == '/status_full':
-                        data_to_serialize["chat"] = client_self.notifier.chat_log
-                        data_to_serialize["hints"] = client_self.notifier.hint_log
-                
-                elif self.path == '/chat':
-                    data_to_serialize = client_self.notifier.chat_log
-                elif self.path == '/hints':
-                    data_to_serialize = client_self.notifier.hint_log
-                else:
-                    self.send_error(404)
-                    return
-
-                json_body = json.dumps(data_to_serialize)
-                
-                response_hash = hashlib.md5(json_body.encode('utf-8')).hexdigest()
-                if self.headers.get('If-None-Match') == response_hash:
-                    self.send_response(304)
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.end_headers()
-                    return
-
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.send_header('ETag', response_hash)
-                self.end_headers()
-                self.wfile.write(json_body.encode('utf-8'))
-
-            def do_POST(self):
-                try:
-                    content_length = int(self.headers.get('Content-Length', 0))
-                    body = self.rfile.read(content_length).decode('utf-8')
-                    command = None
-                    try:
-                        data = json.loads(body)
-                        command = data.get("command")
-                    except json.JSONDecodeError:
-                        data = parse_qs(body)
-                        if "command" in data: command = data["command"][0]
-
-                    if self.path == '/command' and command:
-                        client_self.loop.call_soon_threadsafe(client_self.on_input, command)
-                        self._send_json({"status": "ok"})
-                    elif self.path == '/hints/refresh':
-                        client_self.loop.call_soon_threadsafe(client_self.request_hints_sync)
-                        self._send_json({"status": "ok"})
-                    else: self.send_error(404)
-                except Exception as e: self.send_error(500, str(e))
-
-            def _send_json(self, d):
-                body = json.dumps(d).encode('utf-8')
-                self.send_response(200); self.send_header('Content-Type', 'application/json'); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers(); self.wfile.write(body)
-
-        def run_server():
-            try:
-                server = HTTPServer(('0.0.0.0', 8910), APIHandler)
-                server.serve_forever()
-            except Exception:
-                pass
-
-        threading.Thread(target=run_server, daemon=True).start()
-
     def send_level_begin_commands(self):
         if self.item_remove_commands:
             self.command_queue.append(f"{';'.join(self.item_remove_commands)}\n")
@@ -455,10 +331,7 @@ class Portal2Context(CommonContext):
         msg_lower = message.lower()
         
         if message.startswith("deathlink_pong_ready"):
-            if self.deathlink_handler.deathlink_queue:
-                self.deathlink_handler.process_pong()
-            elif self.trap_handler.trap_queue:
-                self.trap_handler.process_pong()
+            self.deathlink_handler.process_pong()
             return
 
         if "client ping times" in msg_lower or "ms :" in msg_lower or "ping:" in msg_lower:
@@ -471,9 +344,7 @@ class Portal2Context(CommonContext):
             return
 
         if message.startswith("map_name:"):
-            map_name = message.split(':', 1)[1].strip()
-            self.trap_handler.set_map_transition_state(False)
-            
+            map_name = message.split(':', 1)[1]
             self.send_level_begin_commands()
             self.command_queue += handle_map_start(map_name, self.item_list, self.get_wheatley_monitor_names(self.checked_locations), self.get_ratman_den_names(self.checked_locations))
             
@@ -489,13 +360,7 @@ class Portal2Context(CommonContext):
                 self.ping_sent_time = 0
 
         elif message.startswith("map_complete:"):
-            done_map = message.split(':', 1)[1].strip()
-            
-            if done_map != "sp_a4_finale4":
-                self.trap_handler.set_map_transition_state(True)
-            else:
-                self.trap_handler.set_map_transition_state(False)
-            
+            done_map = message.split(':', 1)[1]
             if done_map in self.completed_maps:
                 return
             self.completed_maps.add(done_map)
@@ -532,7 +397,12 @@ class Portal2Context(CommonContext):
                 self.update_menu(check_id)
         
         elif message.startswith("send_deathlink"):
-            pass
+            if self.death_link_active and time.time() - getattr(self, 'last_death_link', 0) > 10:
+                map_name = message.strip().split()[1]
+                death_message = get_death_message(map_name, self.player_names[self.slot])
+                await self.send_death(death_text=death_message)
+                fake_data = [{"text": death_message, "is_death": True}]
+                self.notifier.on_print_silently(death_message, fake_data, mirror_to_hud=True)
 
     async def handle_goal_completion(self):
         if getattr(self, 'finished_game', False):
@@ -541,13 +411,9 @@ class Portal2Context(CommonContext):
         await self.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
     def on_deathlink(self, data: typing.Dict[str, typing.Any]):
-        cause = data.get("cause", "Un joueur est mort.")
-        
-        # 1. Update your custom death handler queue
+        cause = data.get("cause", "A player died.")
         self.deathlink_handler.enqueue_death(cause)
-        
-        # 2. Return None to block the base client from printing its own "DeathLink: ..." line
-        return
+        return super().on_deathlink(data)
 
     def check_game_connection(self) -> bool:
         return self.sender_active and self.listener_active
@@ -694,9 +560,10 @@ class Portal2Context(CommonContext):
             index = args["index"]
             for item in args["items"]:
                 if (item.flags & 0b100):
-                    trap_cmd = handle_trap(self.item_names.lookup_in_game(item.item, self.game))
-                    if trap_cmd:
-                        self.trap_handler.enqueue_trap(trap_cmd + "\n")
+                    if not self.is_processing_received_cmd:
+                        trap_cmd = handle_trap(self.item_names.lookup_in_game(item.item, self.game))
+                        if trap_cmd:
+                            self.execute_in_game_event({"command": trap_cmd + "\n"})
                 index += 1
             
             super().on_package(cmd, args)
@@ -773,8 +640,6 @@ class Portal2Context(CommonContext):
             self.game_connection_task.cancel()
         if self.deathlink_handler:
             self.deathlink_handler.stop()
-        if self.trap_handler:
-            self.trap_handler.stop()
 
         while self.input_requests > 0:
             self.input_queue.put_nowait(None)
@@ -798,8 +663,7 @@ async def main(args: argparse.Namespace):
     ctx.game_connection_task = asyncio.create_task(ctx.p2_connection_loop(), name="netcon loop")
     
     ctx.deathlink_handler.start()
-    ctx.trap_handler.start()
-    ctx.start_api_server()
+    ctx.api_server.start()
     ctx.flush_init_logs()
 
     if gui_enabled and not args.nogui:

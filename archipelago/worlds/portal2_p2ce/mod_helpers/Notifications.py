@@ -16,11 +16,11 @@ class NotificationManager:
         self._current_ap_msg_priority: bool = False
 
     def reset(self):
-        """Réinitialise l'historique lors d'une nouvelle connexion."""
+        """Resets hint history tracking data upon a new session connection."""
         self.hint_log.clear()
 
     def add_in_game_message(self, message: str, color_string: str = None):
-        """Gère les messages envoyés depuis la console du jeu."""
+        """Handles incoming raw text vectors submitted straight from the game runtime environment."""
         if color_string:
             try:
                 rgb = [int(x) for x in color_string.split()]
@@ -33,22 +33,44 @@ class NotificationManager:
         self.on_print_silently(message)
 
     def on_print(self, text: str):
-        """Redirige les prints standards vers le gestionnaire silencieux."""
+        """Redirects default standard terminal prints straight through the silent pipeline."""
         self.on_print_silently(text, mirror_to_hud=False)
 
     def on_print_silently(self, text: str, rich_data: list = None, html_text: str = None, mirror_to_hud: bool = False):
-        """Cœur du système : formate le texte et l'envoie à l'interface."""
+        # 1. Define mandatory variables at the very top
         is_processing = getattr(self.ctx, "is_processing_received_cmd", False)
-        if is_processing:
-            mirror_to_hud = False
-        print(f"[DEBUG] {text}")
+        is_death_event = False
+        
+        # 2. Check for Death event early
+        if rich_data:
+            for part in rich_data:
+                if isinstance(part, dict) and part.get("is_death"):
+                    is_death_event = True
+                    break
 
+        # 3. Filter noise (Suppress standard client announcements for DeathLink)
         text_lower = text.lower()
+        if "deathlink:" in text_lower and not text.startswith("DEATHLINK:"):
+             return 
+
         noise_filters = ["changed tags from", "now that you are connected", "room information", 
                          "server protocol", "permission", "hint cost", "!hint", "enter slot", "lost connection"]
         if any(noise.lower() in text_lower for noise in noise_filters):
             mirror_to_hud = False
 
+        # 4. Handle Logging and HUD Printing (Single source of truth)
+        if mirror_to_hud:
+            if is_death_event:
+                # DeathLink print: Clean, no prefix, only once
+                logger.info(text)
+            else:
+                # Normal HUD print: with prefix
+                logger.info(f"[HUD] {text}")
+        
+        # Internal debug logging
+        logger.debug(f"Notification: {text}")
+
+        # 5. Process HTML/Rich Text for API
         if rich_data and not html_text:
             color_map = {
                 "player_id": "#ff7f50", "player_name": "#ff7f50", "magenta": "#ee82ee",
@@ -64,30 +86,8 @@ class NotificationManager:
                 color = color_map.get(p_type) or color_map.get(p_color) or p_color
                 html_text += f"<font color='{color}'>{p_text}</font>" if color else p_text
 
-        ap_msg_type = self._current_ap_msg_type
-        if self._current_ap_msg_priority:
-            mirror_to_hud = True
-
-        is_death_event = False
-        if rich_data:
-            for part in rich_data:
-                if isinstance(part, dict) and part.get("is_death"):
-                    is_death_event = True
-                    break
-
-        if is_death_event:
-            mirror_to_hud = True
-            ap_msg_type = "deathlink"
-        elif "Trap" in text:
-            mirror_to_hud = True
-            ap_msg_type = "trap"
-
-        if mirror_to_hud:
-            logger.info(f"[HUD] {text}")
-
+        # 6. Update internal logs for API/UI
         self.msg_id_counter += 1
-        no_notification = False
-        
         self.chat_log.append({
             "id": self.msg_id_counter, 
             "text": text,
@@ -95,16 +95,16 @@ class NotificationManager:
             "data": rich_data,
             "type": "text" if rich_data is None else "json",
             "priority": mirror_to_hud,  
-            "no_notification": no_notification,
-            "ap_msg_type": ap_msg_type,
+            "ap_msg_type": self._current_ap_msg_type if not is_death_event else "deathlink",
             "time": time.time(),
             "muted": is_processing
         })
+        
         if len(self.chat_log) > 100:
             self.chat_log.pop(0)
 
     def print_json(self, data: typing.List[typing.Dict[str, str]], mirror_to_hud: bool = False):
-        """Traduit les IDs réseau d'Archipelago en textes lisibles."""
+        """Translates multiworld data packages tracking structural components into human-readable strings."""
         resolved_data = []
         is_trap_msg = False 
         
@@ -126,8 +126,6 @@ class NotificationManager:
                     item_name = self.ctx.item_names.lookup_in_slot(int(text), owner_id)
                     new_part["text"] = item_name
                     
-                    # On vérifie si c'est un piège, mais on ne lève l'alerte HUD 
-                    # que si on n'est pas en train de lister l'historique /received
                     trap_cmd = handle_trap(item_name)
                     if trap_cmd and not getattr(self.ctx, "is_processing_received_cmd", False):
                         new_part["is_trap"] = True
@@ -142,7 +140,6 @@ class NotificationManager:
 
         text = "".join(part.get("text", "") if isinstance(part, dict) else str(part) for part in resolved_data)
         
-        # Bloque la notification intempestive sur le HUD lors du /received
         if getattr(self.ctx, "is_processing_received_cmd", False):
             mirror_to_hud = False
             is_trap_msg = False
@@ -150,7 +147,7 @@ class NotificationManager:
         self.on_print_silently(text, resolved_data, mirror_to_hud=(mirror_to_hud or is_trap_msg))
 
     def on_print_json(self, args: dict):
-        """Détermine le type de la notification (Envoi, Réception, Indice)."""
+        """Determines incoming context messaging metadata flags layout categories."""
         ap_msg_type = "default"
         priority = False
         msg_type = args.get("type", "")
@@ -209,12 +206,6 @@ class NotificationManager:
         self._current_ap_msg_type = "default"
         self._current_ap_msg_priority = False
         
-    def trigger_go_mode(self):
-        """Déclenche la notification arc-en-ciel du Go Mode."""
-        self._current_ap_msg_type = "go_mode"
-        self.on_print_silently("All items for the finale have been gathered!", mirror_to_hud=True)
-        self._current_ap_msg_type = "default"
-        
     def process_hints(self, raw_hints: list):
         self.hint_log.clear()
         for h in raw_hints:
@@ -224,16 +215,29 @@ class NotificationManager:
                 item_id = h.get("item")
                 loc_id = h.get("location")
                 
-                rec = self.ctx.player_names[rec_id]
-                find = self.ctx.player_names[find_id]
+                # Fetching names safely from context
+                rec = self.ctx.player_names.get(rec_id, str(rec_id))
+                find = self.ctx.player_names.get(find_id, str(find_id))
                 item_name = self.ctx.item_names.lookup_in_slot(item_id, rec_id)
                 loc_name = self.ctx.location_names.lookup_in_slot(loc_id, find_id)
                 
-                txt = f"<font color='#ff7f50'>{rec}</font>'s <font color='#00ffff'>{item_name}</font> is at <font color='#00ff00'>{loc_name}</font> in <font color='#ff7f50'>{find}</font>'s World"
-            except Exception: 
-                txt = f"Hint: Item {h.get('item', '???')} at {h.get('location', '???')}"
-            
-            self.hint_log.append({
-                "found": h.get("found", False), 
-                "text": txt
-            })
+                # Create the HTML string with colors
+                txt_html = (f"<font color='#ff7f50'>{rec}</font>'s "
+                            f"<font color='#00ffff'>{item_name}</font> is at "
+                            f"<font color='#00ff00'>{loc_name}</font> in "
+                            f"<font color='#ff7f50'>{find}</font>'s World")
+                
+                # Plain text fallback
+                txt_plain = f"{rec}'s {item_name} is at {loc_name} in {find}'s World"
+                
+                self.hint_log.append({
+                    "found": h.get("found", False), 
+                    "text": txt_plain,
+                    "html": txt_html # This is what your TS code looks for
+                })
+            except Exception as e:
+                logger.error(f"Error processing hint: {e}")
+                self.hint_log.append({
+                    "found": h.get("found", False), 
+                    "text": f"Hint: Item {h.get('item', '???')} at {h.get('location', '???')}"
+                })

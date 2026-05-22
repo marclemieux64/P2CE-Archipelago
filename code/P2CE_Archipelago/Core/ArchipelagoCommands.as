@@ -107,21 +107,6 @@ void SetCheckedScreensCmd(const CommandArgs@ args) {
     Archipelago::ArchipelagoLog("AP: Checked screens updated (" + Archipelago::checked_screens.length() + " items)");
 }
 
-[ServerCommand("DeathLink", "Checks if the player is dead for DeathLink")]
-void DeathLinkCmd(const CommandArgs@ args) {
-    if (sent_death_link) return;
-    CBaseEntity@ player = EntityList().FindByClassname(null, "player");
-    if (player !is null && player.GetHealth() <= 0) {
-        sent_death_link = true;
-        CBaseEntity@ world = EntityList().FindByClassname(null, "worldspawn");
-        if (world !is null) {
-            Variant v;
-            v.SetString("printl(\"send_deathlink " + ::current_map + "\")");
-            world.FireInput("RunScriptCode", v, 0.0f, null, null, 0);
-        }
-    }
-}
-
 [ServerCommand("AddWheatleyMonitorBreakCheck", "Runs the automatic monitor check logic")]
 void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
     Archipelago::AddWheatleyMonitorBreakCheck();
@@ -418,4 +403,60 @@ void DisableTriggerAtPosCmd(const CommandArgs@ args) {
 [ServerCommand("AP_UpdateHologramsVisibility", "Updates the visibility of all holograms based on settings")]
 void AP_UpdateHologramsVisibilityCmd(const CommandArgs@ args) {
     Archipelago::UpdateHologramsVisibility();
+}
+
+[ServerCommand("CheckDeathLinkQueue", "Gère la détection de la mort locale du joueur")]
+void CheckDeathLinkQueueCmd(const CommandArgs@ args) {
+    CBaseEntity@ player = EntityList().FindByClassname(null, "player");
+    if (player is null) return;
+
+    int health = player.GetHealth();
+
+    if (health <= 0) {
+        if (is_faking_death) {
+            sent_death_link = true; 
+            return;
+        }
+
+        if (!sent_death_link) {
+            sent_death_link = true;
+            CBaseEntity@ world = EntityList().FindByClassname(null, "worldspawn");
+            if (world !is null) {
+                Variant v;
+                v.SetString("printl(\"send_deathlink " + ::current_map + "\")");
+                world.FireInput("RunScriptCode", v, 0.0f, null, null, 0);
+            }
+        }
+        return;
+    }
+
+    if (health > 0) {
+        if (sent_death_link && !is_faking_death) {
+            sent_death_link = false;
+        }
+        if (is_faking_death && health >= 100) {
+            is_faking_death = false;
+            sent_death_link = false;
+            Archipelago::ArchipelagoLog("[AP] Joueur réapparu. Sécurité DeathLink désactivée.");
+        }
+    }
+}
+
+[ServerCommand("AP_PingReady", "Vérifie si le jeu est prêt à exécuter un événement")]
+void AP_PingReadyCmd(const CommandArgs@ args) {
+    CBaseEntity@ player = EntityList().FindByClassname(null, "player");
+    if (player is null) return; // Si on est au menu ou en chargement, l'entité n'existe pas -> Pas de réponse
+
+    int health = player.GetHealth();
+    // Si le joueur est en vie et actif sur la map, on renvoie le feu vert à Python via Netcon
+    if (health > 0) {
+        Msgl("deathlink_pong_ready");
+    }
+}
+
+[ServerCommand("AP_SetMutedDeath", "Active ou désactive la protection d'écho de mort")]
+void AP_SetMutedDeathCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    is_faking_death = (args.Arg(1) == "1");
+    Archipelago::ArchipelagoLog("[AP] is_faking_death mis à : " + (is_faking_death ? "TRUE" : "FALSE"));
 }

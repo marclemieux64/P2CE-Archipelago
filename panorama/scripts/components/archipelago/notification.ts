@@ -19,10 +19,26 @@ function GetHudRoot(): Panel | null {
     if (hud) hud.RemoveClass("fade-active");
 })();
 
-$.DefineEvent("ArchipelagoQueueUpdated", 0);
-$.DefineEvent("ArchipelagoNotify", 1, "payload");
-$.DefineEvent("ArchipelagoHideNotifications", 1, "time");
-$.DefineEvent("ArchipelagoDeath", 1, "message");
+// --- DÉCLARATIONS DES ÉVÉNEMENTS PANORAMA ---
+try {
+    $.DefineEvent("ArchipelagoQueueUpdated", 0);
+    $.DefineEvent("ArchipelagoHideNotifications", 1, "time");
+    $.DefineEvent("ArchipelagoDeath", 1, "message");
+    $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch with fade buffer");
+    
+    // CORRECTIF : Déclaration obligatoire de l'événement personnalisé pour le Heartbeat silencieux
+    $.DefineEvent("ArchipelagoDeathLinkHeartbeat", 0);
+} catch (e) { }
+
+// Sécurisation adaptative de la définition pour éviter le message "already registered"
+try {
+    if (!(UiToolkitAPI.GetGlobalObject() as any).ArchipelagoNotifyRegistered) {
+        $.DefineEvent("ArchipelagoNotify", 1, "payload");
+        (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoNotifyRegistered = true;
+    }
+} catch (e) { }
+
+// --- ÉCOUTEURS D'ÉVÉNEMENTS ---
 
 $.RegisterForUnhandledEvent("ArchipelagoDeath", (msg: string) => {
     let locTitle = $.Localize("#Archipelago_HUD_Deathlink");
@@ -35,10 +51,6 @@ $.RegisterForUnhandledEvent("ArchipelagoDeath", (msg: string) => {
         play_sound: true
     }));
 });
-
-try {
-    $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch with fade buffer");
-} catch (e) {}
 
 $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
     if (isWarpPending) return; 
@@ -277,7 +289,6 @@ function OnArchipelagoNotify(payload: string) {
 
         entry.AddClass('notify-entry');
 
-        // --- DELEGATION DU SON AU CSS VIA L'AJOUT DE CLASSES ---
         if (data.play_sound) {
             if (data.type === "255 50 50") entry.AddClass('sound-deathlink');
             else if (data.type === "255 150 0") entry.AddClass('sound-trap');

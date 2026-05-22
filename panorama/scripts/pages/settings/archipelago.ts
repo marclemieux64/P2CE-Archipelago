@@ -8,7 +8,6 @@
 if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 // --- SAUVEGARDE DES RÉGLAGES ---
-
 function SaveCompletionSymbolSetting() {
     const dropdown = $('#CompletionSymbolSetting');
     if (dropdown) {
@@ -17,12 +16,16 @@ function SaveCompletionSymbolSetting() {
             const selected = realDropdown.GetSelected();
             if (selected) {
                 const val = selected.GetAttributeInt('value', 0);
-                $.persistentStorage.setItem('ap_completion_symbol', val);
-                $.Msg(`[AP] Completion Symbol saved: ${val === 1 ? "Star" : "Checkmark"}`);
+                // Ensure it is saved as a string "0", "1", or "2"
+                $.persistentStorage.setItem('ap_completion_symbol', val.toString());
                 
-                // On notifie immédiatement le Map Select s'il est ouvert
-                const mapSelect = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect;
-                if (mapSelect) mapSelect.generateList();
+                $.Msg(`[AP] Completion Symbol setting saved as: ${val}`);
+                
+                // Trigger global refresh
+                const global = UiToolkitAPI.GetGlobalObject() as any;
+                if (global.UpdateCompletionSymbolStatus) {
+                    global.UpdateCompletionSymbolStatus();
+                }
             }
         }
     }
@@ -181,7 +184,15 @@ function UpdateMapStatusHUDKeyBinder() {
 (UiToolkitAPI.GetGlobalObject() as any).SaveHideHologramsSetting = SaveHideHologramsSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveStatusIndicatorModeSetting = SaveStatusIndicatorModeSetting;
 (UiToolkitAPI.GetGlobalObject() as any).LoadArchipelagoSettings = LoadArchipelagoSettings;
-(UiToolkitAPI.GetGlobalObject() as any).UpdateMapStatusHUDKeyBinder = UpdateMapStatusHUDKeyBinder; // <-- CORRECTIF ICI
+(UiToolkitAPI.GetGlobalObject() as any).UpdateMapStatusHUDKeyBinder = UpdateMapStatusHUDKeyBinder;
+
+// AJOUT DE LA FONCTION MANQUANTE
+(UiToolkitAPI.GetGlobalObject() as any).UpdateCompletionSymbolStatus = () => {
+    const mapSelect = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect;
+    if (mapSelect && mapSelect.generateList) {
+        mapSelect.generateList();
+    }
+};
 
 // --- INITIALISATION ---
 

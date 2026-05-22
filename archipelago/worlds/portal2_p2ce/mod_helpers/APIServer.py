@@ -130,20 +130,27 @@ class Portal2Context(CommonContext):
                 self.ctx = ctx
 
             def emit(self, record):
-                if "[Archipelago]" in record.msg or "[HUD]" in record.msg:
+                # Prevent duplicate logging in game console for messages already logged/handled
+                if getattr(record, "from_sync", False) or any(x in record.msg for x in ["[HUD]", "DEATHLINK:", "Connection to Portal 2", "Disconnected from Portal 2"]):
                     return
                 try:
                     msg = self.format(record)
+                    if "Connecting to Archipelago server at" in msg:
+                        current_time = time.time()
+                        last_time = getattr(self.ctx, "last_connect_log_time", 0.0)
+                        if current_time - last_time < 3.0:
+                            return
+                        self.ctx.last_connect_log_time = current_time
                     if getattr(self.ctx, 'loop', None):
                         msg_lower = msg.lower()
                         noise_keywords = ["serving on", "connected to", "logged in", "connecting to", "connection closed", 
                                           "room information", "server protocol", "permission", "hint cost", "!hint", "enter slot", "lost connection"]
                         
                         if any(noise.lower() in msg_lower for noise in noise_keywords):
-                            self.ctx.loop.call_soon_threadsafe(self.ctx.notifier.on_print_silently, msg, None, None, False)
+                            self.ctx.loop.call_soon_threadsafe(self.ctx.notifier.on_print_silently, msg, None, None, False, True)
                             return
 
-                        self.ctx.loop.call_soon_threadsafe(self.ctx.notifier.on_print_silently, msg, None, None, False)
+                        self.ctx.loop.call_soon_threadsafe(self.ctx.notifier.on_print_silently, msg, None, None, False, True)
                 except Exception:
                     pass
 
@@ -156,7 +163,7 @@ class Portal2Context(CommonContext):
     def flush_init_logs(self):
         if hasattr(self, 'temp_handler') and self.temp_handler:
             for msg in self.temp_handler.queue:
-                self.notifier.on_print_silently(msg)
+                self.notifier.on_print_silently(msg, from_logger=True)
             logging.getLogger().removeHandler(self.temp_handler)
             self.temp_handler = None
 
@@ -649,6 +656,21 @@ class Portal2Context(CommonContext):
             await self.ui_task
         if getattr(self, 'input_task', None):
             self.input_task.cancel()
+
+    async def get_username(self):
+        if not self.auth:
+            self.auth = self.username
+            if not self.auth:
+                logger.info('Enter slot name:')
+                self.auth = await self.console_input()
+                
+                # Update the log message in self.notifier.chat_log
+                for entry in reversed(self.notifier.chat_log):
+                    if "Enter slot name:" in entry["text"]:
+                        new_text = f"Enter slot name: {self.auth}"
+                        entry["text"] = new_text
+                        entry["html"] = self.notifier.auto_color_text(new_text)
+                        break
 
     async def server_auth(self, password_requested: bool = False) -> None:
         if password_requested and not self.password:

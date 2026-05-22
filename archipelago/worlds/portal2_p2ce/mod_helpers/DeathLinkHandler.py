@@ -1,6 +1,7 @@
 import time
 import asyncio
 import logging
+from Utils import persistent_load, persistent_store
 
 logger = logging.getLogger("Portal2Client")
 
@@ -12,6 +13,24 @@ class DeathLinkHandler:
         self.last_death_link_executed = 0
         self.ping_in_progress = False
         self.loop_task = None
+
+    def get_saved_time(self) -> float | None:
+        seed = getattr(self.ctx, "seed_name", None)
+        if not seed:
+            seed = f"{getattr(self.ctx, 'server_address', '')}_{getattr(self.ctx, 'slot', 'default')}"
+        storage = persistent_load().get("portal2_deathlink", {})
+        return storage.get(seed, None)
+
+    @property
+    def last_processed_time(self) -> float:
+        val = self.get_saved_time()
+        return val if val is not None else 0.0
+
+    def save_last_death_link_time(self, timestamp: float):
+        seed = getattr(self.ctx, "seed_name", None)
+        if not seed:
+            seed = f"{getattr(self.ctx, 'server_address', '')}_{getattr(self.ctx, 'slot', 'default')}"
+        persistent_store("portal2_deathlink", seed, timestamp)
 
     def start(self):
         """Starts the asynchronous background loop for processing queued deaths."""
@@ -50,6 +69,7 @@ class DeathLinkHandler:
         current_cause = self.deathlink_queue.pop(0)
         
         self.last_death_link_executed = time.time()
+        self.save_last_death_link_time(self.last_death_link_executed)
         
         self.ctx.command_queue.append("AP_SetMutedDeath 1\n")
         

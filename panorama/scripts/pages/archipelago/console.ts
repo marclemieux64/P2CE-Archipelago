@@ -242,7 +242,9 @@ class ArchipelagoConsole {
             const timeStr = "[" + d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0') + "]";
             
             let lineText = "";
-            if (msg.type === "json" && Array.isArray(msg.data)) {
+            if (msg.html) {
+                lineText = msg.html;
+            } else if (msg.type === "json" && Array.isArray(msg.data)) {
                 lineText = ArchipelagoConsole.formatRichMessage(msg.data);
             } else {
                 lineText = msg.text || "";

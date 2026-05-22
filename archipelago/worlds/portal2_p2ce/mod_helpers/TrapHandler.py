@@ -1,6 +1,7 @@
 import time
 import asyncio
 import logging
+from Utils import persistent_load, persistent_store
 
 logger = logging.getLogger("Portal2Client")
 
@@ -13,6 +14,20 @@ class TrapHandler:
         self.ping_in_progress = False
         self.is_map_transition_active = False
         self.loop_task = None
+
+    @property
+    def last_processed_index(self) -> int:
+        seed = getattr(self.ctx, "seed_name", None)
+        if not seed:
+            seed = f"{getattr(self.ctx, 'server_address', '')}_{getattr(self.ctx, 'slot', 'default')}"
+        storage = persistent_load().get("portal2_traps", {})
+        return storage.get(seed, -1)
+
+    def save_last_processed_index(self, index: int):
+        seed = getattr(self.ctx, "seed_name", None)
+        if not seed:
+            seed = f"{getattr(self.ctx, 'server_address', '')}_{getattr(self.ctx, 'slot', 'default')}"
+        persistent_store("portal2_traps", seed, index)
 
     def start(self):
         """Starts the asynchronous background verification loop for standard traps."""

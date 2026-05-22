@@ -134,21 +134,28 @@ class LogBridge:
                 self.bridge = bridge
 
             def emit(self, record):
-                if "[Archipelago]" in record.msg or "[HUD]" in record.msg:
+                # Prevent duplicate logging in game console for messages already logged/handled
+                if getattr(record, "from_sync", False) or any(x in record.msg for x in ["[HUD]", "DEATHLINK:", "Connection to Portal 2", "Disconnected from Portal 2"]):
                     return
                 try:
                     msg = self.format(record)
+                    if "Connecting to Archipelago server at" in msg:
+                        current_time = time.time()
+                        last_time = getattr(self.bridge, "last_connect_log_time", 0.0)
+                        if current_time - last_time < 3.0:
+                            return
+                        self.bridge.last_connect_log_time = current_time
                     if getattr(self.bridge.ctx, 'loop', None):
                         msg_lower = msg.lower()
                         
                         if any(noise in msg_lower for noise in self.bridge.noise_keywords):
                             self.bridge.ctx.loop.call_soon_threadsafe(
-                                self.bridge.ctx.notifier.on_print_silently, msg, None, None, False
+                                self.bridge.ctx.notifier.on_print_silently, msg, None, None, False, True
                             )
                             return
 
                         self.bridge.ctx.loop.call_soon_threadsafe(
-                            self.bridge.ctx.notifier.on_print_silently, msg, None, None, False
+                            self.bridge.ctx.notifier.on_print_silently, msg, None, None, False, True
                         )
                 except Exception:
                     pass
@@ -161,7 +168,7 @@ class LogBridge:
         """Flushes captured startup logs downstream into the client layout."""
         if self.temp_handler:
             for msg in self.temp_handler.queue:
-                self.ctx.notifier.on_print_silently(msg)
+                self.ctx.notifier.on_print_silently(msg, from_logger=True)
             logging.getLogger().removeHandler(self.temp_handler)
             self.temp_handler = None
 
@@ -172,7 +179,7 @@ class LogBridge:
 class Portal2Context(CommonContext):
     command_processor = Portal2CommandProcessor
     game_connection_task: typing.Optional["asyncio.Task[None]"] = None
-    
+
     def __init__(self, server_address: str = None, password: str = None):
         self.notifier = NotificationManager(self)
         self.deathlink_handler = DeathLinkHandler(self)
@@ -186,9 +193,11 @@ class Portal2Context(CommonContext):
         self.game_message_queue = []
         self.completed_maps = set()
         
-        # FIX: Call base constructor before attaching custom logging streams
-        super().__init__(server_address, password)
+        # --- FIX: Put the trap handler into holding mode immediately on startup ---
+        # This forces traps received during initial connection to wait in the held queue
+        self.trap_handler.set_map_transition_state(True)
 
+        super().__init__(server_address, password)
         self.log_bridge.setup_early_logging()
         self.log_bridge.setup_panorama_logging()
 
@@ -532,7 +541,46 @@ class Portal2Context(CommonContext):
                 self.update_menu(check_id)
         
         elif message.startswith("send_deathlink"):
-            pass
+            if self.death_link_active and time.time() - getattr(self.deathlink_handler, 'last_death_link_executed', 0) > 10:
+                map_name = message.strip().split()[1]
+                death_message = get_death_message(map_name, self.player_names[self.slot])
+                
+                current_time = time.time()
+                
+                if self.check_game_connection() and self.server and not self.server.socket.closed:
+                    # 1. Send the standard live DeathLink bounce
+                    await self.send_death(death_text=death_message)
+                    
+                    # 2. Update the shared persistent server-side key
+                    death_sync_key = f"ap_persistent_deaths_{self.team}"
+                    await self.send_msgs([{
+                        "cmd": "Set",
+                        "key": death_sync_key,
+                        "default": 0.0,
+                        "want_reply": False,
+                        "operations": [
+                            {"operation": "max", "value": current_time}
+                        ]
+                    }])
+                else:
+                    logger.info("Local DeathLink occurred while disconnected. Saving timestamp locally for synchronization upon reconnect.")
+                
+                # 3. Update local last processed time to avoid self-killing and keep timestamp
+                self.deathlink_handler.save_last_death_link_time(current_time)
+                
+                # 4. Display the event locally
+                fake_data = [{"text": death_message, "is_death": True}]
+                self.notifier.on_print_silently(death_message, fake_data, mirror_to_hud=True)
+
+    def check_and_apply_persistent_death(self, server_timestamp: float):
+        if not self.death_link_active:
+            return
+            
+        local_timestamp = self.deathlink_handler.last_processed_time
+        if server_timestamp > local_timestamp:
+            logger.info(f"Persistent DeathLink: Missed death detected! (Server: {server_timestamp}, Local: {local_timestamp})")
+            self.deathlink_handler.enqueue_death("Missed DeathLink while offline")
+            self.deathlink_handler.save_last_death_link_time(server_timestamp)
 
     async def handle_goal_completion(self):
         if getattr(self, 'finished_game', False):
@@ -542,9 +590,12 @@ class Portal2Context(CommonContext):
 
     def on_deathlink(self, data: typing.Dict[str, typing.Any]):
         cause = data.get("cause", "Un joueur est mort.")
+        death_time = data.get("time", time.time())
         
-        # 1. Update your custom death handler queue
-        self.deathlink_handler.enqueue_death(cause)
+        # 1. Guard against duplicate processing of the same or older deaths
+        if death_time > self.deathlink_handler.last_processed_time:
+            self.deathlink_handler.save_last_death_link_time(death_time)
+            self.deathlink_handler.enqueue_death(cause)
         
         # 2. Return None to block the base client from printing its own "DeathLink: ..." line
         return
@@ -634,6 +685,11 @@ class Portal2Context(CommonContext):
         self.refresh_menu()
 
     def on_package(self, cmd, args):
+        if cmd == "RoomInfo":
+            self.seed_name = args.get("seed_name", "")
+        elif cmd == "Connected":
+            self.seed_name = args.get("seed_name", getattr(self, "seed_name", ""))
+
         if cmd in ("RoomInfo", "RoomUpdate", "Connected"):
             if "location_check_points" in args:
                 self.check_points = args["location_check_points"]
@@ -690,13 +746,27 @@ class Portal2Context(CommonContext):
             if hkey in args["keys"]:
                 self.notifier.process_hints(args["keys"][hkey])
 
+            # Check and apply persistent death link key if retrieved
+            if self.team is not None:
+                death_sync_key = f"ap_persistent_deaths_{self.team}"
+                if death_sync_key in args["keys"] and args["keys"][death_sync_key] is not None:
+                    self.check_and_apply_persistent_death(args["keys"][death_sync_key])
+
+        if cmd == "SetReply":
+            if self.team is not None:
+                death_sync_key = f"ap_persistent_deaths_{self.team}"
+                if args.get("key") == death_sync_key and args.get("value") is not None:
+                    self.check_and_apply_persistent_death(args["value"])
+
         if cmd == "ReceivedItems":
             index = args["index"]
             for item in args["items"]:
-                if (item.flags & 0b100):
-                    trap_cmd = handle_trap(self.item_names.lookup_in_game(item.item, self.game))
-                    if trap_cmd:
-                        self.trap_handler.enqueue_trap(trap_cmd + "\n")
+                if index > self.trap_handler.last_processed_index:
+                    if (item.flags & 0b100):
+                        trap_cmd = handle_trap(self.item_names.lookup_in_game(item.item, self.game))
+                        if trap_cmd:
+                            self.trap_handler.enqueue_trap(trap_cmd + "\n")
+                    self.trap_handler.save_last_processed_index(index)
                 index += 1
             
             super().on_package(cmd, args)
@@ -726,6 +796,23 @@ class Portal2Context(CommonContext):
             
             self.handle_slot_data(args["slot_data"])
             self.alert_game_connection()
+
+            # Initialize DeathLink handler timestamp if it is the first connection on this seed/server
+            if self.deathlink_handler.get_saved_time() is None:
+                self.deathlink_handler.save_last_death_link_time(time.time())
+
+            # Subscribe, query, and synchronize the team-wide persistent death sync key
+            if self.team is not None:
+                death_sync_key = f"ap_persistent_deaths_{self.team}"
+                self.stored_data_notification_keys.add(death_sync_key)
+                
+                # Push our local last processed time (in case we died offline) and fetch/subscribe
+                local_timestamp = self.deathlink_handler.last_processed_time
+                async_start(self.send_msgs([
+                    {"cmd": "Set", "key": death_sync_key, "default": 0.0, "want_reply": False, "operations": [{"operation": "max", "value": local_timestamp}]},
+                    {"cmd": "Get", "keys": [death_sync_key]},
+                    {"cmd": "SetNotify", "keys": [death_sync_key]}
+                ]))
 
     def parse_message(self, data: list[dict], sending: int | None = None) -> str:
         message = ""
@@ -784,6 +871,21 @@ class Portal2Context(CommonContext):
             await self.ui_task
         if getattr(self, 'input_task', None):
             self.input_task.cancel()
+
+    async def get_username(self):
+        if not self.auth:
+            self.auth = self.username
+            if not self.auth:
+                logger.info('Enter slot name:')
+                self.auth = await self.console_input()
+                
+                # Update the log message in self.notifier.chat_log
+                for entry in reversed(self.notifier.chat_log):
+                    if "Enter slot name:" in entry["text"]:
+                        new_text = f"Enter slot name: {self.auth}"
+                        entry["text"] = new_text
+                        entry["html"] = self.notifier.auto_color_text(new_text)
+                        break
 
     async def server_auth(self, password_requested: bool = False) -> None:
         if password_requested and not self.password:

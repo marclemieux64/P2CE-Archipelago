@@ -181,9 +181,10 @@ function ProcessChat(json: string) {
                     continue; 
                 }
 
-                let finalHtml = msg.text || "";
-                
-                if (msg.type === "json" && Array.isArray(msg.data)) {
+                let finalHtml = "";
+                if (msg.html) {
+                    finalHtml = msg.html;
+                } else if (msg.type === "json" && Array.isArray(msg.data)) {
                     finalHtml = msg.data.map((p: any) => {
                         let t = p.text || "";
                         t = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -205,6 +206,8 @@ function ProcessChat(json: string) {
                         }
                         return t;
                     }).join("");
+                } else {
+                    finalHtml = msg.text || "";
                 }
                 
                 const apType = msg.ap_msg_type || "default";

@@ -11,7 +11,35 @@ void RemovePotatOS() {
             target.Spawn();
         
             DeleteEntity("sphere_entrance_lift_relay", false);
-            DeleteEntity("potatos_prop", false);
+            string[] potatosEntities = { "potatos_prop", "potatos", "models/props/potatos.mdl" };
+        for (uint i = 0; i < potatosEntities.length(); i++) {
+            string nameOrModel = potatosEntities[i];
+            
+            array<CBaseEntity@> targets;
+            CBaseEntity@ ent = null;
+            if (nameOrModel.locate(".mdl") != uint(-1)) {
+                while ((@ent = EntityList().FindByModel(ent, nameOrModel)) !is null) {
+                    targets.insertLast(ent);
+                }
+            } else {
+                while ((@ent = EntityList().FindByName(ent, nameOrModel)) !is null) {
+                    targets.insertLast(ent);
+                }
+            }
+            
+            for (uint j = 0; j < targets.length(); j++) {
+                CBaseEntity@ target = targets[j];
+                if (target !is null) {
+                    target.KeyValue("rendermode", "10");
+                    
+                    string holoName = target.GetEntityName();
+                    if (holoName == "") holoName = "potatos_holo_" + i + "_" + j; else holoName = holoName + "_holo";
+                    
+                    CreateAPHologram(Vector(0, 0, 0), QAngle(0, 0, 0), 0.3f, target, "", 4, holoName, false);
+                }
+            }
+        }
+        
         }
 
         CBaseEntity@ hint = util::CreateEntityByName("env_instructor_hint");

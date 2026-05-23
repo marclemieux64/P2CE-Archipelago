@@ -1,5 +1,5 @@
 client:
-  last_server_address: archipelago.gg:59900
+  last_server_address: archipelago.gg:53901
 groups_by_checksum:
   6a86ddc259e5ded3cf68c5e72aedb4ced86a3848:
     Portal 2:
@@ -39,5 +39,6 @@ groups_by_checksum:
         - White Gel
 portal2_deathlink:
   01077754363858977560: 1779499781.232086
+  '68115111591830067218': 1779516324.1101518
 portal2_traps:
   01077754363858977560: 0

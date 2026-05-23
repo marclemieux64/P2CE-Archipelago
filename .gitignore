@@ -98,3 +98,5 @@ portal2_p2ce_apworld/
 build_apworld.py
 .gitignore
 portal2_p2ce.apworld
+data/client/api_reference.html
+data/client/api_reference.json

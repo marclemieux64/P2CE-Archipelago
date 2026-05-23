@@ -95,3 +95,6 @@ P2CEClient/*.tar.gz
 archipelago_debug.log
 P2CEClient/core/logs/
 portal2_p2ce_apworld/
+build_apworld.py
+.gitignore
+portal2_p2ce.apworld

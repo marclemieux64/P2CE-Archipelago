@@ -1,6 +1,6 @@
 namespace Archipelago {
 
-void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale, int skin = 0) {
+    void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale, int skin = 0) {
         string scenarioName = TranslateButtonName(name);
 
         if (scenarioName.locate("rd") == 0) skin = 0;
@@ -91,49 +91,98 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
     }
 
     CBaseEntity@ CreateAPHologram(Vector position, QAngle angles, float scale, CBaseEntity@ parent = null, string attachment = "", int skin = 0, string name = "", bool animate = true) {
-    CBaseEntity@ h = null;
+        CBaseEntity@ h = null;
 
-    if (name != "") {
-        @h = EntityList().FindByName(null, name);
-    }
+        if (name != "") {
+            @h = EntityList().FindByName(null, name);
+        }
 
     // BLOC DE MISE À JOUR CORRECTIF POUR LE RELOAD
-    if (h !is null) {
-        if (h.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
-            if (Archipelago::cv_ArchipelagoDebug.GetBool()) {
-                Archipelago::ArchipelagoLog("[AP DEBUG] Updating Hologram '" + name + "' to " + angles.x + " " + angles.y + " " + angles.z + " | Skin: " + skin);
-            }
+        if (h !is null) {
+            if (h.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
+                if (Archipelago::cv_ArchipelagoDebug.GetBool()) {
+                    Archipelago::ArchipelagoLog("[AP DEBUG] Updating Hologram '" + name + "' to " + angles.x + " " + angles.y + " " + angles.z + " | Skin: " + skin);
+                }
             
             // 1. Re-parentage et gestion d'origine stricte à chaque snapshot pour contrer le reload
+                if (parent !is null) {
+                    h.SetParent(parent);
+                    h.SetLocalOrigin(position);
+                    h.SetLocalAngles(angles);
+                
+                    if (attachment != "") {
+                        Variant v;
+                        v.SetString(attachment);
+                        h.FireInput("SetParentAttachment", v, 0.01f, null, null, 0);
+                    }
+                } else {
+                    if (h.GetMoveParent() !is null) {
+                        h.SetParent(null); 
+                    }
+                    h.SetAbsOrigin(position);
+                    h.SetAbsAngles(angles);
+                }
+            
+            // 2. Refresh instantané du matériau via CBaseAnimating
+                CBaseAnimating@ animH = cast<CBaseAnimating>(h);
+                if (animH !is null) {
+                    animH.SetSkin(skin);
+                } else {
+                    h.KeyValue("skin", "" + skin); 
+                }
+            
+                h.KeyValue("modelscale", "" + scale);
+
+            // Apply visibility settings
+                int hideOption = Archipelago::cv_ArchipelagoHideHolograms.GetInt();
+                bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
+                Variant emptyVal;
+                h.KeyValue("rendermode", "0");
+                if (shouldHide) {
+                    h.FireInput("Disable", emptyVal, 0.0f, null, null, 0);
+                } else {
+                    h.FireInput("Enable", emptyVal, 0.0f, null, null, 0);
+                }
+
+                return h;
+            }
+        }
+
+    // BLOC DE CRÉATION INITIALE 
+        @h = util::CreateEntityByName("prop_dynamic");
+        if (h !is null) {
+            h.KeyValue("model", "models/effects/ap/archipelago_hologram.mdl");
+            if (name != "") h.KeyValue("targetname", name);
+            h.KeyValue("skin", "" + skin);
+            h.KeyValue("modelscale", "" + scale);
+            h.KeyValue("DefaultAnim", animate ? "idle" : "");
+
+            if (parent !is null) {
+                h.SetAbsOrigin(parent.GetAbsOrigin()); 
+                h.SetAbsAngles(parent.GetAbsAngles());
+            } else {
+                h.SetAbsOrigin(position); 
+                h.SetAbsAngles(angles);
+            }
+        
+            h.Spawn(); 
+
+            h.SetSolid(SOLID_NONE);
+            h.SetMoveType(MOVETYPE_NONE);
+
             if (parent !is null) {
                 h.SetParent(parent);
-                h.SetLocalOrigin(position);
+                h.SetLocalOrigin(position); 
                 h.SetLocalAngles(angles);
-                
+            
                 if (attachment != "") {
                     Variant v;
                     v.SetString(attachment);
                     h.FireInput("SetParentAttachment", v, 0.01f, null, null, 0);
                 }
-            } else {
-                if (h.GetMoveParent() !is null) {
-                    h.SetParent(null); 
-                }
-                h.SetAbsOrigin(position);
-                h.SetAbsAngles(angles);
             }
-            
-            // 2. Refresh instantané du matériau via CBaseAnimating
-            CBaseAnimating@ animH = cast<CBaseAnimating>(h);
-            if (animH !is null) {
-                animH.SetSkin(skin);
-            } else {
-                h.KeyValue("skin", "" + skin); 
-            }
-            
-            h.KeyValue("modelscale", "" + scale);
 
-            // Apply visibility settings
+        // Apply visibility settings
             int hideOption = Archipelago::cv_ArchipelagoHideHolograms.GetInt();
             bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
             Variant emptyVal;
@@ -143,81 +192,32 @@ void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale
             } else {
                 h.FireInput("Enable", emptyVal, 0.0f, null, null, 0);
             }
-
-            return h;
         }
+        return h;
     }
 
-    // BLOC DE CRÉATION INITIALE 
-    @h = util::CreateEntityByName("prop_dynamic");
-    if (h !is null) {
-        h.KeyValue("model", "models/effects/ap/archipelago_hologram.mdl");
-        if (name != "") h.KeyValue("targetname", name);
-        h.KeyValue("skin", "" + skin);
-        h.KeyValue("modelscale", "" + scale);
-        h.KeyValue("DefaultAnim", animate ? "idle" : "");
-
-        if (parent !is null) {
-            h.SetAbsOrigin(parent.GetAbsOrigin()); 
-            h.SetAbsAngles(parent.GetAbsAngles());
-        } else {
-            h.SetAbsOrigin(position); 
-            h.SetAbsAngles(angles);
-        }
-        
-        h.Spawn(); 
-
-        h.SetSolid(SOLID_NONE);
-        h.SetMoveType(MOVETYPE_NONE);
-
-        if (parent !is null) {
-            h.SetParent(parent);
-            h.SetLocalOrigin(position); 
-            h.SetLocalAngles(angles);
-            
-            if (attachment != "") {
-                Variant v;
-                v.SetString(attachment);
-                h.FireInput("SetParentAttachment", v, 0.01f, null, null, 0);
-            }
-        }
-
-        // Apply visibility settings
-        int hideOption = Archipelago::cv_ArchipelagoHideHolograms.GetInt();
-        bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
-        Variant emptyVal;
-        h.KeyValue("rendermode", "0");
-        if (shouldHide) {
-            h.FireInput("Disable", emptyVal, 0.0f, null, null, 0);
-        } else {
-            h.FireInput("Enable", emptyVal, 0.0f, null, null, 0);
-        }
-    }
-    return h;
-}
-
-void UpdateHologramsVisibility() {
-    CBaseEntity@ ent = null;
-    int hideOption = cv_ArchipelagoHideHolograms.GetInt();
+    void UpdateHologramsVisibility() {
+        CBaseEntity@ ent = null;
+        int hideOption = cv_ArchipelagoHideHolograms.GetInt();
     
-    while ((@ent = EntityList().FindByClassname(ent, "prop_dynamic")) !is null) {
-        if (ent.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
-            int skin = 0;
-            CBaseAnimating@ anim = cast<CBaseAnimating>(ent);
-            if (anim !is null) {
-                skin = anim.GetSkin();
-            }
+        while ((@ent = EntityList().FindByClassname(ent, "prop_dynamic")) !is null) {
+            if (ent.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
+                int skin = 0;
+                CBaseAnimating@ anim = cast<CBaseAnimating>(ent);
+                if (anim !is null) {
+                    skin = anim.GetSkin();
+                }
             
-            bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
-            Variant emptyVal;
-            ent.KeyValue("rendermode", "0");
-            if (shouldHide) {
-                ent.FireInput("Disable", emptyVal, 0.0f, null, null, 0);
-            } else {
-                ent.FireInput("Enable", emptyVal, 0.0f, null, null, 0);
+                bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
+                Variant emptyVal;
+                ent.KeyValue("rendermode", "0");
+                if (shouldHide) {
+                    ent.FireInput("Disable", emptyVal, 0.0f, null, null, 0);
+                } else {
+                    ent.FireInput("Enable", emptyVal, 0.0f, null, null, 0);
+                }
             }
         }
     }
-}
 
 } // namespace Archipelago

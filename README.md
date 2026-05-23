@@ -2,11 +2,11 @@
 
 `Version 1.0.0`
 
-`Unstable` `In Development`
+`Stable` ` Development`
 
 This is a Portal 2 Community Edition mod designed for use with Archipelago, a multi-game collaborative randomiser.
 
-This must be used with the [Portal 2 APWorld and Client](https://github.com/GlassToadstool/Archipelago/releases).
+This must be used with the [P2CE APWorld and Client]().
 
 > [!WARNING]
 > This mod is not compatible with SteamOS.
@@ -66,7 +66,13 @@ At the moment the only goal is to finish the final level in Chapter 9 (Chapter 9
 - Better Archipelago Maps menu
 - Can access Archipelago Maps menu from pause menu
 - Finishing a map bring you to Archipelago maps menu instead of the main menu
-- Framed props button have audio feedback by using it.
+- Transtion system
+- Hint page
+- Tracker included
+- Option menu
+- Quality of life if you do some wheatley monitor screens you get telported to prevent you death
+- Multi Language support (English and French currently)
+- Simple setup
 
 # Using the Mod
 
@@ -101,21 +107,18 @@ sourcemods
 7. We need to change the properties of the game in order to connect to the Archipelago Portal 2 APWorld client. Right-click the "Portal 2 Community Edition - Archipelago" game in your Library, and select the "Properties..." menu option.
 8. In the dialog that appears, navigate to the "General" menu item, then in the right pane of the dialog navigate to "Launch Options". In the text input:
     - On Windows, put:
-        - `-netconport 3000`
+        - `"C:\Program Files (x86)\Steam\steamapps\sourcemods\p2ce-archipelago\RunArchipelago.bat" %command%`
     - On Linux, put: 
-        - `%command% -netconport 3000`
+        - `"~/.steam/steam/steamapps/sourcemods/p2ce-archipelago/RunArchipelago.sh" %command%`
+
 > [!TIP]
 > If on Linux, and you cannot get the game to open as expected, you may need to run the game using Proton, following the Windows install steps.
-9. Download and install the [`portal2.apworld`](https://github.com/GlassToadstool/Archipelago/releases/latest) file into the Archipelago launcher using the "Install APWorld" option
+9. Download and install the [`p2ce.apworld`]() file into the Archipelago launcher using the "Install APWorld" option
 
 ## Running
-1. Open the "Portal 2 Client" from the Archipelago launcher
-2. Input the multiworld server address into the "Server" field at the top of the new window and press connect
-3. Input your slot name into the command field and press enter
-4. When you join a game the client may ask you to select a file with a prompt
-    - Simply locate the Portal2Archipelago mod location and find a file called `extras.txt` in the `scripts` folder and select that file. For Windows that may looks something like `C:/.../Steam/steamapps/sourcemods/p2ce-archipelago/scripts/extras.txt`
-6. Launch the sourcemod (Portal 2 Archipelago Mod) from steam
-7. From the game main menu select "Play P2CE Archipelago"
+1. Launch Portal 2: Community Edition - Archipelago from your library
+2. Enjoy!
+
 
 
 # Portal 2 Client Commands
@@ -130,24 +133,6 @@ sourcemods
 
 
 # FAQ
-
-**Why do checks not send/ items are usable in game even if I don't have them unlocked?**
-
-This could be due to a few different issues:
-
-1. You are not using the Portal 2 Client from the Archipelago Launcher. The custom client must be open at all times while playing the game
-2. Your P2CE-Archipelago Mod has not got the -netconport launch option set. You can check using the `/check_connection` command in the client. See step 7 of [Installation](#installation) to set the launch option.
-
-**Why does my map menu not show any of the maps and just says "Connect to game to load levels"?**
-
-You most likely didn't select the correct extras.txt file when joining a game for the first time. 
-
-- Open host.yaml using the "Open host.yaml" button in the Archipelago Client
-- Go down to `portal2` and see if the `menu_file` points to the **mods** extras.txt file as seen in step 4 of [Running](#running)
-
-If you selected another file in the mod e.g. `GameInfo.txt` the game will not run correctly as the file has probably already been overwritten by the client so you will have to replace that file with an original copy or [reinstall the mod from scratch](#installation).
-
-There is a very small chance that for people running another server on their machine the 3000 port is already in use. In this case you can change the `default_port` setting in `host.yaml` to another unused port and the `-netconport 3000` to the same port as in `host.yaml`.
 
 # Acknowledgements
 
@@ -170,16 +155,21 @@ There is a very small chance that for people running another server on their mac
 - **Charged_Neon** - Documentation
 - **James** - Major Bug Fixing and UT updates
 
+### Initial Testers
+
+**22TwentyTwo, ahhh reptar, Bfbfan26, buzzman5001, ChaiMint, Default Miserable, Fewffwa, Fox, Grenhunterr, Kit Lemonfoot, Knux, MarioXTurn, miketizzle411, Pigmaster100, Rya, Scrungip**
+
 ### P2CE Mod
 - **marclemieux64** - Lead Tinkerer
+
 
 ### P2CE Mod Repo Foundation
 - [p2ce-mod-ui](https://github.com/marclemieux64/p2ce-mod-ui)
 - [p2ce-mod-template](https://github.com/marclemieux64/p2ce-mod-template)
 - [Portal2ArchipelagoMod](https://github.com/marclemieux64/Portal2ArchipelagoMod)
 
+(This mod was made using AI)
 
-### Initial Testers
 
-**22TwentyTwo, ahhh reptar, Bfbfan26, buzzman5001, ChaiMint, Default Miserable, Fewffwa, Fox, Grenhunterr, Kit Lemonfoot, Knux, MarioXTurn, miketizzle411, Pigmaster100, Rya, Scrungip**
+
 

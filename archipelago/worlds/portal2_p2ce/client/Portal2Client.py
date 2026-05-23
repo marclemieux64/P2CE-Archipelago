@@ -9,6 +9,7 @@ import typing
 import json
 from urllib.parse import parse_qs
 import hashlib
+import worlds
 
 # --- STANDALONE FIX ---
 archipelago_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -21,18 +22,42 @@ from CommonClient import CommonContext, server_loop, ClientCommandProcessor, log
 from NetUtils import ClientStatus, NetworkItem
 from Utils import async_start, init_logging
 
-import worlds
-from worlds.portal2_p2ce import Portal2World
-from worlds.portal2_p2ce.mod_helpers.ItemHandling import add_ratman_commands, handle_item, handle_map_start, handle_trap, portal_gun_upgrade_not_inplace, potatos_not_inplace
-from worlds.portal2_p2ce.mod_helpers.MapMenu import Menu
-from worlds.portal2_p2ce.mod_helpers.Notifications import NotificationManager
-from worlds.portal2_p2ce.mod_helpers.DeathLinkHandler import DeathLinkHandler
-from worlds.portal2_p2ce.mod_helpers.TrapHandler import TrapHandler
-from worlds.portal2_p2ce.client.DeathMessages import get_death_message
-from worlds.portal2_p2ce.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
-from worlds.portal2_p2ce.Options import GameModeOption
+from game.mod_helpers.ItemHandling import add_ratman_commands, handle_item, handle_map_start, handle_trap, portal_gun_upgrade_not_inplace, potatos_not_inplace
+from game.mod_helpers.MapMenu import Menu
+from game.mod_helpers.Notifications import NotificationManager
+from game.mod_helpers.DeathLinkHandler import DeathLinkHandler
+from game.mod_helpers.TrapHandler import TrapHandler
+from game.client.DeathMessages import get_death_message
+from game.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
+from game.Options import GameModeOption
 
-worlds.network_data_package["games"]["Portal 2"] = Portal2World.get_data_package_data()
+# Helper to construct network data package statically for client/API validation without importing Portal2World generator
+def get_portal2_data_package():
+    from game.Items import item_table
+    from game.Locations import all_locations_table, location_groups
+    
+    item_name_to_id = {name: data.id for name, data in item_table.items() if data.id}
+    location_name_to_id = {name: data.id for name, data in all_locations_table.items() if data.id}
+    
+    sorted_item_name_groups = {"Everything": sorted(item_name_to_id.keys())}
+    sorted_location_name_groups = {
+        name: sorted(location_groups[name]) for name in sorted(location_groups.keys())
+    }
+    sorted_location_name_groups["Everywhere"] = sorted(location_name_to_id.keys())
+    
+    res = {
+        "item_name_groups": sorted_item_name_groups,
+        "item_name_to_id": item_name_to_id,
+        "location_name_groups": sorted_location_name_groups,
+        "location_name_to_id": location_name_to_id,
+    }
+    
+    import hashlib
+    from NetUtils import encode
+    res["checksum"] = hashlib.sha1(encode(res).encode()).hexdigest()
+    return res
+
+worlds.network_data_package["games"]["Portal 2 P2CE"] = get_portal2_data_package()
 
 logger = logging.getLogger("Portal2Client")
 
@@ -92,9 +117,9 @@ class Portal2CommandProcessor(ClientCommandProcessor):
                 requirements.sort()
                 requirements_not_collected.sort()
 
-                message = ("Required Items: \n"
-                           f"{', '.join(requirements)}\n"
-                           f"{'All items acquired' if not requirements_not_collected else 'Still needed: \n' + ', '.join(requirements_not_collected)}")
+                still_needed = "All items acquired" if not requirements_not_collected else f"Still needed: \n{', '.join(requirements_not_collected)}"
+                message = (f"Required Items: \n{', '.join(requirements)}\n"
+                           f"{still_needed}")
                 break
         self.output(message)
 
@@ -204,7 +229,7 @@ class Portal2Context(CommonContext):
     def flush_init_logs(self):
         self.log_bridge.flush_init_logs()
 
-    game = "Portal 2"
+    game = "Portal 2 P2CE"
     items_handling = 0b111 
 
     HOST = "127.0.0.1"
@@ -370,7 +395,7 @@ class Portal2Context(CommonContext):
     def start_api_server(self):
         import threading
         from http.server import BaseHTTPRequestHandler, HTTPServer
-        from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened 
+        from game.mod_helpers.MapMenu import items_shortened
         client_self = self
 
         class APIHandler(BaseHTTPRequestHandler):
@@ -720,7 +745,7 @@ class Portal2Context(CommonContext):
                 self.hint_cost = new_pct
 
         def update_item_list():
-            from worlds.portal2_p2ce.mod_helpers.MapMenu import items_shortened
+            from game.mod_helpers.MapMenu import items_shortened
             
             full_list = list(items_shortened.keys())
             recv_names = [self.item_names.lookup_in_game(i.item, self.game) for i in self.items_received]
@@ -843,7 +868,8 @@ class Portal2Context(CommonContext):
             base_title = "Portal 2 Archipelago Client"
             def __init__(self, ctx):
                 super().__init__(ctx)
-                self.icon = r"worlds/portal2/data/Portalpelago.png"
+                import os
+                self.icon = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "Portalpelago.png")
 
         return Portal2TextManager
     
@@ -891,7 +917,7 @@ class Portal2Context(CommonContext):
         if password_requested and not self.password:
             await super().server_auth(password_requested)
         await self.get_username()
-        await self.send_connect(game="Portal 2")
+        await self.send_connect(game="Portal 2 P2CE")
 
 async def main(args: argparse.Namespace):
     ctx = Portal2Context(args.connect, args.password)

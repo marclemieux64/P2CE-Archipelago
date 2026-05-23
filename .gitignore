@@ -82,10 +82,7 @@ archipelago/worlds/portal2_p2ce/mod_helpers/__pycache__/MapMenu.cpython-313.pyc
 archipelago/_persistent_storage.yaml
 
 # Standalone Client Migration - Ignore Legacy Archipelago Directory & Venv
-archipelago/*
-!archipelago/worlds/
-archipelago/worlds/*
-!archipelago/worlds/portal2_p2ce/
+archipelago/
 ap_venv/
 
 # Standalone Client Runtime, Bytecode & Archives

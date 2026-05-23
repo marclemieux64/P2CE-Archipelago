@@ -1,52 +1,66 @@
 #!/bin/bash
 
 # =============================================================================
-# P2CE Archipelago Native Linux Launcher
+# P2CE Archipelago Native Linux & Steam Deck Launcher (Standalone)
 # =============================================================================
 
 # 1. Path Definitions
 MOD_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ARCHIPELAGO_LOCAL="$MOD_FOLDER/archipelago"
-CLIENT_PY="$ARCHIPELAGO_LOCAL/worlds/portal2_p2ce/client/Portal2Client.py"
-VENV_DIR="$MOD_FOLDER/ap_venv"
+CLIENT_DIR="$MOD_FOLDER/P2CEClient"
+CLIENT_PY="$CLIENT_DIR/run_client.py"
+PORTABLE_PY_DIR="$CLIENT_DIR/python_env_linux"
+PYTHON_EXE="$PORTABLE_PY_DIR/python/bin/python3"
 
-echo "[Archipelago] Initializing Linux Native Launcher..."
+echo "[Archipelago] Initializing Standalone Linux Launcher..."
 
-# 2. Find a Compatible System Python (3.11, 3.12, or 3.13)
-echo "[Archipelago] Hunting for compatible Python version..."
-PYTHON_BASE=""
-for py in python3.13 python3.12 python3.11; do
-    if command -v "$py" &> /dev/null; then
-        PYTHON_BASE="$py"
-        echo "[Archipelago] Success! Found compatible Python: $PYTHON_BASE"
-        break
-    fi
-done
-
-if [ -z "$PYTHON_BASE" ]; then
-    echo "[Archipelago] ERROR: Compatible Python (3.11, 3.12, or 3.13) is NOT installed."
-    echo "Your default Python 3.14 is too new for Archipelago.Please install python3.13 or python3.12 or python3.11"
-    exit 1
+# 2. Check and build the standalone Python environment on first run
+SETUP_NEEDED=false
+if [ ! -f "$PYTHON_EXE" ]; then
+    SETUP_NEEDED=true
 fi
 
-# 3. Virtual Environment & Dependency Management
-if [ ! -d "$VENV_DIR" ]; then
-    echo "[Archipelago] Creating isolated Python virtual environment..."
-    # Force the venv to be created with the compatible version we found
-    "$PYTHON_BASE" -m venv "$VENV_DIR"
+if [ "$SETUP_NEEDED" = false ]; then
+    # Verify all dependencies are installed (specifically pinning websockets < 14)
+    if ! "$PYTHON_EXE" -c "import websockets, colorama, yaml, certifi, jellyfish, platformdirs, pathspec, typing_extensions, attrs, schema; assert float(websockets.__version__.split('.')[0]) < 14" &>/dev/null; then
+        echo "[Archipelago] Missing, outdated, or incompatible dependencies detected. Installing/updating..."
+        "$PYTHON_EXE" -m pip install "websockets>=13.1,<14" colorama==0.4.6 pyyaml==6.0.3 certifi==2026.2.25 jellyfish==1.2.1 platformdirs==4.9.4 pathspec==1.0.4 typing_extensions==4.15.0 attrs==26.1.0 schema==0.7.8
+    fi
+else
+    echo "[Archipelago] Setting up clean, isolated Linux Python environment..."
+    mkdir -p "$PORTABLE_PY_DIR"
     
-    if [ -f "$ARCHIPELAGO_LOCAL/requirements.txt" ]; then
-        echo "[Archipelago] Installing dependencies into venv..."
-        "$VENV_DIR/bin/pip" install --upgrade pip
-        "$VENV_DIR/bin/pip" install -r "$ARCHIPELAGO_LOCAL/requirements.txt"
+    DOWNLOAD_URL="https://github.com/indygreg/python-build-standalone/releases/download/20240107/cpython-3.11.7+20240107-x86_64-unknown-linux-gnu-install_only.tar.gz"
+    
+    echo "[Archipelago] Downloading pre-compiled portable Python (3.11)..."
+    if command -v wget &> /dev/null; then
+        wget -q -O "$CLIENT_DIR/python.tar.gz" "$DOWNLOAD_URL"
+    elif command -v curl &> /dev/null; then
+        curl -s -L -o "$CLIENT_DIR/python.tar.gz" "$DOWNLOAD_URL"
+    else
+        echo "[Archipelago] ERROR: Neither wget nor curl found! Cannot download Python."
+        exit 1
     fi
+    
+    if [ ! -f "$CLIENT_DIR/python.tar.gz" ]; then
+        echo "[Archipelago] ERROR: Failed to download portable Python!"
+        exit 1
+    fi
+    
+    echo "[Archipelago] Extracting Python package..."
+    tar -xzf "$CLIENT_DIR/python.tar.gz" -C "$PORTABLE_PY_DIR"
+    rm "$CLIENT_DIR/python.tar.gz"
+    
+    echo "[Archipelago] Installing standalone dependencies into venv..."
+    "$PYTHON_EXE" -m ensurepip --upgrade
+    "$PYTHON_EXE" -m pip install --upgrade pip
+    "$PYTHON_EXE" -m pip install "websockets>=13.1,<14" colorama==0.4.6 pyyaml==6.0.3 certifi==2026.2.25 jellyfish==1.2.1 platformdirs==4.9.4 pathspec==1.0.4 typing_extensions==4.15.0 attrs==26.1.0 schema==0.7.8
+    
+    echo "[Archipelago] Setup completed successfully!"
 fi
 
-# Point our execution to the isolated Python binary
-PYTHON_EXE="$VENV_DIR/bin/python"
-
+# 3. Double-check client entrypoint exists
 if [ ! -f "$CLIENT_PY" ]; then
-    echo "[Archipelago] ERROR: Client script not found at $CLIENT_PY"
+    echo "[Archipelago] ERROR: Standalone client script not found at $CLIENT_PY"
     exit 1
 fi
 
@@ -57,9 +71,8 @@ CLIENT_PID=$!
 
 echo "[Archipelago] Client started natively with PID: $CLIENT_PID"
 
-# 5. Process Synchronization (The Clean Way)
-# This trap ensures that no matter how this bash script exits (game crash, 
-# normal exit, or forced kill), it will always take the Python client down with it.
+# 5. Process Synchronization
+# This trap ensures that when the game closes, it automatically terminates the background client.
 cleanup() {
     echo "[Archipelago] Game closed. Cleaning up client process..."
     if kill -0 $CLIENT_PID 2>/dev/null; then
@@ -71,7 +84,6 @@ trap cleanup EXIT INT TERM
 # 6. Launch the Game
 if [ $# -gt 0 ]; then
     echo "[Archipelago] Launching Game with Steam arguments..."
-    # We are adding a redirect to save the game's output to game_debug.log
     "$@" -netconport 3000 -language english > "$MOD_FOLDER/game_debug.log" 2>&1
 else
     echo "[Archipelago] WARNING: No game command provided."

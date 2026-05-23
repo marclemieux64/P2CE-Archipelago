@@ -1,5 +1,5 @@
 client:
-  last_server_address: archipelago.gg:62721
+  last_server_address: archipelago.gg:59900
 groups_by_checksum:
   6a86ddc259e5ded3cf68c5e72aedb4ced86a3848:
     Portal 2:
@@ -218,7 +218,9 @@ groups_by_checksum:
         - Wheatley Monitor 8
         - Wheatley Monitor 9
 portal2_deathlink:
+  01077754363858977560: 1779497094.8323011
   '94213579628119551525': 1779484316.691706
   last_processed_time: 1779482244.7003975
 portal2_traps:
+  01077754363858977560: 0
   '94213579628119551525': 1

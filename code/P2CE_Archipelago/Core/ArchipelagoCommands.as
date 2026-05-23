@@ -96,8 +96,7 @@ void SetCheckedScreensCmd(const CommandArgs@ args) {
                 string prev = Archipelago::checked_screens.opIndex(lastIdx);
                 Archipelago::checked_screens.opIndex(lastIdx) = prev + " " + arg;
                 Archipelago::ArchipelagoLog("AP DEBUG: Merged to create -> '" + Archipelago::checked_screens.opIndex(lastIdx) + "'");
-            } 
-            else {
+            } else {
                 Archipelago::checked_screens.insertLast(arg);
                 Archipelago::ArchipelagoLog("AP DEBUG: Inserted screen -> '" + arg + "'");
             }
@@ -143,7 +142,7 @@ void WarpToMenuLegacyCmd(const CommandArgs@ args) {
 void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("=====Archipelago=====");
     Archipelago::UpdateInternalMapName();
-    if (::current_map == "unknown" || ::current_map == "") {
+    if (::current_map == "unknown" ||::current_map == "") {
         Archipelago::ArchipelagoLog("DelayedInit: Map name unknown, skipping.");
         return;
     }
@@ -158,9 +157,9 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("CreateMapSpecificHolos() completed");
     Archipelago::AttachDeathTrigger();
     Msgl("AttachDeathTrigger() completed");
-    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|1\")");
+    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" +::current_map + "|1\")");
     Msgl("SendToPanorama() completed");
-    Archipelago::ArchipelagoLog("DelayedInit complete for: " + ::current_map);
+    Archipelago::ArchipelagoLog("DelayedInit complete for: " +::current_map);
     Msgl("=====================");
 }
 
@@ -197,7 +196,7 @@ void AddScriptLegacyCmd(const CommandArgs@ args) {
 [ServerCommand("ShowStatus", "Manually show the map status HUD")]
 void ShowStatusLegacyCmd(const CommandArgs@ args) {
     Archipelago::UpdateInternalMapName();
-    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|1\")");
+    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" +::current_map + "|1\")");
 }
 
 [ServerCommand("RefreshMapName", "Forces a map name update to Panorama")]
@@ -217,8 +216,7 @@ void ArchipelagoVitrifiedFoundLegacyCmd(const CommandArgs@ args) {
 
     string newBitmask = "";
     for (int i = 1; i <= 6; i++) {
-        if (i == index) newBitmask += "1";
-        else newBitmask += bitmask.substr(i-1, 1);
+        if (i == index) newBitmask += "1"; else newBitmask += bitmask.substr(i - 1, 1);
     }
 
     Archipelago::cv_ArchipelagoVitrifiedStatus.SetValue(newBitmask);
@@ -266,7 +264,7 @@ void RemovePotatosFromGunLegacyCmd(const CommandArgs@ args) {
 }
 
 [ServerCommand("SetStatus", "Dummy - Deprecated")]
-void SetStatusLegacyCmd(const CommandArgs@ args) {}
+void SetStatusLegacyCmd(const CommandArgs@ args) { }
 
 [ServerCommand("AddScriptAtPos", "Legacy AddScriptAtPos command")]
 void AddScriptAtPosLegacyCmd(const CommandArgs@ args) {
@@ -423,7 +421,7 @@ void CheckDeathLinkQueueCmd(const CommandArgs@ args) {
             CBaseEntity@ world = EntityList().FindByClassname(null, "worldspawn");
             if (world !is null) {
                 Variant v;
-                v.SetString("printl(\"send_deathlink " + ::current_map + "\")");
+                v.SetString("printl(\"send_deathlink " +::current_map + "\")");
                 world.FireInput("RunScriptCode", v, 0.0f, null, null, 0);
             }
         }

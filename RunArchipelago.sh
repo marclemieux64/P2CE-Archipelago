@@ -66,7 +66,7 @@ fi
 
 # 4. Launch the Client
 echo "[Archipelago] Starting Autonomous Client..."
-"$PYTHON_EXE" "$CLIENT_PY" --nogui > "$MOD_FOLDER/archipelago_debug.log" 2>&1 &
+"$PYTHON_EXE" -u "$CLIENT_PY" --nogui > "$MOD_FOLDER/archipelago_debug.log" 2>&1 &
 CLIENT_PID=$!
 
 echo "[Archipelago] Client started natively with PID: $CLIENT_PID"

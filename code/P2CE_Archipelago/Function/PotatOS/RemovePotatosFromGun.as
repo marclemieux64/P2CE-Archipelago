@@ -1,6 +1,6 @@
 namespace Archipelago {
 
-void RemovePotatosFromGun() {
+    void RemovePotatosFromGun() {
         ArchipelagoLog("[AP DEBUG] RemovePotatosFromGun: Executing viewmodel and world cleanup.");
         
         // 1. VIEWMODEL: Force removal via the player proxy
@@ -37,8 +37,7 @@ void RemovePotatosFromGun() {
                     target.KeyValue("rendermode", "10");
                     
                     string holoName = target.GetEntityName();
-                    if (holoName == "") holoName = "potatos_holo_" + i + "_" + j;
-                    else holoName = holoName + "_holo";
+                    if (holoName == "") holoName = "potatos_holo_" + i + "_" + j; else holoName = holoName + "_holo";
                     
                     CreateAPHologram(Vector(0, 0, 0), QAngle(0, 0, 0), 0.3f, target, "", 4, holoName, false);
                 }
@@ -52,8 +51,7 @@ void RemovePotatosFromGun() {
             vMix.SetString("snd_setmixer potatosVO vol 0.0");
             cmd.FireInput("Command", vMix, 0.0f, null, null, 0);
             CallVScript("MutePotatOSSubtitles(true)");
-            
-           
+
         }
         ArchipelagoLog("[AP DEBUG] RemovePotatosFromGun: Done (Visuals, Mixer & Subtitles silenced).");
     }

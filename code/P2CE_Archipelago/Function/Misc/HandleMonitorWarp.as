@@ -4,6 +4,13 @@ void HandleMonitorWarp(string monitorID) {
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
     if (player is null) return;
 
+    // Check if the player is falling (negative vertical velocity) to prevent warp when on solid ground
+    Vector vel = player.GetAbsVelocity();
+    if (vel.z >= -30.0f) {
+        ArchipelagoLog("AP DEBUG: Player is not falling (vel.z = " + vel.z + "), skipping warp.");
+        return;
+    }
+
     Vector targetPos;
     QAngle targetAng;
     bool shouldWarp = false;

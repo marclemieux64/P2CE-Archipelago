@@ -360,15 +360,6 @@ class ConsoleLogManager:
         if len(self.chat_log) > 100:
             self.chat_log.pop(0)
 
-        # Echo the print back to the game console via netcon
-        if hasattr(self.ctx, "command_queue") and self.ctx.check_game_connection():
-            for line in text.split("\n"):
-                line = line.strip()
-                if line:
-                    # Sanitize quotes and semicolons to prevent command injection or syntax errors
-                    escaped_line = line.replace('"', "'").replace(';', ',')
-                    self.ctx.command_queue.append(f'echo "[Archipelago] {escaped_line}"\n')
-
     def print_json(self, data: typing.List[typing.Dict[str, str]], mirror_to_hud: bool = False):
         """Translates multiworld data packages tracking structural components into human-readable strings."""
         resolved_data = []

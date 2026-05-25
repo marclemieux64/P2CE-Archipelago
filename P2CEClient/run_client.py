@@ -1,5 +1,9 @@
 import sys
 import os
+import warnings
+
+# Suppress harmless warnings about compiled C++ speedups not being pre-compiled
+warnings.filterwarnings("ignore", message=".*_speedups not available.*")
 
 # Resolve absolute paths to this client bundle directory
 base_dir = os.path.dirname(os.path.abspath(__file__))

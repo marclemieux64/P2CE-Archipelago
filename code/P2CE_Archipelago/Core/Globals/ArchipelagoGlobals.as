@@ -13,7 +13,7 @@ bool is_faking_death = false;
 namespace Archipelago {
 
 // --- CONVARS & REFS ---
-    ConVar cv_ArchipelagoDebug("ArchipelagoDebug", "0");
+    ConVar cv_ArchipelagoDebug("ArchipelagoDebug", "1");
     ConVar cv_ArchipelagoHideHolograms("ap_hide_holograms", "0", FCVAR_ARCHIVE);
     ConVarRef host_map("host_map");
     ConVar cv_BTS4_InitialTemplateHoloActive("ap_bts4_initial_holo_active", "0");

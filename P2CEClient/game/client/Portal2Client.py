@@ -26,7 +26,7 @@ from game.mod_helpers.MapMenu import Menu
 from game.mod_helpers.Notifications import NotificationManager
 from game.mod_helpers.DeathLinkHandler import DeathLinkHandler
 from game.mod_helpers.TrapHandler import TrapHandler
-from game.mod_helpers.APIServer import APIServer  # Import du module découplé
+from game.mod_helpers.APIServer import APIServer
 from game.client.DeathMessages import get_death_message
 from game.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
 from game.Options import GameModeOption
@@ -190,7 +190,7 @@ class Portal2Context(CommonContext):
         self.deathlink_handler = DeathLinkHandler(self)
         self.trap_handler = TrapHandler(self)
         self.log_bridge = LogBridge(self)
-        self.api_server = APIServer(self) # Instanciation unique et propre
+        self.api_server = APIServer(self)
         
         self.is_processing_received_cmd = False
         self.item_list = []
@@ -242,7 +242,6 @@ class Portal2Context(CommonContext):
         self.api_server.start()
 
     def check_game_connection(self) -> bool:
-        # Résout l'AttributeError de manière définitive pour les boucles HTTP et Netcon
         return self.sender_active and self.listener_active
 
     def execute_in_game_event(self, event_data: dict):
@@ -343,11 +342,15 @@ class Portal2Context(CommonContext):
                             self.pending_validation_events.clear()
                         self.ping_sent_time = 0
                     
-                    while self.command_queue:
-                        cmd = self.command_queue.pop(0)
-                        if cmd:
-                            writer.write(cmd.encode())
-                            await writer.drain()
+                    # CORRECTIF SÉCURITÉ ABSOLUE : Extraction atomique pour éviter les corruptions d'index multi-thread
+                    if self.command_queue:
+                        local_batch = list(self.command_queue)
+                        self.command_queue.clear()
+                        
+                        for cmd in local_batch:
+                            if cmd:
+                                writer.write(cmd.encode())
+                        await writer.drain()
 
                     try:
                         data = await asyncio.wait_for(reader.read(4096), timeout=0.1)
@@ -391,7 +394,10 @@ class Portal2Context(CommonContext):
 
     def send_level_begin_commands(self):
         if self.item_remove_commands:
-            self.command_queue.append(f"{';'.join(self.item_remove_commands)}\n")
+            for cmd in self.item_remove_commands:
+                if cmd:
+                    clean_cmd = cmd if cmd.endswith("\n") else cmd + "\n"
+                    self.command_queue.append(clean_cmd)
 
     async def handle_message(self, message: str):
         cleaned_msg = message.strip()
@@ -812,7 +818,7 @@ async def main(args: argparse.Namespace):
     
     ctx.deathlink_handler.start()
     ctx.trap_handler.start()
-    ctx.api_server.start() # Démarrage propre du serveur restructuré
+    ctx.api_server.start()
     ctx.flush_init_logs()
 
     if gui_enabled and not args.nogui: ctx.run_gui()

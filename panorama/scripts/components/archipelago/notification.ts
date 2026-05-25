@@ -124,24 +124,29 @@ function ProcessQueue() {
 }
 
 // --- ÉCOUTE DU CHAT ---
-$.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (json: string) => {
+$.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (payload: any) => {
     const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
     if (!api) return;
 
     const isHud = GetHudRoot() !== null;
 
     if (isHud) {
-        ProcessChat(json);
+        ProcessChat(payload);
     } else {
         $.Schedule(0.1, () => {
-            ProcessChat(json);
+            ProcessChat(payload);
         });
     }
 });
 
-function ProcessChat(json: string) {
+function ProcessChat(payload: any) {
     try {
-        const chat = JSON.parse(json);
+        // CORRECTIF INTERCEPTEUR V8 : Détection adaptative du type de données (Objet vs String)
+        let chat = payload;
+        if (typeof payload === 'string') {
+            chat = JSON.parse(payload);
+        }
+        
         if (!Array.isArray(chat) || chat.length === 0) return;
 
         const globalObj: any = UiToolkitAPI.GetGlobalObject();

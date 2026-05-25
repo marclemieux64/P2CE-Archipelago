@@ -102,7 +102,7 @@ class ArchipelagoMapSelect {
             }
         }
 
-        if (!api || (status && status.client_offline)) {
+        if (!api || !status || status.client_offline) {
             overlay.RemoveClass('hide');
             if (content && content.IsValid()) content.AddClass('hide');
             if (overlayButton && overlayButton.IsValid()) overlayButton.AddClass('hide');
@@ -111,14 +111,14 @@ class ArchipelagoMapSelect {
                 overlayLabel.text = $.Localize("#Archipelago_Status_NoClient") + "\n" + $.Localize("#Archipelago_Status_LaunchClient");
                 overlayLabel.style.color = "#ffbb00";
             }
-        } else if (!status && Object.keys(this.g_ChapterData).length === 0) {
-            // N'affiche le chargement que si le cache local est totalement vide
+        } else if (status.connected && !status.menu) {
+            // FIX ÉTAT : Client connecté à Panorama mais en cours d'authentification de Slot avec le serveur AP
             overlay.RemoveClass('hide');
             if (content && content.IsValid()) content.AddClass('hide');
             if (overlayButton && overlayButton.IsValid()) overlayButton.AddClass('hide');
 
             if (overlayLabel && overlayLabel.IsValid()) {
-                overlayLabel.text = $.Localize("#Archipelago_Status_Loading");
+                overlayLabel.text = $.Localize("#Archipelago_Status_Loading") + "\n(Authenticating Slot...)";
                 overlayLabel.style.color = "#eeeeee";
             }
         } else if (status && !status.connected) {
@@ -172,7 +172,6 @@ class ArchipelagoMapSelect {
         const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
         if (syncHelper && syncHelper.ENABLE_DEBUG) $.Msg("[AP] MapSelect using helper v" + syncHelper.VERSION);
 
-        // --- INJECTION DU CACHE INSTANTANÉ DE SÉCURITÉ ---
         const cachedRawData = $.persistentStorage.getItem("ArchipelagoLastMenuCacheData");
         if (cachedRawData) {
             try {
@@ -188,7 +187,6 @@ class ArchipelagoMapSelect {
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
             const updateFromApi = (payload: any) => {
-                // Sécurisation adaptative du payload (brute ou déjà parsé)
                 let status: any = null;
                 let jsonString: string = "";
 
@@ -215,7 +213,6 @@ class ArchipelagoMapSelect {
                         }
 
                         if (status.menu) {
-                            // On sauvegarde les données fraîches en cache local synchrone
                             $.persistentStorage.setItem("ArchipelagoLastMenuCacheData", jsonString);
 
                             const isFirstLoad = Object.keys(this.g_ChapterData).length === 0;
@@ -259,6 +256,11 @@ class ArchipelagoMapSelect {
                             if (savedCommand) {
                                 this.restoreSelection(savedCommand);
                             }
+                        } else {
+                            // FIX CANAL : Traitement explicite si l'architecture de données est connectée mais sans menu actif
+                            this.g_ChapterData = {};
+                            this.generateList();
+                            this.updateConnectionState();
                         }
                     }
                 } catch (e) {
@@ -278,6 +280,9 @@ class ArchipelagoMapSelect {
                 if (this.isController()) this.toggleConsole();
             });
         }
+        
+        // Forcer le rendu visuel initial dès le montage de la page
+        this.updateConnectionState();
     }
 
     static restoreSelection(savedCommand: string) {

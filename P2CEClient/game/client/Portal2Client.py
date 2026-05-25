@@ -7,7 +7,6 @@ import logging
 import time
 import typing
 import json
-from urllib.parse import parse_qs
 import hashlib
 import worlds
 
@@ -27,11 +26,11 @@ from game.mod_helpers.MapMenu import Menu
 from game.mod_helpers.Notifications import NotificationManager
 from game.mod_helpers.DeathLinkHandler import DeathLinkHandler
 from game.mod_helpers.TrapHandler import TrapHandler
+from game.mod_helpers.APIServer import APIServer  # Import du module découplé
 from game.client.DeathMessages import get_death_message
 from game.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
 from game.Options import GameModeOption
 
-# Helper to construct network data package statically for client/API validation without importing Portal2World generator
 def get_portal2_data_package():
     from game.Items import item_table
     from game.Locations import all_locations_table, location_groups
@@ -52,7 +51,6 @@ def get_portal2_data_package():
         "location_name_to_id": location_name_to_id,
     }
     
-    import hashlib
     from NetUtils import encode
     res["checksum"] = hashlib.sha1(encode(res).encode()).hexdigest()
     return res
@@ -60,10 +58,6 @@ def get_portal2_data_package():
 worlds.network_data_package["games"]["Portal 2 P2CE"] = get_portal2_data_package()
 
 logger = logging.getLogger("Portal2Client")
-
-# =============================================================
-# INTEGRATED SYSTEM HELPER CLASSES
-# =============================================================
 
 class Portal2CommandProcessor(ClientCommandProcessor):
     def __init__(self, ctx: CommonContext):
@@ -74,25 +68,20 @@ class Portal2CommandProcessor(ClientCommandProcessor):
         super()._cmd_help()
 
     def _cmd_check_connection(self):
-        """Responds with the status of the client's connection to the Portal 2 mod"""
         self.ctx.alert_game_connection()
 
     def _cmd_command(self, *command):
-        """Sends a command to the game. Should not be used unless you get softlocked"""
         self.ctx.command_queue.append(' '.join(command) + "\n")
 
     def _cmd_deathlink(self):
-        """Toggles death link for this client"""
         self.ctx.death_link_active = not self.ctx.death_link_active
         async_start(self.ctx.update_death_link(self.ctx.death_link_active), "set_deathlink")
         self.output(f"Death link has been {'enabled' if self.ctx.death_link_active else 'disabled'}")
 
     def _cmd_refresh_menu(self):
-        """Refreshed the in game menu in case of maps being inaccessible when they should be"""
         self.ctx.refresh_menu()
 
     def _cmd_received(self):
-        """Lists all items received"""
         self.ctx.is_processing_received_cmd = True
         try:
             super()._cmd_received()
@@ -100,14 +89,12 @@ class Portal2CommandProcessor(ClientCommandProcessor):
             self.ctx.is_processing_received_cmd = False
 
     def _cmd_message_in_game(self, message: str, *color_string):
-        """Send a message to be displayed in game (only works while in a map)."""
         if len(color_string) == 3:
             self.ctx.notifier.add_in_game_message(message, ' '.join(color_string))
         else:
             self.ctx.notifier.add_in_game_message(message)
 
     def _cmd_needed(self, *location_name):
-        """Get the requirements for the map separated by all requirements and ones not yet acquired"""
         message = "Location not found, use /locations to get a list of locations"
         location_name_str = ' '.join(location_name)
         for location in location_names_to_map_codes.keys():
@@ -139,7 +126,6 @@ class LogBridge:
         ]
 
     def setup_early_logging(self):
-        """Captures early startup logs before the asyncio loop is running."""
         class QueuingLogHandler(logging.Handler):
             def __init__(self):
                 super().__init__()
@@ -152,14 +138,12 @@ class LogBridge:
         logging.getLogger().addHandler(self.temp_handler)
 
     def setup_panorama_logging(self):
-        """Attaches the live netcon monitor stream filter onto the main logger."""
         class PanoramaLogHandler(logging.Handler):
             def __init__(self, bridge):
                 super().__init__()
                 self.bridge = bridge
 
             def emit(self, record):
-                # Prevent duplicate logging in game console for messages already logged/handled
                 if getattr(record, "from_sync", False) or any(x in record.msg for x in ["[HUD]", "DEATHLINK:", "Connection to Portal 2", "Disconnected from Portal 2"]):
                     return
                 try:
@@ -190,16 +174,12 @@ class LogBridge:
         logging.getLogger().addHandler(self.panorama_handler)
 
     def flush_init_logs(self):
-        """Flushes captured startup logs downstream into the client layout."""
         if self.temp_handler:
             for msg in self.temp_handler.queue:
                 self.ctx.notifier.on_print_silently(msg, from_logger=True)
             logging.getLogger().removeHandler(self.temp_handler)
             self.temp_handler = None
 
-# =============================================================
-# MAIN MULTIWORLD CORE CONTEXT
-# =============================================================
 
 class Portal2Context(CommonContext):
     command_processor = Portal2CommandProcessor
@@ -210,6 +190,7 @@ class Portal2Context(CommonContext):
         self.deathlink_handler = DeathLinkHandler(self)
         self.trap_handler = TrapHandler(self)
         self.log_bridge = LogBridge(self)
+        self.api_server = APIServer(self) # Instanciation unique et propre
         
         self.is_processing_received_cmd = False
         self.item_list = []
@@ -218,8 +199,6 @@ class Portal2Context(CommonContext):
         self.game_message_queue = []
         self.completed_maps = set()
         
-        # --- FIX: Put the trap handler into holding mode immediately on startup ---
-        # This forces traps received during initial connection to wait in the held queue
         self.trap_handler.set_map_transition_state(True)
 
         super().__init__(server_address, password)
@@ -259,6 +238,13 @@ class Portal2Context(CommonContext):
     pending_validation_events: list[dict] = []
     ping_sent_time: float = 0
 
+    def start_api_server(self):
+        self.api_server.start()
+
+    def check_game_connection(self) -> bool:
+        # Résout l'AttributeError de manière définitive pour les boucles HTTP et Netcon
+        return self.sender_active and self.listener_active
+
     def execute_in_game_event(self, event_data: dict):
         self.pending_validation_events.append(event_data)
         if self.ping_sent_time == 0:
@@ -291,14 +277,11 @@ class Portal2Context(CommonContext):
                 logger.debug(f"Executing client command: {command}")
                 proc = self.command_processor(self)
                 proc(command)
-            
             elif command.startswith("!"):
                 logger.info(f"Sending server command: {command}")
                 async_start(self.send_msgs([{"cmd": "Say", "text": command}]))
-            
             else:
                 self.command_queue.append(command + "\n")
-                
         except Exception as e:
             logger.error(f"Command Error ({command}): {e}")
             self.notifier.on_print(f"Error: {e}")
@@ -406,103 +389,12 @@ class Portal2Context(CommonContext):
                 self.sender_active = False
                 self.listener_active = False
 
-    def start_api_server(self):
-        import threading
-        from http.server import BaseHTTPRequestHandler, HTTPServer
-        from game.mod_helpers.MapMenu import items_shortened
-        client_self = self
-
-        class APIHandler(BaseHTTPRequestHandler):
-            def log_message(self, format, *args): pass 
-            def do_OPTIONS(self):
-                self.send_response(200); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers()
-
-            def do_GET(self):
-                is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
-                missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
-
-                if self.path == '/status_full' or self.path == '/status':
-                    data_to_serialize = {
-                        "connected": is_conn, 
-                        "game_connected": client_self.check_game_connection(), 
-                        "slot": client_self.slot, 
-                        "checked_locations": list(client_self.checked_locations), 
-                        "missing_items": missing_str, 
-                        "hint_points": getattr(client_self, "hint_points", 0), 
-                        "hint_cost": getattr(client_self, "hint_cost", 0), 
-                        "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
-                        "menu": client_self.menu.to_dict() if client_self.menu else None
-                    }
-                    if self.path == '/status_full':
-                        data_to_serialize["chat"] = client_self.notifier.chat_log
-                        data_to_serialize["hints"] = client_self.notifier.hint_log
-                
-                elif self.path == '/chat':
-                    data_to_serialize = client_self.notifier.chat_log
-                elif self.path == '/hints':
-                    data_to_serialize = client_self.notifier.hint_log
-                else:
-                    self.send_error(404)
-                    return
-
-                json_body = json.dumps(data_to_serialize)
-                
-                response_hash = hashlib.md5(json_body.encode('utf-8')).hexdigest()
-                if self.headers.get('If-None-Match') == response_hash:
-                    self.send_response(304)
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.end_headers()
-                    return
-
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json')
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.send_header('ETag', response_hash)
-                self.end_headers()
-                self.wfile.write(json_body.encode('utf-8'))
-
-            def do_POST(self):
-                try:
-                    content_length = int(self.headers.get('Content-Length', 0))
-                    body = self.rfile.read(content_length).decode('utf-8')
-                    command = None
-                    try:
-                        data = json.loads(body)
-                        command = data.get("command")
-                    except json.JSONDecodeError:
-                        data = parse_qs(body)
-                        if "command" in data: command = data["command"][0]
-
-                    if self.path == '/command' and command:
-                        client_self.loop.call_soon_threadsafe(client_self.on_input, command)
-                        self._send_json({"status": "ok"})
-                    elif self.path == '/hints/refresh':
-                        client_self.loop.call_soon_threadsafe(client_self.request_hints_sync)
-                        self._send_json({"status": "ok"})
-                    else: self.send_error(404)
-                except Exception as e: self.send_error(500, str(e))
-
-            def _send_json(self, d):
-                body = json.dumps(d).encode('utf-8')
-                self.send_response(200); self.send_header('Content-Type', 'application/json'); self.send_header('Access-Control-Allow-Origin', '*'); self.end_headers(); self.wfile.write(body)
-
-        def run_server():
-            try:
-                server = HTTPServer(('0.0.0.0', 8910), APIHandler)
-                server.serve_forever()
-            except Exception:
-                pass
-
-        threading.Thread(target=run_server, daemon=True).start()
-
     def send_level_begin_commands(self):
         if self.item_remove_commands:
             self.command_queue.append(f"{';'.join(self.item_remove_commands)}\n")
 
     async def handle_message(self, message: str):
         cleaned_msg = message.strip()
-        
-        # Intercept custom command requests from the game
         if cleaned_msg.startswith("connect_request:"):
             ip_port = cleaned_msg.split(":", 1)[1].strip()
             self.on_input(f"/connect {ip_port}")
@@ -511,8 +403,7 @@ class Portal2Context(CommonContext):
             slot_name = cleaned_msg.split(":", 1)[1].strip()
             self.on_input(slot_name)
             return
-        
-        # Intercept console input typed by the player in-game
+            
         if cleaned_msg.startswith("]"):
             cmd = cleaned_msg[1:].strip()
             if cmd.startswith("/") or cmd.startswith("!") or getattr(self, "input_requests", 0) > 0:
@@ -520,7 +411,6 @@ class Portal2Context(CommonContext):
                 self.on_input(cmd)
                 return
         elif cleaned_msg.startswith("Unknown command \""):
-            # Avoid duplicate execution if we recently processed a command via the prompt prefix ']'
             if time.time() - getattr(self, "_last_cmd_prompt_time", 0.0) < 0.2:
                 return
             try:
@@ -532,7 +422,6 @@ class Portal2Context(CommonContext):
                 pass
 
         msg_lower = message.lower()
-        
         if message.startswith("deathlink_pong_ready"):
             if self.deathlink_handler.deathlink_queue:
                 self.deathlink_handler.process_pong()
@@ -552,7 +441,6 @@ class Portal2Context(CommonContext):
         if message.startswith("map_name:"):
             map_name = message.split(':', 1)[1].strip()
             self.trap_handler.set_map_transition_state(False)
-            
             self.send_level_begin_commands()
             self.command_queue += handle_map_start(map_name, self.item_list, self.get_wheatley_monitor_names(self.checked_locations), self.get_ratman_den_names(self.checked_locations))
             
@@ -560,7 +448,6 @@ class Portal2Context(CommonContext):
                 for ev in self.deferred_events:
                     self.process_event(ev)
                 self.deferred_events.clear()
-            
             if self.pending_validation_events:
                 for ev in self.pending_validation_events:
                     self.process_event(ev)
@@ -569,11 +456,7 @@ class Portal2Context(CommonContext):
 
         elif message.startswith("map_complete:"):
             done_map = message.split(':', 1)[1].strip()
-            
-            if done_map != "sp_a4_finale4":
-                self.trap_handler.set_map_transition_state(True)
-            else:
-                self.trap_handler.set_map_transition_state(False)
+            self.trap_handler.set_map_transition_state(done_map != "sp_a4_finale4")
             
             if done_map in self.completed_maps:
                 return
@@ -593,7 +476,6 @@ class Portal2Context(CommonContext):
                 check_id = all_locations_table[item_collected].id
                 await self.check_locations([check_id])
                 self.update_menu(check_id)
-        
         elif message.startswith("monitor_break:"):
             map_name = message.split(":", 1)[1]
             if map_name in wheatley_maps_to_monitor_names:
@@ -602,77 +484,49 @@ class Portal2Context(CommonContext):
                     check_id = all_locations_table[check_name].id
                     await self.check_locations([check_id])
                     self.update_menu(check_id)
-                    
         elif message.startswith("button_check:"):
             check_name = message.split(":", 1)[1]
             if check_name in all_locations_table:
                 check_id = all_locations_table[check_name].id
                 await self.check_locations([check_id])
                 self.update_menu(check_id)
-        
         elif message.startswith("send_deathlink"):
             if self.death_link_active and time.time() - getattr(self.deathlink_handler, 'last_death_link_executed', 0) > 10:
                 map_name = message.strip().split()[1]
                 death_message = get_death_message(map_name, self.player_names[self.slot])
-                
                 current_time = time.time()
                 
                 if self.check_game_connection() and self.server and not self.server.socket.closed:
-                    # 1. Send the standard live DeathLink bounce
                     await self.send_death(death_text=death_message)
-                    
-                    # 2. Update the shared persistent server-side key
                     death_sync_key = f"ap_persistent_deaths_{self.team}"
                     await self.send_msgs([{
-                        "cmd": "Set",
-                        "key": death_sync_key,
-                        "default": 0.0,
-                        "want_reply": False,
-                        "operations": [
-                            {"operation": "max", "value": current_time}
-                        ]
+                        "cmd": "Set", "key": death_sync_key, "default": 0.0, "want_reply": False,
+                        "operations": [{"operation": "max", "value": current_time}]
                     }])
-                else:
-                    logger.info("Local DeathLink occurred while disconnected. Saving timestamp locally for synchronization upon reconnect.")
                 
-                # 3. Update local last processed time to avoid self-killing and keep timestamp
                 self.deathlink_handler.save_last_death_link_time(current_time)
-                
-                # 4. Display the event locally
                 fake_data = [{"text": death_message, "is_death": True}]
                 self.notifier.on_print_silently(death_message, fake_data, mirror_to_hud=True)
 
     def check_and_apply_persistent_death(self, server_timestamp: float):
-        if not self.death_link_active:
-            return
-            
-        local_timestamp = self.deathlink_handler.last_processed_time
-        if server_timestamp > local_timestamp:
-            logger.info(f"Persistent DeathLink: Missed death detected! (Server: {server_timestamp}, Local: {local_timestamp})")
+        if not self.death_link_active: return
+        if server_timestamp > self.deathlink_handler.last_processed_time:
             self.deathlink_handler.enqueue_death("Missed DeathLink while offline")
             self.deathlink_handler.save_last_death_link_time(server_timestamp)
 
     async def handle_goal_completion(self):
-        if getattr(self, 'finished_game', False):
-            return
+        if getattr(self, 'finished_game', False): return
         self.finished_game = True
         await self.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
     def on_deathlink(self, data: typing.Dict[str, typing.Any]):
         cause = data.get("cause", "Un joueur est mort.")
         death_time = data.get("time", time.time())
-        
-        # 1. Guard against duplicate processing of the same or older deaths
         if death_time > self.deathlink_handler.last_processed_time:
             self.deathlink_handler.save_last_death_link_time(death_time)
             self.deathlink_handler.enqueue_death(cause)
-        
-        # 2. Return None to block the base client from printing its own "DeathLink: ..." line
-        return
+        return super().on_deathlink(data)
 
-    def check_game_connection(self) -> bool:
-        return self.sender_active and self.listener_active
-    
     def location_id_to_map_code(self, location_id: str) -> str:
         location_name = self.location_names.lookup_in_game(location_id)
         if location_name in location_names_to_map_codes:
@@ -816,7 +670,6 @@ class Portal2Context(CommonContext):
             if hkey in args["keys"]:
                 self.notifier.process_hints(args["keys"][hkey])
 
-            # Check and apply persistent death link key if retrieved
             if self.team is not None:
                 death_sync_key = f"ap_persistent_deaths_{self.team}"
                 if death_sync_key in args["keys"] and args["keys"][death_sync_key] is not None:
@@ -859,16 +712,13 @@ class Portal2Context(CommonContext):
             self.handle_slot_data(args["slot_data"])
             self.alert_game_connection()
 
-            # Initialize DeathLink handler timestamp if it is the first connection on this seed/server
             if self.deathlink_handler.get_saved_time() is None:
                 self.deathlink_handler.save_last_death_link_time(time.time())
 
-            # Subscribe, query, and synchronize the team-wide persistent death sync key
             if self.team is not None:
                 death_sync_key = f"ap_persistent_deaths_{self.team}"
                 self.stored_data_notification_keys.add(death_sync_key)
                 
-                # Push our local last processed time (in case we died offline) and fetch/subscribe
                 local_timestamp = self.deathlink_handler.last_processed_time
                 async_start(self.send_msgs([
                     {"cmd": "Set", "key": death_sync_key, "default": 0.0, "want_reply": False, "operations": [{"operation": "max", "value": local_timestamp}]},
@@ -941,8 +791,6 @@ class Portal2Context(CommonContext):
             if not self.auth:
                 logger.info('Enter slot name:')
                 self.auth = await self.console_input()
-                
-                # Update the log message in self.notifier.chat_log
                 for entry in reversed(self.notifier.chat_log):
                     if "Enter slot name:" in entry["text"]:
                         new_text = f"Enter slot name: {self.auth}"
@@ -964,13 +812,11 @@ async def main(args: argparse.Namespace):
     
     ctx.deathlink_handler.start()
     ctx.trap_handler.start()
-    ctx.start_api_server()
+    ctx.api_server.start() # Démarrage propre du serveur restructuré
     ctx.flush_init_logs()
 
-    if gui_enabled and not args.nogui:
-        ctx.run_gui()
+    if gui_enabled and not args.nogui: ctx.run_gui()
     ctx.run_cli()
-    
     await ctx.exit_event.wait()
     await ctx.shutdown()
 

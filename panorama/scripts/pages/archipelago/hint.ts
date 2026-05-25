@@ -15,17 +15,14 @@ class ArchipelagoHint {
 
     static m_FilteredItems: string[] = [];
     static m_SelectedIndex = 0;
-    static m_SyncCounter = 0;
-    static m_SyncInterval = 10;
 
     static m_WaitingForFeedback = false;
     static m_LastMatchedMsg = ""; 
     static m_FeedbackHideSchedule: any = null;
     static m_RequestChatLength = 0;
     
-    // Cache de rendu pour éviter d'effondrer le moteur de rendu Panorama
+    // Cache de comparaison pour éviter les bakes de rendu DOM inutiles
     static m_LastRawHints: string = "";
-    static m_UpdateSchedule: any = null;
 
     static init() {
         $.DispatchEvent('MainMenuSetPageLines', 
@@ -35,15 +32,15 @@ class ArchipelagoHint {
 
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         
-        // --- CHARGEMENT INSTANTANÉ DE SÉCURITÉ PAR LE CACHE ---
+        // 1. Chargement synchrone instantané depuis le stockage persistant s'il existe
         const cachedHints = $.persistentStorage.getItem("ArchipelagoLastHintsCacheData");
         if (cachedHints) {
             try { this.render(JSON.parse(cachedHints)); } catch(e) {}
         }
 
         if (api) {
-            $.AsyncWebRequest(api.API_BASE + "/hints/refresh", { type: 'POST' });
-            this.updateLoop();
+            // Force l'actualisation des indices côté serveur AP dès l'ouverture de la page
+            api.forceRefreshHints();
         }
 
         const doneHeader = $.GetContextPanel().FindChildTraverse('DoneHeader') as any;
@@ -54,7 +51,6 @@ class ArchipelagoHint {
         const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
         if (input) {
             input.SetFocus();
-            
             input.SetPanelEvent('ontextentrychange', () => ArchipelagoHint.onTextChanged());
             input.SetPanelEvent('oninputsubmit', () => ArchipelagoHint.onHintInputSubmit());
 
@@ -64,7 +60,8 @@ class ArchipelagoHint {
         }
 
         if (api) {
-            api.registerChatListener($.GetContextPanel(), (json: string) => {
+            // Écouteur pour intercepter les retours d'erreurs (Points insuffisants)
+            api.registerChatListener($.GetContextPanel(), (json: any) => {
                 if (!ArchipelagoHint.m_WaitingForFeedback) return;
                 try {
                     const chat = typeof json === 'string' ? JSON.parse(json) : json;
@@ -93,14 +90,17 @@ class ArchipelagoHint {
                 } catch (e) { }
             });
 
-            const updatePoints = (json: string) => {
+            // 2. AMARRE DE SYNCHRONISATION INSTANTANÉE (Points ET Tableau d'indices unifiés)
+            api.registerStatusListener($.GetContextPanel(), (payload: any) => {
                 try {
-                    let status = typeof json === 'string' ? JSON.parse(json) : json;
-                    if (status && status.hint_points !== undefined) {
+                    let status = typeof payload === 'string' ? JSON.parse(payload) : payload;
+                    if (!status) return;
+
+                    // Résolution des Points
+                    if (status.hint_points !== undefined) {
                         const ptsLabel = $.GetContextPanel().FindChildTraverse('HintPointsLabel') as LabelPanel;
                         if (ptsLabel) {
                             const cost = status.hint_cost !== undefined ? status.hint_cost : 0;
-                            
                             let locPoints = $.Localize('#Archipelago_Points');
                             let locCost = $.Localize('#Archipelago_Cost');
                             
@@ -111,11 +111,17 @@ class ArchipelagoHint {
                             ptsLabel.style.color = status.hint_points >= cost ? "#44ff44" : "#ff5555";
                         }
                     }
-                } catch (e) { }
-            };
 
-            api.registerStatusListener($.GetContextPanel(), (payload: any) => {
-                updatePoints(payload);
+                    // --- ENVOI DIRECT VERS LE MOTEUR DE RENDU SANS REQUÊTE HTTP PARALLÈLE ---
+                    if (status.hints) {
+                        const rawHintsStr = JSON.stringify(status.hints);
+                        if (rawHintsStr !== ArchipelagoHint.m_LastRawHints) {
+                            ArchipelagoHint.m_LastRawHints = rawHintsStr;
+                            $.persistentStorage.setItem("ArchipelagoLastHintsCacheData", rawHintsStr);
+                            ArchipelagoHint.render(status.hints);
+                        }
+                    }
+                } catch (e) { }
             });
         }
     }
@@ -123,7 +129,6 @@ class ArchipelagoHint {
     static showFeedback(msg: string) {
         const lbl = $.GetContextPanel().FindChildTraverse('HintFeedback') as LabelPanel;
         if (!lbl) return;
-
         lbl.html = true;
         lbl.text = msg;
         lbl.RemoveClass('hide');
@@ -131,7 +136,6 @@ class ArchipelagoHint {
         if (this.m_FeedbackHideSchedule) {
             $.CancelScheduled(this.m_FeedbackHideSchedule);
         }
-        
         this.m_FeedbackHideSchedule = $.Schedule(6.0, () => {
             lbl.AddClass('hide');
             this.m_FeedbackHideSchedule = null;
@@ -170,7 +174,6 @@ class ArchipelagoHint {
 
     static autocompleteSelection(): boolean {
         if (this.m_FilteredItems.length === 0) return false;
-        
         const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
         const box = $.GetContextPanel().FindChildTraverse('SuggestionBox');
         
@@ -241,7 +244,6 @@ class ArchipelagoHint {
             
             $.Schedule(5.0, () => { this.m_WaitingForFeedback = false; });
 
-            // On utilise sendCommand qui nettoie le cache réseau instantanément
             api.sendCommand("!hint " + finalValue, () => {
                 api.forceRefreshHints();
             });
@@ -255,47 +257,6 @@ class ArchipelagoHint {
     static toggleDoneSection() {
         const section = $.GetContextPanel().FindChildTraverse('SectionDone');
         if (section) section.ToggleClass('collapsed');
-    }
-
-    static updateLoop() {
-        if (this.m_UpdateSchedule) {
-            try { $.CancelScheduled(this.m_UpdateSchedule); } catch(e) {}
-            this.m_UpdateSchedule = null;
-        }
-
-        if (!$.GetContextPanel().IsValid()) return;
-        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
-        if (!api) return;
-
-        this.m_SyncCounter++;
-        if (this.m_SyncCounter >= this.m_SyncInterval) {
-            $.AsyncWebRequest(api.API_BASE + "/hints/refresh", { type: 'POST' });
-            this.m_SyncCounter = 0;
-        }
-
-        $.AsyncWebRequest(api.API_BASE + "/hints", {
-            type: 'GET',
-            complete: (res: any) => {
-                if (!$.GetContextPanel().IsValid()) return;
-
-                if (res.status === 200 && res.responseText) {
-                    const cleanText = res.responseText.trim().replace(/\0/g, '');
-                    
-                    if (cleanText === ArchipelagoHint.m_LastRawHints) {
-                        this.m_UpdateSchedule = $.Schedule(1.0, () => this.updateLoop());
-                        return;
-                    }
-                    ArchipelagoHint.m_LastRawHints = cleanText;
-                    $.persistentStorage.setItem("ArchipelagoLastHintsCacheData", cleanText);
-
-                    try {
-                        const hints = JSON.parse(cleanText);
-                        this.render(hints);
-                    } catch (e) { }
-                }
-                this.m_UpdateSchedule = $.Schedule(1.0, () => this.updateLoop());
-            }
-        });
     }
 
     static render(hints: any[]) {
@@ -313,12 +274,7 @@ class ArchipelagoHint {
             if (hint.found) row.AddClass('hint--found');
             
             const lbl = $.CreatePanel('Label', row, '');
-            
-            // FIX 1: Enable HTML rendering so the <font> tags work
             lbl.html = true; 
-            
-            // FIX 2: Prioritize the 'html' field we added in Notifications.py, 
-            // fallback to 'text' if missing.
             lbl.text = hint.html || hint.text; 
         });
     }

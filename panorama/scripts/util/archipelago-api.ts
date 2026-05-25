@@ -10,7 +10,7 @@ const globalObj = UiToolkitAPI.GetGlobalObject() as any;
 
 if (!globalObj.ArchipelagoAPI) {
     class ArchipelagoAPI {
-        static VERSION: string = "2.1.2"; 
+        static VERSION: string = "3.1.1"; 
         static API_BASE: string = "http://127.0.0.1:8910";
         
         static m_Status: any = null;
@@ -18,17 +18,14 @@ if (!globalObj.ArchipelagoAPI) {
         static m_Hints: any[] = [];
         
         static m_PollSchedule: any = null;
-        static m_StatusETag: string = "";
-        static m_ChatETag: string = "";
-
-        static m_LastRawStatus: string = "";
-        static m_LastRawChat: string = "";
+        static m_SyncETag: string = "";
+        static m_LastChatId: number = -1;
 
         static m_StatusListeners: { panel: any, callback: (data: any) => void }[] = [];
         static m_ChatListeners: { panel: any, callback: (data: any) => void }[] = [];
 
         static init() {
-            $.Msg("[AP] Initializing High-Performance ETag-Cached Singleton API with Instant-Invalidation");
+            $.Msg("[AP] Initializing Safe Single-Pulse Delta Sync Pipeline");
             this.startPolling();
         }
 
@@ -36,85 +33,53 @@ if (!globalObj.ArchipelagoAPI) {
             if (this.m_PollSchedule) {
                 try { $.CancelScheduled(this.m_PollSchedule); } catch(e) {}
             }
-            
             this.pulse();
-            this.m_PollSchedule = $.Schedule(0.5, () => this.startPolling());
+            this.m_PollSchedule = $.Schedule(0.4, () => this.startPolling());
         }
 
         static pulse() {
             const headers: Record<string, string> = {};
-            if (this.m_StatusETag) {
-                headers["If-None-Match"] = this.m_StatusETag;
+            if (this.m_SyncETag) {
+                headers["If-None-Match"] = this.m_SyncETag;
             }
 
-            $.AsyncWebRequest(this.API_BASE + "/status", {
+            const url = `${this.API_BASE}/api/sync?last_chat=${this.m_LastChatId}`;
+
+            $.AsyncWebRequest(url, {
                 type: 'GET',
                 headers: headers,
                 complete: (res: any) => {
                     if (res.status === 304) {
-                        this.fetchChat();
                         return;
                     }
 
                     if (res.status === 200 && res.responseText) {
                         const eTagHeader = res.getheader ? res.getheader("ETag") : "";
-                        if (eTagHeader) this.m_StatusETag = eTagHeader;
+                        if (eTagHeader) this.m_SyncETag = eTagHeader;
 
-                        const cleanText = res.responseText.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").trim();
-                        
-                        if (cleanText === this.m_LastRawStatus) {
-                            this.fetchChat();
-                            return;
-                        }
-                        this.m_LastRawStatus = cleanText;
+                        const sanitizedResponse = res.responseText.replace(/[\u0000-\u001F\u007F-\u009F]/g, "").trim();
+                        if (!sanitizedResponse) return;
 
                         try {
-                            const data = JSON.parse(cleanText);
+                            const data = JSON.parse(sanitizedResponse);
+                            
                             this.m_Status = data;
-                            if (data.logic_difficulty !== undefined) {
-                                $.persistentStorage.setItem("ArchipelagoLogicDifficulty", data.logic_difficulty);
+                            this.m_Hints = data.hints || [];
+                            this.dispatchStatusUpdate(data);
+
+                            if (data.chat_delta && data.chat_delta.length > 0) {
+                                this.m_Chat = this.m_Chat.concat(data.chat_delta);
+                                this.m_LastChatId = data.chat_delta[data.chat_delta.length - 1].id;
+                                this.dispatchChatUpdate(data.chat_delta);
                             }
-                            this.dispatchStatusUpdate(cleanText);
-                        } catch (e) { }
-                    }
-                    this.fetchChat();
-                }
-            });
-        }
-
-        static fetchChat(callback?: (chat: any) => void) {
-            const headers: Record<string, string> = {};
-            if (this.m_ChatETag) {
-                headers["If-None-Match"] = this.m_ChatETag;
-            }
-
-            $.AsyncWebRequest(this.API_BASE + "/chat", {
-                type: 'GET',
-                headers: headers,
-                complete: (res: any) => {
-                    if (res.status === 304) {
-                        if (callback) callback(this.m_Chat);
-                        return;
-                    }
-
-                    if (res.status === 200 && res.responseText) {
-                        const eTagHeader = res.getheader ? res.getheader("ETag") : "";
-                        if (eTagHeader) this.m_ChatETag = eTagHeader;
-
-                        const cleanText = res.responseText.trim().replace(/\0/g, '');
-                        
-                        if (cleanText === this.m_LastRawChat) {
-                            if (callback) callback(this.m_Chat);
-                            return;
+                        } catch (e) {
+                            $.Warning("[AP] SyntaxError prevention triggered during single-pulse resolution: " + e);
                         }
-                        this.m_LastRawChat = cleanText;
-
-                        try {
-                            const data = JSON.parse(cleanText);
-                            this.m_Chat = data;
-                            this.dispatchChatUpdate(cleanText);
-                            if (callback) callback(data);
-                        } catch (e) { }
+                    } else {
+                        // FIX COMPORTEMENT : Si le serveur est éteint (status 0), on propage activement l'état offline
+                        const offlinePayload = { connected: false, game_connected: false, client_offline: true, menu: null };
+                        this.m_Status = offlinePayload;
+                        this.dispatchStatusUpdate(offlinePayload);
                     }
                 }
             });
@@ -122,10 +87,7 @@ if (!globalObj.ArchipelagoAPI) {
 
         static sendCommand(cmd: string, callback?: () => void) {
             if (!cmd) return;
-            this.m_StatusETag = "";
-            this.m_ChatETag = "";
-            this.m_LastRawStatus = "";
-            this.m_LastRawChat = "";
+            this.m_SyncETag = ""; 
 
             $.AsyncWebRequest(this.API_BASE + "/command", {
                 type: 'POST',
@@ -138,10 +100,7 @@ if (!globalObj.ArchipelagoAPI) {
         }
 
         static forceRefreshHints() {
-            this.m_StatusETag = "";
-            this.m_ChatETag = "";
-            this.m_LastRawStatus = "";
-            this.m_LastRawChat = "";
+            this.m_SyncETag = "";
             $.AsyncWebRequest(this.API_BASE + "/hints/refresh", { 
                 type: 'POST',
                 complete: () => { this.pulse(); }
@@ -152,75 +111,38 @@ if (!globalObj.ArchipelagoAPI) {
         static getChat() { return this.m_Chat; }
         static getHints() { return this.m_Hints; }
 
-        static getLastNotificationId() {
-            if (globalObj.Archipelago_LastMsgId === undefined) {
-                globalObj.Archipelago_LastMsgId = -1;
-            }
-            return globalObj.Archipelago_LastMsgId;
-        }
-
-        static setLastNotificationId(id: number) {
-            globalObj.Archipelago_LastMsgId = id;
-        }
-
         static registerStatusListener(panel: any, callback: (data: any) => void) {
             if (!panel || !panel.IsValid()) return;
-            this.m_StatusListeners = this.m_StatusListeners.filter(l => l.panel && l.panel.IsValid());
-            this.m_StatusListeners = this.m_StatusListeners.filter(l => l.panel !== panel);
+            this.m_StatusListeners = this.m_StatusListeners.filter(l => l.panel && l.panel.IsValid() && l.panel !== panel);
             this.m_StatusListeners.push({ panel: panel, callback: callback });
             
             if (this.m_Status) {
-                try {
-                    callback(this.m_Status);
-                } catch(e) {}
+                try { callback(this.m_Status); } catch(e) {}
             }
         }
 
         static registerChatListener(panel: any, callback: (data: any) => void) {
             if (!panel || !panel.IsValid()) return;
-            this.m_ChatListeners = this.m_ChatListeners.filter(l => l.panel && l.panel.IsValid());
-            this.m_ChatListeners = this.m_ChatListeners.filter(l => l.panel !== panel);
+            this.m_ChatListeners = this.m_ChatListeners.filter(l => l.panel && l.panel.IsValid() && l.panel !== panel);
             this.m_ChatListeners.push({ panel: panel, callback: callback });
-
+            
             if (this.m_Chat && this.m_Chat.length > 0) {
-                try {
-                    callback(this.m_Chat);
-                } catch(e) {}
+                try { callback(this.m_Chat); } catch(e) {}
             }
         }
 
         static dispatchStatusUpdate(data: any) {
-            this.m_StatusListeners = this.m_StatusListeners.filter(l => {
-                if (l.panel && l.panel.IsValid()) {
-                    try {
-                        l.callback(data);
-                    } catch(e) {
-                        $.Warning("[AP] Error in status listener callback: " + e);
-                    }
-                    return true;
-                }
-                return false;
+            this.m_StatusListeners.forEach(l => {
+                if (l.panel && l.panel.IsValid()) l.callback(data);
             });
-            try {
-                $.DispatchEvent("ArchipelagoAPI_StatusUpdated", data);
-            } catch(e) {}
+            try { $.DispatchEvent("ArchipelagoAPI_StatusUpdated", data); } catch(e) {}
         }
 
-        static dispatchChatUpdate(data: any) {
-            this.m_ChatListeners = this.m_ChatListeners.filter(l => {
-                if (l.panel && l.panel.IsValid()) {
-                    try {
-                        l.callback(data);
-                    } catch(e) {
-                        $.Warning("[AP] Error in chat listener callback: " + e);
-                    }
-                    return true;
-                }
-                return false;
+        static dispatchChatUpdate(chatDelta: any[]) {
+            this.m_ChatListeners.forEach(l => {
+                if (l.panel && l.panel.IsValid()) l.callback(chatDelta);
             });
-            try {
-                $.DispatchEvent("ArchipelagoAPI_ChatUpdated", data);
-            } catch(e) {}
+            try { $.DispatchEvent("ArchipelagoAPI_ChatUpdated", chatDelta); } catch(e) {}
         }
     }
 

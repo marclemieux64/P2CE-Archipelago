@@ -103,3 +103,4 @@ portal2_p2ce.apworld
 data/client/api_reference.html
 data/client/api_reference.json
 build_apworld.py
+data/client/js.scope

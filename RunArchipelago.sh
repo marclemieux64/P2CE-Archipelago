@@ -4,9 +4,6 @@
 # P2CE Archipelago Native Linux & Steam Deck Launcher (Standalone)
 # =============================================================================
 
-# Workaround for modern glibc (e.g. Fedora 43) executable stack compatibility crashes
-export GLIBC_TUNABLES=glibc.rtld.execstack=2
-
 # 1. Path Definitions
 MOD_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLIENT_DIR="$MOD_FOLDER/P2CEClient"
@@ -69,7 +66,7 @@ fi
 
 # 4. Launch the Client
 echo "[Archipelago] Starting Autonomous Client..."
-LD_PRELOAD="" "$PYTHON_EXE" -u "$CLIENT_PY" --nogui > "$MOD_FOLDER/archipelago_debug.log" 2>&1 &
+"$PYTHON_EXE" -u "$CLIENT_PY" --nogui > "$MOD_FOLDER/archipelago_debug.log" 2>&1 &
 CLIENT_PID=$!
 
 echo "[Archipelago] Client started natively with PID: $CLIENT_PID"

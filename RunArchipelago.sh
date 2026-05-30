@@ -84,8 +84,9 @@ trap cleanup EXIT INT TERM
 # 6. Launch the Game
 if [ $# -gt 0 ]; then
     echo "[Archipelago] Launching Game with Steam arguments..."
-    "$@" -netconport 3000 -language english > "$MOD_FOLDER/game_debug.log" 2>&1
+    exec "$@" -netconport 3000 -language english > "$MOD_FOLDER/game_debug.log" 2>&1
 else
-    echo "[Archipelago] WARNING: No game command provided."
-    wait $CLIENT_PID
+    echo "[Archipelago] ERROR: No game command provided."
+    kill $CLIENT_PID
+    exit 1
 fi

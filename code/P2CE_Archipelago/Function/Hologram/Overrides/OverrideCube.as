@@ -40,8 +40,8 @@ void InitializeCubeDatabase() {
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro5", "cube_dropper_2-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro6", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-    g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro7", "metal_box.mdl", Vector(25, 0, 0), QAngle(0, 0, 90), 0.8f));
-    g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro7", "reflection_cube.mdl", Vector(25, 0, 0), QAngle(0, 0, 90), 0.8f));
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro7", "metal_box.mdl", Vector(0, 0, 25), QAngle(0, 0, 90), 0.8f));
+    g_CubeDatabase.insertLast(CubeOverrideData("sp_a1_intro7", "reflection_cube.mdl", Vector(0, 0, 25), QAngle(0, 0, 90), 0.8f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_laser_stairs", "cube_dropper_01-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_laser_over_goo", "cube_dropper_box", Vector(0, 0, -530), QAngle(180, 0, 0), 1.0f));
     g_CubeDatabase.insertLast(CubeOverrideData("sp_a2_catapult_intro", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));

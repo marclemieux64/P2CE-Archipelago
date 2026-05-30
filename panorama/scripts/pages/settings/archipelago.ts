@@ -8,6 +8,27 @@
 if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 // --- SAUVEGARDE DES RÉGLAGES ---
+function SaveHideCountsSetting() {
+    const enumPanel = $('#HideCountsSetting');
+    if (enumPanel) {
+        const children = enumPanel.FindChildTraverse('RadioButtonsContainer')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].paneltype === "RadioButton" && children[i].IsSelected()) {
+                const val = children[i].GetAttributeString('value', '0');
+                // Enregistrer comme une chaîne propre pour correspondre au gestionnaire de variables globales
+                $.persistentStorage.setItem('ap_hide_location_counts', val);
+                $.Msg(`[AP] Hide Location Counts setting saved as: ${val}`);
+                break;
+            }
+        }
+        
+        const global = UiToolkitAPI.GetGlobalObject() as any;
+        if (global.UpdateCompletionSymbolStatus) {
+            global.UpdateCompletionSymbolStatus();
+        }
+    }
+}
+
 function SaveCompletionSymbolSetting() {
     const dropdown = $('#CompletionSymbolSetting');
     if (dropdown) {
@@ -16,12 +37,10 @@ function SaveCompletionSymbolSetting() {
             const selected = realDropdown.GetSelected();
             if (selected) {
                 const val = selected.GetAttributeInt('value', 0);
-                // Ensure it is saved as a string "0", "1", or "2"
-                $.persistentStorage.setItem('ap_completion_symbol', val.toString());
-                
+                // Sauvegarder sans forcer de type incompatible avec l'initialisation récursive
+                $.persistentStorage.setItem('ap_completion_symbol', val);
                 $.Msg(`[AP] Completion Symbol setting saved as: ${val}`);
                 
-                // Trigger global refresh
                 const global = UiToolkitAPI.GetGlobalObject() as any;
                 if (global.UpdateCompletionSymbolStatus) {
                     global.UpdateCompletionSymbolStatus();
@@ -32,20 +51,18 @@ function SaveCompletionSymbolSetting() {
 }
 
 function SaveMapStatusHUDSetting() {
-    const dropdown = $('#ShowMapStatusHUDSetting');
-    if (dropdown) {
-        const realDropdown = dropdown.FindChildTraverse('DropDown') as any;
-        if (realDropdown) {
-            const selected = realDropdown.GetSelected();
-            if (selected) {
-                const val = selected.GetAttributeInt('value', 0);
+    const enumPanel = $('#MapStatusHUDSetting');
+    if (enumPanel) {
+        const children = enumPanel.FindChildTraverse('RadioButtonsContainer')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].paneltype === "RadioButton" && children[i].IsSelected()) {
+                const val = children[i].GetAttributeString('value', '0');
                 $.persistentStorage.setItem('ap_show_map_status_hud', val);
                 $.Msg(`[AP] Show Map Status HUD saved: ${val}`);
-                
-                // Mettre à jour l'état du binder de touches
-                UpdateMapStatusHUDKeyBinder();
+                break;
             }
         }
+        UpdateMapStatusHUDKeyBinder();
     }
 }
 
@@ -59,7 +76,6 @@ function SaveSmartWarpSetting() {
                 const val = selected.GetAttributeInt('value', -1);
                 $.persistentStorage.setItem('ap_smart_warp', val);
                 
-                // On définit aussi la convar pour que le moteur de jeu puisse la lire (Smart Warp)
                 GameInterfaceAPI.SetSettingInt('ap_smart_warp', val);
                 $.Msg(`[AP] Smart Warp setting saved: ${val}`);
             }
@@ -77,7 +93,7 @@ function SavePortalGunSkinSetting() {
                 const val = selected.GetAttributeInt('value', 0);
                 $.persistentStorage.setItem('ap_portalgun_skin', val);
                 
-                // Appel de la commande AngelScript pour mettre à jour le skin de l'arme
+                GameInterfaceAPI.SetSettingInt('ap_portalgun_skin', val);
                 GameInterfaceAPI.ConsoleCommand('AP_UpdateGunSkin ' + val);
                 $.Msg(`[AP] Portal Gun Skin saved and applied: ${val}`);
             }
@@ -95,10 +111,7 @@ function SaveHideHologramsSetting() {
                 const val = selected.GetAttributeInt('value', 0);
                 $.persistentStorage.setItem('ap_hide_holograms', val);
                 
-                // Mettre à jour la convar pour le moteur
                 GameInterfaceAPI.SetSettingInt('ap_hide_holograms', val);
-                
-                // Déclencher la mise à jour visuelle immédiate en jeu
                 GameInterfaceAPI.ConsoleCommand('AP_UpdateHologramsVisibility');
                 $.Msg(`[AP] Hide Holograms setting saved: ${val}`);
             }
@@ -116,7 +129,6 @@ function SaveStatusIndicatorModeSetting() {
                 const val = selected.GetAttributeInt('value', 0);
                 $.persistentStorage.setItem('ap_status_indicator_mode', val);
                 
-                // Rafraîchir immédiatement l'indicateur sur le HUD
                 const statusIndicator = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoStatusIndicator;
                 if (statusIndicator) {
                     statusIndicator.refreshVisibility();
@@ -128,55 +140,81 @@ function SaveStatusIndicatorModeSetting() {
 }
 
 function LoadArchipelagoSettings() {
-    // 1. Completion Symbol
-    const compVal = $.persistentStorage.getItem('ap_completion_symbol') ?? 0;
+    // 1. Hide Location Counts
+    const hideCountsVal = $.persistentStorage.getItem('ap_hide_location_counts') ?? "0";
+    const hideCountsPanel = $('#HideCountsSetting');
+    if (hideCountsPanel) {
+        const children = hideCountsPanel.FindChildTraverse('RadioButtonsContainer')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].paneltype === "RadioButton" && children[i].GetAttributeString('value', '0') === hideCountsVal.toString()) {
+                children[i].SetSelected(true);
+                break;
+            }
+        }
+    }
+
+    // 2. Completion Symbol
+    const compVal = $.persistentStorage.getItem('ap_completion_symbol') ?? "0";
     const compDropdown = $('#CompletionSymbolSetting')?.FindChildTraverse('DropDown') as any;
-    if (compDropdown) compDropdown.SetSelected('ap_symbol_' + compVal);
+    if (compDropdown) compDropdown.SetSelected('ap_symbol_' + compVal.toString());
 
-    // 2. HUD Visibility
-    const hudVal = $.persistentStorage.getItem('ap_show_map_status_hud') ?? 0;
+    // 3. HUD Visibility
+    const hudVal = $.persistentStorage.getItem('ap_show_map_status_hud') ?? "0";
+    const hudPanel = $('#MapStatusHUDSetting');
+    if (hudPanel) {
+        const children = hudPanel.FindChildTraverse('RadioButtonsContainer')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].paneltype === "RadioButton" && children[i].GetAttributeString('value', '0') === hudVal.toString()) {
+                children[i].SetSelected(true);
+                break;
+            }
+        }
+    }
 
-    // 3. Smart Warp
-    const warpVal = $.persistentStorage.getItem('ap_smart_warp') ?? 0;
+    // 4. Smart Warp
+    const warpVal = $.persistentStorage.getItem('ap_smart_warp') ?? "0";
     const warpDropdown = $('#TransitionTypeSetting')?.FindChildTraverse('DropDown') as any;
-    if (warpDropdown) warpDropdown.SetSelected(warpVal === 1 ? 'ap_transition_smart' : 'ap_transition_menu');
+    if (warpDropdown) warpDropdown.SetSelected(warpVal.toString() === "1" ? 'ap_transition_smart' : 'ap_transition_menu');
 
-    // 4. Portal Gun Skin
-    const skinVal = $.persistentStorage.getItem('ap_portalgun_skin') ?? 0;
+    // 5. Portal Gun Skin
+    const skinValRaw = $.persistentStorage.getItem('ap_portalgun_skin') ?? "0";
     const skinDropdown = $('#PortalGunSkinSetting')?.FindChildTraverse('DropDown') as any;
-    if (skinDropdown) skinDropdown.SetSelected('ap_skin_' + skinVal);
+    if (skinDropdown) skinDropdown.SetSelected('ap_skin_' + skinValRaw.toString());
     
-    // Applique le skin au moteur de jeu immédiatement au chargement
-    GameInterfaceAPI.ConsoleCommand('AP_UpdateGunSkin ' + skinVal)
-
-    // 5. Hide Holograms
-    const hideHoloVal = $.persistentStorage.getItem('ap_hide_holograms') ?? 0;
+    const skinValNum = parseInt(skinValRaw.toString(), 10) || 0;
+    GameInterfaceAPI.SetSettingInt('ap_portalgun_skin', skinValNum);
+    
+    // 6. Hide Holograms
+    const hideHoloValRaw = $.persistentStorage.getItem('ap_hide_holograms') ?? "0";
     const hideHoloDropdown = $('#HideHologramsSetting')?.FindChildTraverse('DropDown') as any;
-    if (hideHoloDropdown) hideHoloDropdown.SetSelected('ap_hide_holograms_' + hideHoloVal);
+    if (hideHoloDropdown) hideHoloDropdown.SetSelected('ap_hide_holograms_' + hideHoloValRaw.toString());
     
-    // Synchroniser la convar et rafraîchir la visibilité au chargement
-    GameInterfaceAPI.SetSettingInt('ap_hide_holograms', hideHoloVal);
-    GameInterfaceAPI.ConsoleCommand('AP_UpdateHologramsVisibility');
+    const hideHoloValNum = parseInt(hideHoloValRaw.toString(), 10) || 0;
+    GameInterfaceAPI.SetSettingInt('ap_hide_holograms', hideHoloValNum);
 
-    // 6. Status Indicator Mode
-    const statusIndVal = $.persistentStorage.getItem('ap_status_indicator_mode') ?? 0;
+    // 7. Status Indicator Mode
+    const statusIndVal = $.persistentStorage.getItem('ap_status_indicator_mode') ?? "0";
     const statusIndDropdown = $('#StatusIndicatorModeSetting')?.FindChildTraverse('DropDown') as any;
-    if (statusIndDropdown) statusIndDropdown.SetSelected('ap_status_indicator_mode_' + statusIndVal);
+    if (statusIndDropdown) statusIndDropdown.SetSelected('ap_status_indicator_mode_' + statusIndVal.toString());
 
     UpdateMapStatusHUDKeyBinder();
+
+    $.Schedule(0.2, () => {
+        GameInterfaceAPI.ConsoleCommand('AP_UpdateGunSkin ' + skinValNum);
+        GameInterfaceAPI.ConsoleCommand('AP_UpdateHologramsVisibility');
+    });
 }
 
 function UpdateMapStatusHUDKeyBinder() {
-    const showHUD = $.persistentStorage.getItem('ap_show_map_status_hud') ?? 0;
+    const showHUD = $.persistentStorage.getItem('ap_show_map_status_hud') ?? "0";
     const keyBinder = $('#MapStatusKeyBinder');
     if (keyBinder) {
-        // Désactive le raccourci manuel si le HUD est réglé sur "Always Show" (valeur 1)
-        keyBinder.enabled = (showHUD == 0);
+        keyBinder.enabled = (showHUD.toString() === "0");
     }
 }
 
 // --- EXPOSITION GLOBALE HARMONISÉE ---
-// Permet aux éléments externes et aux enums de settings.ts d'appeler ces fonctions sans planter
+(UiToolkitAPI.GetGlobalObject() as any).SaveHideCountsSetting = SaveHideCountsSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveCompletionSymbolSetting = SaveCompletionSymbolSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveMapStatusHUDSetting = SaveMapStatusHUDSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveSmartWarpSetting = SaveSmartWarpSetting;
@@ -186,7 +224,6 @@ function UpdateMapStatusHUDKeyBinder() {
 (UiToolkitAPI.GetGlobalObject() as any).LoadArchipelagoSettings = LoadArchipelagoSettings;
 (UiToolkitAPI.GetGlobalObject() as any).UpdateMapStatusHUDKeyBinder = UpdateMapStatusHUDKeyBinder;
 
-// AJOUT DE LA FONCTION MANQUANTE
 (UiToolkitAPI.GetGlobalObject() as any).UpdateCompletionSymbolStatus = () => {
     const mapSelect = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect;
     if (mapSelect && mapSelect.generateList) {
@@ -195,11 +232,9 @@ function UpdateMapStatusHUDKeyBinder() {
 };
 
 // --- INITIALISATION ---
-
 (function () {
-    // Se déclenche quand on entre dans l'onglet des réglages
     $.RegisterEventHandler('PropertyTransitionEnd', $.GetContextPanel(), (panel, propertyName) => {
-        if (propertyName === 'opacity' && !$.GetContextPanel().IsTransparent()) {
+        if (propertyName === 'opacity' && panel.id === $.GetContextPanel().id && !$.GetContextPanel().IsTransparent()) {
             LoadArchipelagoSettings();
         }
     });

@@ -110,12 +110,6 @@ class SlipperyFloorTrapWeight(BaseTrapWeight):
     """
     display_name = slippery_floor_trap + " Weight"
 
-# class StoryAchievementSanity(Toggle):
-#     """
-#     Determines whether completing story achievements send location checks
-#     """
-#     display_name = "StoryAchievementSanity"
-
 class WheatleyMonitors(Toggle):
     """
     Determines whether breaking Wheatly monitors will send location checks
@@ -134,7 +128,7 @@ class VitrifiedDoors(Toggle):
     """
     display_name = "Vitrified Doors"
 
-portal2_option_groups = [
+p2ce_option_groups = [
     OptionGroup("Location Options", [
         GameMode,
         EarlyPlayabilityPercentage,
@@ -155,7 +149,7 @@ portal2_option_groups = [
     ])
 ]
 
-portal2_option_presets = {
+p2ce_option_presets = {
     "default": {
         "death_link": False,
         "map_layout": "normal",
@@ -164,7 +158,7 @@ portal2_option_presets = {
 }
 
 @dataclass
-class Portal2Options(PerGameCommonOptions):
+class P2CEOptions(PerGameCommonOptions):
     death_link: DeathLink
     start_inventory_from_pool: StartInventoryPool
 
@@ -173,7 +167,6 @@ class Portal2Options(PerGameCommonOptions):
     remove_locations: RemoveLocations
     early_playability_percentage: EarlyPlayabilityPercentage
     logic_difficulty: LogicDifficulty
-    # storyachievementsanity: StoryAchievementSanity
     wheatley_monitors: WheatleyMonitors
     ratman_dens: RatmanDens
     vitrified_doors: VitrifiedDoors
@@ -184,4 +177,3 @@ class Portal2Options(PerGameCommonOptions):
     butter_fingers_trap_weight: ButterFingersTrapWeight
     cube_confetti_trap_weight: CubeConfettiTrapWeight
     slippery_floor_trap_weight: SlipperyFloorTrapWeight
-    

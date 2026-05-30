@@ -73,7 +73,7 @@ class ArchipelagoMapSelect {
     }
 
     static getCompletionSymbol(): string {
-        return ($.persistentStorage.getItem('ap_completion_symbol') ?? 0) === 1 ? "\u2605" : "\u2713";
+        return ($.persistentStorage.getItem('ap_completion_symbol') ?? "0").toString() === "1" ? "\u2605" : "\u2713";
     }
 
     static updateConnectionState() {
@@ -112,7 +112,6 @@ class ArchipelagoMapSelect {
                 overlayLabel.style.color = "#ffbb00";
             }
         } else if (status.connected && !status.menu) {
-            // FIX ÉTAT : Client connecté à Panorama mais en cours d'authentification de Slot avec le serveur AP
             overlay.RemoveClass('hide');
             if (content && content.IsValid()) content.AddClass('hide');
             if (overlayButton && overlayButton.IsValid()) overlayButton.AddClass('hide');
@@ -257,7 +256,6 @@ class ArchipelagoMapSelect {
                                 this.restoreSelection(savedCommand);
                             }
                         } else {
-                            // FIX CANAL : Traitement explicite si l'architecture de données est connectée mais sans menu actif
                             this.g_ChapterData = {};
                             this.generateList();
                             this.updateConnectionState();
@@ -281,7 +279,6 @@ class ArchipelagoMapSelect {
             });
         }
         
-        // Forcer le rendu visuel initial dès le montage de la page
         this.updateConnectionState();
     }
 
@@ -478,6 +475,7 @@ class ArchipelagoMapSelect {
             const mItems = mapData.subtitle || "";
             const formattedIcons = logicHelper ? logicHelper.getFormattedIcons(rawStatus, mapCmdName, mItems) : [];
             let finalStatusHtml = "";
+
             for (const iconData of formattedIcons) {
                 finalStatusHtml += `<font color="${iconData.color}">${iconData.char}</font>`;
             }
@@ -548,8 +546,16 @@ class ArchipelagoMapSelect {
     }
 
     static playSelectedMap() {
-        if (this.g_SelectedMapCommand) {
-            GameInterfaceAPI.ConsoleCommand(this.g_SelectedMapCommand);
+        if (this.g_SelectedMapData && !this.g_SelectedMapData.is_chapter) {
+            const cmd = this.g_SelectedMapData.command;
+            if (cmd && !this.g_SelectedMapData.command_deactivated) {
+                $.Msg(`[AP] Executing Map Connection Command: ${cmd}`);
+                GameInterfaceAPI.ConsoleCommand(cmd);
+            } else {
+                $.Msg("[AP] Cannot launch map: Command is locked or deactivated.");
+            }
+        } else {
+            $.Msg("[AP] Cannot launch map: Selection is empty or a base Chapter header.");
         }
     }
 
@@ -590,7 +596,9 @@ class ArchipelagoMapSelect {
         const errEntry = container.FindChild('ErrorEntry');
         if (errEntry && errEntry.IsValid()) errEntry.DeleteAsync(0);
 
-        const completionSymbol = ArchipelagoMapSelect.getCompletionSymbol();
+        const configFallbackSymbol = ArchipelagoMapSelect.getCompletionSymbol();
+        const isHidingCounts = ($.persistentStorage.getItem('ap_hide_location_counts') ?? "0").toString() === "1";
+
         const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));
 
         for (const chId of sortedKeys) {
@@ -630,7 +638,7 @@ class ArchipelagoMapSelect {
                 wrapper.SetPanelEvent('onfocus', () => {
                     this.selectMap({
                         pic: chapter.pic,
-                        title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title || $.Localize("#Archipelago_Chapter_Title") + " " + chapterId,
+                        title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title || $.Localize("#Archipelago_Chapter_Title") + " " + chId,
                         subtitle: "",
                         status: "",
                         command_deactivated: true,
@@ -673,6 +681,9 @@ class ArchipelagoMapSelect {
             let chapterTotalCount = 0;
             let mapsWithIconsCount = 0;
             let mapsCompletedCount = 0;
+            
+            // Unify dynamic character detection: Identify exactly what character asset symbol the tracked maps are carrying.
+            let activeChapterSymbol = configFallbackSymbol; 
 
             chapter.maps.forEach((map: any) => {
                 if (map.command_deactivated) return;
@@ -684,7 +695,14 @@ class ArchipelagoMapSelect {
 
                 if (statusIcons.length > 0) {
                     mapsWithIconsCount++;
-                    const cleanStatus = statusIcons.split(completionSymbol).join("").split("★").join("").split("£").join("").split("✓").join("");
+                    
+                    // Look directly inside raw string payload for the symbol signature before evaluating completion loops.
+                    if (statusIcons.indexOf("\u2605") !== -1) activeChapterSymbol = "\u2605";
+                    else if (statusIcons.indexOf("\u2713") !== -1) activeChapterSymbol = "\u2713";
+                    else if (statusIcons.indexOf("✓") !== -1) activeChapterSymbol = "✓";
+                    else if (statusIcons.indexOf("£") !== -1) activeChapterSymbol = "£";
+
+                    const cleanStatus = statusIcons.split(activeChapterSymbol).join("").split("★").join("").split("£").join("").split("✓").join("").split("\u2713").join("");
                     if (cleanStatus.length === 0) {
                         mapsCompletedCount++;
                         map._isComplete = true;
@@ -714,17 +732,19 @@ class ArchipelagoMapSelect {
             const chStatus = entry.FindChildTraverse(`ChapterStatus_${chId}`) as LabelPanel;
             if (chStatus && chStatus.IsValid()) {
                 if (mapsCompletedCount === mapsWithIconsCount && mapsWithIconsCount > 0) {
-                    chStatus.text = completionSymbol;
+                    chStatus.text = activeChapterSymbol;
                     chStatus.style.color = "#ffff44";
                     chStatus.style.fontSize = "26px";
                     chStatus.style.fontFamily = "APPortal-bold";
-                } else if (chapterTotalCount > 0 && ($.persistentStorage.getItem('HideLocationCounts') ?? 0) === 0) {
+                    chStatus.visible = true;
+                } else if (chapterTotalCount > 0 && !isHidingCounts) {
                     chStatus.text = `${chapterGreenCount}/${chapterTotalCount}`;
                     chStatus.style.color = (chapterGreenCount === chapterTotalCount) ? "#44ff44" : (chapterGreenCount > 0 ? "#ffff44" : "#ff4444");
                     chStatus.style.fontSize = "22px";
                     chStatus.style.fontFamily = '"Lexend Deca", Bold';
+                    chStatus.visible = true;
                 } else {
-                    chStatus.text = "";
+                    chStatus.visible = false;
                 }
             }
 
@@ -887,7 +907,7 @@ class ArchipelagoMapSelect {
 
                 const mProg = mapBtn.FindChildTraverse(`MapProgress_${chId}_${index}`) as LabelPanel;
                 if (mProg && mProg.IsValid()) {
-                    if (mapTotalLeft > 0 && ($.persistentStorage.getItem('HideLocationCounts') ?? 0) === 0 && !map.command_deactivated) {
+                    if (mapTotalLeft > 0 && !isHidingCounts && !map.command_deactivated) {
                         mProg.text = `${mapGreenCount}/${mapTotalLeft}`;
                         let color = "#ff4444";
                         if (mapGreenCount === mapTotalLeft) color = "#44ff44";
@@ -897,7 +917,7 @@ class ArchipelagoMapSelect {
                         mProg.style.fontFamily = '"Lexend Deca", Bold';
                         mProg.visible = true;
                     } else if (map._isComplete && !map.command_deactivated) {
-                        mProg.text = completionSymbol;
+                        mProg.text = activeChapterSymbol; // Directly match the check character asset found in layout string
                         mProg.style.color = "#ffff44";
                         mProg.style.fontSize = "26px";
                         mProg.style.fontFamily = "APPortal-bold";

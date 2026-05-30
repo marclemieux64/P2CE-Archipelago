@@ -7,17 +7,18 @@ string current_map = "unknown";
 int transition_script_count = 0;
 bool g_has_printed_map_complete = false;
 bool sent_death_link = false;
-bool is_faking_death = false;
+bool is_faking_death = false; 
 
 
 namespace Archipelago {
 
 // --- CONVARS & REFS ---
-    ConVar cv_ArchipelagoDebug("ArchipelagoDebug", "1");
+    ConVar cv_ArchipelagoDebug("ArchipelagoDebug", "0");
     ConVar cv_ArchipelagoHideHolograms("ap_hide_holograms", "0", FCVAR_ARCHIVE);
     ConVarRef host_map("host_map");
     ConVar cv_BTS4_InitialTemplateHoloActive("ap_bts4_initial_holo_active", "0");
     ConVar cv_BTS4_Conveyor1TemplateHoloActive("ap_bts4_conveyor1_holo_active", "0");
+    
 
 
 // --- BOOLEANS ---

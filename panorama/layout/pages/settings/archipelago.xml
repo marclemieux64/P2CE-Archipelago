@@ -1,7 +1,7 @@
 <root>
 	<styles>
 		<include src="file://{resources}/styles/main.scss" />
-		</styles>
+	</styles>
 	<scripts>
 		<include src="file://{scripts}/pages/settings/page.js" />
 		<include src="file://{scripts}/pages/settings/archipelago.ts" />
@@ -20,10 +20,11 @@
 					text="#Archipelago_Settings_HideLocationCounts"
 					psvar="ap_hide_location_counts"
 					infomessage="#Archipelago_Settings_HideLocationCounts_info"
+					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveHideCountsSetting()"
 					hasdocspage="false"
 				>
-					<RadioButton group="ap_hide_location_counts" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().UpdateCompletionSymbolStatus()" />
-					<RadioButton group="ap_hide_location_counts" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().UpdateCompletionSymbolStatus()" />
+					<RadioButton group="ap_hide_location_counts" text="#Common_Off" value="0" />
+					<RadioButton group="ap_hide_location_counts" text="#Common_On" value="1" />
 				</SettingsEnum>
 
 				<SettingsEnumDropDown
@@ -31,6 +32,7 @@
 					text="#Archipelago_Settings_CompletionSymbol"
 					psvar="ap_completion_symbol"
 					infomessage="#Archipelago_Settings_CompletionSymbol_info"
+					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveCompletionSymbolSetting()"
 				>
 					<Label class="ap_symbol" text="#Archipelago_Settings_CompletionSymbol_0" value="0" id="ap_symbol_0" />
 					<Label class="ap_symbol" text="#Archipelago_Settings_CompletionSymbol_1" value="1" id="ap_symbol_1" />
@@ -52,10 +54,11 @@
 					text="#Archipelago_Settings_MapStatusHUD"
 					psvar="ap_show_map_status_hud"
 					infomessage="#Archipelago_Settings_MapStatusHUD_info"
+					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveMapStatusHUDSetting()"
 					hasdocspage="false"
 				>
-					<RadioButton group="ap_show_map_status_hud" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().UpdateMapStatusHUDKeyBinder()" />
-					<RadioButton group="ap_show_map_status_hud" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().UpdateMapStatusHUDKeyBinder()" />
+					<RadioButton group="ap_show_map_status_hud" text="#Common_Off" value="0" />
+					<RadioButton group="ap_show_map_status_hud" text="#Common_On" value="1" />
 				</SettingsEnum>
 				<SettingsKeyBinder
 					id="MapStatusKeyBinder"
@@ -87,7 +90,7 @@
 					<Label text="#Archipelago_Settings_StatusIndicatorMode_2" value="2" id="ap_status_indicator_mode_2" />
 				</SettingsEnumDropDown>
 			</Panel>
-<Panel class="settings-page__spacer" />
+			<Panel class="settings-page__spacer" />
 			<Panel id="ArchipelagoCosmetics" class="settings-group">
 				<Panel class="settings-group__header">
 					<Label class="settings-group__title" text="#Archipelago_Settings_Cosmetics" />
@@ -103,7 +106,7 @@
 					<Label text="#Archipelago_Skin_Default" value="0" id="ap_skin_0" />
 					<Label text="#Archipelago_Skin_1" value="1" id="ap_skin_1" />
 					<Label text="#Archipelago_Skin_2" value="2" id="ap_skin_2" />
-					</SettingsEnumDropDown>
+				</SettingsEnumDropDown>
 			</Panel>
 
 		</Panel>

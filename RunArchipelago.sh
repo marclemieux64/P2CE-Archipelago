@@ -72,7 +72,6 @@ CLIENT_PID=$!
 echo "[Archipelago] Client started natively with PID: $CLIENT_PID"
 
 # 5. Process Synchronization
-# This trap ensures that when the game closes, it automatically terminates the background client.
 cleanup() {
     echo "[Archipelago] Game closed. Cleaning up client process..."
     if kill -0 $CLIENT_PID 2>/dev/null; then

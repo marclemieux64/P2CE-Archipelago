@@ -1,4 +1,4 @@
-# game items
+# P2CE items
 portal_gun_1 = "Portal Gun"
 portal_gun_2 = "Upgraded Portal Gun"
 potatos = "PotatOS"
@@ -34,8 +34,8 @@ lemon = "Lemon"
 slice_of_cake = "Slice of Cake"
 
 # trap items
-motion_blur_trap = "Motion Blur Trap" # Adds blur effect to screen for 20 seconds
-fizzle_portal_trap = "Fizzle Portal Trap" # Instantly Fizzles all places portals
-butter_fingers_trap = "Butter Fingers Trap" # Persistently drops held items for 30 seconds
-cube_confetti_trap = "Cube Confetti Trap" # An explosion of colorful cubes at the feet of the player
-slippery_floor_trap = "Slippery Floor Trap" # Makes the player have 0 friction with the floor
+motion_blur_trap = "Motion Blur Trap" 
+fizzle_portal_trap = "Fizzle Portal Trap" 
+butter_fingers_trap = "Butter Fingers Trap" 
+cube_confetti_trap = "Cube Confetti Trap" 
+slippery_floor_trap = "Slippery Floor Trap"

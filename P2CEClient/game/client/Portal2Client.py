@@ -10,7 +10,6 @@ import json
 import hashlib
 import worlds
 
-# --- STANDALONE FIX ---
 archipelago_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 if archipelago_root not in sys.path:
     sys.path.insert(0, archipelago_root)
@@ -31,7 +30,7 @@ from game.client.DeathMessages import get_death_message
 from game.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
 from game.Options import GameModeOption
 
-def get_portal2_data_package():
+def get_p2ce_data_package():
     from game.Items import item_table
     from game.Locations import all_locations_table, location_groups
     
@@ -55,16 +54,16 @@ def get_portal2_data_package():
     res["checksum"] = hashlib.sha1(encode(res).encode()).hexdigest()
     return res
 
-worlds.network_data_package["games"]["Portal 2 P2CE"] = get_portal2_data_package()
+worlds.network_data_package["games"]["P2CE"] = get_p2ce_data_package()
 
-logger = logging.getLogger("Portal2Client")
+logger = logging.getLogger("P2CEClient")
 
-class Portal2CommandProcessor(ClientCommandProcessor):
+class P2CECommandProcessor(ClientCommandProcessor):
     def __init__(self, ctx: CommonContext):
         super().__init__(ctx)
 
     def _cmd_help(self, *args):
-        self.output("Portal 2 Archipelago Client Commands:")
+        self.output("P2CE Archipelago Client Commands:")
         super()._cmd_help()
 
     def _cmd_check_connection(self):
@@ -144,7 +143,7 @@ class LogBridge:
                 self.bridge = bridge
 
             def emit(self, record):
-                if getattr(record, "from_sync", False) or any(x in record.msg for x in ["[HUD]", "DEATHLINK:", "Connection to Portal 2", "Disconnected from Portal 2"]):
+                if getattr(record, "from_sync", False) or any(x in record.msg for x in ["[HUD]", "DEATHLINK:", "Connection to P2CE", "Disconnected from P2CE"]):
                     return
                 try:
                     msg = self.format(record)
@@ -181,8 +180,8 @@ class LogBridge:
             self.temp_handler = None
 
 
-class Portal2Context(CommonContext):
-    command_processor = Portal2CommandProcessor
+class P2CEContext(CommonContext):
+    command_processor = P2CECommandProcessor
     game_connection_task: typing.Optional["asyncio.Task[None]"] = None
 
     def __init__(self, server_address: str = None, password: str = None):
@@ -220,7 +219,7 @@ class Portal2Context(CommonContext):
         self.go_mode_announced = False
         self.finished_game = False
 
-    game = "Portal 2 P2CE"
+    game = "P2CE"
     items_handling = 0b111 
 
     HOST = "127.0.0.1"
@@ -292,10 +291,10 @@ class Portal2Context(CommonContext):
 
     def alert_game_connection(self):
         if self.check_game_connection():
-            self.notifier.on_print_silently("Connection to Portal 2 is up and running", mirror_to_hud=False)
-            logger.info("Connection to Portal 2 is up and running")
+            self.notifier.on_print_silently("Connection to P2CE is up and running", mirror_to_hud=False)
+            logger.info("Connection to P2CE is up and running")
         else:
-            msg = f"Disconnected from Portal 2. Make sure the mod is open and the `-netconport {self.PORT}` launch option is set"
+            msg = f"Disconnected from P2CE. Make sure the mod is open and the `-netconport {self.PORT}` launch option is set"
             self.notifier.on_print_silently(msg, mirror_to_hud=False)
             logger.info(msg)
 
@@ -330,7 +329,7 @@ class Portal2Context(CommonContext):
                 self.listener_active = True
                 self.has_ever_connected = True
                 attempt_count = 0 
-                logger.info(f"Connected to Portal 2 netcon on {self.HOST}:{self.PORT}")
+                logger.info(f"Connected to P2CE netcon on {self.HOST}:{self.PORT}")
                 self.alert_game_connection()
                 self.command_queue.append('alias "/connect" "ap_connect"\n')
                 self.command_queue.append('alias "/slot" "ap_slot"\n')
@@ -342,7 +341,6 @@ class Portal2Context(CommonContext):
                             self.pending_validation_events.clear()
                         self.ping_sent_time = 0
                     
-                    # CORRECTIF SÉCURITÉ ABSOLUE : Extraction atomique pour éviter les corruptions d'index multi-thread
                     if self.command_queue:
                         local_batch = list(self.command_queue)
                         self.command_queue.clear()
@@ -365,8 +363,8 @@ class Portal2Context(CommonContext):
                     except asyncio.TimeoutError:
                         pass
                     except Exception as e:
-                        logger.error(f"Error reading from Portal 2: {e}")
-                        self.notifier.add_in_game_message(f"Error reading from Portal 2: {e}", "error")
+                        logger.error(f"Error reading from P2CE: {e}")
+                        self.notifier.add_in_game_message(f"Error reading from P2CE: {e}", "error")
                         break
 
             except ConnectionRefusedError:
@@ -377,7 +375,7 @@ class Portal2Context(CommonContext):
                         break
                 
                 if attempt_count <= 5:
-                    logger.info(f"Waiting for Portal 2 to start on {self.HOST}:{self.PORT}... (Attempt {attempt_count})")
+                    logger.info(f"Waiting for P2CE to start on {self.HOST}:{self.PORT}... (Attempt {attempt_count})")
                 else:
                     logger.warning(f"Connection refused on {self.HOST}:{self.PORT}. Is the game running with -netconport {self.PORT}?")
                 self.sender_active = False
@@ -757,14 +755,14 @@ class Portal2Context(CommonContext):
     def make_gui(self):
         from kvui import GameManager
 
-        class Portal2TextManager(GameManager):
-            base_title = "Portal 2 Archipelago Client"
+        class P2CETextManager(GameManager):
+            base_title = "P2CE Archipelago Client"
             def __init__(self, ctx):
                 super().__init__(ctx)
                 import os
-                self.icon = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "Portalpelago.png")
+                self.icon = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "P2CEpelago.png")
 
-        return Portal2TextManager
+        return P2CETextManager
     
     async def shutdown(self):
         self.server_address = ""
@@ -808,10 +806,10 @@ class Portal2Context(CommonContext):
         if password_requested and not self.password:
             await super().server_auth(password_requested)
         await self.get_username()
-        await self.send_connect(game="Portal 2 P2CE")
+        await self.send_connect(game="P2CE")
 
 async def main(args: argparse.Namespace):
-    ctx = Portal2Context(args.connect, args.password)
+    ctx = P2CEContext(args.connect, args.password)
     ctx.loop = asyncio.get_running_loop()
     ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
     ctx.game_connection_task = asyncio.create_task(ctx.p2_connection_loop(), name="netcon loop")
@@ -827,18 +825,18 @@ async def main(args: argparse.Namespace):
     await ctx.shutdown()
 
 def launch(*args: str) -> None:
-    from .Launch import launch_portal_2_client
-    launch_portal_2_client(*args)
+    from .Launch import launch_p2ce_client
+    launch_p2ce_client(*args)
 
 def get_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Portal 2 Archipelago Standalone Client")
+    parser = argparse.ArgumentParser(description="P2CE Archipelago Standalone Client")
     parser.add_argument("connect", nargs="?", help="Address of the Archipelago server", default="")
     parser.add_argument("--password", help="Password for the Archipelago server", default=None)
     parser.add_argument("--nogui", help="Disable the GUI", action="store_true")
     return parser.parse_args()
 
 if __name__ == "__main__":
-    init_logging("Portal2Client", exception_logger="Portal2Client")
+    init_logging("P2CEClient", exception_logger="P2CEClient")
     args = get_args()
     try:
         asyncio.run(main(args))

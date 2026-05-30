@@ -9,8 +9,8 @@ if not __name__.startswith("game"):
     import settings
     from worlds.AutoWorld import WebWorld, World
     from worlds.generic.Rules import add_item_rule
-    from .Options import CutsceneLevels, Portal2Options, portal2_option_groups, portal2_option_presets, GameModeOption, LogicDifficultyOption
-    from .Items import Portal2Item, game_item_table, item_table, junk_items, trap_items
+    from .Options import CutsceneLevels, P2CEOptions, p2ce_option_groups, p2ce_option_presets, GameModeOption, LogicDifficultyOption
+    from .Items import P2CEItem, game_item_table, item_table, junk_items, trap_items
     from .Locations import *
     from .ItemNames import portal_gun_2
 
@@ -18,7 +18,7 @@ if not __name__.startswith("game"):
 
     debug_mode = False
 
-    class Portal2Settings(settings.Group):
+    class P2CESettings(settings.Group):
         import os
         import logging
         # Robust search for extras.txt to avoid blocking file dialogs
@@ -40,38 +40,38 @@ if not __name__.startswith("game"):
         # Use a simple string instead of UserFilePath to prevent blocking dialogs
         menu_file: str = extras_path
 
-        class Portal2NetConPort(int):
-            """The port set in the portal 2 launch options e.g. 3000"""
+        class P2CENetConPort(int):
+            """The port set in the P2CE launch options e.g. 3000"""
 
-        default_portal2_port: Portal2NetConPort = Portal2NetConPort(3000)
+        default_p2ce_port: P2CENetConPort = P2CENetConPort(3000)
 
-    class Portal2WebWorld(WebWorld):
-        game = "Portal 2 P2CE"
+    class P2CEWebWorld(WebWorld):
+        game = "P2CE"
         theme = "partyTime"
 
         setup_en = Tutorial(
             tutorial_name="Setup Guide",
-            description="A guide to playing Portal 2 in Archipelago.",
+            description="A guide to playing P2CE in Archipelago.",
             language="English",
             file_name="setup_en.md",
             link="setup/en",
-            authors=["GlassToadstool"]
+            authors=["GlassToadstool" "marclemieux"]
         )
 
         tutorials = [setup_en]
 
-        option_groups = portal2_option_groups
-        option_presets = portal2_option_presets
+        option_groups = p2ce_option_groups
+        option_presets = p2ce_option_presets
 
-    class Portal2World(World):
-        """Portal 2 is a first person puzzle adventure where you shoot solve test chambers using portal mechanics and other map specific items"""
-        game = "Portal 2 P2CE"  # name of the game/world
-        options_dataclass = Portal2Options  # options the player can set
-        options: Portal2Options  # typing hints for option results
-        settings: ClassVar[Portal2Settings]
-        web = Portal2WebWorld()
+    class P2CEWorld(World):
+        """P2CE is a puzzle adventure community platform built to support native multiworld integrations."""
+        game = "P2CE"  # name of the game/world
+        options_dataclass = P2CEOptions  # options the player can set
+        options: P2CEOptions  # typing hints for option results
+        settings: ClassVar[P2CESettings]
+        web = P2CEWebWorld()
 
-        BASE_ID = 98275000
+        BASE_ID = 98285000
 
         ut_can_gen_without_yaml = True
 
@@ -96,10 +96,10 @@ if not __name__.startswith("game"):
         # Helper Functions
 
         def create_item(self, name: str):
-            return Portal2Item(name, item_table[name].classification, self.item_name_to_id[name], self.player)
+            return P2CEItem(name, item_table[name].classification, self.item_name_to_id[name], self.player)
     
         def create_location(self, name, id, parent):
-            return Portal2Location(self.player, name, id, parent)
+            return P2CELocation(self.player, name, id, parent)
     
         def get_filler_item_name(self):
             return self.random.choice(junk_items)
@@ -147,7 +147,7 @@ if not __name__.startswith("game"):
             # with the map's main end region ("{map} End").
             new_region = Region(f"{name} Check", self.player, self.multiworld)
             self.multiworld.regions.append(new_region)
-            new_region.add_locations({name: self.location_name_to_id[name]}, Portal2Location)
+            new_region.add_locations({name: self.location_name_to_id[name]}, P2CELocation)
             entrance_region.connect(new_region, f"Get {name}", lambda state, _item_reqs=requirements: state.has_all(_item_reqs, self.player))
 
         def create_connected_maps(self, chapter_number: int, map_location_names: list[str] | None = None):
@@ -169,7 +169,7 @@ if not __name__.startswith("game"):
                 self.multiworld.regions.append(region_start)
                 region_end = Region(f"{name} End", self.player, self.multiworld)
                 self.multiworld.regions.append(region_end)
-                region_end.add_locations({map_name: self.location_name_to_id[map_name]}, Portal2Location)
+                region_end.add_locations({map_name: self.location_name_to_id[map_name]}, P2CELocation)
                 item_reqs = self.location_logic[map_name]
                 region_start.connect(region_end, f"Beat {name}", lambda state, _item_reqs=item_reqs: state.has_all(_item_reqs, self.player))
 
@@ -257,7 +257,7 @@ if not __name__.startswith("game"):
             end_game_region = Region("End Game", self.player, self.multiworld)
             last_region.connect(end_game_region, f"End Game Entrance")
             self.multiworld.regions.append(end_game_region)
-            end_game_region.add_event("Beat Final Level", "Victory", None, Portal2Location, None, True)
+            end_game_region.add_event("Beat Final Level", "Victory", None, P2CELocation, None, True)
             self.multiworld.completion_condition[self.player] = lambda state: state.has("Victory", self.player)
 
         def create_items(self):
@@ -270,7 +270,7 @@ if not __name__.startswith("game"):
                                        self.options.fizzle_portal_trap_weight.value,
                                        self.options.butter_fingers_trap_weight.value,
                                        self.options.cube_confetti_trap_weight.value,
-                                       self.options.slippery_floor_trap_weight.value]  # in the same order as the traps appear in trap_items list
+                                       self.options.slippery_floor_trap_weight.value]
 
             if sum(trap_weights) > 0 and trap_fill_number > 0:
                 traps = self.random.choices(trap_items, weights=trap_weights, k=trap_fill_number)
@@ -293,8 +293,6 @@ if not __name__.startswith("game"):
                 state.update_reachable_regions(self.player)
                 Utils.visualize_regions(self.multiworld.get_region("Menu", self.player), f"output/map_Player{self.player}.puml", show_entrance_names=True, regions_to_highlight=state.reachable_regions[self.player])
         
-            # Return the chapter map orders e.g. {chapter1: ['sp_a1_intro2', 'sp_a1_intro5', ...], chapter2: [...], ...}
-            # This is for generating and updating the Extras menu (level select screen) in portal 2 at the start and when checks are made
             excluded_option_names = list(PerGameCommonOptions.type_hints.keys())
             included_option_names: list[str] = [option_name for option_name in self.options_dataclass.type_hints if option_name not in excluded_option_names]
             slot_data = self.options.as_dict(*included_option_names, toggles_as_bools=True)

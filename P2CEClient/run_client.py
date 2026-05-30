@@ -17,11 +17,10 @@ import Utils
 Utils.local_path.cached_path = base_dir
 
 from Utils import init_logging
-init_logging("Portal2Client", exception_logger="Portal2Client")
+init_logging("P2CEClient", exception_logger="P2CEClient")
 
-from game.client.Launch import launch_portal_2_client
+from game.client.Launch import launch_p2ce_client
 
 if __name__ == "__main__":
-    print("Launching independent Portal 2 P2CE Archipelago Client...")
-    launch_portal_2_client(*sys.argv[1:])
-
+    print("Launching independent P2CE Archipelago Client...")
+    launch_p2ce_client(*sys.argv[1:])

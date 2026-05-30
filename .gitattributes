@@ -1,2 +1,2 @@
-
 * !text !filter !merge !diff
+RunArchipelago.sh text eol=lf

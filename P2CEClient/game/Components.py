@@ -1,19 +1,12 @@
-from worlds.LauncherComponents import Component, Type, components, launch, icon_paths
+# Complete, stripped-down implementation for in-game client architectures
+try:
+    from worlds.LauncherComponents import Component, Type, components
+    LAUNCHER_AVAILABLE = True
+except ImportError:
+    LAUNCHER_AVAILABLE = False
 
-def run_client(*args: str) -> None:
-    from .client.Launch import launch_portal_2_client
-
-    launch(launch_portal_2_client, name="Portal 2 Client", args=args)
-
-icon_paths["portalpelago"] = f"ap:{__name__}/data/Portalpelago.png"
-
-components.append(
-    Component(
-        "Portal 2 Client",
-        func=run_client,
-        game_name="Portal2",
-        component_type=Type.CLIENT,
-        supports_uri=True,
-        icon='portalpelago'
-    )
-)
+# We intentionally do not append a Type.CLIENT component here because 
+# the client interface is fully integrated directly in-game.
+# This prevents the Archipelago Launcher from showing an unused external launcher button.
+if LAUNCHER_AVAILABLE:
+    pass

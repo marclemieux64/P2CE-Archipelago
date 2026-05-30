@@ -52,7 +52,7 @@ void AddMapCheck() {
 
         // --- 3. PLACEMENTS MANUELS FORCÉS (Infaillible) ---
         if (current_map == "sp_a1_intro7") {
-            CreateAPHologram(Vector(-2208.0f, 376.0f, 1310.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a1_intro7_map_check_holo", true);
+            CreateAPHologram(Vector(-2208.0f, 376.0f, 1280.0f), QAngle(0, 0, 0), 1.0f, null, "", 0, "sp_a1_intro7_map_check_holo", true);
         }
         else if (current_map == "sp_a1_wakeup") {
             CreateAPHologram(Vector(6165.0f, 3456.0f, 904.0f), QAngle(0, -90.0f, 90.0f), 1.0f, null, "", 0, "sp_a1_wakeup_map_check_holo", false);

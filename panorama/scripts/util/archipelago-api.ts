@@ -34,7 +34,7 @@ if (!globalObj.ArchipelagoAPI) {
                 try { $.CancelScheduled(this.m_PollSchedule); } catch(e) {}
             }
             this.pulse();
-            this.m_PollSchedule = $.Schedule(0.4, () => this.startPolling());
+            this.m_PollSchedule = $.Schedule(1.0, () => this.startPolling());
         }
 
         static pulse() {

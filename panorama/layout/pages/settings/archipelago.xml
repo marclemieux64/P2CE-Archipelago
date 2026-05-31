@@ -91,23 +91,6 @@
 				</SettingsEnumDropDown>
 			</Panel>
 			<Panel class="settings-page__spacer" />
-			<Panel id="ArchipelagoCosmetics" class="settings-group">
-				<Panel class="settings-group__header">
-					<Label class="settings-group__title" text="#Archipelago_Settings_Cosmetics" />
-				</Panel>
-
-				<SettingsEnumDropDown
-					id="PortalGunSkinSetting"
-					text="#Archipelago_Settings_PortalGunSkin"
-					infomessage="#Archipelago_Settings_PortalGunSkin_info"
-					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SavePortalGunSkinSetting()"
-					psvar="ap_portalgun_skin"
-				>
-					<Label text="#Archipelago_Skin_Default" value="0" id="ap_skin_0" />
-					<Label text="#Archipelago_Skin_1" value="1" id="ap_skin_1" />
-					<Label text="#Archipelago_Skin_2" value="2" id="ap_skin_2" />
-				</SettingsEnumDropDown>
-			</Panel>
 
 		</Panel>
 	</Panel>

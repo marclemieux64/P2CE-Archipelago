@@ -349,22 +349,6 @@ void ButterFingersTrapCmd(const CommandArgs@ args) {
     Archipelago::ButterFingersTrap(duration);
 }
 
-[ServerCommand("AP_UpdateGunSkin", "Updates the skin of the portal gun safely")]
-void AP_UpdateGunSkinCmd(const CommandArgs@ args) {
-    if (args.ArgC() < 2) return;
-    string skinVal = args.Arg(1);
-
-    CBaseEntity@ worldGun = EntityList().FindByClassname(null, "weapon_portalgun");
-    if (worldGun !is null) {
-        worldGun.KeyValue("skin", skinVal);
-    }
-
-    CBaseEntity@ viewModel = EntityList().FindByClassname(null, "viewmodel");
-    if (viewModel !is null) {
-        viewModel.KeyValue("skin", skinVal);
-    }
-}
-
 [ServerCommand("DeleteEntityHolo", "Version compacte sans espace pour les déclencheurs")]
 void DeleteEntityHoloCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
@@ -398,7 +382,7 @@ void DisableTriggerAtPosCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("AP_UpdateHologramsVisibility", "Updates the visibility of all holograms based on settings")]
+[ServerCommand("UpdateHologramsVisibility", "Updates the visibility of all holograms based on settings")]
 void AP_UpdateHologramsVisibilityCmd(const CommandArgs@ args) {
     Archipelago::UpdateHologramsVisibility();
 }

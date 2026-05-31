@@ -15,7 +15,6 @@ function SaveHideCountsSetting() {
         for (let i = 0; i < children.length; i++) {
             if (children[i].paneltype === "RadioButton" && children[i].IsSelected()) {
                 const val = children[i].GetAttributeString('value', '0');
-                // Enregistrer comme une chaîne propre pour correspondre au gestionnaire de variables globales
                 $.persistentStorage.setItem('ap_hide_location_counts', val);
                 $.Msg(`[AP] Hide Location Counts setting saved as: ${val}`);
                 break;
@@ -37,7 +36,6 @@ function SaveCompletionSymbolSetting() {
             const selected = realDropdown.GetSelected();
             if (selected) {
                 const val = selected.GetAttributeInt('value', 0);
-                // Sauvegarder sans forcer de type incompatible avec l'initialisation récursive
                 $.persistentStorage.setItem('ap_completion_symbol', val);
                 $.Msg(`[AP] Completion Symbol setting saved as: ${val}`);
                 
@@ -94,7 +92,9 @@ function SavePortalGunSkinSetting() {
                 $.persistentStorage.setItem('ap_portalgun_skin', val);
                 
                 GameInterfaceAPI.SetSettingInt('ap_portalgun_skin', val);
-                GameInterfaceAPI.ConsoleCommand('AP_UpdateGunSkin ' + val);
+                
+                // Force an instant push down to server structures
+                GameInterfaceAPI.ConsoleCommand('UpdatePortalGunSkin ' + val);
                 $.Msg(`[AP] Portal Gun Skin saved and applied: ${val}`);
             }
         }
@@ -112,7 +112,7 @@ function SaveHideHologramsSetting() {
                 $.persistentStorage.setItem('ap_hide_holograms', val);
                 
                 GameInterfaceAPI.SetSettingInt('ap_hide_holograms', val);
-                GameInterfaceAPI.ConsoleCommand('AP_UpdateHologramsVisibility');
+                GameInterfaceAPI.ConsoleCommand('UpdateHologramsVisibility');
                 $.Msg(`[AP] Hide Holograms setting saved: ${val}`);
             }
         }
@@ -175,14 +175,6 @@ function LoadArchipelagoSettings() {
     const warpVal = $.persistentStorage.getItem('ap_smart_warp') ?? "0";
     const warpDropdown = $('#TransitionTypeSetting')?.FindChildTraverse('DropDown') as any;
     if (warpDropdown) warpDropdown.SetSelected(warpVal.toString() === "1" ? 'ap_transition_smart' : 'ap_transition_menu');
-
-    // 5. Portal Gun Skin
-    const skinValRaw = $.persistentStorage.getItem('ap_portalgun_skin') ?? "0";
-    const skinDropdown = $('#PortalGunSkinSetting')?.FindChildTraverse('DropDown') as any;
-    if (skinDropdown) skinDropdown.SetSelected('ap_skin_' + skinValRaw.toString());
-    
-    const skinValNum = parseInt(skinValRaw.toString(), 10) || 0;
-    GameInterfaceAPI.SetSettingInt('ap_portalgun_skin', skinValNum);
     
     // 6. Hide Holograms
     const hideHoloValRaw = $.persistentStorage.getItem('ap_hide_holograms') ?? "0";
@@ -200,8 +192,7 @@ function LoadArchipelagoSettings() {
     UpdateMapStatusHUDKeyBinder();
 
     $.Schedule(0.2, () => {
-        GameInterfaceAPI.ConsoleCommand('AP_UpdateGunSkin ' + skinValNum);
-        GameInterfaceAPI.ConsoleCommand('AP_UpdateHologramsVisibility');
+        GameInterfaceAPI.ConsoleCommand('UpdateHologramsVisibility');
     });
 }
 
@@ -218,7 +209,6 @@ function UpdateMapStatusHUDKeyBinder() {
 (UiToolkitAPI.GetGlobalObject() as any).SaveCompletionSymbolSetting = SaveCompletionSymbolSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveMapStatusHUDSetting = SaveMapStatusHUDSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveSmartWarpSetting = SaveSmartWarpSetting;
-(UiToolkitAPI.GetGlobalObject() as any).SavePortalGunSkinSetting = SavePortalGunSkinSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveHideHologramsSetting = SaveHideHologramsSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveStatusIndicatorModeSetting = SaveStatusIndicatorModeSetting;
 (UiToolkitAPI.GetGlobalObject() as any).LoadArchipelagoSettings = LoadArchipelagoSettings;

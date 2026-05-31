@@ -39,11 +39,6 @@
 			// MOD may have multiple directories on it, hence why this works.
 			game+mod								p2ce
 			
-			//Portal 2 Language support
-			//Game			portal2/portal2_french/pak01_dir.vpk
-			//Game			portal2/portal2_german/pak01_dir.vpk
-			//Game			portal2/portal2_spanish/pak01_dir.vpk
-			//Game			portal2/portal2_russian/pak01_dir.vpk
 
 			// Portal 2 content - repackaged to reduce filesize
 			// This is a bedrock dependency for P2:CE, not having this present will

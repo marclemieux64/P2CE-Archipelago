@@ -8,10 +8,49 @@ set "CLIENT_DIR=%MOD_FOLDER%P2CEClient"
 set "CLIENT_PY=%CLIENT_DIR%\run_client.py"
 set "PORTABLE_PY_DIR=%CLIENT_DIR%\python_env"
 set "PYTHON_EXE=%PORTABLE_PY_DIR%\python.exe"
+set "GAMEINFO_FILE=%MOD_FOLDER%gameinfo.txt"
 
-echo [Archipelago] Initializing Autonomous Launcher...
+:: 2. Dynamic Language Catching from Steam Arguments
+set "SELECTED_LANGUAGE=english"
 
-:: 2. Check and build the standalone Python environment on first run
+:PARSE_ARGS
+if "%~1"=="" goto END_PARSE_ARGS
+if /i "%~1"=="-language" (
+    if not "%~2" == "" (
+        set "SELECTED_LANGUAGE=%~2"
+        echo [Archipelago] Intercepted explicit language argument from Steam: !SELECTED_LANGUAGE!
+    )
+)
+shift
+goto PARSE_ARGS
+:END_PARSE_ARGS
+
+:: 3. Dynamically Rewrite gameinfo.txt SearchPaths
+if exist "!GAMEINFO_FILE!" (
+    echo [Archipelago] Cleaning old localized language mappings from gameinfo.txt...
+    
+    :: Remove any previously injected or commented lines mapping back to portal2_ language structures
+    powershell -Command "$content = Get-Content '!GAMEINFO_FILE!' | Where-Object { $_ -notmatch 'portal2_.*_dir.vpk' -and $_ -notmatch 'portal2_[a-zA-Z]' }; Set-Content '!GAMEINFO_FILE!' $content"
+
+    if /i not "!SELECTED_LANGUAGE!"=="english" if not "!SELECTED_LANGUAGE!"=="" (
+        echo [Archipelago] Customizing gameinfo.txt SearchPaths for non-English language: '!SELECTED_LANGUAGE!'...
+        
+        :: Generate the exact tabs and spacing formatting strings
+        set "LANG_VPK=			Game				portal2/portal2_!SELECTED_LANGUAGE!/pak01_dir.vpk"
+        set "LANG_DIR=			Game				portal2/portal2_!SELECTED_LANGUAGE!"
+        
+        :: CRITICAL: Read, look for the core portal2 line, insert custom configurations strictly ABOVE it, and save back down
+        powershell -Command "$vpk = '			Game				portal2/portal2/portal2.vpk'; $lines = Get-Content '!GAMEINFO_FILE!'; $newLines = foreach ($line in $lines) { if ($line.Trim() -eq $vpk.Trim()) { '!LANG_VPK!'; '!LANG_DIR!'; $line } else { $line } }; Set-Content '!GAMEINFO_FILE!' $newLines"
+        
+        echo [Archipelago] gameinfo.txt search paths optimized successfully for custom language.
+    ) else (
+        echo [Archipelago] Language is English or blank. Keeping gameinfo.txt clean with native base paths.
+    )
+) else (
+    echo [Archipelago] WARNING: gameinfo.txt not found! Skipping localization mount rules.
+)
+
+:: 4. Check and build the standalone Python environment on first run
 if not exist "%PYTHON_EXE%" goto DOWNLOAD_PY
 
 :: Verify if all required dependencies are installed (specifically pinning websockets < 14)
@@ -58,7 +97,7 @@ echo [Archipelago] Installing required dependencies (websockets 13.1, colorama, 
 echo [Archipelago] Environment setup completed successfully!
 
 :RUN_CLIENT
-:: 3. Double-check client entrypoint exists
+:: 5. Double-check client entrypoint exists
 if not exist "%CLIENT_PY%" (
     echo [Archipelago] ERROR: Standalone client script not found!
     echo Looked in: "%CLIENT_PY%"
@@ -67,19 +106,23 @@ if not exist "%CLIENT_PY%" (
 )
 
 echo [Archipelago] Starting Autonomous Client...
-:: 4. Launch the client in the background and redirect output to log
+:: 6. Launch the client in the background and redirect output to log
 start "ArchipelagoClient" cmd /k ""%PYTHON_EXE%" "%CLIENT_PY%" --nogui >> "%MOD_FOLDER%archipelago_debug.log" 2>&1"
 
 echo [Archipelago] Launching Game...
-:: 5. Launch the game if arguments are passed (standard Steam launch)
-if not "%~1"=="" (
-    start "" %* -netconport 3000
-) else (
-    echo [Archipelago] No game arguments provided.
-    echo [Archipelago] If you are running from Steam, this is normal.
-)
+:: 7. Re-parse original command parameters to run the native game binary hook correctly
+set "ARGS="
+:COLLECT_ARGS
+if "%~1"=="" goto RUN_GAME
+set "ARGS=!ARGS! %1"
+shift
+goto COLLECT_ARGS
 
-:: 6. Wait for game to exit and then clean up the client
+:RUN_GAME
+:: Boot P2CE engine, binding network connection interfaces and matching game language strings
+start "" !ARGS! -netconport 3000 -language !SELECTED_LANGUAGE!
+
+:: 8. Wait for game to exit and then clean up the client
 :WAITLOOP
 timeout /t 2 /nobreak >nul
 tasklist /FI "IMAGENAME eq p2ce.exe" 2>NUL | find /I /N "p2ce.exe">NUL

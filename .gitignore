@@ -98,7 +98,6 @@ P2CEClient/logs/
 P2CEClient/_persistent_storage.yaml
 portal2_p2ce_apworld/
 build_apworld.py
-.gitignore
 portal2_p2ce.apworld
 data/client/api_reference.html
 data/client/api_reference.json
@@ -106,3 +105,4 @@ build_apworld.py
 data/client/js.scope
 p2ce.apworld
 gameinfo.txt
+

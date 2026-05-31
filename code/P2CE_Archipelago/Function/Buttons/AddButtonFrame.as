@@ -4,30 +4,41 @@ void AddButtonFrame(string entity_name) {
         string mapName = ConVarRef("host_map").GetString();
         array<CBaseEntity@> targets = FindEntities(entity_name);
         
-        // --- RECHERCHE DU PARENT D'INSTANCE (SP_A4_TB_WALL_BUTTON UNIQUEMENT) ---
+        // --- RECHERCHE DU PARENT D'INSTANCE ---
         CBaseEntity@ targetParent = null;
-        if (mapName == "sp_a4_tb_wall_button") {
-            CBaseEntity@ loopEnt = EntityList().First();
-            while (loopEnt !is null) {
-                string entName = loopEnt.GetEntityName().tolower();
-                if (entName.locate("dropper_prop") != uint(-1)) {
-                    if (loopEnt.GetClassname() == "prop_dynamic") {
-                        @targetParent = loopEnt;
-                        break;
-                    }
-                }
-                @loopEnt = EntityList().Next(loopEnt);
-            }
-        }
+        bool useAutoParent = (mapName == "sp_a2_sphere_peek");
 
         for (uint i = 0; i < targets.length(); i++) {
             CBaseEntity@ ent = targets[i];
             if (ent is null) continue;
 
+            // Détection du parent s'il existe sur l'entité originale (requis pour les plateformes mobiles)
+            if (useAutoParent) {
+                @targetParent = ent.GetMoveParent();
+            }
+            else if (mapName == "sp_a4_tb_wall_button") {
+                CBaseEntity@ loopEnt = EntityList().First();
+                while (loopEnt !is null) {
+                    string entName = loopEnt.GetEntityName().tolower();
+                    if (entName.locate("dropper_prop") != uint(-1)) {
+                        if (loopEnt.GetClassname() == "prop_dynamic") {
+                            @targetParent = loopEnt;
+                            break;
+                        }
+                    }
+                    @loopEnt = EntityList().Next(loopEnt);
+                }
+            }
+
             Vector position = ent.GetAbsOrigin();
             QAngle angles = ent.GetAbsAngles();
             string originalModel = ent.GetModelName();
         
+            // --- OFFSET VERTICAL SÉCURISÉ POUR SP_A2_SPHERE_PEEK ---
+            if (mapName == "sp_a2_sphere_peek") {
+                position.z += 4.0f; // Ajustement vertical de 4 unités pour le cadre et le dummy
+            }
+
             // 1. Spawn le cadre
             CBaseEntity@ box = util::CreateEntityByName("prop_dynamic");
             if (box !is null) {
@@ -38,7 +49,6 @@ void AddButtonFrame(string entity_name) {
                 box.SetAbsAngles(angles);
                 box.Spawn();
                 
-                // Si on a un parent de carte mobile, on soude le cadre dessus en conservant son décalage
                 if (targetParent !is null) {
                     Variant v;
                     v.SetEntity(targetParent);
@@ -46,7 +56,7 @@ void AddButtonFrame(string entity_name) {
                 }
             }
 
-            // 2. Spawn le Faux Bouton Inerte (Dummy) EN PREMIER
+            // 2. Spawn le Faux Bouton Inerte (Dummy)
             CBaseEntity@ dummy = util::CreateEntityByName("prop_dynamic");
             if (dummy !is null) {
                 dummy.KeyValue("model", originalModel);
@@ -55,7 +65,6 @@ void AddButtonFrame(string entity_name) {
                 dummy.SetAbsAngles(angles);
                 dummy.Spawn();
                 
-                // Si on a un parent de carte mobile, on soude aussi le dummy dessus
                 if (targetParent !is null) {
                     Variant v;
                     v.SetEntity(targetParent);
@@ -74,11 +83,13 @@ void AddButtonFrame(string entity_name) {
                 bool hAbs = false;
                 Archipelago::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
 
+                // --- OFFSET VERTICAL DE L'HOLOGRAMME POUR SP_A2_SPHERE_PEEK ---
+                if (mapName == "sp_a2_sphere_peek") {
+                    hPos.z += 4.0f; // Ajustement vertical de 4 unités pour l'hologramme
+                }
+
                 Vector finalPos;
                 QAngle finalAng;
-                
-                // Si l'environnement bouge, le dummy est déjà parenté au décor mobile. 
-                // Lier l'hologramme au dummy (`finalParent = dummy`) crée une hiérarchie parfaite !
                 CBaseEntity@ finalParent = hParent ? dummy : null;
 
                 if (hParent) { 

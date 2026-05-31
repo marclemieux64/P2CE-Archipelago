@@ -7,7 +7,6 @@
 
 if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
-// --- SAUVEGARDE DES RÉGLAGES ---
 function SaveHideCountsSetting() {
     const enumPanel = $('#HideCountsSetting');
     if (enumPanel) {
@@ -20,11 +19,7 @@ function SaveHideCountsSetting() {
                 break;
             }
         }
-        
-        const global = UiToolkitAPI.GetGlobalObject() as any;
-        if (global.UpdateCompletionSymbolStatus) {
-            global.UpdateCompletionSymbolStatus();
-        }
+        UpdateCompletionSymbolStatus();
     }
 }
 
@@ -38,11 +33,6 @@ function SaveCompletionSymbolSetting() {
                 const val = selected.GetAttributeInt('value', 0);
                 $.persistentStorage.setItem('ap_completion_symbol', val);
                 $.Msg(`[AP] Completion Symbol setting saved as: ${val}`);
-                
-                const global = UiToolkitAPI.GetGlobalObject() as any;
-                if (global.UpdateCompletionSymbolStatus) {
-                    global.UpdateCompletionSymbolStatus();
-                }
             }
         }
     }
@@ -56,7 +46,9 @@ function SaveMapStatusHUDSetting() {
             if (children[i].paneltype === "RadioButton" && children[i].IsSelected()) {
                 const val = children[i].GetAttributeString('value', '0');
                 $.persistentStorage.setItem('ap_show_map_status_hud', val);
-                $.Msg(`[AP] Show Map Status HUD saved: ${val}`);
+                
+                GameInterfaceAPI.ConsoleCommand(`ap_show_map_status_hud ${val}`);
+                $.Msg(`[AP] Show Map Status HUD saved and pushed to Server: ${val}`);
                 break;
             }
         }
@@ -76,26 +68,6 @@ function SaveSmartWarpSetting() {
                 
                 GameInterfaceAPI.SetSettingInt('ap_smart_warp', val);
                 $.Msg(`[AP] Smart Warp setting saved: ${val}`);
-            }
-        }
-    }
-}
-
-function SavePortalGunSkinSetting() {
-    const dropdown = $('#PortalGunSkinSetting');
-    if (dropdown) {
-        const realDropdown = dropdown.FindChildTraverse('DropDown') as any;
-        if (realDropdown) {
-            const selected = realDropdown.GetSelected();
-            if (selected) {
-                const val = selected.GetAttributeInt('value', 0);
-                $.persistentStorage.setItem('ap_portalgun_skin', val);
-                
-                GameInterfaceAPI.SetSettingInt('ap_portalgun_skin', val);
-                
-                // Force an instant push down to server structures
-                GameInterfaceAPI.ConsoleCommand('UpdatePortalGunSkin ' + val);
-                $.Msg(`[AP] Portal Gun Skin saved and applied: ${val}`);
             }
         }
     }
@@ -124,17 +96,41 @@ function SaveStatusIndicatorModeSetting() {
     if (dropdown) {
         const realDropdown = dropdown.FindChildTraverse('DropDown') as any;
         if (realDropdown) {
-            const selected = realDropdown.GetSelected();
-            if (selected) {
-                const val = selected.GetAttributeInt('value', 0);
-                $.persistentStorage.setItem('ap_status_indicator_mode', val);
-                
-                const statusIndicator = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoStatusIndicator;
-                if (statusIndicator) {
-                    statusIndicator.refreshVisibility();
-                }
-                $.Msg(`[AP] Status Indicator Mode saved: ${val}`);
+            const val = realDropdown.GetSelected().GetAttributeInt('value', 0);
+            $.persistentStorage.setItem('ap_status_indicator_mode', val);
+            
+            const statusIndicator = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoStatusIndicator;
+            if (statusIndicator) {
+                statusIndicator.refreshVisibility();
             }
+            $.Msg(`[AP] Status Indicator Mode saved: ${val}`);
+        }
+    }
+}
+
+function UpdateCompletionSymbolStatus() {
+    const hideCounts = $.persistentStorage.getItem('ap_hide_location_counts') ?? "0";
+    const dropdown = $('#CompletionSymbolSetting');
+    if (dropdown) {
+        dropdown.enabled = (hideCounts.toString() === "0");
+    }
+}
+
+function UpdateMapStatusHUDKeyBinder() {
+    const showHUD = $.persistentStorage.getItem('ap_show_map_status_hud') ?? "0";
+    const keyBinder = $('#MapStatusKeyBinder');
+    if (keyBinder) {
+        keyBinder.hittest = true;
+        keyBinder.hittestchildren = true;
+
+        if (showHUD.toString() === "1") {
+            keyBinder.AddClass('disabled');
+            keyBinder.SetPanelEvent('onactivate', () => {});
+        } else {
+            keyBinder.RemoveClass('disabled');
+            keyBinder.SetPanelEvent('onactivate', () => {
+                $.DispatchEvent('SettingsKeyBinderActivate', keyBinder);
+            });
         }
     }
 }
@@ -146,7 +142,7 @@ function LoadArchipelagoSettings() {
     if (hideCountsPanel) {
         const children = hideCountsPanel.FindChildTraverse('RadioButtonsContainer')?.Children() || [];
         for (let i = 0; i < children.length; i++) {
-            if (children[i].paneltype === "RadioButton" && children[i].GetAttributeString('value', '0') === hideCountsVal.toString()) {
+            if (children[i].GetAttributeString('value', '0') === hideCountsVal.toString()) {
                 children[i].SetSelected(true);
                 break;
             }
@@ -164,12 +160,13 @@ function LoadArchipelagoSettings() {
     if (hudPanel) {
         const children = hudPanel.FindChildTraverse('RadioButtonsContainer')?.Children() || [];
         for (let i = 0; i < children.length; i++) {
-            if (children[i].paneltype === "RadioButton" && children[i].GetAttributeString('value', '0') === hudVal.toString()) {
+            if (children[i].GetAttributeString('value', '0') === hudVal.toString()) {
                 children[i].SetSelected(true);
                 break;
             }
         }
     }
+    GameInterfaceAPI.ConsoleCommand(`ap_show_map_status_hud ${hudVal}`);
 
     // 4. Smart Warp
     const warpVal = $.persistentStorage.getItem('ap_smart_warp') ?? "0";
@@ -189,19 +186,12 @@ function LoadArchipelagoSettings() {
     const statusIndDropdown = $('#StatusIndicatorModeSetting')?.FindChildTraverse('DropDown') as any;
     if (statusIndDropdown) statusIndDropdown.SetSelected('ap_status_indicator_mode_' + statusIndVal.toString());
 
+    UpdateCompletionSymbolStatus();
     UpdateMapStatusHUDKeyBinder();
 
     $.Schedule(0.2, () => {
         GameInterfaceAPI.ConsoleCommand('UpdateHologramsVisibility');
     });
-}
-
-function UpdateMapStatusHUDKeyBinder() {
-    const showHUD = $.persistentStorage.getItem('ap_show_map_status_hud') ?? "0";
-    const keyBinder = $('#MapStatusKeyBinder');
-    if (keyBinder) {
-        keyBinder.enabled = (showHUD.toString() === "0");
-    }
 }
 
 // --- EXPOSITION GLOBALE HARMONISÉE ---
@@ -212,22 +202,13 @@ function UpdateMapStatusHUDKeyBinder() {
 (UiToolkitAPI.GetGlobalObject() as any).SaveHideHologramsSetting = SaveHideHologramsSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveStatusIndicatorModeSetting = SaveStatusIndicatorModeSetting;
 (UiToolkitAPI.GetGlobalObject() as any).LoadArchipelagoSettings = LoadArchipelagoSettings;
+(UiToolkitAPI.GetGlobalObject() as any).UpdateCompletionSymbolStatus = UpdateCompletionSymbolStatus;
 (UiToolkitAPI.GetGlobalObject() as any).UpdateMapStatusHUDKeyBinder = UpdateMapStatusHUDKeyBinder;
 
-(UiToolkitAPI.GetGlobalObject() as any).UpdateCompletionSymbolStatus = () => {
-    const mapSelect = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect;
-    if (mapSelect && mapSelect.generateList) {
-        mapSelect.generateList();
+$.RegisterEventHandler('PropertyTransitionEnd', $.GetContextPanel(), (panel, propertyName) => {
+    if (propertyName === 'opacity' && panel.id === $.GetContextPanel().id && !$.GetContextPanel().IsTransparent()) {
+        LoadArchipelagoSettings();
     }
-};
+});
 
-// --- INITIALISATION ---
-(function () {
-    $.RegisterEventHandler('PropertyTransitionEnd', $.GetContextPanel(), (panel, propertyName) => {
-        if (propertyName === 'opacity' && panel.id === $.GetContextPanel().id && !$.GetContextPanel().IsTransparent()) {
-            LoadArchipelagoSettings();
-        }
-    });
-
-    LoadArchipelagoSettings();
-})();
+LoadArchipelagoSettings();

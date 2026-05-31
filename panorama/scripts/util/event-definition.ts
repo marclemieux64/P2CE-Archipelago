@@ -57,6 +57,7 @@ $.DefineEvent('ReloadCCSettings', 0);
  * @param {string} payload - JSON string containing {title, message, type}
  */
 $.DefineEvent('ArchipelagoNotify', 1, 'payload', 'Direct VScript notification for Archipelago items and events');
+$.DefineEvent('ShowStatus', 0, '', 'Triggers a manual refresh and display toggle on the map status HUD layout');
 
 $.DefineEvent('MutePotatos', 1, 'active', 'Mutes all PotatOS/GLaDOS related captions');
 $.DefineEvent('ArchipelagoMapNameUpdated', 1, 'payload', 'Triggered when the current map name changes in the engine');

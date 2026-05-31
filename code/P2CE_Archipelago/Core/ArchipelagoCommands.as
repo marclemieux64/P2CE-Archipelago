@@ -142,7 +142,7 @@ void WarpToMenuLegacyCmd(const CommandArgs@ args) {
 void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("=====Archipelago=====");
     Archipelago::UpdateInternalMapName();
-    if (::current_map == "unknown" ||::current_map == "") {
+    if (::current_map == "unknown" || ::current_map == "") {
         Archipelago::ArchipelagoLog("DelayedInit: Map name unknown, skipping.");
         return;
     }
@@ -157,9 +157,17 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("CreateMapSpecificHolos() completed");
     Archipelago::AttachDeathTrigger();
     Msgl("AttachDeathTrigger() completed");
-    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" +::current_map + "|1\")");
-    Msgl("SendToPanorama() completed");
-    Archipelago::ArchipelagoLog("DelayedInit complete for: " +::current_map);
+
+    // Only forward map name changes to HUD display if it is active (Set to 0)
+    ConVarRef showHUDConVar("ap_show_map_status_hud");
+    if (showHUDConVar.IsValid() && showHUDConVar.GetInt() == 0) {
+        Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|0\")");
+        Msgl("SendToPanorama() completed");
+    } else {
+        Msgl("SendToPanorama() skipped - Status HUD is toggled off");
+    }
+
+    Archipelago::ArchipelagoLog("DelayedInit complete for: " + ::current_map);
     Msgl("=====================");
 }
 
@@ -195,8 +203,14 @@ void AddScriptLegacyCmd(const CommandArgs@ args) {
 
 [ServerCommand("ShowStatus", "Manually show the map status HUD")]
 void ShowStatusLegacyCmd(const CommandArgs@ args) {
+    // Verification safety net: Do not allow keybind execution if the option is toggled off
+    ConVarRef showHUDConVar("ap_show_map_status_hud");
+    if (!showHUDConVar.IsValid() || showHUDConVar.GetInt() == 1) {
+        return; 
+    }
+
     Archipelago::UpdateInternalMapName();
-    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" +::current_map + "|1\")");
+    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|1\")");
 }
 
 [ServerCommand("RefreshMapName", "Forces a map name update to Panorama")]

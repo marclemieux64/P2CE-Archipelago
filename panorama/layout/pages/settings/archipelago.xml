@@ -34,8 +34,8 @@
 					infomessage="#Archipelago_Settings_CompletionSymbol_info"
 					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveCompletionSymbolSetting()"
 				>
-					<Label class="ap_symbol" text="#Archipelago_Settings_CompletionSymbol_0" value="0" id="ap_symbol_0" />
-					<Label class="ap_symbol" text="#Archipelago_Settings_CompletionSymbol_1" value="1" id="ap_symbol_1" />
+					<Label class="ap_symbol" text="#Archipelago_Settings_Symbol_Checkmark" value="0" id="ap_symbol_0" />
+					<Label class="ap_symbol" text="#Archipelago_Settings_Symbol_Star" value="1" id="ap_symbol_1" />
 				</SettingsEnumDropDown>
 
 				<SettingsEnumDropDown
@@ -60,6 +60,7 @@
 					<RadioButton group="ap_show_map_status_hud" text="#Common_Off" value="0" />
 					<RadioButton group="ap_show_map_status_hud" text="#Common_On" value="1" />
 				</SettingsEnum>
+				
 				<SettingsKeyBinder
 					id="MapStatusKeyBinder"
 					text="#Archipelago_Settings_Key_ShowStatus"

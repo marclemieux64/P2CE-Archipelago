@@ -18,6 +18,7 @@ namespace Archipelago {
     ConVarRef host_map("host_map");
     ConVar cv_BTS4_InitialTemplateHoloActive("ap_bts4_initial_holo_active", "0");
     ConVar cv_BTS4_Conveyor1TemplateHoloActive("ap_bts4_conveyor1_holo_active", "0");
+    ConVar cv_ArchipelagoShowMapStatusHUD("ap_show_map_status_hud", "1", FCVAR_ARCHIVE);
     
 
 

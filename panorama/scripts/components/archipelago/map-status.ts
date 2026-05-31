@@ -33,7 +33,6 @@ var ArchipelagoMapStatusHUD = class {
             }
         });
 
-        // --- CORRECTIF SÉCURISÉ POUR L'ÉVÉNEMENT API ---
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
             api.registerStatusListener($.GetContextPanel(), (payload: any) => {
@@ -46,8 +45,13 @@ var ArchipelagoMapStatusHUD = class {
 
     static updateStatus(currentMapName: string, isManual: boolean, forceShow: boolean) {
         const psValue = $.persistentStorage.getItem('ap_show_map_status_hud');
-        const enabled = (psValue === null || psValue === undefined || psValue == 1 || psValue === "1");
-        if (!enabled && !isManual) return;
+        
+        // 1 means hidden/disabled completely
+        const hudShouldBeHidden = (psValue !== null && psValue !== undefined && (psValue == 1 || psValue === "1"));
+
+        if (hudShouldBeHidden) {
+            return;
+        }
 
         const container = $.GetContextPanel();
         if (!container || !currentMapName || currentMapName === "main_menu") return;
@@ -62,7 +66,6 @@ var ArchipelagoMapStatusHUD = class {
             return;
         }
 
-        // --- GESTION ET ADAPTATION DU TYPE DE DONNÉES (OBJECT VS STRING) ---
         if (typeof apiStatus === 'string') {
             try {
                 apiStatus = JSON.parse(apiStatus);
@@ -92,6 +95,31 @@ var ArchipelagoMapStatusHUD = class {
 
         if (!currentMapData) return;
 
+        let mapCmdName = currentMapName;
+        const fullCommand = currentMapData.command || currentMapData.command_deactivated || "";
+        if (fullCommand) {
+            const parts = fullCommand.split(" ");
+            if (parts.length >= 2) mapCmdName = parts[1].trim().toLowerCase();
+        }
+
+        let formattedMapTokenName = mapCmdName;
+        if (mapCmdName.indexOf("sp_") === 0) {
+            formattedMapTokenName = "SP_" + mapCmdName.substring(3);
+        } else if (mapCmdName.indexOf("coop_") === 0) {
+            formattedMapTokenName = "COOP_" + mapCmdName.substring(5);
+        }
+
+        const mapToken = `#portal2_MapName_${formattedMapTokenName}`;
+        let localizedString = $.Localize(mapToken);
+        
+        const testEngineString = $.Localize("#GameUI_LoadGame");
+        if (localizedString === mapToken || testEngineString === testEngineString.toUpperCase()) {
+            $.Schedule(0.15, () => {
+                this.updateStatus(currentMapName, isManual, forceShow);
+            });
+            return;
+        }
+
         if (forceShow) {
             container.AddClass('visible');
             container.RemoveClass('collapse');
@@ -104,16 +132,8 @@ var ArchipelagoMapStatusHUD = class {
 
         if (!container.HasClass('visible')) return;
 
-        let mapCmdName = currentMapName;
-        const fullCommand = currentMapData.command || currentMapData.command_deactivated || "";
-        if (fullCommand) {
-            const parts = fullCommand.split(" ");
-            if (parts.length >= 2) mapCmdName = parts[1].trim().toLowerCase();
-        }
-
         const titleLabel = $('#MapTitle');
-        const mapToken = `#portal2_MapName_${mapCmdName}`;
-        titleLabel.text = $.Localize(mapToken) !== mapToken ? $.Localize(mapToken) : currentMapData.id;
+        titleLabel.text = localizedString;
 
         const statusIconsRaw = (currentMapData.statusIcons || currentMapData.info || "").replace(/[~\-]/g, "").trim();
         const mItemsRaw = currentMapData.subtitle || "";
@@ -131,7 +151,6 @@ var ArchipelagoMapStatusHUD = class {
                 const icon = $.CreatePanel('Label', iconsContainer, '');
                 icon.text = iconData.char;
                 icon.AddClass('status-icon');
-                
                 icon.style.color = iconData.color; 
 
                 if (iconData.isCompleted) {
@@ -140,7 +159,6 @@ var ArchipelagoMapStatusHUD = class {
             }
         }
 
-        // --- GESTION DES MISSING ITEMS ---
         const missingItemsList = logicHelper.getMissingItemsList(mItemsRaw);
         let currentMissingKey = "";
         let redCount = 0;

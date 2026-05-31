@@ -105,3 +105,4 @@ data/client/api_reference.json
 build_apworld.py
 data/client/js.scope
 p2ce.apworld
+gameinfo.txt

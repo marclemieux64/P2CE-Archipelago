@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =============================================================================
-# P2CE Archipelago Native Linux & Steam Deck Launcher (Strict Priority Mount)
+# P2CE Archipelago Flatpak / Proton Native Container Layer Sandbox Fix
 # =============================================================================
 
 # 1. Path Definitions
@@ -13,7 +13,7 @@ PYTHON_EXE="$PORTABLE_PY_DIR/python/bin/python3"
 GAMEINFO_FILE="$MOD_FOLDER/gameinfo.txt"
 
 # 2. Dynamic Language Catching from Steam Arguments
-SELECTED_LANGUAGE="english" # Default fallback if no argument is passed by Steam
+SELECTED_LANGUAGE="english"
 
 ARG_LIST=("$@")
 for ((i=0; i<${#ARG_LIST[@]}; i++)); do
@@ -25,19 +25,14 @@ done
 
 # 3. Dynamically Rewrite gameinfo.txt SearchPaths to Mount the Selected Language Pack
 if [ -f "$GAMEINFO_FILE" ]; then
-    # Always clean out any old localized language mappings first
     sed -i '/portal2_.*_dir.vpk/d' "$GAMEINFO_FILE"
     sed -i '/portal2_[a-zA-Z]*/d' "$GAMEINFO_FILE"
     
-    # If the language is english, we don't need to add anything extra since it's the base content
     if [ "$SELECTED_LANGUAGE" != "english" ] && [ -n "$SELECTED_LANGUAGE" ]; then
         echo "[Archipelago] Customizing gameinfo.txt SearchPaths for non-English language: '$SELECTED_LANGUAGE'..."
-        
-        # Generate the exact syntax needed for the Source Engine mount rules
         LANG_VPK="Game\t\t\t\tportal2/portal2_${SELECTED_LANGUAGE}/pak01_dir.vpk"
         LANG_DIR="Game\t\t\t\tportal2/portal2_${SELECTED_LANGUAGE}"
         
-        # Prepend the custom language directories strictly BEFORE the core portal2 asset line
         sed -i '/portal2\/portal2\/portal2.vpk/i \ \ \ \ \ \ \ \ \ \ \ '"$LANG_VPK"'' "$GAMEINFO_FILE"
         sed -i '/portal2\/portal2\/portal2.vpk/i \ \ \ \ \ \ \ \ \ \ \ '"$LANG_DIR"'' "$GAMEINFO_FILE"
         echo "[Archipelago] gameinfo.txt search paths optimized successfully for custom language."
@@ -88,7 +83,7 @@ if [ -f "$CLIENT_PY" ]; then
     echo "[Archipelago] Autonomous background bridge started with PID: $CLIENT_PID"
     
     cleanup() {
-        echo "[Archipelago] Execution terminal closed. Terminating client background process..."
+        echo "[Archipelago] Game session terminated. Cleaning up background processes..."
         if kill -0 $CLIENT_PID 2>/dev/null; then
             kill -TERM $CLIENT_PID
         fi
@@ -98,10 +93,17 @@ else
     echo "[Archipelago] WARNING: client entrypoint script missing. Interface running solo."
 fi
 
-# 6. Execute Game Process handover
+# 6. Execute Game Process via Transparent Handoff
 if [ $# -gt 0 ]; then
-    echo "[Archipelago] Handing control over to P2CE engine runtime..."
-    exec "$@" -netconport 3000 -language "$SELECTED_LANGUAGE" > "$MOD_FOLDER/game_debug.log" 2>&1
+    echo "[Archipelago] Handing control smoothly over to Flatpak Proton layer..."
+    
+    # Extract the container runner executable dynamically from Steam's launch pipeline
+    GAME_COMMAND="$1"
+    shift
+    
+    # Append netcon parameters directly into the plain array stack rather than 
+    # forcing variable strings that trigger nested sandbox evaluations
+    exec "$GAME_COMMAND" "$@" -netconport 3000 -language "$SELECTED_LANGUAGE" > "$MOD_FOLDER/game_debug.log" 2>&1
 else
     echo "[Archipelago] ERROR: No game execution parameters provided by Steam launch pipeline."
     exit 1

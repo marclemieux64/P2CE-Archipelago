@@ -3,7 +3,7 @@
 declare var GameInterfaceAPI: any;
 
 class ArchipelagoSync {
-    static VERSION: string = "1.0.6"; // Incrément de version suite au correctif SVG array
+    static VERSION: string = "1.0.9"; 
     static ENABLE_DEBUG: boolean = false;
 
     static getCompletionSymbol(): string {
@@ -28,7 +28,6 @@ class ArchipelagoSync {
         return (itemChar && itemChar !== " ");
     }
 
-
     static parseApiStatus(status: any): any {
         if (!status || !status.menu || !status.menu.chapters) return {};
         const chapters: any = {};
@@ -38,13 +37,20 @@ class ArchipelagoSync {
                 title: chapter.title,
                 subtitle: chapter.subtitle,
                 pic: chapter.pic,
+                valid_count: chapter.valid_count,
+                total_count: chapter.total_count,
+                progress_text: chapter.progress_text,
                 maps: chapter.maps.map((map: any) => ({
                     title: map.title,
                     subtitle: map.subtitle,
                     command: map.command,
                     command_deactivated: map.command_deactivated,
                     pic: map.pic,
-                    statusIcons: map.statusIcons, // Il s'agit maintenant d'un tableau de chaînes depuis Python (ex: ["flag", "monitor"])
+                    statusIcons: map.status_text_list || map.statusIcons || [], 
+                    required_item_icons: map.required_item_icons || [],
+                    valid_count: map.valid_count,
+                    total_count: map.total_count,
+                    progress_text: map.progress_text,
                     completed: map.completed
                 }))
             };
@@ -57,55 +63,25 @@ class ArchipelagoSync {
         const mapCmdName = fullCommand ? fullCommand.replace("map ", "").trim().toLowerCase() : "";
         const mItems = map.subtitle || "";
 
-        // --- CONVERSION ET SÉCURISATION DU TYPE ---
-        // Si statusIcons arrive sous forme de tableau (nouvel outil SVG), on le convertit en chaîne 
-        // ou on l'évalue proprement pour ne pas faire crasher le pont V8
-        let statusIconsStr = "";
-        if (map.statusIcons) {
-            if (Array.isArray(map.statusIcons)) {
-                // Si c'est le nouveau format d'icônes SVG en liste, on simule l'équivalent textuel 
-                // pour que le vieux code de synchronisation d'état de la carte continue de fonctionner
-                statusIconsStr = map.statusIcons.map((icon: string) => {
-                    if (icon === "check") return "£";
-                    if (icon === "flag") return "ã";
-                    if (icon === "monitor") return "ÿ";
-                    if (icon === "ratmansdent") return "ø";
-                    if (icon === "door") return "¢";
-                    if (icon === "portalgun1") return "ý";
-                    if (icon === "portalgun2") return "þ";
-                    if (icon === "potatos") return "ù";
-                    return "";
-                }).join("");
-            } else if (typeof map.statusIcons === 'string') {
-                statusIconsStr = map.statusIcons;
-            }
-        }
-        
-        let statusIcons = statusIconsStr.replace(/[~\-]/g, "").trim();
+        const statusIconsList: string[] = map.statusIcons || [];
 
         const symbol = this.getCompletionSymbol();
-        const isCompleted = statusIcons.length > 0 && statusIcons.replace(new RegExp(symbol, 'g'), "").length === 0;
-        if (isCompleted) return { completed: true, greenCount: 0, total: statusIcons.length, doable: false, fullyDoable: false };
+        const isCompleted = map.completed === true || (statusIconsList.length > 0 && statusIconsList.every(icon => icon === "check"));
+        if (isCompleted) return { completed: true, greenCount: 0, total: statusIconsList.length, doable: false, fullyDoable: false };
 
         let greenCount = 0;
-        const logicHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoLogic;
-        const charCounts: { [key: string]: number } = {};
-
-        for (let i = 0; i < statusIcons.length; i++) {
-            const char = statusIcons[i];
-            if (!charCounts[char]) charCounts[char] = 0;
-            const index = charCounts[char]++;
-
-            const status = logicHelper ? logicHelper.getIndicatorStatus(char, mapCmdName, mItems, index) : { isCompleted: false, isAvailable: true };
-            if (status.isAvailable) greenCount++;
-        }
+        statusIconsList.forEach((iconName: string) => {
+            if (iconName !== "uncheck") {
+                greenCount++;
+            }
+        });
 
         return {
             completed: false,
             greenCount: greenCount,
-            total: statusIcons.length,
+            total: statusIconsList.length,
             doable: greenCount > 0,
-            fullyDoable: (greenCount === statusIcons.length && statusIcons.length > 0)
+            fullyDoable: (greenCount === statusIconsList.length && statusIconsList.length > 0)
         };
     }
 
@@ -217,27 +193,18 @@ class ArchipelagoSync {
         const status = this.getMapStatus(currentMapData, chapters);
         let serverStatus = (status.total > 0 && status.greenCount === status.total) ? 2 : (status.greenCount > 0 ? 1 : 0);
 
-        // --- ADAPTATION DES COMPORTEMENTS SUR LE TABLEAU D'ICÔNES ---
-        let statusIconsList: string[] = [];
-        if (Array.isArray(currentMapData.statusIcons)) {
-            statusIconsList = currentMapData.statusIcons;
-        } else if (typeof currentMapData.statusIcons === 'string') {
-            // Rétrocompatibilité si une chaîne brute passe par là
-            statusIconsList = currentMapData.statusIcons.split("");
-        }
+        const statusIconsList: string[] = currentMapData.statusIcons || [];
 
-        let ratmanStatus = (statusIconsList.indexOf("ratmansdent") === -1 && statusIconsList.indexOf("ø") === -1) ? 1 : 0;
-        let hasCheck = statusIconsList.indexOf("check") !== -1 || statusIconsList.indexOf(this.getCompletionSymbol()) !== -1;
+        // FIX: Aligné sur la chaîne "ratmansdent" pour assurer un mapping correct
+        let ratmanStatus = (statusIconsList.indexOf("ratmansdent") === -1) ? 1 : 0;
+        let hasCheck = statusIconsList.indexOf("check") !== -1;
         
         let portalGunDone = (
             (statusIconsList.indexOf("portalgun1") === -1 && 
-             statusIconsList.indexOf("portalgun2") === -1 && 
-             statusIconsList.indexOf("ý") === -1 && 
-             statusIconsList.indexOf("þ") === -1) || hasCheck
+             statusIconsList.indexOf("portalgun2") === -1) || hasCheck
         ) ? 1 : 0;
         
-        let potatosDone = (statusIconsList.indexOf("potatos") === -1 && statusIconsList.indexOf("ù") === -1 || hasCheck) ? 1 : 0;
-        let wheatleyDone = 0;
+        let potatosDone = (statusIconsList.indexOf("potatos") === -1 || hasCheck) ? 1 : 0;
 
         const symbols = statusIconsList.join(",");
 

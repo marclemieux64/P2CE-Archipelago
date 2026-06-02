@@ -16,11 +16,17 @@
 			<Panel class="content">
 				<Label id="MapTitle" class="map-title" text="MAP NAME" />
 				
-				<Label class="section-label" text="#Archipelago_Map_Checks" />
-				<Panel id="StatusIcons" class="status-icons" />
+				<Panel id="HUDColumnsWrapper" class="hud_columns_wrapper">
+					<Panel id="ChecksColumn" class="info_column">
+						<Label class="section-label" text="#Archipelago_Map_Checks" />
+						<Panel id="StatusIcons" class="status_svg_container" />
+					</Panel>
 
-				<Label id="MissingLabel" class="section-label" text="#Archipelago_Map_MissingItems" />
-				<Panel id="MissingIcons" class="status-icons" />
+					<Panel id="RequirementsColumn" class="info_column">
+						<Label id="MissingLabel" class="section-label" text="#Archipelago_Map_MissingItems" />
+						<Panel id="MissingIcons" class="status_svg_container" />
+					</Panel>
+				</Panel>
 			</Panel>
 		</Panel>
 	</Panel>

@@ -43,7 +43,7 @@ indicator_characters = {
     "completed": "check",
     "map": "flag",
     "wheatley": "monitor",
-    "ratman": "ratman",
+    "ratman": "ratmansdent", # FIX: Aligné sur le nom de fichier ratmansdent.svg
     "vitrified_door": "door",
     portal_gun_1: "portalgun1",
     portal_gun_2: "portalgun2",
@@ -59,6 +59,22 @@ def get_sub_locations(location_name, has_wheatley, has_ratman, has_vitrified):
     if not has_ratman: subs = [s for s in subs if "Ratman Den" not in s]
     if not has_vitrified: subs = [s for s in subs if "Vitrified Door" not in s]
     return {s: False for s in subs}
+
+def parse_sub_locations(sub_locations):
+    additional_indicators = []
+    for sub_location, is_completed in sub_locations.items():
+        if not is_completed:
+            if "Wheatley Monitor" in sub_location:
+                additional_indicators.append(indicator_characters["wheatley"])
+            elif "Ratman Den" in sub_location:
+                additional_indicators.append(indicator_characters["ratman"])
+            elif "Vitrified Door" in sub_location:
+                additional_indicators.append(indicator_characters["vitrified_door"])
+            elif sub_location in indicator_characters:
+                additional_indicators.append(indicator_characters[sub_location])
+        else:
+            additional_indicators.append(indicator_characters["completed"])
+    return additional_indicators
 
 class MenuElement:
     def __init__(self, parent, name, title, subtitle="", command="", pic=""):
@@ -107,22 +123,27 @@ class MapMenuElement(MenuElement):
                 if sub in all_locations_table and all_locations_table[sub].id in client.checked_locations:
                     self.sub_location_completion[sub] = True
 
-        # Logique de la carte principale
+        # Rendu de la map de base
         self.info_text = [indicator_characters["completed"] if self.completed else (indicator_characters["map"] if self.check_logic(self.required_items) else "uncheck")]
         
-        # Logique individuelle par sous-emplacement pour injecter l'état "uncheck" si bloqué
+        # Rendu dynamique et précis de toutes les sous-icônes (Moniteurs, Repaires, Portes et Items)
         for sub_location, is_completed in self.sub_location_completion.items():
             if is_completed:
                 self.info_text.append(indicator_characters["completed"])
             else:
                 reqs = all_locations_table[sub_location].required_items if sub_location in all_locations_table else []
                 if self.check_logic(reqs):
-                    if "Wheatley Monitor" in sub_location:
+                    if sub_location in indicator_characters:
+                        self.info_text.append(indicator_characters[sub_location])
+                    elif "Wheatley Monitor" in sub_location:
                         self.info_text.append(indicator_characters["wheatley"])
                     elif "Ratman Den" in sub_location:
                         self.info_text.append(indicator_characters["ratman"])
                     elif "Vitrified Door" in sub_location:
                         self.info_text.append(indicator_characters["vitrified_door"])
+                    elif len(reqs) == 1:
+                        shortened = items_to_shortened(reqs)
+                        self.info_text.append(shortened[0] if shortened else indicator_characters["map"])
                     else:
                         self.info_text.append(indicator_characters["map"])
                 else:
@@ -142,7 +163,6 @@ class MapMenuElement(MenuElement):
         all_reqs = self.get_combined_requirements()
         icons = items_to_shortened(all_reqs)
         
-        # Compte tout ce qui est accessible ou complété (différent de "uncheck")
         valid_count = sum(1 for c in self.info_text if c != "uncheck")
         total_count = len(self.info_text)
         

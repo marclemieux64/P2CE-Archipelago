@@ -97,12 +97,12 @@
 
                         <Panel id="ChecksColumn" class="info_column">
                             <Label id="ChecksHeader" class="info_header" text="#Archipelago_Map_Checks" style="visibility:collapse;" />
-                            <Label id="MapStatusIconsPreview" class="map_status_preview_label" text="" html="true" />
+                            <Panel id="MapStatusIconsIconsPreview" class="map_status_icons_container" />
                         </Panel>
 
                         <Panel id="RequirementsColumn" class="info_column">
                             <Label id="MissingItemsHeader" class="info_header" text="#Archipelago_Map_MissingItems" style="visibility:collapse;" />
-                            <Label id="MapSubtitleLabel_Secondary" class="map_subtitle_label" text="" html="true" />
+                            <Panel id="MapRequiredItemsIconsPreview" class="map_required_icons_container" />
                         </Panel>
                     </Panel>
 

@@ -3,7 +3,7 @@
 declare var GameInterfaceAPI: any;
 
 class ArchipelagoSync {
-    static VERSION: string = "1.0.5";
+    static VERSION: string = "1.0.6"; // Incrément de version suite au correctif SVG array
     static ENABLE_DEBUG: boolean = false;
 
     static getCompletionSymbol(): string {
@@ -44,7 +44,7 @@ class ArchipelagoSync {
                     command: map.command,
                     command_deactivated: map.command_deactivated,
                     pic: map.pic,
-                    statusIcons: map.statusIcons,
+                    statusIcons: map.statusIcons, // Il s'agit maintenant d'un tableau de chaînes depuis Python (ex: ["flag", "monitor"])
                     completed: map.completed
                 }))
             };
@@ -55,8 +55,33 @@ class ArchipelagoSync {
     static getMapStatus(map: any, allData: any) {
         const fullCommand = map.command || map.command_deactivated || "";
         const mapCmdName = fullCommand ? fullCommand.replace("map ", "").trim().toLowerCase() : "";
-        let statusIcons = (map.statusIcons || "").replace(/[~\-]/g, "").trim();
         const mItems = map.subtitle || "";
+
+        // --- CONVERSION ET SÉCURISATION DU TYPE ---
+        // Si statusIcons arrive sous forme de tableau (nouvel outil SVG), on le convertit en chaîne 
+        // ou on l'évalue proprement pour ne pas faire crasher le pont V8
+        let statusIconsStr = "";
+        if (map.statusIcons) {
+            if (Array.isArray(map.statusIcons)) {
+                // Si c'est le nouveau format d'icônes SVG en liste, on simule l'équivalent textuel 
+                // pour que le vieux code de synchronisation d'état de la carte continue de fonctionner
+                statusIconsStr = map.statusIcons.map((icon: string) => {
+                    if (icon === "check") return "£";
+                    if (icon === "flag") return "ã";
+                    if (icon === "monitor") return "ÿ";
+                    if (icon === "ratmansdent") return "ø";
+                    if (icon === "door") return "¢";
+                    if (icon === "portalgun1") return "ý";
+                    if (icon === "portalgun2") return "þ";
+                    if (icon === "potatos") return "ù";
+                    return "";
+                }).join("");
+            } else if (typeof map.statusIcons === 'string') {
+                statusIconsStr = map.statusIcons;
+            }
+        }
+        
+        let statusIcons = statusIconsStr.replace(/[~\-]/g, "").trim();
 
         const symbol = this.getCompletionSymbol();
         const isCompleted = statusIcons.length > 0 && statusIcons.replace(new RegExp(symbol, 'g'), "").length === 0;
@@ -122,7 +147,6 @@ class ArchipelagoSync {
         $.RegisterForUnhandledEvent("MapLoaded", (map: string, bg: boolean) => {
             if (bg) return;
             
-            // --- SANITIZE MAP NAME ---
             let cleanMap = map;
             if (cleanMap.indexOf("maps/") === 0 || cleanMap.indexOf("maps\\") === 0) {
                 cleanMap = cleanMap.substring(5);
@@ -160,7 +184,6 @@ class ArchipelagoSync {
                 this.m_PollSchedule = null;
                 this.startPolling();
             } else {
-                // Keep polling if we're in menu to detect first map load
                 this.m_PollSchedule = null;
                 this.startPolling();
             }
@@ -194,15 +217,29 @@ class ArchipelagoSync {
         const status = this.getMapStatus(currentMapData, chapters);
         let serverStatus = (status.total > 0 && status.greenCount === status.total) ? 2 : (status.greenCount > 0 ? 1 : 0);
 
-        const statusIconsStr = (currentMapData.statusIcons || "");
-        let ratmanStatus = (statusIconsStr.indexOf("ø") === -1) ? 1 : 0;
+        // --- ADAPTATION DES COMPORTEMENTS SUR LE TABLEAU D'ICÔNES ---
+        let statusIconsList: string[] = [];
+        if (Array.isArray(currentMapData.statusIcons)) {
+            statusIconsList = currentMapData.statusIcons;
+        } else if (typeof currentMapData.statusIcons === 'string') {
+            // Rétrocompatibilité si une chaîne brute passe par là
+            statusIconsList = currentMapData.statusIcons.split("");
+        }
+
+        let ratmanStatus = (statusIconsList.indexOf("ratmansdent") === -1 && statusIconsList.indexOf("ø") === -1) ? 1 : 0;
+        let hasCheck = statusIconsList.indexOf("check") !== -1 || statusIconsList.indexOf(this.getCompletionSymbol()) !== -1;
         
-        let hasCheck = statusIconsStr.indexOf(this.getCompletionSymbol()) !== -1;
-        let portalGunDone = (statusIconsStr.indexOf("þ") === -1 && statusIconsStr.indexOf("ý") === -1 && statusIconsStr.indexOf("ǫ") === -1 || hasCheck) ? 1 : 0;
-        let potatosDone = (statusIconsStr.indexOf("ù") === -1 || hasCheck) ? 1 : 0;
+        let portalGunDone = (
+            (statusIconsList.indexOf("portalgun1") === -1 && 
+             statusIconsList.indexOf("portalgun2") === -1 && 
+             statusIconsList.indexOf("ý") === -1 && 
+             statusIconsList.indexOf("þ") === -1) || hasCheck
+        ) ? 1 : 0;
+        
+        let potatosDone = (statusIconsList.indexOf("potatos") === -1 && statusIconsList.indexOf("ù") === -1 || hasCheck) ? 1 : 0;
         let wheatleyDone = 0;
 
-        const symbols = statusIconsStr || "";
+        const symbols = statusIconsList.join(",");
 
         if (serverStatus === this.m_LastServerStatus &&
             ratmanStatus === this.m_LastRatmanStatus &&

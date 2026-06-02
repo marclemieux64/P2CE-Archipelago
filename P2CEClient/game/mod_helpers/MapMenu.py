@@ -1,62 +1,62 @@
 from ..Locations import all_locations_table, speedrun_logic_table, sub_locations_in_maps
 from ..ItemNames import *
 
-# Custom font for items
+# Correspondance exacte avec les noms de vos fichiers SVG physiques
 items_shortened = {
-    portal_gun_1: "û",
-    portal_gun_2: "û",
-    potatos: "ù",
-    weighted_cube: "ç",
-    reflection_cube: "ì",
-    spherical_cube: "ë",
-    antique_cube: "é",
-    button: "ñ",
-    old_button: "ò",
-    floor_button: "æ",
-    old_floor_button: "è",
-    frankenturret: "ð",
-    paint: "¢",
-    blue_gel: "à",
-    orange_gel: "á",
-    white_gel: "â",
-    laser: "í",
-    faith_plate: "õ",
-    funnel: "å",
-    bridge: "¿",
-    laser_relays: "ï",
-    laser_catcher: "î",
-    turrets: "ó",
-    adventure_core: "A.ô",
-    space_core: "S.ô",
-    fact_core: "F.ô",
-    moon_dust: "¡",
-    lemon: "¡",
-    slice_of_cake: "¡",
-    motion_blur_trap: "¥",
-    fizzle_portal_trap: "¥",
-    butter_fingers_trap: "¥",
-    cube_confetti_trap: "¥",
-    slippery_floor_trap: "¥",
+    portal_gun_1: "portalgun1",
+    portal_gun_2: "portalgun2",
+    potatos: "potatos",
+    weighted_cube: "weightedcube",
+    reflection_cube: "lasercube",
+    spherical_cube: "ballcube",
+    antique_cube: "antiqueweightedcube",
+    button: "button",
+    old_button: "antiquebutton",
+    floor_button: "weightedfloorbutton",
+    old_floor_button: "antiquefloorbutton",
+    frankenturret: "frankencube",
+    paint: "paint",
+    blue_gel: "jumpgel",
+    orange_gel: "speedgel",
+    white_gel: "portalgel",
+    laser: "laser",
+    faith_plate: "faithplate",
+    funnel: "funnel",
+    bridge: "lightbridge",
+    laser_relays: "laserrelay",
+    laser_catcher: "lasercatcher",
+    turrets: "turret",
+    adventure_core: "advcore",
+    space_core: "spacecore",
+    fact_core: "factcore",
+    moon_dust: "moondust",
+    lemon: "lemon",
+    slice_of_cake: "cake",
+    motion_blur_trap: "trap",
+    fizzle_portal_trap: "trap",
+    butter_fingers_trap: "trap",
+    cube_confetti_trap: "trap",
+    slippery_floor_trap: "trap",
 }
 
 indicator_characters: dict[str, str] = {
-    "completed": "£",
-    "map": "ã",
-    "wheatley": "ÿ",
-    "ratman": "ø",
-    "vitrified_door": "¢",
-    portal_gun_1: "ý",
-    portal_gun_2: "þ",
-    potatos: "ù",
+    "completed": "check",
+    "map": "flag",
+    "wheatley": "monitor",
+    "ratman": "ratmansdent",
+    "vitrified_door": "door",
+    portal_gun_1: "portalgun1",
+    portal_gun_2: "portalgun2",
+    potatos: "potatos",
 }
 
 access_icons: dict[str, str] = {
-    "playable": "═ ",
-    "unplayable": "║ ",
+    "playable": "",
+    "unplayable": "",
 }
 
 def items_to_shortened(items_list: list[str]) -> list[str]:
-    return map(lambda x: items_shortened[x], items_list)
+    return [items_shortened[x] for x in items_list if x in items_shortened]
 
 
 class MenuElement:
@@ -67,18 +67,10 @@ class MenuElement:
         self.subtitle = subtitle
         self.command = command
         self.pic = pic
-        self.info_text: str | None = None
+        self.info_text: list[str] = []
 
     def __str__(self):
-        return (
-            f'  "{self.name}"\n'
-            "   {\n"
-            f'      "title"    "{self.title}"\n'
-            f'      "subtitle" "{self.subtitle}"\n'
-            f'      "command"  "{self.command}"\n'
-            f'      "pic"      "{self.pic}"\n'
-            "   }\n" + self.generate_info_text()
-        )
+        return ""
     
     def to_dict(self):
         return {
@@ -90,11 +82,6 @@ class MenuElement:
             "statusIcons": self.info_text,
             "info": self.info_text
         }
-
-    def generate_info_text(self):
-        if self.info_text == None:
-            return ""
-        return f'   "{self.name}_info"\n' "   {\n" f'      "title"    "{self.info_text}"\n' "   }\n"
 
 
 class MapMenuElement(MenuElement):
@@ -111,10 +98,10 @@ class MapMenuElement(MenuElement):
         subtitle = "".join(items_to_shortened(self.required_items))
         new_title = title.removesuffix(" Completion")
         super().__init__(parent, f"chapter {chapter_number}.{map_number}", new_title, subtitle, f"map {map_code}", pic)
-        self.info_text = indicator_characters["map"] + parse_sub_locations(self.sub_location_completion)
+        self.info_text = [indicator_characters["map"]] + parse_sub_locations(self.sub_location_completion)
 
     def refresh_title(self, blocked: bool = False):
-        self.info_text = indicator_characters["completed"] if self.completed else indicator_characters["map"]
+        self.info_text = [indicator_characters["completed"]] if self.completed else [indicator_characters["map"]]
         self.info_text += parse_sub_locations(self.sub_location_completion)
 
         if blocked:
@@ -124,41 +111,18 @@ class MapMenuElement(MenuElement):
             self.title = self.title.strip(access_icons["unplayable"])
             self.title = access_icons["playable"] + self.title
 
-    def get_string(self, previous_completed: bool):
-        # --- NOUVEAU : On fusionne les prérequis de la carte et de ses sous-locations ---
+    def get_combined_requirements(self):
         all_reqs = list(self.required_items)
         for sub_loc in self.sub_location_completion:
             if sub_loc in all_locations_table:
                 all_reqs.extend(all_locations_table[sub_loc].required_items)
-        all_reqs = list(set(all_reqs)) # Supprime les doublons
+        return list(set(all_reqs))
 
-        # Update required items based on the combined list
-        new_required_items = [item for item in all_reqs if item in self.parent.parent.client.item_list]
-
-        # Remake subtitle
-        self.subtitle = "".join(items_to_shortened(new_required_items))
-
-        text = super().__str__()
-        if not (self.parent.parent.is_open_world or previous_completed):
-            self.refresh_title(blocked=True)
-            text = text.replace("command", "command_deactivated")
-        else:
-            self.refresh_title()
-        
-        if self.next_map:
-            text = text + self.next_map.get_string(self.completed)
-        
-        return text
+    def get_string(self, previous_completed: bool):
+        return ""
 
     def to_dict(self, previous_completed: bool):
-        # --- NOUVEAU : On fusionne les prérequis de la carte et de ses sous-locations ---
-        all_reqs = list(self.required_items)
-        for sub_loc in self.sub_location_completion:
-            if sub_loc in all_locations_table:
-                all_reqs.extend(all_locations_table[sub_loc].required_items)
-        all_reqs = list(set(all_reqs)) # Supprime les doublons
-
-        # Update required items based on the combined list
+        all_reqs = self.get_combined_requirements()
         new_required_items = [item for item in all_reqs if item in self.parent.parent.client.item_list]
         self.subtitle = "".join(items_to_shortened(new_required_items))
 
@@ -172,11 +136,19 @@ class MapMenuElement(MenuElement):
         else:
             d["command_deactivated"] = None
 
+        raw_status = d.get("statusIcons") or []
+        total_count = len(raw_status)
+        green_count = sum(1 for c in raw_status if c == indicator_characters["completed"])
+
         d.update({
             "location_id": self.location_id,
             "required_items": list(self.required_items),
             "completed": self.completed,
-            "sub_locations": self.sub_location_completion
+            "sub_locations": self.sub_location_completion,
+            "is_blocked": is_blocked,
+            "progress_text": f"{green_count}/{total_count}" if total_count > 0 else "",
+            "status_text_list": raw_status,
+            "required_item_icons": items_to_shortened(new_required_items)
         })
         return d
 
@@ -223,22 +195,20 @@ def get_sub_locations(
     return {sub_location: False for sub_location in sub_locations}
 
 
-def parse_sub_locations(sub_locations: dict[str, bool]) -> str:
-    additional_indicators = ""
+def parse_sub_locations(sub_locations: dict[str, bool]) -> list[str]:
+    additional_indicators = []
     for sub_location, is_completed in sub_locations.items():
         if not is_completed:
             if "Wheatley Monitor" in sub_location:
-                additional_indicators += indicator_characters["wheatley"]
+                additional_indicators.append(indicator_characters["wheatley"])
             elif "Ratman Den" in sub_location:
-                additional_indicators += indicator_characters["ratman"]
+                additional_indicators.append(indicator_characters["ratman"])
             elif "Vitrified Door" in sub_location:
-                additional_indicators += indicator_characters["vitrified_door"]
-            # No in use atm but can add more indicators for other sub locations if wanted
+                additional_indicators.append(indicator_characters["vitrified_door"])
             elif sub_location in indicator_characters:
-                additional_indicators += indicator_characters[sub_location]
+                additional_indicators.append(indicator_characters[sub_location])
         else:
-            additional_indicators += indicator_characters["completed"]
-
+            additional_indicators.append(indicator_characters["completed"])
     return additional_indicators
 
 
@@ -266,29 +236,39 @@ class ChapterMenuElement(MenuElement):
                 current_map = next_map
 
     def __str__(self):
-        # Set command to the first not completed map's code, or empty if all maps completed
-        if "No Maps In This Chapter" not in self.first_map.title:
-            current_map = self.first_map
-            while current_map and current_map.completed:
-                current_map = current_map.next_map
-            if current_map:
-                self.command = current_map.command
-        
-        string = super().__str__()
-        string += self.first_map.get_string(previous_completed="No Maps In This Chapter" not in self.first_map.title)
-        return string
+        return ""
     
     def to_dict(self):
         d = super().to_dict()
         maps = []
         curr = self.first_map
-        prev_completed = True # First map is always unlocked
+        prev_completed = True
+        
+        chapter_total_green = 0
+        chapter_total_indicators = 0
+        all_maps_complete = True
+        has_valid_maps = False
+
         while curr:
-            maps.append(curr.to_dict(prev_completed))
+            map_dict = curr.to_dict(prev_completed)
+            maps.append(map_dict)
+            
+            if not map_dict.get("is_blocked") and curr.location_id != -1:
+                has_valid_maps = True
+                if not map_dict.get("completed"):
+                    all_maps_complete = False
+                
+                raw_status = map_dict.get("status_text_list", [])
+                chapter_total_indicators += len(raw_status)
+                chapter_total_green += sum(1 for c in raw_status if c == indicator_characters["completed"])
+
             prev_completed = curr.completed
             curr = curr.next_map
+            
         d["maps"] = maps
         d["chapter_number"] = self.chapter_number
+        d["all_completed"] = all_maps_complete if has_valid_maps else False
+        d["progress_text"] = f"{chapter_total_green}/{chapter_total_indicators}" if chapter_total_indicators > 0 else ""
         return d
     
     def complete_map(self, map_id: int):
@@ -315,7 +295,6 @@ class Menu:
         ratman_dens: bool = False,
         vitrified_doors: bool = False,
     ):
-        # Update all_locations table to speedrun logic
         if logic_difficulty == 1:
             for map_location in speedrun_logic_table:
                 all_locations_table[map_location].required_items = speedrun_logic_table[map_location]
@@ -330,9 +309,6 @@ class Menu:
     def generate_menu(self):
         for chapter_number, map_names in self.chapter_dict.items():
             self.chapters.append(ChapterMenuElement(self, chapter_number, map_names))
-
-    def __str__(self):
-        return '"Extras"\n' "{\n" f'{"".join([str(map) for map in self.chapters])}' "}\n"
 
     def to_dict(self):
         return {

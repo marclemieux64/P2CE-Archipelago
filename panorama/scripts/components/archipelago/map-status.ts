@@ -135,7 +135,27 @@ var ArchipelagoMapStatusHUD = class {
         const titleLabel = $('#MapTitle');
         titleLabel.text = localizedString;
 
-        const statusIconsRaw = (currentMapData.statusIcons || currentMapData.info || "").replace(/[~\-]/g, "").trim();
+        // --- CONVERSION SECURISEE DE L'ARRAY D'ICONES EN SÉQUENCE COMPATIBLE LOGIC ---
+        let rawIconsPayload = currentMapData.statusIcons || currentMapData.info || "";
+        let statusIconsStr = "";
+
+        if (Array.isArray(rawIconsPayload)) {
+            statusIconsStr = rawIconsPayload.map((icon: string) => {
+                if (icon === "check") return "£";
+                if (icon === "flag") return "ã";
+                if (icon === "monitor") return "ÿ";
+                if (icon === "ratmansdent") return "ø";
+                if (icon === "door") return "¢";
+                if (icon === "portalgun1") return "ý";
+                if (icon === "portalgun2") return "þ";
+                if (icon === "potatos") return "ù";
+                return "";
+            }).join("");
+        } else if (typeof rawIconsPayload === 'string') {
+            statusIconsStr = rawIconsPayload;
+        }
+
+        const statusIconsRaw = statusIconsStr.replace(/[~\-]/g, "").trim();
         const mItemsRaw = currentMapData.subtitle || "";
         
         const mapStatusFromEngine = $.persistentStorage.getItem("ArchipelagoLastMapStatus") || 0;

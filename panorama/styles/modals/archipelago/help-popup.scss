@@ -77,10 +77,9 @@
 }
 
 .help-popup__row {
-    width: 100%;
     flow-children: right;
-    padding: 10px 0px;
-    border-bottom: 1px solid #ffffff05;
+    margin-bottom: 12px;
+    vertical-align: center;
 }
 
 .help-popup__icon-container {
@@ -90,7 +89,7 @@
 }
 
 .help-popup__icon {
-    width: 60px;
+    width: 48px;
     font-family: "APPortal-bold";
     font-size: 28px;
     color: #ffffff;
@@ -99,12 +98,26 @@
 }
 
 .help-popup__icon-img {
+    max-width: 48px;      // FIX NETTETÉ ABSOLUE : Utilisation des contraintes max fluides
+    max-height: 48px;     // Élimine la pixelisation causée par l'étirement forcé des textures
+    vertical-align: center;
+    img-shadow: 2px 2px 1px 3.0 #333333b0 alpha-only;
+}
+.help-popup__icon-lock-img {
+    vertical-align: center;
+    horizontal-align: center;
+    img-shadow: 1px 1px 3px 3.0 #333333b0 alpha-only;
     width: 18px;
     height: 24px;
-    horizontal-align: center;
+    }
+
+.help-popup__icon-unlock-img {
     vertical-align: center;
-    wash-color: #ffffff;
-}
+    horizontal-align: center;
+    img-shadow: 1px 1px 3px 3.0 #333333b0 alpha-only;
+    width: 18px;
+    height: 24px;
+    }
 
 .help-popup__icon--stacked {
     font-size: 22px;
@@ -112,12 +125,11 @@
 }
 
 .help-popup__label {
-    width: fill-parent-flow(1.0);
-    font-family: "Lexend";
-    font-size: 18px;
+    font-family: "Lexend Deca"; // Utilisation de votre police propre
+    font-size: 20px;
     color: #eeeeee;
     vertical-align: center;
-    margin-left: 16px;
+    margin-left: 12px;
 }
 
 .help-popup__header {

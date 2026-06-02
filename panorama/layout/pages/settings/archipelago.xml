@@ -28,17 +28,6 @@
 				</SettingsEnum>
 
 				<SettingsEnumDropDown
-					id="CompletionSymbolSetting"
-					text="#Archipelago_Settings_CompletionSymbol"
-					psvar="ap_completion_symbol"
-					infomessage="#Archipelago_Settings_CompletionSymbol_info"
-					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveCompletionSymbolSetting()"
-				>
-					<Label class="ap_symbol" text="#Archipelago_Settings_Symbol_Checkmark" value="0" id="ap_symbol_0" />
-					<Label class="ap_symbol" text="#Archipelago_Settings_Symbol_Star" value="1" id="ap_symbol_1" />
-				</SettingsEnumDropDown>
-
-				<SettingsEnumDropDown
 					text="#Archipelago_Settings_TransitionType"
 					infomessage="#Archipelago_Settings_TransitionType_info"
 					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveSmartWarpSetting()"

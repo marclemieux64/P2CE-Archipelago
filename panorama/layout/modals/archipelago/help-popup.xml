@@ -21,77 +21,63 @@
 
 					<Panel class="help-popup__row">
 						<Panel class="help-popup__icon">
-							<Image class="help-popup__icon-img" src="file://{images}/archipelago/lock-solid.svg" texturewidth="96" textureheight="96" style="wash-color: #ff4444;" />
+							<Image class="help-popup__icon-lock-img" src="file://{images}/archipelago/lock-solid.svg" texturewidth="96" textureheight="96" style="wash-color: #ff4444;" />
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Status_Locked" />
 					</Panel>
 
 					<Panel class="help-popup__row">
 						<Panel class="help-popup__icon">
-							<Image class="help-popup__icon-img" src="file://{images}/archipelago/unlock-solid.svg" texturewidth="96" textureheight="96" style="wash-color: #44ff44;" />
+							<Image class="help-popup__icon-unlock-img" src="file://{images}/archipelago/unlock-solid.svg" texturewidth="96" textureheight="96" style="wash-color: #44ff44;" />
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Status_Unlocked" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="£" style="color: #ffff44;" />
+						<Image src="file://{images}/archipelago/icons/check.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Status_Goal" />
 					</Panel>
 
-					<Panel class="help-popup__row">
-						<Panel class="help-popup__icon-container">
-							<Label class="help-popup__icon help-popup__icon--stacked" text="★" style="color: #ffff44;" />
-							<Label class="help-popup__icon help-popup__icon--stacked" text="£" style="color: #ffff44;" />
-						</Panel>
-						<Label class="help-popup__label" text="#Archipelago_Help_Status_Full" />
-					</Panel>
-
-					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Availability" />
-
-					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ý" style="color: #44ff44;" />
-						<Label class="help-popup__label" text="#Archipelago_Help_Avail_Yes" />
-					</Panel>
-
-					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ý" style="color: #ff4444;" />
-						<Label class="help-popup__label" text="#Archipelago_Help_Avail_No" />
-					</Panel>
 
 					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Checks" />
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ã" />
+						<Image src="file://{images}/archipelago/icons/uncheck.svg" class="help-popup__icon-img" />
+						<Label class="help-popup__label" text="#Archipelago_Help_Avail_No" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Image src="file://{images}/archipelago/icons/Flag.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Generic" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ý" style="color: #00a5ff;" />
+						<Image src="file://{images}/archipelago/icons/portalgun1.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_PGunBlue" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="þ" style="color: #ff6a00;" />
+						<Image src="file://{images}/archipelago/icons/portalgun2.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_PGunOrange" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ø" />
+						<Image src="file://{images}/archipelago/icons/ratmansdent.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Ratman" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ù"/>
+						<Image src="file://{images}/archipelago/icons/potatos.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Potatos" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="¢" />
+						<Image src="file://{images}/archipelago/icons/door.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Door" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ÿ" />
+						<Image src="file://{images}/archipelago/icons/Monitor.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Wheatley" />
 					</Panel>
 				</Panel>
@@ -100,122 +86,122 @@
 					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Items" />
 					
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="û" style="color: #ff6a00;" />
+						<Image src="file://{images}/archipelago/icons/portalgun2.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_PGun" />
 					</Panel>
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="à" html="true" style="color: #00a5ff;" />
+						<Image src="file://{images}/archipelago/icons/jumpgel.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelBlue" />
 					</Panel>
 							
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="á" style="color: #ff6a00;" />
+						<Image src="file://{images}/archipelago/icons/speedgel.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelOrange" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="â" style="color: #fafafa;" />
+						<Image src="file://{images}/archipelago/icons/portalgel.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelWhite" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="S.ô" style="color: #ffc904;" />
+						<Image src="file://{images}/archipelago/icons/spacecore.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CoreSpace" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="A.ô" style="color: #e790c2;" />
+						<Image src="file://{images}/archipelago/icons/advcore.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CoreAdv" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="F.ô" style="color: #1ec10d;" />
+						<Image src="file://{images}/archipelago/icons/factcore.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CoreFact" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ç" />
+						<Image src="file://{images}/archipelago/icons/weightedcube.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeWeighted" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ì" />
+						<Image src="file://{images}/archipelago/icons/lasercube.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeReflect" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ë" />
+						<Image src="file://{images}/archipelago/icons/ballcube.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeSphere" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="é" />
+						<Image src="file://{images}/archipelago/icons/antiqueweightedcube.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeAntique" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ñ" />
+						<Image src="file://{images}/archipelago/icons/button.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Button" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ò" />
+						<Image src="file://{images}/archipelago/icons/antiquebutton.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_ButtonOld" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="æ" />
+						<Image src="file://{images}/archipelago/icons/weightedfloorbutton.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_ButtonFloor" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="è" />
+						<Image src="file://{images}/archipelago/icons/antiquefloorbutton.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_ButtonFloorOld" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="í" />
+						<Image src="file://{images}/archipelago/icons/laser.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Laser" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="î" />
+						<Image src="file://{images}/archipelago/icons/lasercatcher.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_LaserCatcher" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ï" />
+						<Image src="file://{images}/archipelago/icons/laserrelay.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_LaserRelay" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ó" />
+						<Image src="file://{images}/archipelago/icons/turret.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Turrets" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="õ" />
+						<Image src="file://{images}/archipelago/icons/faithplate.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_FaithPlate" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="å" />
+						<Image src="file://{images}/archipelago/icons/funnel.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_TractorBeam" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="¿" />
+						<Image src="file://{images}/archipelago/icons/lightbridge.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Bridge" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ð" />
+						<Image src="file://{images}/archipelago/icons/frankencube.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Franken" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Label class="help-popup__icon" text="ù" style="color: #ffffff;" />
+						<Image src="file://{images}/archipelago/icons/potatos.svg" class="help-popup__icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Potatos" />
 					</Panel>
 

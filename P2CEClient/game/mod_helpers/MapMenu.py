@@ -39,39 +39,37 @@ items_shortened = {
     slippery_floor_trap: "trap",
 }
 
-indicator_characters: dict[str, str] = {
+indicator_characters = {
     "completed": "check",
     "map": "flag",
     "wheatley": "monitor",
-    "ratman": "ratmansdent",
+    "ratman": "ratman",
     "vitrified_door": "door",
     portal_gun_1: "portalgun1",
     portal_gun_2: "portalgun2",
     potatos: "potatos",
 }
 
-access_icons: dict[str, str] = {
-    "playable": "",
-    "unplayable": "",
-}
-
-def items_to_shortened(items_list: list[str]) -> list[str]:
+def items_to_shortened(items_list):
     return [items_shortened[x] for x in items_list if x in items_shortened]
 
+def get_sub_locations(location_name, has_wheatley, has_ratman, has_vitrified):
+    subs = sub_locations_in_maps.get(location_name, [])
+    if not has_wheatley: subs = [s for s in subs if "Wheatley Monitor" not in s]
+    if not has_ratman: subs = [s for s in subs if "Ratman Den" not in s]
+    if not has_vitrified: subs = [s for s in subs if "Vitrified Door" not in s]
+    return {s: False for s in subs}
 
 class MenuElement:
-    def __init__(self, parent, name: str, title: str, subtitle: str = "", command: str = "", pic: str = ""):
+    def __init__(self, parent, name, title, subtitle="", command="", pic=""):
         self.parent = parent
         self.name = name
         self.title = title
         self.subtitle = subtitle
         self.command = command
         self.pic = pic
-        self.info_text: list[str] = []
+        self.info_text = []
 
-    def __str__(self):
-        return ""
-    
     def to_dict(self):
         return {
             "name": self.name,
@@ -83,33 +81,52 @@ class MenuElement:
             "info": self.info_text
         }
 
-
 class MapMenuElement(MenuElement):
-    next_map: MenuElement = None
-    completed: bool = False
-    sub_location_completion: dict[str, bool] = {}
+    next_map = None
+    completed = False
+    sub_location_completion = {}
 
     def __init__(self, parent, chapter_number, map_number, title, map_code, location_id, required_items, pic):
         self.location_id = location_id
         self.required_items = required_items
-        self.sub_location_completion = get_sub_locations(
-            title, parent.parent.has_wheatley_monitors, parent.parent.has_ratman_dens, parent.parent.has_vitrified_doors
-        )
+        self.sub_location_completion = get_sub_locations(title, parent.parent.has_wheatley_monitors, parent.parent.has_ratman_dens, parent.parent.has_vitrified_doors)
         subtitle = "".join(items_to_shortened(self.required_items))
         new_title = title.removesuffix(" Completion")
-        super().__init__(parent, f"chapter {chapter_number}.{map_number}", new_title, subtitle, f"map {map_code}", pic)
-        self.info_text = [indicator_characters["map"]] + parse_sub_locations(self.sub_location_completion)
+        super().__init__(parent, f"vgui/chapters/chapter{chapter_number}", map_code, subtitle, f"map {map_code}", pic)
+        self.refresh_title()
 
-    def refresh_title(self, blocked: bool = False):
-        self.info_text = [indicator_characters["completed"]] if self.completed else [indicator_characters["map"]]
-        self.info_text += parse_sub_locations(self.sub_location_completion)
+    def check_logic(self, required_items):
+        return all(item in self.parent.parent.client.items_received for item in required_items)
 
-        if blocked:
-            if access_icons["unplayable"] not in self.title:
-                self.title = access_icons["unplayable"] + self.title
-        elif access_icons["playable"] not in self.title:
-            self.title = self.title.strip(access_icons["unplayable"])
-            self.title = access_icons["playable"] + self.title
+    def refresh_title(self):
+        client = self.parent.parent.client
+        if client and hasattr(client, "checked_locations"):
+            if self.location_id in client.checked_locations:
+                self.completed = True
+            for sub in self.sub_location_completion:
+                if sub in all_locations_table and all_locations_table[sub].id in client.checked_locations:
+                    self.sub_location_completion[sub] = True
+
+        # Logique de la carte principale
+        self.info_text = [indicator_characters["completed"] if self.completed else (indicator_characters["map"] if self.check_logic(self.required_items) else "uncheck")]
+        
+        # Logique individuelle par sous-emplacement pour injecter l'état "uncheck" si bloqué
+        for sub_location, is_completed in self.sub_location_completion.items():
+            if is_completed:
+                self.info_text.append(indicator_characters["completed"])
+            else:
+                reqs = all_locations_table[sub_location].required_items if sub_location in all_locations_table else []
+                if self.check_logic(reqs):
+                    if "Wheatley Monitor" in sub_location:
+                        self.info_text.append(indicator_characters["wheatley"])
+                    elif "Ratman Den" in sub_location:
+                        self.info_text.append(indicator_characters["ratman"])
+                    elif "Vitrified Door" in sub_location:
+                        self.info_text.append(indicator_characters["vitrified_door"])
+                    else:
+                        self.info_text.append(indicator_characters["map"])
+                else:
+                    self.info_text.append("uncheck")
 
     def get_combined_requirements(self):
         all_reqs = list(self.required_items)
@@ -118,212 +135,125 @@ class MapMenuElement(MenuElement):
                 all_reqs.extend(all_locations_table[sub_loc].required_items)
         return list(set(all_reqs))
 
-    def get_string(self, previous_completed: bool):
-        return ""
-
-    def to_dict(self, previous_completed: bool):
-        all_reqs = self.get_combined_requirements()
-        new_required_items = [item for item in all_reqs if item in self.parent.parent.client.item_list]
-        self.subtitle = "".join(items_to_shortened(new_required_items))
-
+    def to_dict(self, previous_completed):
         is_blocked = not (self.parent.parent.is_open_world or previous_completed)
-        self.refresh_title(blocked=is_blocked)
-
+        self.refresh_title()
+        
+        all_reqs = self.get_combined_requirements()
+        icons = items_to_shortened(all_reqs)
+        
+        # Compte tout ce qui est accessible ou complété (différent de "uncheck")
+        valid_count = sum(1 for c in self.info_text if c != "uncheck")
+        total_count = len(self.info_text)
+        
         d = super().to_dict()
-        if is_blocked:
-            d["command_deactivated"] = d.pop("command")
-            d["command"] = None
-        else:
-            d["command_deactivated"] = None
-
-        raw_status = d.get("statusIcons") or []
-        total_count = len(raw_status)
-        green_count = sum(1 for c in raw_status if c == indicator_characters["completed"])
-
         d.update({
-            "location_id": self.location_id,
-            "required_items": list(self.required_items),
+            "command": None if is_blocked else self.command,
+            "command_deactivated": self.command if is_blocked else None,
+            "location_id": self.location_id, 
             "completed": self.completed,
-            "sub_locations": self.sub_location_completion,
-            "is_blocked": is_blocked,
-            "progress_text": f"{green_count}/{total_count}" if total_count > 0 else "",
-            "status_text_list": raw_status,
-            "required_item_icons": items_to_shortened(new_required_items)
+            "valid_count": valid_count,
+            "total_count": total_count,
+            "progress_text": f"{valid_count}/{total_count}",
+            "status_text_list": self.info_text, 
+            "required_item_icons": icons, 
+            "is_chapter": False
         })
         return d
 
-    def complete_map(self, map_id: int) -> bool:
+    def complete_map(self, map_id):
         if self.location_id == map_id:
-            if self.completed:
-                return True
             self.completed = True
             self.refresh_title()
-            if self.next_map:
-                self.next_map.command = self.next_map.command.replace("command_deactivated", "command")
             return True
-        else:
-            if self.next_map:
-                return self.next_map.complete_map(map_id)
-            else:
-                return False
+        return self.next_map.complete_map(map_id) if self.next_map else False
 
-    def complete_sub_location_check(self, sub_location: str):
-        if sub_location in self.sub_location_completion:
-            self.sub_location_completion[sub_location] = True
+    def complete_sub_location_check(self, sub):
+        if sub in self.sub_location_completion:
+            self.sub_location_completion[sub] = True
             self.refresh_title()
-        elif self.next_map:
-            self.next_map.complete_sub_location_check(sub_location)
+        elif self.next_map: self.next_map.complete_sub_location_check(sub)
 
-    def complete_check(self, location_id: int):
-        if not self.complete_map(location_id):
-            location_name = self.parent.parent.client.location_names.lookup_in_game(location_id)
-            if "Complete" not in location_name:
-                self.complete_sub_location_check(location_name)
-
-blank_map_element = lambda parent, chapter_number: MapMenuElement(parent, chapter_number, 0, "No Maps In This Chapter", "", -1, [], "")
-
-def get_sub_locations(
-    location_name: str, has_wheatley_monitors: bool, has_ratman_dens: bool, has_vitrified_doors: bool
-) -> dict[str, bool]:
-    sub_locations = sub_locations_in_maps.get(location_name, [])
-    if not has_wheatley_monitors:
-        sub_locations = [sub_location for sub_location in sub_locations if "Wheatley Monitor" not in sub_location]
-    if not has_ratman_dens:
-        sub_locations = [sub_location for sub_location in sub_locations if "Ratman Den" not in sub_location]
-    if not has_vitrified_doors:
-        sub_locations = [sub_location for sub_location in sub_locations if "Vitrified Door" not in sub_location]
-    return {sub_location: False for sub_location in sub_locations}
-
-
-def parse_sub_locations(sub_locations: dict[str, bool]) -> list[str]:
-    additional_indicators = []
-    for sub_location, is_completed in sub_locations.items():
-        if not is_completed:
-            if "Wheatley Monitor" in sub_location:
-                additional_indicators.append(indicator_characters["wheatley"])
-            elif "Ratman Den" in sub_location:
-                additional_indicators.append(indicator_characters["ratman"])
-            elif "Vitrified Door" in sub_location:
-                additional_indicators.append(indicator_characters["vitrified_door"])
-            elif sub_location in indicator_characters:
-                additional_indicators.append(indicator_characters[sub_location])
-        else:
-            additional_indicators.append(indicator_characters["completed"])
-    return additional_indicators
-
+    def complete_check(self, loc_id):
+        if not self.complete_map(loc_id):
+            name = self.parent.parent.client.location_names.lookup_in_game(loc_id)
+            if "Complete" not in name: self.complete_sub_location_check(name)
 
 class ChapterMenuElement(MenuElement):
-    first_map: MapMenuElement = None
-
-    def __init__(self, parent, chapter_number: int, map_names: list[str]):
-        self.chapter_number = chapter_number
-        super().__init__(parent, f"chapter{chapter_number}", f"Chapter {chapter_number}", pic=f"vgui/chapters/chapter{chapter_number}")
-        if not map_names:
-            self.first_map = blank_map_element(self, chapter_number)
-            return
-
-        current_map: MapMenuElement = None
+    first_map = None
+    def __init__(self, parent, chapter_number, map_names):
+        self.chapter_number = "".join(c for c in str(chapter_number) if c.isdigit())
+        super().__init__(parent, f"chapter{self.chapter_number}", f"Chapter {self.chapter_number}", pic=f"vgui/chapters/chapter{self.chapter_number}")
+        curr = None
         for i, name in enumerate(map_names):
-            location = all_locations_table[name]
-            next_map = MapMenuElement(
-                self, chapter_number, i, name, location.map_name, location.id, location.required_items, self.pic
-            )
-            if not self.first_map:
-                self.first_map = next_map
-                current_map = self.first_map
-            else:
-                current_map.next_map = next_map
-                current_map = next_map
+            loc = all_locations_table[name]
+            nxt = MapMenuElement(self, self.chapter_number, i, name, loc.map_name, loc.id, loc.required_items, self.pic)
+            if not self.first_map: self.first_map = nxt
+            else: curr.next_map = nxt
+            curr = nxt
 
-    def __str__(self):
-        return ""
-    
-    def to_dict(self):
-        d = super().to_dict()
-        maps = []
-        curr = self.first_map
-        prev_completed = True
-        
-        chapter_total_green = 0
-        chapter_total_indicators = 0
+    def to_dict(self, previous_completed=True):
+        maps_list, curr = [], self.first_map
+        prev_comp = previous_completed
+        chapter_valid = 0
+        chapter_total = 0
         all_maps_complete = True
         has_valid_maps = False
 
         while curr:
-            map_dict = curr.to_dict(prev_completed)
-            maps.append(map_dict)
-            
-            if not map_dict.get("is_blocked") and curr.location_id != -1:
+            m = curr.to_dict(prev_comp)
+            maps_list.append(m)
+            if curr.location_id != -1:
                 has_valid_maps = True
-                if not map_dict.get("completed"):
+                if not m.get("completed"):
                     all_maps_complete = False
-                
-                raw_status = map_dict.get("status_text_list", [])
-                chapter_total_indicators += len(raw_status)
-                chapter_total_green += sum(1 for c in raw_status if c == indicator_characters["completed"])
-
-            prev_completed = curr.completed
+                chapter_valid += m.get("valid_count", 0)
+                chapter_total += m.get("total_count", 0)
+            prev_comp = curr.completed
             curr = curr.next_map
-            
-        d["maps"] = maps
-        d["chapter_number"] = self.chapter_number
-        d["all_completed"] = all_maps_complete if has_valid_maps else False
-        d["progress_text"] = f"{chapter_total_green}/{chapter_total_indicators}" if chapter_total_indicators > 0 else ""
-        return d
-    
-    def complete_map(self, map_id: int):
-        if self.first_map:
-            self.first_map.complete_map(map_id)
-        
-    def complete_sub_location_check(self, sub_location: str):
-        if self.first_map:
-            self.first_map.complete_sub_location_check(sub_location)
-        
-    def complete_check(self, location_id: int):
-        if self.first_map:
-            self.first_map.complete_check(location_id)
 
+        return {
+            "name": self.name, 
+            "title": self.title, 
+            "chapter_number": self.chapter_number,
+            "maps": maps_list, 
+            "valid_count": chapter_valid,
+            "total_count": chapter_total,
+            "progress_text": f"{chapter_valid}/{chapter_total}" if chapter_total > 0 else "0/0", 
+            "is_chapter": True,
+            "all_completed": all_maps_complete if has_valid_maps else False
+        }
 
 class Menu:
-    def __init__(
-        self,
-        chapter_dict: dict[int, list[str]],
-        client,
-        is_open_world: bool = False,
-        logic_difficulty: int = 0,
-        wheatley_monitors: bool = False,
-        ratman_dens: bool = False,
-        vitrified_doors: bool = False,
-    ):
+    def __init__(self, chapter_dict, client, is_open_world=False, logic_difficulty=0, **kwargs):
         if logic_difficulty == 1:
             for map_location in speedrun_logic_table:
                 all_locations_table[map_location].required_items = speedrun_logic_table[map_location]
         self.client = client
         self.is_open_world = is_open_world
-        self.has_wheatley_monitors = wheatley_monitors
-        self.has_ratman_dens = ratman_dens
-        self.has_vitrified_doors = vitrified_doors
+        self.has_wheatley_monitors = kwargs.get("wheatley_monitors", False)
+        self.has_ratman_dens = kwargs.get("ratman_dens", False)
+        self.has_vitrified_doors = kwargs.get("vitrified_doors", False)
         self.chapter_dict = chapter_dict
-        self.chapters: list[ChapterMenuElement] = []
+        self.chapters = []
 
     def generate_menu(self):
         for chapter_number, map_names in self.chapter_dict.items():
             self.chapters.append(ChapterMenuElement(self, chapter_number, map_names))
 
     def to_dict(self):
-        return {
-            "is_open_world": self.is_open_world,
-            "chapters": [chapter.to_dict() for chapter in self.chapters]
-        }
+        data, prev = [], True
+        for ch in self.chapters:
+            ch_dict = ch.to_dict(previous_completed=prev)
+            data.append(ch_dict)
+            prev = ch_dict.get("all_completed", False)
+        return {"is_open_world": self.is_open_world, "chapters": data}
 
-    def complete_map(self, map_id: int):
-        for chapter in self.chapters:
-            chapter.complete_map(map_id)
-
-    def complete_sub_location_check(self, sub_location: str):
-        for chapter in self.chapters:
-            chapter.complete_sub_location_check(sub_location)
-
-    def complete_check(self, location_id: int):
-        for chapter in self.chapters:
-            chapter.complete_check(location_id)
+    def complete_map(self, map_id):
+        for ch in self.chapters: ch.complete_map(map_id)
+        
+    def complete_sub_location_check(self, sub):
+        for ch in self.chapters: ch.complete_sub_location_check(sub)
+        
+    def complete_check(self, loc_id):
+        for ch in self.chapters: ch.complete_check(loc_id)

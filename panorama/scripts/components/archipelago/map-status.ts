@@ -112,13 +112,7 @@ var ArchipelagoMapStatusHUD = class {
         const mapToken = `#portal2_MapName_${formattedMapTokenName}`;
         let localizedString = $.Localize(mapToken);
         
-        const testEngineString = $.Localize("#GameUI_LoadGame");
-        if (localizedString === mapToken || testEngineString === testEngineString.toUpperCase()) {
-            $.Schedule(0.15, () => {
-                this.updateStatus(currentMapName, isManual, forceShow);
-            });
-            return;
-        }
+        
 
         if (forceShow) {
             container.AddClass('visible');

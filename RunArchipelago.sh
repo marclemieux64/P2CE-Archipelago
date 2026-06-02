@@ -85,7 +85,23 @@ if [ -f "$CLIENT_PY" ]; then
     cleanup() {
         echo "[Archipelago] Game session terminated. Cleaning up background processes..."
         if kill -0 $CLIENT_PID 2>/dev/null; then
+            echo "[Archipelago] Sending termination signal to Python client..."
             kill -TERM $CLIENT_PID
+            
+            # Wait up to 2 seconds for Python to exit cleanly
+            for ((i=0; i<20; i++)); do
+                if ! kill -0 $CLIENT_PID 2>/dev/null; then
+                    echo "[Archipelago] Python client exited cleanly."
+                    return
+                fi
+                sleep 0.1
+            done
+            
+            # Force close if it's still running
+            if kill -0 $CLIENT_PID 2>/dev/null; then
+                echo "[Archipelago] Python client ignored SIGTERM. Forcing immediate shutdown..."
+                kill -KILL $CLIENT_PID
+            fi
         fi
     }
     trap cleanup EXIT INT TERM
@@ -101,9 +117,8 @@ if [ $# -gt 0 ]; then
     GAME_COMMAND="$1"
     shift
     
-    # Append netcon parameters directly into the plain array stack rather than 
-    # forcing variable strings that trigger nested sandbox evaluations
-    exec "$GAME_COMMAND" "$@" -netconport 3000 -language "$SELECTED_LANGUAGE" > "$MOD_FOLDER/game_debug.log" 2>&1
+    # Removed 'exec' so the shell script persists to execute the cleanup trap when the game exits
+    "$GAME_COMMAND" "$@" -netconport 3000 -language "$SELECTED_LANGUAGE" > "$MOD_FOLDER/game_debug.log" 2>&1
 else
     echo "[Archipelago] ERROR: No game execution parameters provided by Steam launch pipeline."
     exit 1

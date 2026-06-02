@@ -1,6 +1,7 @@
 'use strict';
 
 declare var $: any;
+declare var UiToolkitAPI: any;
 declare var GameInterfaceAPI: any;
 interface Panel { [key: string]: any; }
 interface ImagePanel extends Panel { }
@@ -14,15 +15,14 @@ class ArchipelagoMapSelect {
     static g_SelectedMapData: any = null;
     static g_ResetSchedule: any = null;
 
-    // Ordre de tri strict demandé pour aligner définitivement les fichiers SVG d'items
     static ITEM_SORT_ORDER: { [key: string]: number } = {
         "portalgun1": 1,          // Portal Gun
         "portalgun2": 2,          // Upgraded Portal Gun
         "weightedcube": 3,        // Weighted Cubes
-        "lasercube": 4,           // Redirection Cubes (reflection_cube)
+        "lasercube": 4,           // Redirection Cubes
         "button": 5,              // Buttons
         "weightedfloorbutton": 6, // Floor Buttons
-        "cubebutton": 7,          // Cube Buttons (préservé au cas où)
+        "cubebutton": 7,          // Cube Buttons
         "ballfloorbutton": 8,     // Ball Buttons
         "ballcube": 9,            // Spherical Cubes
         "laser": 10,              // Lasers
@@ -105,6 +105,24 @@ class ArchipelagoMapSelect {
         }
     }
 
+    static applyColorCode(panel: Panel, valid: number, total: number) {
+        if (!panel || !panel.IsValid()) return;
+        panel.RemoveClass('progress--red');
+        panel.RemoveClass('progress--yellow');
+        panel.RemoveClass('progress--green');
+
+        if (total === 0 || valid === 0) {
+            panel.AddClass('progress--red');
+            panel.style.color = "#ff4444"; // Force le Rouge si aucun emplacement n'est accessible
+        } else if (valid < total) {
+            panel.AddClass('progress--yellow');
+            panel.style.color = "#ffcc00"; // Force le Jaune si l'accès est partiel
+        } else if (valid === total) {
+            panel.AddClass('progress--green');
+            panel.style.color = "#33cc33"; // Force le Vert si tout est accessible / fini
+        }
+    }
+
     static onLoad() {
         this.g_LastApiJson = '';
         $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
@@ -152,7 +170,7 @@ class ArchipelagoMapSelect {
                 }
 
                 const mappedData: any = {};
-                if (status.menu.chapters) {
+                if (status.menu && status.menu.chapters) {
                     status.menu.chapters.forEach((ch: any) => {
                         mappedData[ch.chapter_number] = ch;
                     });
@@ -311,6 +329,7 @@ class ArchipelagoMapSelect {
     }
 
     static selectMap(mapData: any, bShowPlayButton: boolean = true) {
+        this.g_SelectedMapData = mapData;
         const previewImage = $('#PreviewImage') as ImagePanel;
         const mapSubtitleLabel = $('#MapSubtitleLabel') as LabelPanel;
         
@@ -332,47 +351,46 @@ class ArchipelagoMapSelect {
         }
 
         if (mapSubtitleLabel && mapSubtitleLabel.IsValid()) {
-            mapSubtitleLabel.text = mapData.title || "";
+            if (mapData.is_chapter) {
+                mapSubtitleLabel.text = mapData.title || "";
+            } else {
+                let mapCleanToken = mapData.title || "";
+                mapSubtitleLabel.text = $.Localize(`#portal2_MapName_${mapCleanToken}`);
+            }
         }
 
-        // 1. Rendu des icônes de statut (Vérifications) restauré en balises <Image> standard
         if (indicatorsContainer && indicatorsContainer.IsValid()) {
-    indicatorsContainer.RemoveAndDeleteChildren();
-    const statusList = mapData.status_text_list || [];
-    statusList.forEach((svgName: string, i: number) => {
-        // Créer une balise Image standard pour garantir la netteté vectorielle
-        const imgPanel = $.CreatePanel('Image', indicatorsContainer, 'StatusIcon_' + i) as ImagePanel;
-        imgPanel.AddClass('status_svg_icon');
-        // Ne pas utiliser style.backgroundImage, utilisez SetImage()
-        imgPanel.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
-    });
-}
+            indicatorsContainer.RemoveAndDeleteChildren();
+            const statusList = mapData.status_text_list || [];
+            statusList.forEach((svgName: string, i: number) => {
+                const imgPanel = $.CreatePanel('Image', indicatorsContainer, 'StatusIcon_' + i) as ImagePanel;
+                imgPanel.AddClass('status_svg_icon');
+                imgPanel.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+            });
+        }
 
-// 2. Rendu des icônes d'items (Prérequis) avec Tri Immuable
-if (iconsContainer && iconsContainer.IsValid()) {
-    iconsContainer.RemoveAndDeleteChildren();
-    if (mapData.required_item_icons && mapData.required_item_icons.length > 0) {
-        const sortedItemIcons = [...mapData.required_item_icons];
-        sortedItemIcons.sort((a: string, b: string) => {
-            const orderA = ArchipelagoMapSelect.ITEM_SORT_ORDER[a] || 99;
-            const orderB = ArchipelagoMapSelect.ITEM_SORT_ORDER[b] || 99;
-            return orderA - orderB;
-        });
+        if (iconsContainer && iconsContainer.IsValid()) {
+            iconsContainer.RemoveAndDeleteChildren();
+            if (mapData.required_item_icons && mapData.required_item_icons.length > 0) {
+                const sortedItemIcons = [...mapData.required_item_icons];
+                sortedItemIcons.sort((a: string, b: string) => {
+                    const orderA = ArchipelagoMapSelect.ITEM_SORT_ORDER[a] || 99;
+                    const orderB = ArchipelagoMapSelect.ITEM_SORT_ORDER[b] || 99;
+                    return orderA - orderB;
+                });
 
-        sortedItemIcons.forEach((svgName: string, i: number) => {
-            // Utiliser Image pour forcer le rendu vectoriel net
-            const imgPanel = $.CreatePanel('Image', iconsContainer, 'ReqIcon_' + i) as ImagePanel;
-            imgPanel.AddClass('requirement_svg_icon');
-            imgPanel.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
-        });
-    }
-}
+                sortedItemIcons.forEach((svgName: string, i: number) => {
+                    const imgPanel = $.CreatePanel('Image', iconsContainer, 'ReqIcon_' + i) as ImagePanel;
+                    imgPanel.AddClass('requirement_svg_icon');
+                    imgPanel.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                });
+            }
+        }
 
         const showDetails = !mapData.is_chapter;
         if (checks && checks.IsValid()) {
             checks.visible = showDetails;
         }
-
         if (reqs && reqs.IsValid()) {
             reqs.visible = showDetails;
         }
@@ -382,7 +400,6 @@ if (iconsContainer && iconsContainer.IsValid()) {
 
         if (playButton && playButton.IsValid()) {
             playButton.visible = (showDetails && bShowPlayButton);
-            
             const isDeactivated = mapData.command_deactivated !== null && mapData.command_deactivated !== false && mapData.command_deactivated !== undefined;
             this.g_SelectedMapCommand = (!isDeactivated && mapData.command) ? mapData.command : (typeof mapData.command_deactivated === 'string' ? mapData.command_deactivated : "");
             
@@ -497,23 +514,25 @@ if (iconsContainer && iconsContainer.IsValid()) {
                 statusLabel.style.marginRight = "15px";
             }
 
-            const chStatus = entry.FindChildTraverse(`ChapterStatus_${chId}`) as LabelPanel;
+            const chStatus = entry.FindChildTraverse('ChapterStatus_' + chId) as LabelPanel;
             if (chStatus && chStatus.IsValid()) {
                 if (chapter.all_completed) {
                     chStatus.text = "£";
                     chStatus.visible = true;
+                    this.applyColorCode(chStatus, 1, 1);
                 } else if (chapter.progress_text && !isHidingCounts) {
                     chStatus.text = chapter.progress_text;
                     chStatus.visible = true;
+                    this.applyColorCode(chStatus, chapter.valid_count || 0, chapter.total_count || 0);
                 } else {
                     chStatus.visible = false;
                 }
             }
 
-            const chTitle = entry.FindChildTraverse(`ChapterTitle_${chId}`) as LabelPanel;
+            const chTitle = entry.FindChildTraverse('ChapterTitle_' + chId) as LabelPanel;
             if (chTitle && chTitle.IsValid()) chTitle.text = $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title;
 
-            const chDesc = entry.FindChildTraverse(`ChapterSubtitle_${chId}`) as LabelPanel;
+            const chDesc = entry.FindChildTraverse('ChapterSubtitle_' + chId) as LabelPanel;
             if (chDesc && chDesc.IsValid()) chDesc.text = $.Localize(`#portal2_Chapter${chId}_Subtitle`) || chapter.subtitle || "";
 
             let mapList = container.FindChild(`ChapterMaps_${chId}`);
@@ -627,16 +646,21 @@ if (iconsContainer && iconsContainer.IsValid()) {
                     }
 
                     const mName = mapBtn.FindChildTraverse(`MapName_${chId}_${index}`) as LabelPanel;
-                    if (mName && mName.IsValid()) mName.text = map.title;
+                    if (mName && mName.IsValid()) {
+                        let listCodeName = map.title || "";
+                        mName.text = $.Localize(`#portal2_MapName_${listCodeName}`);
+                    }
 
                     const mProg = mapBtn.FindChildTraverse(`MapProgress_${chId}_${index}`) as LabelPanel;
                     if (mProg && mProg.IsValid()) {
                         if (map.progress_text && !isHidingCounts && !isDeactivated) {
                             mProg.text = map.progress_text;
                             mProg.visible = true;
+                            this.applyColorCode(mProg, map.valid_count || 0, map.total_count || 0);
                         } else if (map.completed && !isDeactivated) {
                             mProg.text = "£";
                             mProg.visible = true;
+                            this.applyColorCode(mProg, 1, 1);
                         } else {
                             mProg.visible = false;
                         }

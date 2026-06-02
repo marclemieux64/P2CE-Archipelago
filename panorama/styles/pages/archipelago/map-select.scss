@@ -173,6 +173,9 @@
     vertical-align: center;
     horizontal-align: right;
     margin-right: 10px;
+    img-shadow: 1px 1px 3px 3.0 #333333b0 alpha-only;
+
+
 
     &.icon--locked {
         width: 18px;
@@ -294,6 +297,9 @@
     max-width: 60px;      // FIX NETTETÉ ABSOLUE : Utilisation des contraintes max fluides
     max-height: 60px;     // Élimine la pixelisation causée par l'étirement forcé des textures
     vertical-align: center;
+    img-shadow: 2px 2px 1px 3.0 #333333b0 alpha-only;
+
+
 }
 
 // STRUCTURE POUR LES PRÉREQUIS D'ITEMS EN SVG (BOÎTE DE DROITE)
@@ -311,6 +317,9 @@
     max-height: 60px;     // Élimine la pixelisation causée par l'étirement forcé des textures
     vertical-align: center;
     margin-right: 0px;
+    img-shadow: 2px 2px 5px 3.0 #333333b0 alpha-only;
+
+
 }
 
 //=============================================================================

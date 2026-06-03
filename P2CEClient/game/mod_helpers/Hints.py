@@ -14,17 +14,28 @@ class HintManager:
     def process_hints(self, raw_hints: list):
         self.hint_log.clear()
         for h in raw_hints:
+            if not isinstance(h, dict):
+                continue
             try:
                 rec_id = h.get("receiving_player")
                 find_id = h.get("finding_player")
                 item_id = h.get("item")
                 loc_id = h.get("location")
                 
-                # Fetching names safely from context
-                rec = self.ctx.player_names.get(rec_id, str(rec_id))
-                find = self.ctx.player_names.get(find_id, str(find_id))
-                item_name = self.ctx.item_names.lookup_in_slot(item_id, rec_id)
-                loc_name = self.ctx.location_names.lookup_in_slot(loc_id, find_id)
+                # Coercition de type sécurisée et double vérification d'index (int vs string)
+                rec = self.ctx.player_names.get(int(rec_id)) or self.ctx.player_names.get(str(rec_id)) or f"Player {rec_id}"
+                find = self.ctx.player_names.get(int(find_id)) or self.ctx.player_names.get(str(find_id)) or f"Player {find_id}"
+                
+                # Résilience multi-jeux complète pour parer aux ID inconnus des autres mondes
+                try:
+                    item_name = self.ctx.item_names.lookup_in_slot(int(item_id), int(rec_id))
+                except Exception:
+                    item_name = f"Item {item_id}"
+
+                try:
+                    loc_name = self.ctx.location_names.lookup_in_slot(int(loc_id), int(find_id))
+                except Exception:
+                    loc_name = f"Location {loc_id}"
                 
                 # Create the HTML string with colors
                 txt_html = (f"<font color='#ff7f50'>{rec}</font>'s "

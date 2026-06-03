@@ -18,12 +18,12 @@
 				
 				<Panel id="HUDColumnsWrapper" class="hud_columns_wrapper">
 					<Panel id="ChecksColumn" class="info_column">
-						<Label class="section-label" text="#Archipelago_Map_Checks" />
+						<Label id="ChecksTitleLabel" class="section-label" text="Checks Found" />
 						<Panel id="StatusIcons" class="status_svg_container" />
 					</Panel>
 
 					<Panel id="RequirementsColumn" class="info_column">
-						<Label id="MissingLabel" class="section-label" text="#Archipelago_Map_MissingItems" />
+						<Label id="MissingTitleLabel" class="section-label" text="Missing Items Required" />
 						<Panel id="MissingIcons" class="status_svg_container" />
 					</Panel>
 				</Panel>

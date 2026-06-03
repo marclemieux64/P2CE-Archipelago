@@ -24,7 +24,6 @@
     border: 1px solid rgba(255, 255, 255, 0.05) !important;
     border-radius: 4px;
     flow-children: right;
-    overflow: clip;
 }
 
 .accent-bar {
@@ -36,9 +35,8 @@
 .content {
     flow-children: down;
     padding: 14px 18px;
-    width: fit-children;
-    transition-property: height;
-    transition-duration: 0.2s;
+    width: 495px;
+    height: fit-children;
 }
 
 .hud_columns_wrapper {
@@ -53,15 +51,15 @@
     font-size: 30px;
     color: #eeeeee;
     text-shadow: 0px 0px 8px #ffffff11;
+    margin-bottom: 8px;
 }
 
 .info_column {
     flow-children: down;
     margin-bottom: 10px;
-    width: fit-children;
-    min-width: fit-content;
-    height: 82px; // Hauteur maintenue pour correspondre à map-select
-    overflow: clip; 
+    width: 320px; // Largeur fixe explicite pour casser la boucle de dimension fit-children parentale
+    height: fit-children; 
+    min-height: 82px;
     
     background-color: #ffffff04;
     border: 1px solid #ffffff11;
@@ -75,29 +73,29 @@
     font-size: 14px;
     color: #ffffff44;
     text-transform: uppercase;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 
 .status_svg_container {
     flow-children: right;
     width: fit-children;
-    height: fill-parent-flow(1.0);
+    height: 48px;
     vertical-align: center;
 }
 
 .status_svg_icon {
-    width: 48px; // Taille fixe pour garantir l'alignement
+    width: 48px; 
     height: 48px;
-    vertical-align: center; // Centrage vertical strict
-    margin-right: 4px;
+    vertical-align: center; 
+    margin-right: 6px;
     img-shadow: 2px 2px 5px 3.0 #333333b0 alpha-only;
 }
 
 .requirement_svg_icon {
-    width: 48px; // Taille fixe pour garantir l'alignement
+    width: 48px; 
     height: 48px;
-    vertical-align: center; // Centrage vertical strict
-    margin-right: 4px;
+    vertical-align: center; 
+    margin-right: 6px;
     img-shadow: 2px 2px 5px 3.0 #333333b0 alpha-only;
 }    
 

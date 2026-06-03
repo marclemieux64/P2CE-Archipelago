@@ -3,8 +3,12 @@
 declare var GameInterfaceAPI: any;
 
 class ArchipelagoSync {
-    static VERSION: string = "1.0.9"; 
+    static VERSION: string = "1.1.0"; 
     static ENABLE_DEBUG: boolean = false;
+    
+    // Cache local pour eviter l'evaluation repetitive de parseApiStatus()
+    static m_LastParsedMenuVersion: number = -1;
+    static m_CachedChapters: any = null;
 
     static getCompletionSymbol(): string {
         return ($.persistentStorage.getItem('CompletionSymbol') ?? 0) === 1 ? "★" : "£";
@@ -171,7 +175,14 @@ class ArchipelagoSync {
         const apiStatus = api ? api.getStatus() : null;
         if (!apiStatus || !apiStatus.menu) return;
 
-        const chapters = this.parseApiStatus(apiStatus);
+        // Verification du tracking de version pour sauter le processing lourd
+        const currentMenuVersion = api.m_MenuVersion || 0;
+        if (currentMenuVersion !== this.m_LastParsedMenuVersion || !this.m_CachedChapters) {
+            this.m_CachedChapters = this.parseApiStatus(apiStatus);
+            this.m_LastParsedMenuVersion = currentMenuVersion;
+        }
+        
+        const chapters = this.m_CachedChapters;
         let currentMapData: any = null;
 
         for (const chId in chapters) {
@@ -195,7 +206,6 @@ class ArchipelagoSync {
 
         const statusIconsList: string[] = currentMapData.statusIcons || [];
 
-        // FIX: Aligné sur la chaîne "ratmansdent" pour assurer un mapping correct
         let ratmanStatus = (statusIconsList.indexOf("ratmansdent") === -1) ? 1 : 0;
         let hasCheck = statusIconsList.indexOf("check") !== -1;
         

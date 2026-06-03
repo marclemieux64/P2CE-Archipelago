@@ -26,6 +26,11 @@ class APIServer:
             "chat_key": None, "chat_json": b"", "chat_etag": "",
             "hints_key": None, "hints_json": b"", "hints_etag": ""
         }
+        
+        # Tracking de version pour découpler la sérialisation du menu principal
+        self._menu_version = 0
+        self._last_menu_key = None
+        self._cached_menu_dict = None
 
     def start(self):
         client_self = self.ctx
@@ -57,10 +62,27 @@ class APIServer:
                     except (ValueError, IndexError):
                         last_chat_id = -1
 
+                    try:
+                        client_menu_version = int(query.get('menu_version', [-1])[0])
+                    except (ValueError, IndexError):
+                        client_menu_version = -1
+
                     chat_log = client_self.notifier.chat_log
                     chat_delta = [msg for msg in chat_log if msg["id"] > last_chat_id]
 
-                    # Clé de cache composite incluant le delta de chat pour invalider au bon moment
+                    # Calcul de validité de l'état structurel du menu des maps
+                    current_menu_key = (
+                        len(client_self.checked_locations),
+                        len(client_self.items_received) if hasattr(client_self, "items_received") else 0,
+                        client_self.slot
+                    )
+                    
+                    if current_menu_key != server_self._last_menu_key:
+                        server_self._last_menu_key = current_menu_key
+                        server_self._menu_version += 1
+                        server_self._cached_menu_dict = client_self.menu.to_dict() if client_self.menu else None
+
+                    # Clé de cache composite incluant l'identifiant de la taille de hint_log
                     current_key = (
                         is_conn,
                         client_self.check_game_connection(),
@@ -69,11 +91,17 @@ class APIServer:
                         getattr(client_self, "hint_points", 0),
                         getattr(client_self, "hint_cost", 0),
                         getattr(client_self, "logic_difficulty", 0),
-                        len(chat_delta)
+                        len(chat_delta),
+                        client_menu_version,
+                        server_self._menu_version,
+                        len(client_self.notifier.hint_log)  # FIX : Invalidation immédiate lors de mises à jour d'indices passifs
                     )
 
                     if current_key != server_self._cache["sync_key"]:
                         server_self._cache["sync_key"] = current_key
+                        
+                        # Si l'interface possède déjà la version à jour, on omet le dictionnaire complet
+                        should_send_menu = (client_menu_version != server_self._menu_version)
                         
                         payload = {
                             "connected": is_conn,
@@ -84,7 +112,8 @@ class APIServer:
                             "hint_points": getattr(client_self, "hint_points", 0),
                             "hint_cost": getattr(client_self, "hint_cost", 0),
                             "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
-                            "menu": client_self.menu.to_dict() if client_self.menu else None,
+                            "menu_version": server_self._menu_version,
+                            "menu": server_self._cached_menu_dict if should_send_menu else None,
                             "chat_delta": chat_delta,
                             "hints": client_self.notifier.hint_log,
                             "persistent_death_time": getattr(client_self.deathlink_handler, 'last_death_link_executed', 0.0)
@@ -101,7 +130,7 @@ class APIServer:
 
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
-                    self.send_header('Content-Length', str(len(server_self._cache["sync_json"]))) # FIX: Longueur explicite
+                    self.send_header('Content-Length', str(len(server_self._cache["sync_json"])))
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.send_header('ETag', server_self._cache["sync_etag"])
                     self.end_headers()
@@ -152,7 +181,7 @@ class APIServer:
                         
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
-                    self.send_header('Content-Length', str(len(server_self._cache["status_json"]))) # FIX: Longueur explicite
+                    self.send_header('Content-Length', str(len(server_self._cache["status_json"])))
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.send_header('ETag', server_self._cache["status_etag"])
                     self.end_headers()
@@ -177,7 +206,7 @@ class APIServer:
                         
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
-                    self.send_header('Content-Length', str(len(server_self._cache["chat_json"]))) # FIX: Longueur explicite
+                    self.send_header('Content-Length', str(len(server_self._cache["chat_json"])))
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.send_header('ETag', server_self._cache["chat_etag"])
                     self.end_headers()
@@ -202,7 +231,7 @@ class APIServer:
                         
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
-                    self.send_header('Content-Length', str(len(server_self._cache["hints_json"]))) # FIX: Longueur explicite
+                    self.send_header('Content-Length', str(len(server_self._cache["hints_json"])))
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.send_header('ETag', server_self._cache["hints_etag"])
                     self.end_headers()

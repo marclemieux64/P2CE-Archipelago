@@ -664,20 +664,19 @@ class P2CEContext(CommonContext):
                     self.go_mode_announced = True
                     self.notifier.trigger_go_mode()
 
-        if cmd == "Retrieved":
-            if f"_read_item_name_groups_{self.game}" in args["keys"]:
-                self.item_list = args["keys"][f"_read_item_name_groups_{self.game}"]["Everything"]
+        # FIX : Capture des notifications de changements d'indices en provenance des autres joueurs
+        if cmd in ("Retrieved", "RoomUpdate"):
+            if "keys" in args:
+                if f"_read_item_name_groups_{self.game}" in args["keys"]:
+                    self.item_list = args["keys"][f"_read_item_name_groups_{self.game}"]["Everything"]
+                
+                hkey = f"_read_hints_{self.team}_{self.slot}"
+                if hkey in args["keys"]:
+                    self.notifier.process_hints(args["keys"][hkey])
             update_item_list()
             self.update_item_remove_commands()
-            
-            hkey = f"_read_hints_{self.team}_{self.slot}"
-            if hkey in args["keys"]:
-                self.notifier.process_hints(args["keys"][hkey])
-
-            if self.team is not None:
-                death_sync_key = f"ap_persistent_deaths_{self.team}"
-                if death_sync_key in args["keys"] and args["keys"][death_sync_key] is not None:
-                    self.check_and_apply_persistent_death(args["keys"][death_sync_key])
+            if cmd == "Retrieved":
+                return
 
         if cmd == "SetReply":
             if self.team is not None:
@@ -723,11 +722,15 @@ class P2CEContext(CommonContext):
                 death_sync_key = f"ap_persistent_deaths_{self.team}"
                 self.stored_data_notification_keys.add(death_sync_key)
                 
+                # FIX : Enregistrement persistant de l'amarre de suivi des indices globaux
+                hkey = f"_read_hints_{self.team}_{self.slot}"
+                self.stored_data_notification_keys.add(hkey)
+                
                 local_timestamp = self.deathlink_handler.last_processed_time
                 async_start(self.send_msgs([
                     {"cmd": "Set", "key": death_sync_key, "default": 0.0, "want_reply": False, "operations": [{"operation": "max", "value": local_timestamp}]},
-                    {"cmd": "Get", "keys": [death_sync_key]},
-                    {"cmd": "SetNotify", "keys": [death_sync_key]}
+                    {"cmd": "Get", "keys": [death_sync_key, hkey]},
+                    {"cmd": "SetNotify", "keys": [death_sync_key, hkey]}
                 ]))
 
     def parse_message(self, data: list[dict], sending: int | None = None) -> str:

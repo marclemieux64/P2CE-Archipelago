@@ -10,7 +10,7 @@ const globalObj = UiToolkitAPI.GetGlobalObject() as any;
 
 if (!globalObj.ArchipelagoAPI) {
     class ArchipelagoAPI {
-        static VERSION: string = "3.1.1"; 
+        static VERSION: string = "3.1.3"; 
         static API_BASE: string = "http://127.0.0.1:8910";
         
         static m_Status: any = null;
@@ -20,12 +20,13 @@ if (!globalObj.ArchipelagoAPI) {
         static m_PollSchedule: any = null;
         static m_SyncETag: string = "";
         static m_LastChatId: number = -1;
+        static m_MenuVersion: number = 0;
 
         static m_StatusListeners: { panel: any, callback: (data: any) => void }[] = [];
         static m_ChatListeners: { panel: any, callback: (data: any) => void }[] = [];
 
         static init() {
-            $.Msg("[AP] Initializing Safe Single-Pulse Delta Sync Pipeline");
+            $.Msg("[AP] Initializing Capped Window Chat & Delta Status Sync Pipeline");
             this.startPolling();
         }
 
@@ -43,7 +44,7 @@ if (!globalObj.ArchipelagoAPI) {
                 headers["If-None-Match"] = this.m_SyncETag;
             }
 
-            const url = `${this.API_BASE}/api/sync?last_chat=${this.m_LastChatId}`;
+            const url = `${this.API_BASE}/api/sync?last_chat=${this.m_LastChatId}&menu_version=${this.m_MenuVersion}`;
 
             $.AsyncWebRequest(url, {
                 type: 'GET',
@@ -63,22 +64,42 @@ if (!globalObj.ArchipelagoAPI) {
                         try {
                             const data = JSON.parse(sanitizedResponse);
                             
-                            this.m_Status = data;
+                            if (data.menu_version !== undefined) {
+                                if (data.menu) {
+                                    this.m_Status = data;
+                                    this.m_MenuVersion = data.menu_version;
+                                } else {
+                                    if (this.m_Status && this.m_Status.menu) {
+                                        data.menu = this.m_Status.menu;
+                                    }
+                                    this.m_Status = data;
+                                    this.m_MenuVersion = data.menu_version;
+                                }
+                            } else {
+                                this.m_Status = data;
+                            }
+
                             this.m_Hints = data.hints || [];
-                            this.dispatchStatusUpdate(data);
+                            this.dispatchStatusUpdate(this.m_Status);
 
                             if (data.chat_delta && data.chat_delta.length > 0) {
                                 this.m_Chat = this.m_Chat.concat(data.chat_delta);
+                                
+                                // Élimine les fuites de mémoire en limitant la taille aux 100 derniers messages
+                                if (this.m_Chat.length > 100) {
+                                    this.m_Chat = this.m_Chat.slice(this.m_Chat.length - 100);
+                                }
+                                
                                 this.m_LastChatId = data.chat_delta[data.chat_delta.length - 1].id;
-                                this.dispatchChatUpdate(data.chat_delta);
+                                this.dispatchChatUpdate(this.m_Chat);
                             }
                         } catch (e) {
                             $.Warning("[AP] SyntaxError prevention triggered during single-pulse resolution: " + e);
                         }
                     } else {
-                        // FIX COMPORTEMENT : Si le serveur est éteint (status 0), on propage activement l'état offline
-                        const offlinePayload = { connected: false, game_connected: false, client_offline: true, menu: null };
+                        const offlinePayload = { connected: false, game_connected: false, client_offline: true, menu: null, menu_version: 0 };
                         this.m_Status = offlinePayload;
+                        this.m_MenuVersion = 0;
                         this.dispatchStatusUpdate(offlinePayload);
                     }
                 }
@@ -138,11 +159,11 @@ if (!globalObj.ArchipelagoAPI) {
             try { $.DispatchEvent("ArchipelagoAPI_StatusUpdated", data); } catch(e) {}
         }
 
-        static dispatchChatUpdate(chatDelta: any[]) {
+        static dispatchChatUpdate(chatList: any[]) {
             this.m_ChatListeners.forEach(l => {
-                if (l.panel && l.panel.IsValid()) l.callback(chatDelta);
+                if (l.panel && l.panel.IsValid()) l.callback(chatList);
             });
-            try { $.DispatchEvent("ArchipelagoAPI_ChatUpdated", chatDelta); } catch(e) {}
+            try { $.DispatchEvent("ArchipelagoAPI_ChatUpdated", chatList); } catch(e) {}
         }
     }
 

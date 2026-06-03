@@ -22,40 +22,84 @@ var ArchipelagoMapStatusHUD = class {
 
     static init() {
         $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
+            if (!payload) return;
             const parts = payload.split('|');
-            this.m_CurrentMapName = parts[0];
+            ArchipelagoMapStatusHUD.m_CurrentMapName = parts[0] || "";
             const isManual = parts[1] === "1";
-            if (this.m_HideSchedule) { $.CancelScheduled(this.m_HideSchedule); this.m_HideSchedule = null; }
-            this.m_LastStatusKey = "";
-            this.m_LastMissingKey = "";
-            if (isManual) { this.updateStatus(this.m_CurrentMapName, true, true); } 
-            else { $.Schedule(0.5, () => this.updateStatus(this.m_CurrentMapName, false, true)); }
+            
+            if (ArchipelagoMapStatusHUD.m_HideSchedule) { 
+                $.CancelScheduled(ArchipelagoMapStatusHUD.m_HideSchedule); 
+                ArchipelagoMapStatusHUD.m_HideSchedule = null; 
+            }
+            
+            ArchipelagoMapStatusHUD.m_LastStatusKey = "";
+            ArchipelagoMapStatusHUD.m_LastMissingKey = "";
+            
+            if (isManual) { 
+                ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, true, true); 
+            } else { 
+                $.Schedule(0.5, () => ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, true)); 
+            }
         });
 
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
             api.registerStatusListener($.GetContextPanel(), (payload: any) => {
-                if (this.m_CurrentMapName) this.updateStatus(this.m_CurrentMapName, false, this.m_PendingShow);
+                if (ArchipelagoMapStatusHUD.m_CurrentMapName) {
+                    ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, ArchipelagoMapStatusHUD.m_PendingShow);
+                }
             });
         }
     }
 
     static updateStatus(currentMapName: string, isManual: boolean, forceShow: boolean) {
-        if ($.persistentStorage.getItem('ap_show_map_status_hud') == 1) return;
+        if (!currentMapName || typeof currentMapName !== 'string') return;
 
         const container = $.GetContextPanel();
+        if (!container || !container.IsValid()) return;
+
+        // PROTECTION CONTRE L'ÉTIREMENT : Bloque immédiatement les dimensions au strict minimum requis par les enfants
+        container.style.width = "fit-children";
+        container.style.height = "fit-children";
+        container.style.horizontalAlign = "left";
+
+        const mainContainerPanel = container.FindChildTraverse('MainContainer');
+        if (mainContainerPanel) {
+            mainContainerPanel.style.width = "fit-children";
+            mainContainerPanel.style.height = "fit-children";
+        }
+
+        const wrapperPanel = container.FindChildTraverse('HUDColumnsWrapper');
+        if (wrapperPanel) {
+            wrapperPanel.style.width = "fit-children";
+            wrapperPanel.style.height = "fit-children";
+        }
+
+        const hudSetting = $.persistentStorage.getItem('ap_show_map_status_hud');
+        if (hudSetting !== null && (hudSetting == 1 || hudSetting == '1' || hudSetting === true)) {
+            container.RemoveClass('visible');
+            container.AddClass('collapse');
+            return;
+        }
+
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
         
         let apiStatus = api ? api.getStatus() : null;
-        if (!apiStatus || !apiStatus.menu) { if (forceShow) this.m_PendingShow = true; return; }
+        if (!apiStatus || !apiStatus.menu) { 
+            if (forceShow) ArchipelagoMapStatusHUD.m_PendingShow = true; 
+            return; 
+        }
 
-        this.m_PendingShow = false;
+        ArchipelagoMapStatusHUD.m_PendingShow = false;
         const chapters = syncHelper.parseApiStatus(apiStatus);
         let currentMapData: any = null;
+        
         for (const chId in chapters) {
+            if (!chapters[chId] || !chapters[chId].maps) continue;
             for (const map of chapters[chId].maps) {
-                if (map.command && map.command.toLowerCase().indexOf(currentMapName.toLowerCase()) !== -1) {
+                const fullCmdStr = map.command || map.command_deactivated || "";
+                if (fullCmdStr && fullCmdStr.toLowerCase().indexOf(currentMapName.toLowerCase()) !== -1) {
                     currentMapData = map;
                     break;
                 }
@@ -65,6 +109,29 @@ var ArchipelagoMapStatusHUD = class {
 
         if (!currentMapData) return;
 
+        const titleLabel = container.FindChildTraverse('MapTitle') as LabelPanel;
+        const statusIconsContainer = container.FindChildTraverse('StatusIcons');
+        const missingIconsContainer = container.FindChildTraverse('MissingIcons');
+
+        if (!titleLabel || !statusIconsContainer || !missingIconsContainer) return;
+
+        if (forceShow) {
+            container.AddClass('visible');
+            container.RemoveClass('collapse');
+            container.RemoveClass('hide');
+            container.RemoveClass('hidden');
+
+            if (ArchipelagoMapStatusHUD.m_HideSchedule) $.CancelScheduled(ArchipelagoMapStatusHUD.m_HideSchedule);
+            ArchipelagoMapStatusHUD.m_HideSchedule = $.Schedule(5.0, () => { 
+                if (container.IsValid()) {
+                    container.RemoveClass('visible');
+                }
+                ArchipelagoMapStatusHUD.m_HideSchedule = null; 
+            });
+        }
+
+        if (!container.HasClass('visible')) return;
+
         let mapCmdName = currentMapName;
         const fullCommand = currentMapData.command || currentMapData.command_deactivated || "";
         if (fullCommand) {
@@ -73,45 +140,58 @@ var ArchipelagoMapStatusHUD = class {
         }
 
         const mapToken = `#portal2_MapName_${mapCmdName.startsWith("sp_") ? "SP_" + mapCmdName.substring(3) : mapCmdName.startsWith("coop_") ? "COOP_" + mapCmdName.substring(5) : mapCmdName}`;
-        
-        if (forceShow) {
-            container.AddClass('visible');
-            container.RemoveClass('collapse');
-            if (this.m_HideSchedule) $.CancelScheduled(this.m_HideSchedule);
-            this.m_HideSchedule = $.Schedule(5.0, () => { container.RemoveClass('visible'); this.m_HideSchedule = null; });
+        titleLabel.text = $.Localize(mapToken);
+
+        // FALLBACK DES EN-TÊTES : Empêche l'effondrement à 0px de hauteur si le fichier de traduction est absent
+        const checksColumn = container.FindChildTraverse('ChecksColumn');
+        if (checksColumn) {
+            checksColumn.style.width = "fit-children";
+            checksColumn.style.height = "fit-children";
+            const label = checksColumn.GetChild(0) as LabelPanel;
+            if (label) {
+                const localizedText = $.Localize("#Archipelago_Map_Checks");
+                label.text = (localizedText === "#Archipelago_Map_Checks" || localizedText === "") ? "Checks Found" : localizedText;
+            }
+        }
+        const reqsColumn = container.FindChildTraverse('RequirementsColumn');
+        if (reqsColumn) {
+            reqsColumn.style.width = "fit-children";
+            reqsColumn.style.height = "fit-children";
+            const label = reqsColumn.GetChild(0) as LabelPanel;
+            if (label) {
+                const localizedText = $.Localize("#Archipelago_Map_MissingItems");
+                label.text = (localizedText === "#Archipelago_Map_MissingItems" || localizedText === "") ? "Missing Items Required" : localizedText;
+            }
         }
 
-        if (!container.HasClass('visible')) return;
-
-        // TITRE : Localisation simple, sans coloration dynamique
-        $('#MapTitle').text = $.Localize(mapToken);
-
-        // ICÔNES STATUT
+        // RE-MAPPING DES CLÉS : Extraction alignée sur la structure d'ArchipelagoSync (statusIcons)
         const statusIconsList = currentMapData.statusIcons || [];
         const currentStatusKey = statusIconsList.join(",");
-        if (this.m_LastStatusKey !== currentStatusKey) {
-            this.m_LastStatusKey = currentStatusKey;
-            const iconsContainer = $('#StatusIcons');
-            iconsContainer.RemoveAndDeleteChildren();
+        if (ArchipelagoMapStatusHUD.m_LastStatusKey !== currentStatusKey) {
+            ArchipelagoMapStatusHUD.m_LastStatusKey = currentStatusKey;
+            statusIconsContainer.RemoveAndDeleteChildren();
             statusIconsList.forEach((svgName: string, i: number) => {
-                const img = $.CreatePanel('Image', iconsContainer, 'StatusHUDIcon_' + i) as ImagePanel;
-                img.AddClass('status_svg_icon');
-                img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                const img = $.CreatePanel('Image', statusIconsContainer, 'StatusHUDIcon_' + i) as ImagePanel;
+                if (img) {
+                    img.AddClass('status_svg_icon');
+                    img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                }
             });
         }
 
-        // ICÔNES PRÉREQUIS
+        // RENDU DES OBJETS REQUIS MANQUANTS
         const missingItemsList = currentMapData.required_item_icons || [];
         const currentMissingKey = missingItemsList.join(",");
-        if (this.m_LastMissingKey !== currentMissingKey) {
-            this.m_LastMissingKey = currentMissingKey;
-            const missingContainer = $('#MissingIcons');
-            missingContainer.RemoveAndDeleteChildren();
+        if (ArchipelagoMapStatusHUD.m_LastMissingKey !== currentMissingKey) {
+            ArchipelagoMapStatusHUD.m_LastMissingKey = currentMissingKey;
+            missingIconsContainer.RemoveAndDeleteChildren();
             [...missingItemsList].sort((a, b) => (ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[a] || 99) - (ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[b] || 99))
                 .forEach((svgName: string, i: number) => {
-                    const img = $.CreatePanel('Image', missingContainer, 'MissingHUDIcon_' + i) as ImagePanel;
-                    img.AddClass('requirement_svg_icon');
-                    img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                    const img = $.CreatePanel('Image', missingIconsContainer, 'MissingHUDIcon_' + i) as ImagePanel;
+                    if (img) {
+                        img.AddClass('requirement_svg_icon');
+                        img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                    }
                 });
         }
     }

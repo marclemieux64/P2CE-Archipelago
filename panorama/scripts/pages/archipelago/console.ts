@@ -29,7 +29,7 @@ class ArchipelagoConsole {
         "blue": "#77aaff", "magenta": "#ee82ee", "cyan": "#00ffff",
         "white": "#ffffff", "black": "#000000", "gold": "#ffd700",
         "plum": "#dda0dd", "salmon": "#fa8072", "slate": "#708090",
-        "brown": "#8b4513", "orange": "#ffa500", "pink": "#ffc0cb",
+        "brown": "#8b4313", "orange": "#ffa500", "pink": "#ffc0cb",
         "purple": "#800080", "grey": "#808080"
     };
 
@@ -46,11 +46,9 @@ class ArchipelagoConsole {
             input.SetPanelEvent('onfocus', () => { wrapper.AddClass('focused'); });
             input.SetPanelEvent('onblur', () => { wrapper.RemoveClass('focused'); });
 
-            // Écoute de texte sécurisée
             input.SetPanelEvent('ontextentrychange', () => ArchipelagoConsole.onTextChanged());
             input.SetPanelEvent('oninputsubmit', () => ArchipelagoConsole.onArchipelagoInput());
 
-            // Navigation intelligente Flèches + Tabulation
             $.RegisterKeyBind(input, "key_up", () => {
                 if (ArchipelagoConsole.m_FilteredCommands.length > 0) return ArchipelagoConsole.navigateSuggestions(-1);
                 return ArchipelagoConsole.handleHistoryNavigation(true);
@@ -76,7 +74,7 @@ class ArchipelagoConsole {
             if (input) input.SetFocus();
         });
 
-        // --- CHARGEMENT INSTANTANÉ DE SÉCURITÉ DE L'HISTORIQUE DE CHAT ---
+        // Lecture sécurisée du cache de démarrage immédiat
         const cachedChat = $.persistentStorage.getItem("ArchipelagoLastChatCacheData");
         if (cachedChat) {
             try { ArchipelagoConsole.refreshConsoleUI(JSON.parse(cachedChat)); } catch (e) { }
@@ -84,11 +82,8 @@ class ArchipelagoConsole {
 
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
-            api.registerChatListener($.GetContextPanel(), (payload: any) => {
-                try {
-                    const chat = typeof payload === 'string' ? JSON.parse(payload) : payload;
-                    ArchipelagoConsole.refreshConsoleUI(chat);
-                } catch (e) { }
+            api.registerChatListener($.GetContextPanel(), (chatList: any[]) => {
+                ArchipelagoConsole.refreshConsoleUI(chatList);
             });
         }
     }
@@ -233,11 +228,14 @@ class ArchipelagoConsole {
     }
 
     static refreshConsoleUI(chat: any[]) {
+        if (!Array.isArray(chat)) return;
+        
         const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
         if (!output) return;
 
         let fullText = "";
         for (const msg of chat) {
+            if (!msg) continue;
             const d = new Date(msg.time * 1000);
             const timeStr = "[" + d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0') + "]";
             
@@ -254,12 +252,12 @@ class ArchipelagoConsole {
             fullText += `<font color='#888888'>${timeStr}</font> ${lineText}<br/>`;
         }
 
-        if (output.text === fullText || ArchipelagoConsole.g_ConsoleText === fullText) return;
+        // Évite d'invalider le layout HTML si le contenu textuel est identique
+        if (ArchipelagoConsole.g_ConsoleText === fullText) return;
 
         ArchipelagoConsole.g_ConsoleText = fullText;
         output.text = fullText; 
         
-        // Sauvegarde de l'historique complet pour le démarrage instantané
         $.persistentStorage.setItem("ArchipelagoLastChatCacheData", JSON.stringify(chat));
 
         $.Schedule(0.05, () => {
@@ -299,7 +297,7 @@ class ArchipelagoConsole {
                 type: 'POST',
                 data: { command: text },
                 complete: () => {
-                    if (api.fetchChat) api.fetchChat();
+                    if (api.pulse) api.pulse();
                 }
             });
         }

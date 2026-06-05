@@ -206,7 +206,7 @@
 
 		"Archipelago_Maps_Check_Tag"        	  "N"    
 		
-		"Archipelago_Ratmens_Dens_Check_Tag" 	  "AR"
+		"Archipelago_Ratmens_Dens_Check_Tag" 	  "PR"
         
 		"Archipelago_Portal_Guns1_Check_Tag"   	  "GP1"   
 		
@@ -264,17 +264,6 @@
 		"Archipelago_Settings_StatusIndicatorMode_0"   "Toujours afficher"
 		"Archipelago_Settings_StatusIndicatorMode_1"   "Afficher uniquement en cas de problème"
 		"Archipelago_Settings_StatusIndicatorMode_2"   "Toujours masquer"
-		"Archipelago_Settings_CompletionSymbol" "Symbole de niveau/chapitre complété"
-
-
-		"Archipelago_Settings_CompletionSymbol_0" "Crochet"
-
-
-		"Archipelago_Settings_CompletionSymbol_1" "Étoile"
-
-
-		"Archipelago_Settings_CompletionSymbol_info" "Choisissez un symbole pour représenter un niveau/chapitre terminé complètement."
-
 
 		"Archipelago_Settings_TransitionType"   "Type de changement de niveau"
 
@@ -304,22 +293,6 @@
 
 
 		"Archipelago_Settings_Cosmetics"       "Cosmétiques"
-
-
-		"Archipelago_Settings_PortalGunSkin"   "Portal Gun Skin"
-
-
-		"Archipelago_Settings_PortalGunSkin_info" "Change the visual appearance of your Portal Gun."
-
-
-		"Archipelago_Skin_Default"             "Default (Chell)"
-
-
-		"Archipelago_Skin_1"                   "Atlas"
-
-
-		"Archipelago_Skin_2"                   "P-body"
-
 
 		"Archipelago_Settings_WIP"              "Travail en cours"
 
@@ -4425,10 +4398,8 @@ Ce message ne s’affichera qu’une seule fois et ne s’affichera plus après 
 		"Archipelago_Help_Section_Availability" "Disponibilité des Tests"
 
 
-		"Archipelago_Help_Avail_Yes" "Validation Accessible"
-
-
-		"Archipelago_Help_Avail_No" "Validation Inaccessible"
+		"Archipelago_Help_Check_Status_Unavalaible" "Inaccessible (selon la difficulté de la logique)"
+		"Archipelago_Help_Check_Status_Availaible" "Accessible (selon la difficulté de la logique)"
 
 
 		"Archipelago_Help_Section_Checks" "Validations"
@@ -4443,7 +4414,7 @@ Ce message ne s’affichera qu’une seule fois et ne s’affichera plus après 
 		"Archipelago_Help_Check_PGunOrange" "Générateur de portails 2"
 
 
-		"Archipelago_Help_Check_Ratman" "Antre de Ratman"
+		"Archipelago_Help_Check_Ratman" "Planque de Ratman"
 
 
 		"Archipelago_Help_Check_Potatos" "PotatOS"

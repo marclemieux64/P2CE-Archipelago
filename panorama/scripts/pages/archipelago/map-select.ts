@@ -16,41 +16,59 @@ class ArchipelagoMapSelect {
     static g_ResetSchedule: any = null;
 
     static ITEM_SORT_ORDER: { [key: string]: number } = {
-        "portalgun1": 1,          // Portal Gun
-        "portalgun2": 2,          // Upgraded Portal Gun
-        "weightedcube": 3,        // Weighted Cubes
-        "lasercube": 4,           // Redirection Cubes
-        "button": 5,              // Buttons
-        "weightedfloorbutton": 6, // Floor Buttons
-        "cubebutton": 7,          // Cube Buttons
-        "ballfloorbutton": 8,     // Ball Buttons
-        "ballcube": 9,            // Spherical Cubes
-        "laser": 10,              // Lasers
-        "laserrelay": 11,         // Laser Relays
-        "lasercatcher": 12,       // Laser Catchers
-        "lightbridge": 13,        // Hard Light Bridges
-        "turret": 14,             // Turrets
-        "faithplate": 15,         // Aerial Faith Plates
-        "potatos": 16,            // PotatOS
-        "jumpgel": 17,            // Blue Gel
-        "speedgel": 18,           // Orange Gel
-        "portalgel": 19,          // White Gel
-        "funnel": 20,             // Excursion Funnels
-        "antiqueweightedcube": 21,// Antique Cubes
-        "antiquebutton": 22,      // Antique Buttons
-        "antiquefloorbutton": 23, // Antique Floor Buttons
-        "frankencube": 24,        // Frankenturrets
-        "advcore": 25,            // Adventure Core
-        "spacecore": 26,          // Space Core
-        "factcore": 27            // Fact Core
+        "portalgun1": 1, "portalgun2": 2, "weightedcube": 3, "lasercube": 4,
+        "button": 5, "weightedfloorbutton": 6, "cubebutton": 7, "ballfloorbutton": 8,
+        "ballcube": 9, "laser": 10, "laserrelay": 11, "lasercatcher": 12,
+        "lightbridge": 13, "turret": 14, "faithplate": 15, "potatos": 16,
+        "jumpgel": 17, "speedgel": 18, "portalgel": 19, "funnel": 20,
+        "antiqueweightedcube": 21,"antiquebutton": 22, "antiquefloorbutton": 23,
+        "frankencube": 24, "advcore": 25, "spacecore": 26, "factcore": 27
+    };
+
+    static ICON_BADGE_MAP: { [key: string]: string } = {
+        "flag": "#Archipelago_Maps_Check_Tag", "ratmansdent": "#Archipelago_Ratmens_Dens_Check_Tag", "portalgun1": "#Archipelago_Portal_Guns1_Check_Tag", "portalgun2": "#Archipelago_Portal_Guns2_Check_Tag", "door": "#Archipelago_Vitrified_Doors_Check_Tag", "potatos": "#Archipelago_Potatos_Check_Tag", "monitor": "#Archipelago_Wheathley_Monitor_Check_Tag"
+    };
+
+    static LOCALIZED_TOKEN_MAP: { [key: string]: string } = {
+        "flag": "#Archipelago_Help_Check_Generic",
+        "ratmansdent": "#Archipelago_Help_Check_Ratman",
+        "monitor": "#Archipelago_Help_Check_Wheatley",
+        "door": "#Archipelago_Help_Check_Door",
+        "portalgun1": "#Archipelago_Help_Check_PGunBlue",
+        "portalgun2": "#Archipelago_Help_Check_PGunOrange",
+        "potatos": "#Archipelago_Help_Check_Potatos",
+        "check": "#Archipelago_Help_Status_Unlocked",
+        "weightedcube": "#Archipelago_Help_Item_CubeWeighted",
+        "lasercube": "#Archipelago_Help_Item_CubeReflect",
+        "ballcube": "#Archipelago_Help_Item_CubeSphere",
+        "antiqueweightedcube": "#Archipelago_Help_Item_CubeAntique",
+        "frankencube": "#Archipelago_Help_Item_Franken",
+        "button": "#Archipelago_Help_Item_Button",
+        "antiquebutton": "#Archipelago_Help_Item_ButtonOld",
+        "weightedfloorbutton": "#Archipelago_Help_Item_ButtonFloor",
+        "antiquefloorbutton": "#Archipelago_Help_Item_ButtonFloorOld",
+        "cubebutton": "#Archipelago_Help_Item_Button",
+        "ballfloorbutton": "#Archipelago_Help_Item_Button",
+        "paint": "#Archipelago_Help_Item_GelBlue",
+        "jumpgel": "#Archipelago_Help_Item_GelBlue",
+        "speedgel": "#Archipelago_Help_Item_GelOrange",
+        "portalgel": "#Archipelago_Help_Item_GelWhite",
+        "laser": "#Archipelago_Help_Item_Laser",
+        "laserrelay": "#Archipelago_Help_Item_LaserRelay",
+        "lasercatcher": "#Archipelago_Help_Item_LaserCatcher",
+        "faithplate": "#Archipelago_Help_Item_FaithPlate",
+        "funnel": "#Archipelago_Help_Item_TractorBeam",
+        "lightbridge": "#Archipelago_Help_Item_Bridge",
+        "turret": "#Archipelago_Help_Item_Turrets",
+        "advcore": "#Archipelago_Help_Item_CoreAdv",
+        "spacecore": "#Archipelago_Help_Item_CoreSpace",
+        "factcore": "#Archipelago_Help_Item_CoreFact"
     };
 
     static isController() {
         let p = $.GetContextPanel();
         while (p) {
-            if (p.id === 'MainMenu' || p.HasClass('MainMenuRootPanel')) {
-                return p.HasClass('InputController');
-            }
+            if (p.id === 'MainMenu' || p.HasClass('MainMenuRootPanel')) return p.HasClass('InputController');
             p = p.GetParent();
         }
         return false;
@@ -67,7 +85,6 @@ class ArchipelagoMapSelect {
         const globalObj = (UiToolkitAPI.GetGlobalObject() as any);
         const api = globalObj.ArchipelagoAPI;
         const status = api ? api.getStatus() : null;
-
         const root = $.GetContextPanel();
         if (!root || !root.IsValid()) return;
 
@@ -113,13 +130,13 @@ class ArchipelagoMapSelect {
 
         if (total === 0 || valid === 0) {
             panel.AddClass('progress--red');
-            panel.style.color = "#ff4444"; // Force le Rouge si aucun emplacement n'est accessible
+            panel.style.color = "#ff4444";
         } else if (valid < total) {
             panel.AddClass('progress--yellow');
-            panel.style.color = "#ffcc00"; // Force le Jaune si l'accès est partiel
+            panel.style.color = "#ffcc00";
         } else if (valid === total) {
             panel.AddClass('progress--green');
-            panel.style.color = "#33cc33"; // Force le Vert si tout est accessible / fini
+            panel.style.color = "#33cc33";
         }
     }
 
@@ -196,9 +213,7 @@ class ArchipelagoMapSelect {
                     }
                 }
 
-                if (savedCommand) {
-                    this.restoreSelection(savedCommand);
-                }
+                if (savedCommand) this.restoreSelection(savedCommand);
             });
         }
         this.updateConnectionState();
@@ -250,9 +265,8 @@ class ArchipelagoMapSelect {
                 scrollBar.ScrollPosition = startScroll + (targetScroll - startScroll) * ease;
             }
 
-            if (progress < 1.0) {
-                $.Schedule(0.0, step);
-            } else {
+            if (progress < 1.0) $.Schedule(0.0, step);
+            else {
                 if (closePanel && closePanel.IsValid()) {
                     closePanel.AddClass('hide');
                     closePanel.style.height = '0px';
@@ -319,13 +333,55 @@ class ArchipelagoMapSelect {
             this.selectMap({
                 pic: chapter.pic,
                 title: $.Localize(`#portal2_Chapter${chapterId}_Title`) || chapter.title,
-                subtitle: "",
-                status_text_list: [],
-                command_deactivated: true,
-                is_chapter: true,
-                required_item_icons: []
+                subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
             }, false);
         }
+    }
+
+    static createIconCell(parentPanel: any, cellId: string, svgName: string, isMissingItem: boolean, mapData: any, iconIndex: number) {
+        const cell = $.CreatePanel('Panel', parentPanel, cellId);
+        cell.AddClass('hud_icon_cell');
+
+        const img = $.CreatePanel('Image', cell, cellId + '_Image') as ImagePanel;
+        img.AddClass(isMissingItem ? 'requirement_svg_icon' : 'status_svg_icon');
+
+        let targetBadgeText = "";
+        let calculatedIdentityKey = svgName;
+
+        if (!isMissingItem) {
+            if (svgName === "uncheck") {
+                img.SetImage("file://{images}/archipelago/icons/uncheck.svg");
+                img.AddClass('status_icon--locked'); 
+
+                if (iconIndex === 0) {
+                    targetBadgeText = "#Archipelago_Maps_Check_Tag";
+                    calculatedIdentityKey = "flag";
+                } else {
+                    const activeSubs = mapData.active_sub_keys || [];
+                    const typeKey = activeSubs[iconIndex - 1]; 
+                    if (typeKey && ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey]) {
+                        targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey];
+                        calculatedIdentityKey = typeKey;
+                    }
+                }
+            } else {
+                img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                if (svgName !== "check" && ArchipelagoMapSelect.ICON_BADGE_MAP[svgName]) {
+                    targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[svgName];
+                }
+            }
+        } else {
+            img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+        }
+
+        if (targetBadgeText !== "") {
+            const badge = $.CreatePanel('Label', cell, cellId + '_Badge') as LabelPanel;
+            badge.AddClass('hud_icon_badge');
+            badge.text = $.Localize(targetBadgeText);
+            if (svgName === "uncheck") badge.AddClass('hud_icon_badge--locked'); 
+        }
+
+        return cell;
     }
 
     static selectMap(mapData: any, bShowPlayButton: boolean = true) {
@@ -363,9 +419,7 @@ class ArchipelagoMapSelect {
             indicatorsContainer.RemoveAndDeleteChildren();
             const statusList = mapData.status_text_list || [];
             statusList.forEach((svgName: string, i: number) => {
-                const imgPanel = $.CreatePanel('Image', indicatorsContainer, 'StatusIcon_' + i) as ImagePanel;
-                imgPanel.AddClass('status_svg_icon');
-                imgPanel.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                ArchipelagoMapSelect.createIconCell(indicatorsContainer, 'SelectStatusCell_' + i, svgName, false, mapData, i);
             });
         }
 
@@ -380,20 +434,14 @@ class ArchipelagoMapSelect {
                 });
 
                 sortedItemIcons.forEach((svgName: string, i: number) => {
-                    const imgPanel = $.CreatePanel('Image', iconsContainer, 'ReqIcon_' + i) as ImagePanel;
-                    imgPanel.AddClass('requirement_svg_icon');
-                    imgPanel.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                    ArchipelagoMapSelect.createIconCell(iconsContainer, 'SelectReqCell_' + i, svgName, true, mapData, i);
                 });
             }
         }
 
         const showDetails = !mapData.is_chapter;
-        if (checks && checks.IsValid()) {
-            checks.visible = showDetails;
-        }
-        if (reqs && reqs.IsValid()) {
-            reqs.visible = showDetails;
-        }
+        if (checks && checks.IsValid()) checks.visible = showDetails;
+        if (reqs && reqs.IsValid()) reqs.visible = showDetails;
 
         if (missingItemsHeader && missingItemsHeader.IsValid()) missingItemsHeader.style.visibility = showDetails ? 'visible' : 'collapse';
         if (checksHeader && checksHeader.IsValid()) checksHeader.style.visibility = showDetails ? 'visible' : 'collapse';
@@ -416,10 +464,8 @@ class ArchipelagoMapSelect {
     static playSelectedMap() {
         if (this.g_SelectedMapData && !this.g_SelectedMapData.is_chapter) {
             const cmd = this.g_SelectedMapData.command;
-            const isDeactivated = this.g_SelectedMapData.command_deactivated !== null && this.g_SelectedMapData.command_deactivated !== false && this.g_SelectedMapData.command_deactivated !== undefined;
-            if (cmd && !isDeactivated) {
-                GameInterfaceAPI.ConsoleCommand(cmd);
-            }
+            const isDeactivated = this.g_SelectedMapData.command_deactivated !== null && this_g_SelectedMapData.command_deactivated !== false && this_g_SelectedMapData.command_deactivated !== undefined;
+            if (cmd && !isDeactivated) GameInterfaceAPI.ConsoleCommand(cmd);
         }
     }
 
@@ -489,11 +535,7 @@ class ArchipelagoMapSelect {
                     this.selectMap({
                         pic: chapter.pic,
                         title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title,
-                        subtitle: "",
-                        status_text_list: [],
-                        command_deactivated: true,
-                        is_chapter: true,
-                        required_item_icons: []
+                        subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
                     }, false);
                 });
 
@@ -524,9 +566,7 @@ class ArchipelagoMapSelect {
                     chStatus.text = chapter.progress_text;
                     chStatus.visible = true;
                     this.applyColorCode(chStatus, chapter.valid_count || 0, chapter.total_count || 0);
-                } else {
-                    chStatus.visible = false;
-                }
+                } else chStatus.visible = false;
             }
 
             const chTitle = entry.FindChildTraverse('ChapterTitle_' + chId) as LabelPanel;
@@ -568,7 +608,7 @@ class ArchipelagoMapSelect {
                             if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                             this.g_ResetSchedule = $.Schedule(0.15, () => {
                                 if (this.g_SelectedMapData) this.selectMap(this.g_SelectedMapData, true);
-                                this.g_ResetSchedule = null;
+                                    this.g_ResetSchedule = null;
                             });
                         });
 
@@ -584,7 +624,8 @@ class ArchipelagoMapSelect {
                                 for (let i = 0; i < listInner.GetChildCount(); i++) {
                                     const c = listInner.GetChild(i);
                                     if (c && c.IsValid() && c.HasClass('map_list')) {
-                                        for (let j = 0; j < c.GetChildCount(); j++) {
+                                        const childrenCount = c.GetChildCount();
+                                        for (let j = 0; j < childrenCount; j++) {
                                             const w = c.GetChild(j);
                                             if (w && w.IsValid()) {
                                                 const mb = w.GetChild(0);
@@ -626,7 +667,6 @@ class ArchipelagoMapSelect {
                     }
 
                     (wrapper as any).m_MapData = map; 
-
                     const isDeactivated = map.command_deactivated !== null && map.command_deactivated !== false && map.command_deactivated !== undefined;
 
                     if (isDeactivated) {
@@ -641,9 +681,7 @@ class ArchipelagoMapSelect {
 
                     if (this.g_SelectedMapData && this.g_SelectedMapData.command === map.command) {
                         mapBtn.AddClass('map_button--selected');
-                    } else {
-                        mapBtn.RemoveClass('map_button--selected');
-                    }
+                    } else mapBtn.RemoveClass('map_button--selected');
 
                     const mName = mapBtn.FindChildTraverse(`MapName_${chId}_${index}`) as LabelPanel;
                     if (mName && mName.IsValid()) {
@@ -661,9 +699,7 @@ class ArchipelagoMapSelect {
                             mProg.text = "£";
                             mProg.visible = true;
                             this.applyColorCode(mProg, 1, 1);
-                        } else {
-                            mProg.visible = false;
-                        }
+                        } else mProg.visible = false;
                     }
 
                     const mLock = mapBtn.FindChildTraverse(`MapLock_${chId}_${index}`) as ImagePanel;

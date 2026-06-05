@@ -10,9 +10,6 @@ class ArchipelagoSync {
     static m_LastParsedMenuVersion: number = -1;
     static m_CachedChapters: any = null;
 
-    static getCompletionSymbol(): string {
-        return ($.persistentStorage.getItem('CompletionSymbol') ?? 0) === 1 ? "★" : "£";
-    }
 
     /**
      * Legacy helper to evaluate indicator status, redirects to ArchipelagoLogic.

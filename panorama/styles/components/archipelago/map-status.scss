@@ -57,7 +57,7 @@
 .info_column {
     flow-children: down;
     margin-bottom: 10px;
-    width: 320px; // Largeur fixe explicite pour casser la boucle de dimension fit-children parentale
+    width: 320px; 
     height: fit-children; 
     min-height: 82px;
     
@@ -79,23 +79,49 @@
 .status_svg_container {
     flow-children: right;
     width: fit-children;
-    height: 48px;
+    height: 62px; // Augmenté pour accueillir la cellule et le badge sans écrasement
     vertical-align: center;
 }
 
-.status_svg_icon {
-    width: 48px; 
+// STRUCTURE DES CELLULES ET OVERLAY BADGES INTÉGRÉE DEPUIS LA CONFIGURATION DU DOSSIER PAGES
+.hud_icon_cell {
+    width: 62px;
+    height: 62px;
+    overflow: noclip;
+    vertical-align: center;
+    margin-right: 4px;
+}
+
+.hud_icon_cell .status_svg_icon,
+.hud_icon_cell .requirement_svg_icon {
+    width: 48px;
     height: 48px;
-    vertical-align: center; 
-    margin-right: 6px;
+    vertical-align: bottom;
+    horizontal-align: left;
+    margin-right: 0px;
+}
+
+.hud_icon_cell .hud_icon_badge {
+    font-family: "LexendDeca";
+    font-weight: bold;
+    font-size: 11px; // Légèrement réduit pour s'adapter au format HUD compact 48px
+    color: #ffffff;
+    background-color: #ec6726;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    padding: 0px 3px;
+    horizontal-align: right;
+    vertical-align: top;
+    text-shadow: 1px 1px 2px #000000;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+    z-index: 10;
+}
+
+.status_svg_icon {
     img-shadow: 2px 2px 5px 3.0 #333333b0 alpha-only;
 }
 
 .requirement_svg_icon {
-    width: 48px; 
-    height: 48px;
-    vertical-align: center; 
-    margin-right: 6px;
     img-shadow: 2px 2px 5px 3.0 #333333b0 alpha-only;
 }    
 

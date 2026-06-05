@@ -43,7 +43,7 @@ indicator_characters = {
     "completed": "check",
     "map": "flag",
     "wheatley": "monitor",
-    "ratman": "ratmansdent", # FIX: Aligné sur le nom de fichier ratmansdent.svg
+    "ratman": "ratmansdent", 
     "vitrified_door": "door",
     portal_gun_1: "portalgun1",
     portal_gun_2: "portalgun2",
@@ -59,22 +59,6 @@ def get_sub_locations(location_name, has_wheatley, has_ratman, has_vitrified):
     if not has_ratman: subs = [s for s in subs if "Ratman Den" not in s]
     if not has_vitrified: subs = [s for s in subs if "Vitrified Door" not in s]
     return {s: False for s in subs}
-
-def parse_sub_locations(sub_locations):
-    additional_indicators = []
-    for sub_location, is_completed in sub_locations.items():
-        if not is_completed:
-            if "Wheatley Monitor" in sub_location:
-                additional_indicators.append(indicator_characters["wheatley"])
-            elif "Ratman Den" in sub_location:
-                additional_indicators.append(indicator_characters["ratman"])
-            elif "Vitrified Door" in sub_location:
-                additional_indicators.append(indicator_characters["vitrified_door"])
-            elif sub_location in indicator_characters:
-                additional_indicators.append(indicator_characters[sub_location])
-        else:
-            additional_indicators.append(indicator_characters["completed"])
-    return additional_indicators
 
 class MenuElement:
     def __init__(self, parent, name, title, subtitle="", command="", pic=""):
@@ -107,7 +91,6 @@ class MapMenuElement(MenuElement):
         self.required_items = required_items
         self.sub_location_completion = get_sub_locations(title, parent.parent.has_wheatley_monitors, parent.parent.has_ratman_dens, parent.parent.has_vitrified_doors)
         subtitle = "".join(items_to_shortened(self.required_items))
-        new_title = title.removesuffix(" Completion")
         super().__init__(parent, f"vgui/chapters/chapter{chapter_number}", map_code, subtitle, f"map {map_code}", pic)
         self.refresh_title()
 
@@ -123,10 +106,8 @@ class MapMenuElement(MenuElement):
                 if sub in all_locations_table and all_locations_table[sub].id in client.checked_locations:
                     self.sub_location_completion[sub] = True
 
-        # Rendu de la map de base
         self.info_text = [indicator_characters["completed"] if self.completed else (indicator_characters["map"] if self.check_logic(self.required_items) else "uncheck")]
         
-        # Rendu dynamique et précis de toutes les sous-icônes (Moniteurs, Repaires, Portes et Items)
         for sub_location, is_completed in self.sub_location_completion.items():
             if is_completed:
                 self.info_text.append(indicator_characters["completed"])
@@ -166,6 +147,16 @@ class MapMenuElement(MenuElement):
         valid_count = sum(1 for c in self.info_text if c != "uncheck")
         total_count = len(self.info_text)
         
+        # Envoie un tableau des sous-emplacements configurés pour associer la bonne icône "uncheck"
+        active_sub_keys = []
+        for k in self.sub_location_completion.keys():
+            if "Wheatley Monitor" in k: active_sub_keys.append("monitor")
+            elif "Ratman Den" in k: active_sub_keys.append("ratmansdent")
+            elif "Vitrified Door" in k: active_sub_keys.append("door")
+            elif portal_gun_1 in k: active_sub_keys.append("portalgun1")
+            elif portal_gun_2 in k: active_sub_keys.append("portalgun2")
+            elif potatos in k: active_sub_keys.append("potatos")
+
         d = super().to_dict()
         d.update({
             "command": None if is_blocked else self.command,
@@ -177,6 +168,7 @@ class MapMenuElement(MenuElement):
             "progress_text": f"{valid_count}/{total_count}",
             "status_text_list": self.info_text, 
             "required_item_icons": icons, 
+            "active_sub_keys": active_sub_keys,
             "is_chapter": False
         })
         return d
@@ -197,7 +189,7 @@ class MapMenuElement(MenuElement):
     def complete_check(self, loc_id):
         if not self.complete_map(loc_id):
             name = self.parent.parent.client.location_names.lookup_in_game(loc_id)
-            if "Complete" not in name: self.complete_sub_location_check(name)
+            if name and "Complete" not in name: self.complete_sub_location_check(name)
 
 class ChapterMenuElement(MenuElement):
     first_map = None
@@ -267,6 +259,7 @@ class Menu:
             ch_dict = ch.to_dict(previous_completed=prev)
             data.append(ch_dict)
             prev = ch_dict.get("all_completed", False)
+        # FIX SYNTAX ERROR : Suppression du backslash d'échappement erroné sur "chapters"
         return {"is_open_world": self.is_open_world, "chapters": data}
 
     def complete_map(self, map_id):

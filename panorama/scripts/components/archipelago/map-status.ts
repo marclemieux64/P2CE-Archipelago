@@ -20,6 +20,16 @@ var ArchipelagoMapStatusHUD = class {
         "frankencube": 24, "advcore": 25, "spacecore": 26, "factcore": 27
     };
 
+    static ICON_BADGE_MAP: { [key: string]: string } = {
+        "flag": "#Archipelago_Maps_Check_Tag", 
+        "ratmansdent": "#Archipelago_Ratmens_Dens_Check_Tag", 
+        "portalgun1": "#Archipelago_Portal_Guns1_Check_Tag", 
+        "portalgun2": "#Archipelago_Portal_Guns2_Check_Tag", 
+        "door": "#Archipelago_Vitrified_Doors_Check_Tag", 
+        "potatos": "#Archipelago_Potatos_Check_Tag", 
+        "monitor": "#Archipelago_Wheathley_Monitor_Check_Tag"
+    };
+
     static init() {
         $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
             if (!payload) return;
@@ -58,7 +68,6 @@ var ArchipelagoMapStatusHUD = class {
         const container = $.GetContextPanel();
         if (!container || !container.IsValid()) return;
 
-        // PROTECTION CONTRE L'ÉTIREMENT : Bloque immédiatement les dimensions au strict minimum requis par les enfants
         container.style.width = "fit-children";
         container.style.height = "fit-children";
         container.style.horizontalAlign = "left";
@@ -142,7 +151,6 @@ var ArchipelagoMapStatusHUD = class {
         const mapToken = `#portal2_MapName_${mapCmdName.startsWith("sp_") ? "SP_" + mapCmdName.substring(3) : mapCmdName.startsWith("coop_") ? "COOP_" + mapCmdName.substring(5) : mapCmdName}`;
         titleLabel.text = $.Localize(mapToken);
 
-        // FALLBACK DES EN-TÊTES : Empêche l'effondrement à 0px de hauteur si le fichier de traduction est absent
         const checksColumn = container.FindChildTraverse('ChecksColumn');
         if (checksColumn) {
             checksColumn.style.width = "fit-children";
@@ -164,17 +172,48 @@ var ArchipelagoMapStatusHUD = class {
             }
         }
 
-        // RE-MAPPING DES CLÉS : Extraction alignée sur la structure d'ArchipelagoSync (statusIcons)
+        // RENDU DES ICÔNES DE STATUT DE CHECKS AVEC ENCAPSULATION CELLULE ET BADGE
         const statusIconsList = currentMapData.statusIcons || [];
         const currentStatusKey = statusIconsList.join(",");
         if (ArchipelagoMapStatusHUD.m_LastStatusKey !== currentStatusKey) {
             ArchipelagoMapStatusHUD.m_LastStatusKey = currentStatusKey;
             statusIconsContainer.RemoveAndDeleteChildren();
             statusIconsList.forEach((svgName: string, i: number) => {
-                const img = $.CreatePanel('Image', statusIconsContainer, 'StatusHUDIcon_' + i) as ImagePanel;
+                const cell = $.CreatePanel('Panel', statusIconsContainer, 'StatusHUDCell_' + i);
+                cell.AddClass('hud_icon_cell');
+
+                const img = $.CreatePanel('Image', cell, 'StatusHUDIcon_' + i) as ImagePanel;
                 if (img) {
                     img.AddClass('status_svg_icon');
                     img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                }
+
+                let targetBadgeText = "";
+                let calculatedIdentityKey = svgName;
+
+                if (svgName === "uncheck") {
+                    if (i === 0) {
+                        targetBadgeText = "#Archipelago_Maps_Check_Tag";
+                        calculatedIdentityKey = "flag";
+                    } else {
+                        const activeSubs = currentMapData.active_sub_keys || [];
+                        const typeKey = activeSubs[i - 1];
+                        if (typeKey && ArchipelagoMapStatusHUD.ICON_BADGE_MAP[typeKey]) {
+                            targetBadgeText = ArchipelagoMapStatusHUD.ICON_BADGE_MAP[typeKey];
+                            calculatedIdentityKey = typeKey;
+                        }
+                    }
+                } else {
+                    if (svgName !== "check" && ArchipelagoMapStatusHUD.ICON_BADGE_MAP[svgName]) {
+                        targetBadgeText = ArchipelagoMapStatusHUD.ICON_BADGE_MAP[svgName];
+                    }
+                }
+
+                if (targetBadgeText !== "") {
+                    const badge = $.CreatePanel('Label', cell, 'StatusHUDBadge_' + i) as LabelPanel;
+                    badge.AddClass('hud_icon_badge');
+                    badge.text = $.Localize(targetBadgeText);
+                    if (svgName === "uncheck") badge.AddClass('hud_icon_badge--locked');
                 }
             });
         }
@@ -187,7 +226,10 @@ var ArchipelagoMapStatusHUD = class {
             missingIconsContainer.RemoveAndDeleteChildren();
             [...missingItemsList].sort((a, b) => (ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[a] || 99) - (ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[b] || 99))
                 .forEach((svgName: string, i: number) => {
-                    const img = $.CreatePanel('Image', missingIconsContainer, 'MissingHUDIcon_' + i) as ImagePanel;
+                    const cell = $.CreatePanel('Panel', missingIconsContainer, 'MissingHUDCell_' + i);
+                    cell.AddClass('hud_icon_cell');
+
+                    const img = $.CreatePanel('Image', cell, 'MissingHUDIcon_' + i) as ImagePanel;
                     if (img) {
                         img.AddClass('requirement_svg_icon');
                         img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);

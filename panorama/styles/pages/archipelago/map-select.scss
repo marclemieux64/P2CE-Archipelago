@@ -230,8 +230,7 @@
 .title_column {
     flow-children: down;
     margin-right: 35px;
-    width: fit-children; 
-    min-width: 250px;    
+    width: fit-children;     
     vertical-align: center;
 }
 
@@ -244,7 +243,7 @@
     background-color: #ffffff04;
     border: 1px solid #ffffff11;
     border-radius: 6px;
-    padding: 10px 14px;
+    padding: 14px 34px 14px 14px;
 }
 
 #ChecksColumn {
@@ -544,10 +543,11 @@
 //=============================================================================
 
 .hud_icon_cell {
-    width: 74px;
-    height: 75px;
-    overflow: clip; 
+    width: 65px;
+    height: 65px;
+    overflow: noclip; // Changé à noclip pour permettre au badge de s'étirer proprement vers la droite
     vertical-align: center;
+    margin-left: 10px;
 }
 
 .map_status_icons_container .hud_icon_cell,
@@ -572,11 +572,13 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 3px;
     padding: 1px 4px;
-    horizontal-align: right;
+    
+    // ANCRAGE FIXE : Le badge commence à 38px du bord gauche et s'étend vers la droite[cite: 43]
+    horizontal-align: left;
+    transform: translateX(50px) translateY(0px);
     vertical-align: top;
+    
     text-shadow: 1px 1px 2px #000000;
     box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
     z-index: 10;
-    margin-left: 4px;
-    margin-right: 4px;
 }

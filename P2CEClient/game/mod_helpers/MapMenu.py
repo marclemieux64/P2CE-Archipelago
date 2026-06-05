@@ -147,15 +147,15 @@ class MapMenuElement(MenuElement):
         valid_count = sum(1 for c in self.info_text if c != "uncheck")
         total_count = len(self.info_text)
         
-        # Envoie un tableau des sous-emplacements configurés pour associer la bonne icône "uncheck"
+        # CORRECTION : Alignement strict des identifiants de dictionnaire de badges pour map-status et map-select
         active_sub_keys = []
         for k in self.sub_location_completion.keys():
             if "Wheatley Monitor" in k: active_sub_keys.append("monitor")
             elif "Ratman Den" in k: active_sub_keys.append("ratmansdent")
             elif "Vitrified Door" in k: active_sub_keys.append("door")
+            elif "Potatos" in k: active_sub_keys.append("potatos") # AJOUT : Prise en charge manquante pour Potatos
             elif portal_gun_1 in k: active_sub_keys.append("portalgun1")
             elif portal_gun_2 in k: active_sub_keys.append("portalgun2")
-            elif potatos in k: active_sub_keys.append("potatos")
 
         d = super().to_dict()
         d.update({
@@ -259,7 +259,6 @@ class Menu:
             ch_dict = ch.to_dict(previous_completed=prev)
             data.append(ch_dict)
             prev = ch_dict.get("all_completed", False)
-        # FIX SYNTAX ERROR : Suppression du backslash d'échappement erroné sur "chapters"
         return {"is_open_world": self.is_open_world, "chapters": data}
 
     def complete_map(self, map_id):

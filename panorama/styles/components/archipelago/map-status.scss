@@ -55,16 +55,15 @@
 }
 
 .info_column {
-    flow-children: down;
-    margin-bottom: 10px;
-    width: 320px; 
+  flow-children: down;
+    margin-bottom: 20px;
+    vertical-align: center;
+    width: fit-children;
     height: fit-children; 
-    min-height: 82px;
-    
     background-color: #ffffff04;
     border: 1px solid #ffffff11;
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 14px 34px 14px 14px;
 }
 
 .section-label {
@@ -79,50 +78,55 @@
 .status_svg_container {
     flow-children: right;
     width: fit-children;
-    height: 62px; // Augmenté pour accueillir la cellule et le badge sans écrasement
+    height: 62px; 
     vertical-align: center;
 }
 
-// STRUCTURE DES CELLULES ET OVERLAY BADGES INTÉGRÉE DEPUIS LA CONFIGURATION DU DOSSIER PAGES
+// SÉCURISATION ET MISE À NIVEAU DE LA GRILLE HUD ALIGNÉE SUR MAP-SELECT
 .hud_icon_cell {
-    width: 62px;
-    height: 62px;
-    overflow: noclip;
+    width: 65px;
+    height: 65px;
+    overflow: noclip; 
     vertical-align: center;
-    margin-right: 4px;
+    margin-left: 10px;
 }
 
 .hud_icon_cell .status_svg_icon,
 .hud_icon_cell .requirement_svg_icon {
-    width: 48px;
-    height: 48px;
+    width: 60px;
+    height: 60px;
     vertical-align: bottom;
     horizontal-align: left;
-    margin-right: 0px;
 }
 
 .hud_icon_cell .hud_icon_badge {
     font-family: "LexendDeca";
     font-weight: bold;
-    font-size: 11px; // Légèrement réduit pour s'adapter au format HUD compact 48px
+    font-size: 14px;
     color: #ffffff;
     background-color: #ec6726;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 3px;
-    padding: 0px 3px;
-    horizontal-align: right;
+    padding: 1px 4px;
+    
+    // STRUCTURE D'ANCRAGE EN DISTANCE RELATIVE CONSTANTE IDENTIQUE AU MENU PRINCIPAL
+    horizontal-align: left;
+    transform: translateX(38px) translateY(0px);
     vertical-align: top;
+    
     text-shadow: 1px 1px 2px #000000;
     box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
     z-index: 10;
 }
 
 .status_svg_icon {
-    img-shadow: 2px 2px 5px 3.0 #333333b0 alpha-only;
+    brightness: 1.4;
+    img-shadow: 2px 2px 8px 3.0 #333333b0 alpha-only;
 }
 
 .requirement_svg_icon {
-    img-shadow: 2px 2px 5px 3.0 #333333b0 alpha-only;
+    brightness: 1.4;
+    img-shadow: 2px 2px 8px 3.0 #333333b0 alpha-only;
 }    
 
 .collapse {

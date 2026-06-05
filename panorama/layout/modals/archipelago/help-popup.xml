@@ -23,61 +23,97 @@
 						<Panel class="help-popup__icon">
 							<Image class="help-popup__icon-lock-img" src="file://{images}/archipelago/lock-solid.svg" texturewidth="96" textureheight="96" style="wash-color: #ff4444;" />
 						</Panel>
-						<Label class="help-popup__label" text="#Archipelago_Help_Status_Locked" />
+						<Label class="help-popup__label_lock" text="#Archipelago_Help_Status_Locked"/>
 					</Panel>
 
 					<Panel class="help-popup__row">
 						<Panel class="help-popup__icon">
 							<Image class="help-popup__icon-unlock-img" src="file://{images}/archipelago/unlock-solid.svg" texturewidth="96" textureheight="96" style="wash-color: #44ff44;" />
 						</Panel>
-						<Label class="help-popup__label" text="#Archipelago_Help_Status_Unlocked" />
+						<Label class="help-popup__label_lock" text="#Archipelago_Help_Status_Unlocked" />
+					</Panel>
+
+					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Check_Status" />
+
+					<Panel class="help-popup__row">
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/uncheck.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge hud_icon_badge--locked" text="#Archipelago_Maps_Check_Tag" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_Status_Unavalaible" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/check.svg" class="help-popup__icon-img" />
-						<Label class="help-popup__label" text="#Archipelago_Help_Status_Goal" />
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/flag.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Maps_Check_Tag" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_Status_Availaible" />
 					</Panel>
 
+					<Panel class="help-popup__row">
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/check.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Maps_Check_Tag" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_Check_Status_Checked" />
+					</Panel>
 
 					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Checks" />
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/uncheck.svg" class="help-popup__icon-img" />
-						<Label class="help-popup__label" text="#Archipelago_Help_Avail_No" />
-					</Panel>
-
-					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/Flag.svg" class="help-popup__icon-img" />
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/Flag.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Maps_Check_Tag" />
+						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Generic" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/portalgun1.svg" class="help-popup__icon-img" />
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/portalgun1.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Portal_Guns1_Check_Tag" />
+						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_PGunBlue" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/portalgun2.svg" class="help-popup__icon-img" />
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/portalgun2.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Portal_Guns2_Check_Tag" />
+						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_PGunOrange" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/ratmansdent.svg" class="help-popup__icon-img" />
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/ratmansdent.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Ratmens_Dens_Check_Tag" />
+						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Ratman" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/potatos.svg" class="help-popup__icon-img" />
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/potatos.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Potatos_Check_Tag" />
+						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Potatos" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/door.svg" class="help-popup__icon-img" />
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/door.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Vitrified_Doors_Check_Tag" />
+						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Door" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/Monitor.svg" class="help-popup__icon-img" />
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/Monitor.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Wheathley_Monitor_Check_Tag" />
+						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Wheatley" />
 					</Panel>
 				</Panel>
@@ -86,126 +122,125 @@
 					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Items" />
 					
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/portalgun2.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/portalgun2.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_PGun" />
 					</Panel>
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/jumpgel.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/jumpgel.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelBlue" />
 					</Panel>
 							
-
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/speedgel.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/speedgel.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelOrange" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/portalgel.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/portalgel.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_GelWhite" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/spacecore.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/spacecore.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CoreSpace" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/advcore.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/advcore.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CoreAdv" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/factcore.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/factcore.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CoreFact" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/weightedcube.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/weightedcube.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeWeighted" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/lasercube.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/lasercube.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeReflect" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/ballcube.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/ballcube.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeSphere" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/antiqueweightedcube.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/antiqueweightedcube.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_CubeAntique" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/button.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/button.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Button" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/antiquebutton.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/antiquebutton.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_ButtonOld" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/weightedfloorbutton.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/weightedfloorbutton.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_ButtonFloor" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/antiquefloorbutton.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/antiquefloorbutton.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_ButtonFloorOld" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/laser.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/laser.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Laser" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/lasercatcher.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/lasercatcher.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_LaserCatcher" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/laserrelay.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/laserrelay.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_LaserRelay" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/turret.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/turret.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Turrets" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/faithplate.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/faithplate.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_FaithPlate" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/funnel.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/funnel.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_TractorBeam" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/lightbridge.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/lightbridge.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Bridge" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/frankencube.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/frankencube.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Franken" />
 					</Panel>
 
 					<Panel class="help-popup__row">
-						<Image src="file://{images}/archipelago/icons/potatos.svg" class="help-popup__icon-img" />
+						<Image src="file://{images}/archipelago/icons/potatos.svg" class="help-popup__item-icon-img" />
 						<Label class="help-popup__label" text="#Archipelago_Help_Item_Potatos" />
 					</Panel>
-
 				</Panel>
+
 			</Panel>
 		</Panel>
 	</Panel>

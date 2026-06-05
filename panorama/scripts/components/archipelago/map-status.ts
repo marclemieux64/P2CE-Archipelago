@@ -54,7 +54,7 @@ var ArchipelagoMapStatusHUD = class {
 
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
-            api.registerStatusListener($.GetContextPanel(), (payload: any) => {
+            api.registerStatusListener($.GetContextPanel(), (status: any) => {
                 if (ArchipelagoMapStatusHUD.m_CurrentMapName) {
                     ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, ArchipelagoMapStatusHUD.m_PendingShow);
                 }
@@ -172,7 +172,7 @@ var ArchipelagoMapStatusHUD = class {
             }
         }
 
-        // RENDU DES ICÔNES DE STATUT DE CHECKS AVEC ENCAPSULATION CELLULE ET BADGE
+        // RENDU ET COMPORTEMENT DES BADGES TEXTUELS UNIFIÉ
         const statusIconsList = currentMapData.statusIcons || [];
         const currentStatusKey = statusIconsList.join(",");
         if (ArchipelagoMapStatusHUD.m_LastStatusKey !== currentStatusKey) {
@@ -191,20 +191,23 @@ var ArchipelagoMapStatusHUD = class {
                 let targetBadgeText = "";
                 let calculatedIdentityKey = svgName;
 
-                if (svgName === "uncheck") {
+                if (svgName === "uncheck" || svgName === "check") {
+                    if (svgName === "uncheck") {
+                        img.AddClass('status_icon--locked'); // Synchronisé sur le nom de classe de map-select
+                    }
                     if (i === 0) {
                         targetBadgeText = "#Archipelago_Maps_Check_Tag";
                         calculatedIdentityKey = "flag";
                     } else {
                         const activeSubs = currentMapData.active_sub_keys || [];
-                        const typeKey = activeSubs[i - 1];
+                        const typeKey = activeSubs[i - 1]; 
                         if (typeKey && ArchipelagoMapStatusHUD.ICON_BADGE_MAP[typeKey]) {
                             targetBadgeText = ArchipelagoMapStatusHUD.ICON_BADGE_MAP[typeKey];
                             calculatedIdentityKey = typeKey;
                         }
                     }
                 } else {
-                    if (svgName !== "check" && ArchipelagoMapStatusHUD.ICON_BADGE_MAP[svgName]) {
+                    if (ArchipelagoMapStatusHUD.ICON_BADGE_MAP[svgName]) {
                         targetBadgeText = ArchipelagoMapStatusHUD.ICON_BADGE_MAP[svgName];
                     }
                 }
@@ -218,23 +221,29 @@ var ArchipelagoMapStatusHUD = class {
             });
         }
 
-        // RENDU DES OBJETS REQUIS MANQUANTS
+        // RENDU DES ICÔNES D'OBJETS MANQUANTS REQUIS
         const missingItemsList = currentMapData.required_item_icons || [];
-        const currentMissingKey = missingItemsList.join(",");
+        const sortedItemIcons = [...missingItemsList];
+        sortedItemIcons.sort((a: string, b: string) => {
+            const orderA = ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[a] || 99;
+            const orderB = ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[b] || 99;
+            return orderA - orderB;
+        });
+
+        const currentMissingKey = sortedItemIcons.join(",");
         if (ArchipelagoMapStatusHUD.m_LastMissingKey !== currentMissingKey) {
             ArchipelagoMapStatusHUD.m_LastMissingKey = currentMissingKey;
             missingIconsContainer.RemoveAndDeleteChildren();
-            [...missingItemsList].sort((a, b) => (ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[a] || 99) - (ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[b] || 99))
-                .forEach((svgName: string, i: number) => {
-                    const cell = $.CreatePanel('Panel', missingIconsContainer, 'MissingHUDCell_' + i);
-                    cell.AddClass('hud_icon_cell');
+            sortedItemIcons.forEach((svgName: string, i: number) => {
+                const cell = $.CreatePanel('Panel', missingIconsContainer, 'MissingHUDCell_' + i);
+                cell.AddClass('hud_icon_cell');
 
-                    const img = $.CreatePanel('Image', cell, 'MissingHUDIcon_' + i) as ImagePanel;
-                    if (img) {
-                        img.AddClass('requirement_svg_icon');
-                        img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
-                    }
-                });
+                const img = $.CreatePanel('Image', cell, 'MissingHUDIcon_' + i) as ImagePanel;
+                if (img) {
+                    img.AddClass('requirement_svg_icon');
+                    img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
+                }
+            });
         }
     }
 };

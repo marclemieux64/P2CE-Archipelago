@@ -1,15 +1,23 @@
 'use strict';
 
+declare var $: any;
+declare var UiToolkitAPI: any;
 declare var GameInterfaceAPI: any;
+interface Panel { [key: string]: any; }
+interface ImagePanel extends Panel { }
+interface LabelPanel extends Panel { }
 
 class ArchipelagoSync {
-    static VERSION: string = "1.1.0"; 
+    static VERSION: string = "1.1.2"; 
     static ENABLE_DEBUG: boolean = false;
     
-    // Cache local pour eviter l'evaluation repetitive de parseApiStatus()
+    // Cache local pour éviter l'évaluation répétitive de parseApiStatus()
     static m_LastParsedMenuVersion: number = -1;
     static m_CachedChapters: any = null;
 
+    static getCompletionSymbol(): string {
+        return ($.persistentStorage.getItem('CompletionSymbol') ?? 0) === 1 ? "★" : "£";
+    }
 
     /**
      * Legacy helper to evaluate indicator status, redirects to ArchipelagoLogic.
@@ -49,6 +57,7 @@ class ArchipelagoSync {
                     pic: map.pic,
                     statusIcons: map.status_text_list || map.statusIcons || [], 
                     required_item_icons: map.required_item_icons || [],
+                    active_sub_keys: map.active_sub_keys || [], // AJOUT CRUCIAL : Transfert des sous-clés pour les badges du HUD
                     valid_count: map.valid_count,
                     total_count: map.total_count,
                     progress_text: map.progress_text,
@@ -172,7 +181,6 @@ class ArchipelagoSync {
         const apiStatus = api ? api.getStatus() : null;
         if (!apiStatus || !apiStatus.menu) return;
 
-        // Verification du tracking de version pour sauter le processing lourd
         const currentMenuVersion = api.m_MenuVersion || 0;
         if (currentMenuVersion !== this.m_LastParsedMenuVersion || !this.m_CachedChapters) {
             this.m_CachedChapters = this.parseApiStatus(apiStatus);
@@ -214,6 +222,7 @@ class ArchipelagoSync {
         let potatosDone = (statusIconsList.indexOf("potatos") === -1 || hasCheck) ? 1 : 0;
 
         const symbols = statusIconsList.join(",");
+        const subKeys = (currentMapData.active_sub_keys || []).join(",");
 
         if (serverStatus === this.m_LastServerStatus &&
             ratmanStatus === this.m_LastRatmanStatus &&
@@ -230,6 +239,7 @@ class ArchipelagoSync {
         this.m_LastSymbols = symbols;
         
         $.persistentStorage.setItem("ArchipelagoLastSymbols", symbols);
+        $.persistentStorage.setItem("ArchipelagoLastSubKeys", subKeys);
         $.persistentStorage.setItem("ArchipelagoLastMapStatus", serverStatus);
         $.persistentStorage.setItem("ArchipelagoLastMapName", mapName);
 

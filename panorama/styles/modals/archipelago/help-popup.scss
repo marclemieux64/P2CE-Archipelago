@@ -26,13 +26,57 @@
     }
 }
 
+.help-popup__header {
+    width: 100%;
+    flow-children: right;
+    margin-bottom: 24px;
+}
+
 .help-popup__title {
     font-family: "Lexend Deca", Bold;
     font-size: 32px;
     color: #ec6726; // Brand Orange
-    margin-bottom: 24px;
-    text-transform: uppercase;
     letter-spacing: 2px;
+    text-transform: uppercase;
+    vertical-align: center;
+    width: fill-parent-flow(1.0);
+}
+
+.help-popup__close-x {
+    vertical-align: top;
+    horizontal-align: right;
+    width: 50px;
+    height: 50px;
+    margin-top: 0px;
+    margin-right: -10px;
+    background-color: #00000000;
+    border: 0px solid #00000000;
+    transition-property: transform;
+    transition-duration: 0.1s;
+
+    &:hover {
+        transform: scale3d(1.1, 1.1, 1);
+    }
+
+    &:active {
+        transform: scale3d(0.9, 0.9, 1);
+    }
+
+    Label {
+        font-family: "Lexend Deca", Bold;
+        font-size: 42px; 
+        color: #ec6726aa;
+        horizontal-align: center;
+        vertical-align: center;
+        margin-top: -6px;
+        transition-property: color, text-shadow;
+        transition-duration: 0.1s;
+
+        .help-popup__close-x:hover & {
+            color: #ff4444; 
+            text-shadow: 0px 0px 15px #ff444466;
+        }
+    }
 }
 
 .help-popup__content {
@@ -97,19 +141,34 @@
     vertical-align: center;
 }
 
+// ALIGNEMENT STRICT : Style unifié sur les indicateurs de map-select
 .help-popup__icon-img {
-    max-width: 48px;      // FIX NETTETÉ ABSOLUE : Utilisation des contraintes max fluides
-    max-height: 48px;     // Élimine la pixelisation causée par l'étirement forcé des textures
-    vertical-align: center;
-    img-shadow: 2px 2px 1px 3.0 #333333b0 alpha-only;
+    max-width: 60px;      
+    max-height: 60px;     
+    vertical-align: bottom;
+    horizontal-align: left;
+    brightness: 1.4;
+    img-shadow: 2px 2px 8px 3.0 #333333b0 alpha-only;
 }
+
+// AJOUT : Marges de décalage à gauche (10px) sur les items requis pour un alignement au pixel près
+.help-popup__item-icon-img {
+    max-width: 60px;      
+    max-height: 60px;     
+    vertical-align: center;
+    horizontal-align: left;
+    margin-left: 10px;
+    brightness: 1.4;
+    img-shadow: 2px 2px 8px 3.0 #333333b0 alpha-only;
+}
+
 .help-popup__icon-lock-img {
     vertical-align: center;
     horizontal-align: center;
     img-shadow: 1px 1px 3px 3.0 #333333b0 alpha-only;
     width: 18px;
     height: 24px;
-    }
+}
 
 .help-popup__icon-unlock-img {
     vertical-align: center;
@@ -117,7 +176,7 @@
     img-shadow: 1px 1px 3px 3.0 #333333b0 alpha-only;
     width: 18px;
     height: 24px;
-    }
+}
 
 .help-popup__icon--stacked {
     font-size: 22px;
@@ -125,59 +184,48 @@
 }
 
 .help-popup__label {
-    font-family: "Lexend Deca"; // Utilisation de votre police propre
+    font-family: "Lexend Deca"; 
     font-size: 20px;
     color: #eeeeee;
     vertical-align: center;
-    margin-left: 12px;
+    margin-left: 25px;
 }
 
-.help-popup__header {
-    width: 100%;
-    flow-children: right;
-    margin-bottom: 24px;
-}
-
-.help-popup__title {
-    font-family: "Lexend Deca", Bold;
-    font-size: 32px;
-    color: #ec6726; // Brand Orange
-    letter-spacing: 2px;
-    text-transform: uppercase;
+.help-popup__label_lock {
+    font-family: "Lexend Deca"; 
+    font-size: 20px;
+    color: #eeeeee;
     vertical-align: center;
-    width: fill-parent-flow(1.0);
+    margin-left: 48px;    
 }
 
-.help-popup__close-x {
+//=============================================================================
+// 9. CELLS AND OVERLAY BADGES SYNCHRONISÉS SUR MAP-SELECT
+//=============================================================================
+
+.hud_icon_cell {
+    width: 65px;
+    height: 65px;
+    overflow: noclip; 
     vertical-align: center;
-    width: 60px;
-    height: 60px;
-    background-color: #00000000;
-    border: 0px solid #00000000;
-    transition-property: transform;
-    transition-duration: 0.1s;
+    margin-left: 10px;
+}
 
-    &:hover {
-        transform: scale3d(1.2, 1.2, 1);
-    }
-
-    &:active {
-        transform: scale3d(0.9, 0.9, 1);
-    }
-
-    Label {
-        font-family: "Lexend Deca", Bold;
-        font-size: 52px; // Even bigger X
-        color: #ec6726aa;
-        horizontal-align: center;
-        vertical-align: center;
-        margin-top: -4px;
-        transition-property: color, text-shadow;
-        transition-duration: 0.1s;
-
-        .help-popup__close-x:hover & {
-            color: #ff4444; // Turn red on hover for clear 'Close' intent
-            text-shadow: 0px 0px 15px #ff444466;
-        }
-    }
+.hud_icon_cell .hud_icon_badge {
+    font-family: "LexendDeca";
+    font-weight: bold;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #ec6726;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    padding: 1px 4px;
+    
+    horizontal-align: left;
+    transform: translateX(50px) translateY(0px);
+    vertical-align: top;
+    
+    text-shadow: 1px 1px 2px #000000;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+    z-index: 10;
 }

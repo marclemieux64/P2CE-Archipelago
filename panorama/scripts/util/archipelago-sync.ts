@@ -8,16 +8,12 @@ interface ImagePanel extends Panel { }
 interface LabelPanel extends Panel { }
 
 class ArchipelagoSync {
-    static VERSION: string = "1.1.2"; 
+    static VERSION: string = "1.1.3"; 
     static ENABLE_DEBUG: boolean = false;
     
     // Cache local pour éviter l'évaluation répétitive de parseApiStatus()
     static m_LastParsedMenuVersion: number = -1;
     static m_CachedChapters: any = null;
-
-    static getCompletionSymbol(): string {
-        return ($.persistentStorage.getItem('CompletionSymbol') ?? 0) === 1 ? "★" : "£";
-    }
 
     /**
      * Legacy helper to evaluate indicator status, redirects to ArchipelagoLogic.
@@ -57,7 +53,7 @@ class ArchipelagoSync {
                     pic: map.pic,
                     statusIcons: map.status_text_list || map.statusIcons || [], 
                     required_item_icons: map.required_item_icons || [],
-                    active_sub_keys: map.active_sub_keys || [], // AJOUT CRUCIAL : Transfert des sous-clés pour les badges du HUD
+                    active_sub_keys: map.active_sub_keys || [], 
                     valid_count: map.valid_count,
                     total_count: map.total_count,
                     progress_text: map.progress_text,
@@ -75,7 +71,7 @@ class ArchipelagoSync {
 
         const statusIconsList: string[] = map.statusIcons || [];
 
-        const symbol = this.getCompletionSymbol();
+        // REMOVAL : Plus de symbole textuel. On valide la complétion via l'état des icônes
         const isCompleted = map.completed === true || (statusIconsList.length > 0 && statusIconsList.every(icon => icon === "check"));
         if (isCompleted) return { completed: true, greenCount: 0, total: statusIconsList.length, doable: false, fullyDoable: false };
 
@@ -234,6 +230,7 @@ class ArchipelagoSync {
 
         this.m_LastServerStatus = serverStatus;
         this.m_LastRatmanStatus = ratmanStatus;
+        this.m_LastPortalGunStatus = portalGunDone;
         this.m_LastPortalGunStatus = portalGunDone;
         this.m_LastPotatosStatus = potatosDone;
         this.m_LastSymbols = symbols;

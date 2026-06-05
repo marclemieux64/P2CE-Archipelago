@@ -124,13 +124,16 @@ class ArchipelagoMapSelect {
         }
     }
 
-    static applyColorCode(panel: Panel, valid: number, total: number) {
+    static updateChapterStyle(panel: Panel, valid: number, total: number, allCompleted: boolean) {
         if (!panel || !panel.IsValid()) return;
         panel.RemoveClass('progress--red');
         panel.RemoveClass('progress--yellow');
         panel.RemoveClass('progress--green');
 
-        if (total === 0 || valid === 0) {
+        if (allCompleted) {
+            panel.AddClass('progress--green');
+            panel.style.color = "#33cc33";
+        } else if (total === 0 || valid === 0) {
             panel.AddClass('progress--red');
             panel.style.color = "#ff4444";
         } else if (valid < total) {
@@ -339,7 +342,7 @@ class ArchipelagoMapSelect {
         const chapter = this.g_ChapterData[chapterId];
         if (chapter) {
             this.selectMap({
-                pic: chapter.pic,
+                chapter_number: chapterId,
                 title: $.Localize(`#portal2_Chapter${chapterId}_Title`) || chapter.title,
                 subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
             }, false);
@@ -357,10 +360,12 @@ class ArchipelagoMapSelect {
         let calculatedIdentityKey = svgName;
 
         if (!isMissingItem) {
-            if (svgName === "uncheck") {
-                img.SetImage("file://{images}/archipelago/icons/uncheck.svg");
-                img.AddClass('status_icon--locked'); 
+            img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
 
+            if (svgName === "uncheck" || svgName === "check") {
+                if (svgName === "uncheck") {
+                    img.AddClass('status_icon--locked'); 
+                }
                 if (iconIndex === 0) {
                     targetBadgeText = "#Archipelago_Maps_Check_Tag";
                     calculatedIdentityKey = "flag";
@@ -373,8 +378,7 @@ class ArchipelagoMapSelect {
                     }
                 }
             } else {
-                img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
-                if (svgName !== "check" && ArchipelagoMapSelect.ICON_BADGE_MAP[svgName]) {
+                if (ArchipelagoMapSelect.ICON_BADGE_MAP[svgName]) {
                     targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[svgName];
                 }
             }
@@ -435,6 +439,7 @@ class ArchipelagoMapSelect {
         }
     }
 
+    // CORRECTION CRUCIAL : Isolation et liaison stricte de chapter_number pour les images de prévisualisation
     static selectMap(mapData: any, bShowPlayButton: boolean = true) {
         const previewImage = $('#PreviewImage') as ImagePanel;
         const mapSubtitleLabel = $('#MapSubtitleLabel') as LabelPanel;
@@ -449,11 +454,16 @@ class ArchipelagoMapSelect {
         const checksHeader = $('#ChecksHeader');
 
         if (previewImage && previewImage.IsValid()) {
-            let picPath = mapData.pic || "menu/p2ce-generic";
-            if (picPath.startsWith('vgui/chapters/')) {
-                picPath = `archipelago/${picPath.substring('vgui/chapters/'.length)}`;
+            if (mapData.is_chapter) {
+                // Utilisation explicite de chapter_number extrait de l'API Python pour cibler archipelago/chapterX.png
+                previewImage.SetImage(`file://{images}/archipelago/chapter${mapData.chapter_number}.png`);
+            } else {
+                let picPath = mapData.pic || "menu/p2ce-generic";
+                if (picPath.startsWith('vgui/chapters/')) {
+                    picPath = `archipelago/${picPath.substring('vgui/chapters/'.length)}`;
+                }
+                previewImage.SetImage(`file://{images}/${picPath}.png`);
             }
-            previewImage.SetImage(`file://{images}/${picPath}.png`);
         }
 
         if (mapSubtitleLabel && mapSubtitleLabel.IsValid()) {
@@ -473,10 +483,12 @@ class ArchipelagoMapSelect {
             });
         }
 
+        const missingItemsList = mapData.required_item_icons || [];
+
         if (iconsContainer && iconsContainer.IsValid()) {
             iconsContainer.RemoveAndDeleteChildren();
-            if (mapData.required_item_icons && mapData.required_item_icons.length > 0) {
-                const sortedItemIcons = [...mapData.required_item_icons];
+            if (missingItemsList.length > 0) {
+                const sortedItemIcons = [...missingItemsList];
                 sortedItemIcons.sort((a: string, b: string) => {
                     const orderA = ArchipelagoMapSelect.ITEM_SORT_ORDER[a] || 99;
                     const orderB = ArchipelagoMapSelect.ITEM_SORT_ORDER[b] || 99;
@@ -489,17 +501,20 @@ class ArchipelagoMapSelect {
             }
         }
 
-        const showDetails = !mapData.is_chapter;
-        if (checks && checks.IsValid()) checks.visible = showDetails;
-        if (reqs && reqs.IsValid()) reqs.visible = showDetails;
+        const isChapter = mapData.is_chapter;
+        const hasMissingItems = missingItemsList.length > 0;
 
-        if (missingItemsHeader && missingItemsHeader.IsValid()) missingItemsHeader.style.visibility = showDetails ? 'visible' : 'collapse';
-        if (checksHeader && checksHeader.IsValid()) checksHeader.style.visibility = showDetails ? 'visible' : 'collapse';
+        if (checks && checks.IsValid()) checks.visible = !isChapter;
+        if (checksHeader && checksHeader.IsValid()) checksHeader.style.visibility = !isChapter ? 'visible' : 'collapse';
+
+        if (reqs && reqs.IsValid()) reqs.visible = (!isChapter && hasMissingItems);
+        if (missingItemsHeader && missingItemsHeader.IsValid()) {
+            missingItemsHeader.style.visibility = (!isChapter && hasMissingItems) ? 'visible' : 'collapse';
+        }
 
         if (playButton && playButton.IsValid()) {
-            playButton.visible = (showDetails && bShowPlayButton);
+            playButton.visible = (!isChapter && bShowPlayButton);
             const isDeactivated = mapData.command_deactivated !== null && mapData.command_deactivated !== false && mapData.command_deactivated !== undefined;
-            const calculatedCmd = (!isDeactivated && mapData.command) ? mapData.command : (typeof mapData.command_deactivated === 'string' ? mapData.command_deactivated : "");
             
             if (!isDeactivated && mapData.command) {
                 playButton.enabled = true;
@@ -514,7 +529,7 @@ class ArchipelagoMapSelect {
     static playSelectedMap() {
         if (this.g_SelectedMapData && !this.g_SelectedMapData.is_chapter) {
             const cmd = this.g_SelectedMapData.command;
-            const isDeactivated = this.g_SelectedMapData.command_deactivated !== null && this.g_SelectedMapData.command_deactivated !== false && this.g_SelectedMapData.command_deactivated !== undefined;
+            const isDeactivated = this.g_SelectedMapData.command_deactivated !== null && this.g_SelectedMapData.command_deactivated !== false && this.g_SelectedMapCommand !== undefined;
             if (cmd && !isDeactivated) GameInterfaceAPI.ConsoleCommand(cmd);
         }
     }
@@ -572,17 +587,14 @@ class ArchipelagoMapSelect {
                     if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                     this.g_ResetSchedule = $.Schedule(0.15, () => {
                         if (this.g_ClickedMapData) {
-                            // Si une carte a été sélectionnée par clic, on restaure ses données
                             this.selectMap(this.g_ClickedMapData, true);
                             this.restoreActiveSelectionVisuals();
                         } else {
-                            // CORRECTION INDISPENSABLE : S'il n'y a aucune carte sélectionnée par clic,
-                            // l'arrêt du survol force impérativement le retour aux infos du chapitre ouvert actif.
                             const targetChapterId = this.g_OpenChapterId || chId;
                             const openCh = this.g_ChapterData[targetChapterId];
                             if (openCh) {
                                 this.selectMap({
-                                    pic: openCh.pic,
+                                    chapter_number: targetChapterId,
                                     title: $.Localize(`#portal2_Chapter${targetChapterId}_Title`) || openCh.title,
                                     subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
                                 }, false);
@@ -607,7 +619,7 @@ class ArchipelagoMapSelect {
                     } else {
                         this.clearMapSelectionVisuals(); 
                         this.selectMap({
-                            pic: chapter.pic,
+                            chapter_number: chId,
                             title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title,
                             subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
                         }, false);
@@ -634,13 +646,13 @@ class ArchipelagoMapSelect {
             const chStatus = entry.FindChildTraverse('ChapterStatus_' + chId) as LabelPanel;
             if (chStatus && chStatus.IsValid()) {
                 if (chapter.all_completed) {
-                    chStatus.text = "£";
+                    chStatus.text = "check";
                     chStatus.visible = true;
-                    this.applyColorCode(chStatus, 1, 1);
+                    this.updateChapterStyle(chStatus, 1, 1, true);
                 } else if (chapter.progress_text && !isHidingCounts) {
                     chStatus.text = chapter.progress_text;
                     chStatus.visible = true;
-                    this.applyColorCode(chStatus, chapter.valid_count || 0, chapter.total_count || 0);
+                    this.updateChapterStyle(chStatus, chapter.valid_count || 0, chapter.total_count || 0, false);
                 } else chStatus.visible = false;
             }
 
@@ -690,12 +702,10 @@ class ArchipelagoMapSelect {
                                 if (this.g_ClickedMapData) {
                                     this.selectMap(this.g_ClickedMapData, true);
                                 } else {
-                                    // CORRECTION APPLIQUÉE : Si aucune carte n'est validée par un clic,
-                                    // la sortie de survol d'un élément enfant maps d'une liste force le retour aux infos du chapitre ouvert.
                                     const openCh = this.g_ChapterData[this.g_OpenChapterId || chId];
                                     if (openCh) {
                                         this.selectMap({
-                                            pic: openCh.pic,
+                                            chapter_number: this.g_OpenChapterId || chId,
                                             title: $.Localize(`#portal2_Chapter${this.g_OpenChapterId || chId}_Title`) || openCh.title,
                                             subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
                                         }, false);
@@ -780,11 +790,11 @@ class ArchipelagoMapSelect {
                         if (map.progress_text && !isHidingCounts && !isDeactivated) {
                             progressLabel.text = map.progress_text;
                             progressLabel.visible = true;
-                            this.applyColorCode(progressLabel, map.valid_count || 0, map.total_count || 0);
+                            this.updateChapterStyle(progressLabel, map.valid_count || 0, map.total_count || 0, false);
                         } else if (map.completed && !isDeactivated) {
-                            progressLabel.text = "£";
+                            progressLabel.text = "check";
                             progressLabel.visible = true;
-                            this.applyColorCode(progressLabel, 1, 1);
+                            this.updateChapterStyle(progressLabel, 1, 1, true);
                         } else progressLabel.visible = false;
                     }
 

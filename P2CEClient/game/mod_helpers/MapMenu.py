@@ -144,16 +144,26 @@ class MapMenuElement(MenuElement):
         all_reqs = self.get_combined_requirements()
         icons = items_to_shortened(all_reqs)
         
-        valid_count = sum(1 for c in self.info_text if c != "uncheck")
-        total_count = len(self.info_text)
-        
-        # CORRECTION : Alignement strict des identifiants de dictionnaire de badges pour map-status et map-select
+        # APPLICATION EXACTE DE TA NOUVELLE LOGIQUE DE COMPTAGE
+        # valid = Ce qui est faisable (ni uncheck, ni check)
+        # total = Somme de Faisable + Non Faisable (Tout sauf check)
+        valid_count = 0
+        total_count = 0
+        for icon in self.info_text:
+            if icon == "check":
+                continue # Exclu complètement des compteurs
+            elif icon == "uncheck":
+                total_count += 1 # Non Faisable : incrémente le total uniquement
+            else:
+                valid_count += 1 # Faisable : incrémente les deux compteurs
+                total_count += 1
+
         active_sub_keys = []
         for k in self.sub_location_completion.keys():
             if "Wheatley Monitor" in k: active_sub_keys.append("monitor")
             elif "Ratman Den" in k: active_sub_keys.append("ratmansdent")
             elif "Vitrified Door" in k: active_sub_keys.append("door")
-            elif "Potatos" in k: active_sub_keys.append("potatos") # AJOUT : Prise en charge manquante pour Potatos
+            elif "Potatos" in k: active_sub_keys.append("potatos") 
             elif portal_gun_1 in k: active_sub_keys.append("portalgun1")
             elif portal_gun_2 in k: active_sub_keys.append("portalgun2")
 
@@ -204,6 +214,10 @@ class ChapterMenuElement(MenuElement):
             else: curr.next_map = nxt
             curr = nxt
 
+    def complete_check(self, loc_id):
+        if self.first_map:
+            self.first_map.complete_check(loc_id)
+
     def to_dict(self, previous_completed=True):
         maps_list, curr = [], self.first_map
         prev_comp = previous_completed
@@ -219,6 +233,8 @@ class ChapterMenuElement(MenuElement):
                 has_valid_maps = True
                 if not m.get("completed"):
                     all_maps_complete = False
+                
+                # Somme accumulative propre basée sur le filtrage amont
                 chapter_valid += m.get("valid_count", 0)
                 chapter_total += m.get("total_count", 0)
             prev_comp = curr.completed

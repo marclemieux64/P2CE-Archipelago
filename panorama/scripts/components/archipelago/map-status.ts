@@ -172,7 +172,7 @@ var ArchipelagoMapStatusHUD = class {
             }
         }
 
-        // RENDU ET COMPORTEMENT DES BADGES TEXTUELS UNIFIÉ
+        // RENDU D'ICÔNE CHECK DIRECTE SANS SUPPRESSION DE SYMBOLE TEXTUEL
         const statusIconsList = currentMapData.statusIcons || [];
         const currentStatusKey = statusIconsList.join(",");
         if (ArchipelagoMapStatusHUD.m_LastStatusKey !== currentStatusKey) {
@@ -193,7 +193,7 @@ var ArchipelagoMapStatusHUD = class {
 
                 if (svgName === "uncheck" || svgName === "check") {
                     if (svgName === "uncheck") {
-                        img.AddClass('status_icon--locked'); // Synchronisé sur le nom de classe de map-select
+                        img.AddClass('status_icon--locked');
                     }
                     if (i === 0) {
                         targetBadgeText = "#Archipelago_Maps_Check_Tag";

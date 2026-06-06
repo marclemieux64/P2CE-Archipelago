@@ -58,47 +58,6 @@ namespace Archipelago {
             }
         }
 
-    
-        if (mapName == "sp_a2_turret_blocker") {
-            if (classname == "prop_wall_projector") {
-                // =============================================================
-                // TWEAK THESE VALUES TO ADJUST THE BRIDGE HOLOGRAM!
-                // =============================================================
-                // targetPos: Offset relative to the projector (X = Forward, Y = Right, Z = Up)
-                targetPos = Vector(15.0f, 0.0f, 0.0f);
-                
-                // targetAng: Angle offset relative to the projector (Pitch, Yaw, Roll)
-                // Modify these angles to find the correct orientation for the bridge hologram
-                targetAng = QAngle(0.0f, 90.0f, 0.0f); 
-                
-                targetSkin = 4;        // Skin 4 (Rusty / Uncollected)
-                targetScale = 0.66f;   // Visual scale multiplier
-                shouldParent = false;  // Keep false so the hologram is unparented and free to rotate
-                absoluteAngles = false;// Keep false to combine relative angles properly
-                return;
-            }
-        }
-
-        if (mapName == "sp_a4_stop_the_box") {
-            if (classname == "prop_wall_projector") {
-                // =============================================================
-                // TWEAK THESE VALUES TO ADJUST THE BRIDGE HOLOGRAM!
-                // =============================================================
-                // targetPos: Offset relative to the projector (X = Forward, Y = Right, Z = Up)
-                targetPos = Vector(15.0f, 0.0f, 0.0f);
-                
-                // targetAng: Angle offset relative to the projector (Pitch, Yaw, Roll)
-                // Modify these angles to find the correct orientation for the bridge hologram
-                targetAng = QAngle(0.0f, 90.0f, 0.0f); 
-                
-                targetSkin = 4;        // Skin 4 (Rusty / Uncollected)
-                targetScale = 0.66f;   // Visual scale multiplier
-                shouldParent = false;  // Keep false so the hologram is unparented and free to rotate
-                absoluteAngles = false;// Keep false to combine relative angles properly
-                return;
-            }
-        }
-
        if (mapName == "sp_a2_bts1") {
         // On vérifie que c'est un bouton, mais on exclut strictement les boutons de sol ("floor")
         if ((name_lower.locate("button") != uint(-1) || model.locate("button") != uint(-1) || classname.locate("button") != uint(-1)) && 
@@ -173,18 +132,34 @@ namespace Archipelago {
             targetScale = 1.0f;
             targetPos = Vector(0, 0, 30.0f);
             return;
-        } 
-
+        }
+        
         if (classname == "prop_wall_projector") {
-            targetPos = Vector(15.0f, 0.0f, 0.0f);
-            targetAng = QAngle(90.0f, 0.0f, 0.0f);  
-            targetScale = 0.66f;               
+            shouldParent = false;   // Pas de parentage pour éviter les glitchs de matrice
+            absoluteAngles = true;  // Force l'utilisation d'angles mondiaux absolus adaptés à la surface
+            targetScale = 0.66f;
+            targetSkin = 4;
+
+            // 1. Extraction des axes directionnels réels du projecteur mural
+            Vector forward, right, up;
+            AngleVectors(ent.GetAbsAngles(), forward, right, up);
+
+            // 2. Calcul de la position mondiale absolue voulue (Avance de 15 unités sur l'axe local Forward)
+            Vector worldPos = ent.GetAbsOrigin() + (forward * 15.0f) + (up * 5.0f);
+
+            // Contre-mesure pour DeleteEntity : on soustrait l'origine pour injecter la position absolue parfaite
+            targetPos = worldPos - ent.GetAbsOrigin();
+
+            // 3. Calcul de la rotation mondiale absolue voulue (Pivotement de 90° propre)
+            // On utilise la signature native à deux vecteurs pour calculer le Pitch, le Yaw et le Roll
+            // requis pour suivre l'orientation du mur sur lequel est posé le projecteur.
+            VectorAngles(up, forward, targetAng);
             return;
         }
 
         if (classname == "prop_monster_box") {
-            targetPos = Vector(0, 0, 50.0f);
-            targetScale = 0.8f;
+            targetPos = Vector(0, 0, 32.0f);
+            targetScale = 0.66f;
             shouldParent = true;
             absoluteAngles = true;
             return;
@@ -198,17 +173,38 @@ namespace Archipelago {
         } 
 
         if (classname.locate("env_portal_laser") != uint(-1) || classname.locate("prop_laser_relay") != uint(-1) || classname.locate("prop_laser_catcher") != uint(-1)) {
-            shouldParent = true;
+            shouldParent = false;   // Pas de parentage physique instable
+            absoluteAngles = true;  // Force l'utilisation d'angles mondiaux absolus reconstruits
+            targetScale = 0.66f;
+            targetSkin = 4;
+
+            // 1. Extraction des axes directionnels de l'émetteur (S'adapte automatiquement au sol, mur, ou plafond)
+            Vector forward, right, up;
+            AngleVectors(ent.GetAbsAngles(), forward, right, up);
+
+            // 2. Calcul de la position mondiale absolue voulue
+            Vector worldPos;
             if (classname.locate("prop_laser_relay") != uint(-1)) {
-                targetPos = Vector(0, 0, 40.0f);
-                targetScale = 0.66f;
+                worldPos = ent.GetAbsOrigin() + (up * 32.0f); // Décale de 40 unités vers le haut local
             } else {
-                targetPos = Vector(32.0f, 0, 0);
-                targetScale = 0.66f;
-                targetAng = QAngle(90.0f, 0, 0); 
+                worldPos = ent.GetAbsOrigin() + (forward * 32.0f); // Avance de 32 unités dans l'axe du faisceau
+            }
+
+            // Contre-mesure pour DeleteEntity : comme cette fonction fait (spawnPos + hPos) de force,
+            // on soustrait l'origine de base pour injecter la position absolue parfaite.
+            targetPos = worldPos - ent.GetAbsOrigin();
+
+            // 3. Calcul de la rotation mondiale absolue voulue (Orientation adaptée à l'entité)
+            if (classname.locate("prop_laser_relay") != uint(-1)) {
+                targetAng = ent.GetAbsAngles(); // Reste aligné sur le relais
+            } else {
+                // Pour faire face au faisceau proprement sur toutes les surfaces (sol, murs, plafonds) :
+                // On utilise la deuxième signature valide de l'API pour reconstruire le QAngle complet
+                // en lui donnant une direction de visée (up) et un axe de torsion stable (forward * -1)
+                VectorAngles(up, forward, targetAng);
             }
             return;
-        }  
+        } 
 
         if (classname.locate("button") != uint(-1)) {
             shouldParent = true;
@@ -223,7 +219,7 @@ namespace Archipelago {
 if (classname == "prop_tractor_beam" || classname == "prop_excursion_funnel") {
             targetSkin = 4;
             targetPos = Vector(80.0f, 0, 0); 
-            targetAng = QAngle(-90.0f, 0, 0); 
+            targetAng = QAngle(90.0f, 0, 0); 
             return;
         }
     }

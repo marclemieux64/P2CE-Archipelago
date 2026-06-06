@@ -88,6 +88,15 @@ void AddButtonFrame(string entity_name) {
                     hPos.z += 4.0f; // Ajustement vertical de 4 unités pour l'hologramme
                 }
 
+                // --- EXCEPTION MANUELLE STRICTE POUR SP_A3_BOMB_FLINGS ---
+                if (mapName == "sp_a3_bomb_flings") {
+                    hParent = false;                  // Désactive le parentage qui cause le 180 0 0
+                    hPos = Vector(0.0f, 0.0f, 70.0f); // Position standard devant un bouton mural
+                    hAng = angles;                    // Récupère l'orientation du bouton original
+                    hAng.x += 0.0f; 
+                    hScale = 0.66f;                 // Aligne la rotation face au joueur
+                }
+
                 Vector finalPos;
                 QAngle finalAng;
                 CBaseEntity@ finalParent = hParent ? dummy : null;
@@ -98,6 +107,11 @@ void AddButtonFrame(string entity_name) {
                 } else { 
                     finalPos = position + (AnglesToForward(angles) * hPos.x) + (AnglesToRight(angles) * -hPos.y) + (AnglesToUp(angles) * hPos.z);
                     finalAng = hAbs ? hAng : (angles + hAng);
+                }
+
+                // Ré-ajustement de finalAng pour l'exception afin d'éviter qu'il soit écrasé par le bloc standard
+                if (mapName == "sp_a3_bomb_flings") {
+                    finalAng = hAng;
                 }
 
                 CreateAPHologram(finalPos, finalAng, hScale, finalParent, "", hSkin, holoName);

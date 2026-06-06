@@ -229,14 +229,14 @@
 
 .title_column {
     flow-children: down;
-    margin-right: 35px;
-    width: fit-children;     
+    margin-right: 10px;
+    width: 240px;
     vertical-align: center;
 }
 
 .info_column {
     flow-children: down;
-    margin-right: 20px;
+    margin-right: 10px;
     vertical-align: center;
     width: fit-children;
     height: fit-children; 
@@ -266,7 +266,7 @@
 .map_subtitle_label {
     font-family: "LexendDeca";
     font-weight: bold;
-    font-size: 30px;
+    font-size: 28px;
     color: #eeeeee;
     text-shadow: 0px 0px 8px #ffffff11;
 }

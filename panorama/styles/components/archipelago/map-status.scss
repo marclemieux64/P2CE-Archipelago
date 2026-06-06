@@ -55,7 +55,7 @@
 }
 
 .info_column {
-  flow-children: down;
+    flow-children: down;
     margin-bottom: 20px;
     vertical-align: center;
     width: fit-children;
@@ -71,14 +71,13 @@
     font-weight: light;
     font-size: 14px;
     color: #ffffff44;
-    text-transform: uppercase;
     margin-bottom: 4px;
 }
 
 .status_svg_container {
     flow-children: right;
     width: fit-children;
-    height: 62px; 
+    height: 60px; // Match map-select.scss height exactly
     vertical-align: center;
 }
 
@@ -111,7 +110,7 @@
     
     // STRUCTURE D'ANCRAGE EN DISTANCE RELATIVE CONSTANTE IDENTIQUE AU MENU PRINCIPAL
     horizontal-align: left;
-    transform: translateX(38px) translateY(0px);
+    transform: translateX(50px) translateY(0px); // Shared consistent layout alignment
     vertical-align: top;
     
     text-shadow: 1px 1px 2px #000000;

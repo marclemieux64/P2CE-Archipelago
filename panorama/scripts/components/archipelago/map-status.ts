@@ -161,6 +161,7 @@ var ArchipelagoMapStatusHUD = class {
                 label.text = (localizedText === "#Archipelago_Map_Checks" || localizedText === "") ? "Checks Found" : localizedText;
             }
         }
+
         const reqsColumn = container.FindChildTraverse('RequirementsColumn');
         if (reqsColumn) {
             reqsColumn.style.width = "fit-children";
@@ -229,6 +230,17 @@ var ArchipelagoMapStatusHUD = class {
             const orderB = ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[b] || 99;
             return orderA - orderB;
         });
+
+        // TOGGLE COLLAPSE ON EMPTY: If no missing icons are requested, completely collapse the container box
+        if (reqsColumn) {
+            if (sortedItemIcons.length === 0) {
+                reqsColumn.AddClass('collapse');
+                reqsColumn.style.visibility = 'collapse';
+            } else {
+                reqsColumn.RemoveClass('collapse');
+                reqsColumn.style.visibility = 'visible';
+            }
+        }
 
         const currentMissingKey = sortedItemIcons.join(",");
         if (ArchipelagoMapStatusHUD.m_LastMissingKey !== currentMissingKey) {

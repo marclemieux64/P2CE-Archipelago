@@ -116,7 +116,53 @@
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Wheatley" />
 					</Panel>
+
+					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Hologram" />
+
+					<Panel class="help-popup__row">
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/neutral.png" class="help-popup__icon-img" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_hologram_Neutral" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/skin2.png" class="help-popup__icon-img" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_hologram_skin2" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/skin4.png" class="help-popup__icon-img" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_hologram_skin4" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/skin3.png" class="help-popup__icon-img" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_hologram_skin3" />
+					</Panel>
+
+					<Panel class="help-popup__row">
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/skin5.png" class="help-popup__icon-img" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_hologram_skin5" />
 				</Panel>
+
+					<Panel class="help-popup__row">
+						<Panel class="hud_icon_cell">
+							<Image src="file://{images}/archipelago/icons/skin6.png" class="help-popup__icon-img" />
+						</Panel>
+						<Label class="help-popup__label" text="#Archipelago_Help_hologram_skin6" />
+					</Panel>
+				</Panel>
+
+				
 
 				<Panel class="help-popup__column">
 					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Items" />

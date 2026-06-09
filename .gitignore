@@ -84,6 +84,9 @@ archipelago/_persistent_storage.yaml
 # Standalone Client Migration - Ignore Legacy Archipelago Directory & Venv
 /archipelago/
 /ap_venv/
+/data/client/
+data/script_storage_client.db
+data/script_storage_server.db
 
 # Standalone Client Runtime, Bytecode & Archives
 __pycache__/
@@ -109,3 +112,4 @@ build_mod.py
 
 data/*.db
 build/*zip
+

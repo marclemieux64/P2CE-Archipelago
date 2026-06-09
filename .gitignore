@@ -104,5 +104,9 @@ data/client/api_reference.json
 build_apworld.py
 data/client/js.scope
 p2ce.apworld
-gameinfo.txt
 
+build_mod.py
+build/p2ce-archipelago (1.0.0).zip
+
+data/*.db
+build/*zip

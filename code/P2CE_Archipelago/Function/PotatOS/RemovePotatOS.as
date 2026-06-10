@@ -68,7 +68,11 @@ namespace Archipelago {
         // --- Silence GLaDOSVO exclusively here ---
         CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
         if (cmd !is null) {
-            // Logique optionnelle liée à InitCmd
+            Variant vMix;
+            vMix.SetString("snd_setmixer PotatOS vol 0.0");
+            cmd.FireInput("Command", vMix, 0.0f, null, null, 0);
+            CallVScript("MutePotatOSSubtitles(true)");
+
         }
     }
 

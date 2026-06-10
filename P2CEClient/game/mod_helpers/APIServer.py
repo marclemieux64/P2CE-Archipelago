@@ -50,7 +50,15 @@ class APIServer:
                 from game.mod_helpers.MapMenu import items_shortened
 
                 is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
-                missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
+                
+                # MODIFICATION DIRECTE : Génération dynamique et sécurisée de l'état des items manquants à la volée
+                if hasattr(client_self, "items_received") and hasattr(client_self, "item_names"):
+                    # On traduit l'inventaire reçu en set de chaînes lisibles
+                    received_names = {client_self.item_names.lookup_in_game(i.item, client_self.game) for i in client_self.items_received}
+                    # L'élément n'est ajouté à missing_str QUE s'il n'est pas trouvé dans les reçus (gère le !send instantanément)
+                    missing_str = "".join([items_shortened[item] for item in items_shortened if item not in received_names])
+                else:
+                    missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
 
                 # =============================================================
                 # 1. CANAL UNIFIÉ DELTA SYNC (Haute performance pour le V8)
@@ -82,19 +90,20 @@ class APIServer:
                         server_self._menu_version += 1
                         server_self._cached_menu_dict = client_self.menu.to_dict() if client_self.menu else None
 
-                    # Clé de cache composite incluant l'identifiant de la taille de hint_log
+                    # Clé de cache composite incluant le décompte précis des items reçus pour forcer l'invalidation d'un !send
                     current_key = (
                         is_conn,
                         client_self.check_game_connection(),
                         client_self.slot,
                         len(client_self.checked_locations),
+                        len(client_self.items_received) if hasattr(client_self, "items_received") else 0,
                         getattr(client_self, "hint_points", 0),
                         getattr(client_self, "hint_cost", 0),
                         getattr(client_self, "logic_difficulty", 0),
                         len(chat_delta),
                         client_menu_version,
                         server_self._menu_version,
-                        len(client_self.notifier.hint_log)  # FIX : Invalidation immédiate lors de mises à jour d'indices passifs
+                        len(client_self.notifier.hint_log)
                     )
 
                     if current_key != server_self._cache["sync_key"]:
@@ -146,6 +155,7 @@ class APIServer:
                         client_self.check_game_connection(),
                         client_self.slot,
                         len(client_self.checked_locations),
+                        len(client_self.items_received) if hasattr(client_self, "items_received") else 0,
                         getattr(client_self, "hint_points", 0),
                         getattr(client_self, "hint_cost", 0),
                         getattr(client_self, "logic_difficulty", 0)

@@ -95,7 +95,14 @@ class MapMenuElement(MenuElement):
         self.refresh_title()
 
     def check_logic(self, required_items):
-        return all(item in self.parent.parent.client.items_received for item in required_items)
+        # MODIFICATION DIRECTE : On vérifie directement si l'item a été reçu par le client, peu importe comment (cheat ou légitime)
+        client = self.parent.parent.client
+        if not client or not hasattr(client, "items_received"):
+            return False
+        
+        # Traduction des items reçus en chaînes de caractères pour la comparaison de logique
+        received_names = {client.item_names.lookup_in_game(i.item, client.game) for i in client.items_received}
+        return all(item in received_names for item in required_items)
 
     def refresh_title(self):
         client = self.parent.parent.client
@@ -144,28 +151,26 @@ class MapMenuElement(MenuElement):
         all_reqs = self.get_combined_requirements()
         icons = items_to_shortened(all_reqs)
         
-        # APPLICATION EXACTE DE TA NOUVELLE LOGIQUE DE COMPTAGE
-        # valid = Ce qui est faisable (ni uncheck, ni check)
-        # total = Somme de Faisable + Non Faisable (Tout sauf check)
         valid_count = 0
         total_count = 0
         for icon in self.info_text:
             if icon == "check":
-                continue # Exclu complètement des compteurs
+                continue
             elif icon == "uncheck":
-                total_count += 1 # Non Faisable : incrémente le total uniquement
+                total_count += 1
             else:
-                valid_count += 1 # Faisable : incrémente les deux compteurs
+                valid_count += 1
                 total_count += 1
 
         active_sub_keys = []
         for k in self.sub_location_completion.keys():
-            if "Wheatley Monitor" in k: active_sub_keys.append("monitor")
-            elif "Ratman Den" in k: active_sub_keys.append("ratmansdent")
-            elif "Vitrified Door" in k: active_sub_keys.append("door")
-            elif "Potatos" in k: active_sub_keys.append("potatos") 
-            elif portal_gun_1 in k: active_sub_keys.append("portalgun1")
-            elif portal_gun_2 in k: active_sub_keys.append("portalgun2")
+            k_lower = k.lower()
+            if "wheatley monitor" in k_lower: active_sub_keys.append("monitor")
+            elif "ratman den" in k_lower: active_sub_keys.append("ratmansdent")
+            elif "vitrified door" in k_lower: active_sub_keys.append("door")
+            elif "potatos" in k_lower: active_sub_keys.append("potatos") 
+            elif portal_gun_1 in k or "portal gun 1" in k_lower: active_sub_keys.append("portalgun1")
+            elif portal_gun_2 in k or "portal gun 2" in k_lower: active_sub_keys.append("portalgun2")
 
         d = super().to_dict()
         d.update({
@@ -234,7 +239,6 @@ class ChapterMenuElement(MenuElement):
                 if not m.get("completed"):
                     all_maps_complete = False
                 
-                # Somme accumulative propre basée sur le filtrage amont
                 chapter_valid += m.get("valid_count", 0)
                 chapter_total += m.get("total_count", 0)
             prev_comp = curr.completed

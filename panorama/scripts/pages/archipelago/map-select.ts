@@ -13,9 +13,9 @@ class ArchipelagoMapSelect {
     static g_LastApiJson: string = '';
     static g_OpenChapterId: string = '';
     static g_SelectedMapData: any = null;
-    static g_ClickedMapData: any = null; // Suivi de la carte cliquée pour restauration visuelle
+    static g_ClickedMapData: any = null; 
     static g_ResetSchedule: any = null;
-    static g_IsTransitioning: boolean = false; // Verrou pour bloquer le survol intempestif pendant l'ouverture
+    static g_IsTransitioning: boolean = false; 
 
     static ITEM_SORT_ORDER: { [key: string]: number } = {
         "portalgun1": 1, "portalgun2": 2, "weightedcube": 3, "lasercube": 4,
@@ -28,7 +28,13 @@ class ArchipelagoMapSelect {
     };
 
     static ICON_BADGE_MAP: { [key: string]: string } = {
-        "flag": "#Archipelago_Maps_Check_Tag", "ratmansdent": "#Archipelago_Ratmens_Dens_Check_Tag", "portalgun1": "#Archipelago_Portal_Guns1_Check_Tag", "portalgun2": "#Archipelago_Portal_Guns2_Check_Tag", "door": "#Archipelago_Vitrified_Doors_Check_Tag", "potatos": "#Archipelago_Potatos_Check_Tag", "monitor": "#Archipelago_Wheathley_Monitor_Check_Tag"
+        "flag": "#Archipelago_Maps_Check_Tag", 
+        "ratmansdent": "#Archipelago_Ratmens_Dens_Check_Tag", 
+        "portalgun1": "#Archipelago_Portal_Guns1_Check_Tag", 
+        "portalgun2": "#Archipelago_Portal_Guns2_Check_Tag", 
+        "door": "#Archipelago_Vitrified_Doors_Check_Tag", 
+        "potatos": "#Archipelago_Potatos_Check_Tag", 
+        "monitor": "#Archipelago_Wheathley_Monitor_Check_Tag"
     };
 
     static LOCALIZED_TOKEN_MAP: { [key: string]: string } = {
@@ -357,30 +363,22 @@ class ArchipelagoMapSelect {
         img.AddClass(isMissingItem ? 'requirement_svg_icon' : 'status_svg_icon');
 
         let targetBadgeText = "";
-        let calculatedIdentityKey = svgName;
+        const activeSubs = mapData.active_sub_keys || [];
+        const typeKey = activeSubs[iconIndex - 1];
 
         if (!isMissingItem) {
             img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
 
-            if (svgName === "uncheck" || svgName === "check") {
-                if (svgName === "uncheck") {
-                    img.AddClass('status_icon--locked'); 
-                }
-                if (iconIndex === 0) {
-                    targetBadgeText = "#Archipelago_Maps_Check_Tag";
-                    calculatedIdentityKey = "flag";
-                } else {
-                    const activeSubs = mapData.active_sub_keys || [];
-                    const typeKey = activeSubs[iconIndex - 1]; 
-                    if (typeKey && ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey]) {
-                        targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey];
-                        calculatedIdentityKey = typeKey;
-                    }
-                }
-            } else {
-                if (ArchipelagoMapSelect.ICON_BADGE_MAP[svgName]) {
-                    targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[svgName];
-                }
+            if (iconIndex === 0) {
+                targetBadgeText = "#Archipelago_Maps_Check_Tag";
+            } else if (typeKey && ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey]) {
+                targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey];
+            } else if (svgName && ArchipelagoMapSelect.ICON_BADGE_MAP[svgName]) {
+                targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[svgName];
+            }
+
+            if (svgName === "uncheck") {
+                img.AddClass('status_icon--locked'); 
             }
         } else {
             img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
@@ -439,7 +437,6 @@ class ArchipelagoMapSelect {
         }
     }
 
-    // CORRECTION CRUCIAL : Isolation et liaison stricte de chapter_number pour les images de prévisualisation
     static selectMap(mapData: any, bShowPlayButton: boolean = true) {
         const previewImage = $('#PreviewImage') as ImagePanel;
         const mapSubtitleLabel = $('#MapSubtitleLabel') as LabelPanel;
@@ -455,7 +452,6 @@ class ArchipelagoMapSelect {
 
         if (previewImage && previewImage.IsValid()) {
             if (mapData.is_chapter) {
-                // Utilisation explicite de chapter_number extrait de l'API Python pour cibler archipelago/chapterX.png
                 previewImage.SetImage(`file://{images}/archipelago/chapter${mapData.chapter_number}.png`);
             } else {
                 let picPath = mapData.pic || "menu/p2ce-generic";
@@ -800,9 +796,12 @@ class ArchipelagoMapSelect {
 
                     const lockIcon = mapBtn.FindChildTraverse(`MapLock_${chId}_${index}`) as ImagePanel;
                     if (lockIcon && lockIcon.IsValid()) {
+                        // Nettoyage explicite des classes mutuellement exclusives pour éviter les conflits d'alignement/rendu du layout
+                        lockIcon.RemoveClass('icon--locked');
+                        lockIcon.RemoveClass('icon--unlocked');
+                        
                         lockIcon.SetImage(isDeactivated ? 'file://{images}/archipelago/lock-solid.svg' : 'file://{images}/archipelago/unlock-solid.svg');
-                        lockIcon.SetHasClass('icon--locked', isDeactivated);
-                        lockIcon.SetHasClass('icon--unlocked', !isDeactivated);
+                        lockIcon.AddClass(isDeactivated ? 'icon--locked' : 'icon--unlocked');
                     }
                 });
             }

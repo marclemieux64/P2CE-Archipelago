@@ -170,7 +170,7 @@ ratman_den_locations_table: dict[str, P2CELocationData] = {
     "Ratman Den 4": P2CELocationData("sp_a2_bridge_intro", LocationType.RATMAN_DEN),
     "Ratman Den 5": P2CELocationData("sp_a2_bridge_the_gap", LocationType.RATMAN_DEN, [portal_gun_2, bridge]),
     "Ratman Den 6": P2CELocationData("sp_a2_laser_vs_turret", LocationType.RATMAN_DEN, [portal_gun_2, laser, floor_button, reflection_cube]),
-    "Ratman Den 7": P2CELocationData("sp_a2_pull_the_rug", LocationType.RATMAN_DEN, [portal_gun_2, bridge])
+    "Ratman Den 7": P2CELocationData("sp_a2_pull_the_rug", LocationType.RATMAN_DEN, [portal_gun_2])
 }
 
 ratman_map_to_ratman_den: dict[str, str] = {value.map_name: key for key, value in ratman_den_locations_table.items()}
@@ -183,7 +183,7 @@ vitrified_door_locations_table: dict[str, P2CELocationData] = {
     "Vitrified Door 5": P2CELocationData("sp_a3_transition01", LocationType.OTHER, [portal_gun_2], 6),
     "Vitrified Door 6": P2CELocationData("sp_a3_transition01", LocationType.OTHER, [portal_gun_2], 6),
 }
-
+ 
 vitrified_map_to_vitrified_door: dict[str, list[str]] = {
     "sp_a3_03": ["Vitrified Door 1", "Vitrified Door 2", "Vitrified Door 3"],
     "sp_a3_transition01": ["Vitrified Door 4", "Vitrified Door 5", "Vitrified Door 6"]

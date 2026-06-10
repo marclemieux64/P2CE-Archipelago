@@ -173,7 +173,6 @@ var ArchipelagoMapStatusHUD = class {
             }
         }
 
-        // RENDU D'ICÔNE CHECK DIRECTE SANS SUPPRESSION DE SYMBOLE TEXTUEL
         const statusIconsList = currentMapData.statusIcons || [];
         const currentStatusKey = statusIconsList.join(",");
         if (ArchipelagoMapStatusHUD.m_LastStatusKey !== currentStatusKey) {
@@ -190,27 +189,19 @@ var ArchipelagoMapStatusHUD = class {
                 }
 
                 let targetBadgeText = "";
-                let calculatedIdentityKey = svgName;
+                const activeSubs = currentMapData.active_sub_keys || [];
+                const typeKey = activeSubs[i - 1];
 
-                if (svgName === "uncheck" || svgName === "check") {
-                    if (svgName === "uncheck") {
-                        img.AddClass('status_icon--locked');
-                    }
-                    if (i === 0) {
-                        targetBadgeText = "#Archipelago_Maps_Check_Tag";
-                        calculatedIdentityKey = "flag";
-                    } else {
-                        const activeSubs = currentMapData.active_sub_keys || [];
-                        const typeKey = activeSubs[i - 1]; 
-                        if (typeKey && ArchipelagoMapStatusHUD.ICON_BADGE_MAP[typeKey]) {
-                            targetBadgeText = ArchipelagoMapStatusHUD.ICON_BADGE_MAP[typeKey];
-                            calculatedIdentityKey = typeKey;
-                        }
-                    }
-                } else {
-                    if (ArchipelagoMapStatusHUD.ICON_BADGE_MAP[svgName]) {
-                        targetBadgeText = ArchipelagoMapStatusHUD.ICON_BADGE_MAP[svgName];
-                    }
+                if (i === 0) {
+                    targetBadgeText = "#Archipelago_Maps_Check_Tag";
+                } else if (typeKey && ArchipelagoMapStatusHUD.ICON_BADGE_MAP[typeKey]) {
+                    targetBadgeText = ArchipelagoMapStatusHUD.ICON_BADGE_MAP[typeKey];
+                } else if (svgName && ArchipelagoMapStatusHUD.ICON_BADGE_MAP[svgName]) {
+                    targetBadgeText = ArchipelagoMapStatusHUD.ICON_BADGE_MAP[svgName];
+                }
+
+                if (svgName === "uncheck") {
+                    img.AddClass('status_icon--locked');
                 }
 
                 if (targetBadgeText !== "") {
@@ -222,7 +213,6 @@ var ArchipelagoMapStatusHUD = class {
             });
         }
 
-        // RENDU DES ICÔNES D'OBJETS MANQUANTS REQUIS
         const missingItemsList = currentMapData.required_item_icons || [];
         const sortedItemIcons = [...missingItemsList];
         sortedItemIcons.sort((a: string, b: string) => {
@@ -231,7 +221,6 @@ var ArchipelagoMapStatusHUD = class {
             return orderA - orderB;
         });
 
-        // TOGGLE COLLAPSE ON EMPTY: If no missing icons are requested, completely collapse the container box
         if (reqsColumn) {
             if (sortedItemIcons.length === 0) {
                 reqsColumn.AddClass('collapse');

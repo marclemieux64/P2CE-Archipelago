@@ -664,7 +664,6 @@ class P2CEContext(CommonContext):
                     self.go_mode_announced = True
                     self.notifier.trigger_go_mode()
 
-        # FIX : Capture des notifications de changements d'indices en provenance des autres joueurs
         if cmd in ("Retrieved", "RoomUpdate"):
             if "keys" in args:
                 if f"_read_item_name_groups_{self.game}" in args["keys"]:
@@ -705,7 +704,10 @@ class P2CEContext(CommonContext):
                 self.update_menu()
             return
         
+        # MODIFICATION DIRECTE : Exécution ordonnée de la base d'abord, puis mise à jour forcée des listes
         super().on_package(cmd, args)
+        update_item_list()
+        self.update_item_remove_commands()
         
         if cmd == "Connected":
             self.completed_maps.clear() 
@@ -722,7 +724,6 @@ class P2CEContext(CommonContext):
                 death_sync_key = f"ap_persistent_deaths_{self.team}"
                 self.stored_data_notification_keys.add(death_sync_key)
                 
-                # FIX : Enregistrement persistant de l'amarre de suivi des indices globaux
                 hkey = f"_read_hints_{self.team}_{self.slot}"
                 self.stored_data_notification_keys.add(hkey)
                 

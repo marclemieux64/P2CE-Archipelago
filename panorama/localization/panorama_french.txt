@@ -378,7 +378,7 @@
 		"Archipelago_HUD_Warp_Menu"    "RETOUR AU MENU"
 
 
-		"Archipelago_HUD_Default"   "ARCHIPELAGO"
+		"Archipelago_HUD_Default"   "Archipelago"
 
 
 		"Archipelago_HUD_Found"     "OBJET TROUVÉ"

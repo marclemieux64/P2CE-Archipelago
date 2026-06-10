@@ -24,6 +24,7 @@
 #include "Function/Buttons/AddFloorButtonFrame.as"
 #include "Function/Buttons/ButtonScenarios.as"
 #include "Function/Buttons/CreateAPButton.as"
+#include "Function/Buttons/LockButtonByName.as"
 
 // --- CHECK ---
 #include "Function/Check/AddMapCheck.as"

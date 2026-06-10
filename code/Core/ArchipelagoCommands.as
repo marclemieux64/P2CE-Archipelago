@@ -32,6 +32,16 @@ void DisableEntityPhysicsLegacyCmd(const CommandArgs@ args) {
     Archipelago::DisableEntityPhysics(args.Arg(1));
 }
 
+[ServerCommand("LockButtonByName", "LockButtonByName command")]
+void LockButtonByNameCmd(const CommandArgs@ args) 
+{
+    // Vérification qu'au moins un argument (le nom de l'entité) a été fourni
+    if (args.ArgC() < 2) return;
+    
+    // Appel direct de la fonction globale d'exécution
+    Archipelago::LockButtonByName(args.Arg(1));
+}
+
 [ServerCommand("AddFloorButtonFrame", "AddFloorButtonFrame command")]
 void AddFloorButtonFrameLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;

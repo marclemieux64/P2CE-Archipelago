@@ -1,3 +1,4 @@
+from ..ItemNames import blue_gel, weighted_cube
 from dataclasses import dataclass
 from ..Items import *
 from ..ItemNames import motion_blur_trap, fizzle_portal_trap, butter_fingers_trap
@@ -141,13 +142,18 @@ map_specific_commands: list[MapCommand] = [
     MapCommand("sp_a2_turret_intro", turrets, ["DisableEntityPhysics npc_portal_turret_floor\n"]),
     MapCommand("sp_a2_bts2", turrets, ["AddScriptAtPos 1514 -3898 64 trigger_once OnStartTouch \"DisableEntityPhysics npc_portal_turret_floor\" 3 1\n"]),
     MapCommand("sp_a4_finale2", turrets, ["AddScriptAtPos 11835 11776 8543 trigger_once OnStartTouch \"DisableEntityPhysics npc_portal_turret_floor\" 2.5 1\n"]),
-    MapCommand("sp_a4_intro", frankenturret, [
-        "DisableTriggerAtPos -816 64 320\n",
-        "DeleteEntity \"cube_bot_model\" 1\n"
-    ]),
-    MapCommand("sp_a4_tb_wall_button", weighted_cube, [
-        "DeleteEntity \"cube_dropper_box_spawner\" 1\n"
-    ]),
+    MapCommand("sp_a4_intro", frankenturret, ["DisableTriggerAtPos -816 64 320\n","DeleteEntity \"cube_bot_model\" 1\n"]),
+    MapCommand("sp_a4_tb_wall_button", weighted_cube, ["DeleteEntity \"cube_dropper_box_spawner\" 1\n"]),
+    MapCommand("sp_a3_03", blue_gel, ["LockButtonByName pump_machine_blue_button\n"]),
+    MapCommand("sp_a3_transition01", blue_gel, ["LockButtonByName pump_machine_blue_button\n"]),
+    MapCommand("sp_a3_transition01", orange_gel, ["LockButtonByName pump_machine_orange_button\n"]),
+    MapCommand("sp_a3_portal_intro", blue_gel, ["LockButtonByName pump_machine_blue_button\n"]),
+    MapCommand("sp_a3_portal_intro", orange_gel, ["LockButtonByName pump_machine_orange_button\n"]),
+    MapCommand("sp_a3_portal_intro", white_gel, ["LockButtonByName pump_machine_white_button\n"]),
+    MapCommand("sp_a3_funnel_intro", blue_gel, ["LockButtonByName pump_machine_blue_button\n"]),
+    MapCommand("sp_a3_funnel_intro", orange_gel, ["LockButtonByName pump_machine_orange_button\n"]),
+    MapCommand("sp_a3_funnel_intro", white_gel, ["LockButtonByName pump_machine_white_button\n"]),
+    
 ]
 
 # map specific gel removal commands

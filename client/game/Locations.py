@@ -1,3 +1,4 @@
+
 from enum import Flag, auto
 from attr import dataclass
 from BaseClasses import Location
@@ -74,11 +75,11 @@ map_complete_table: dict[str, P2CELocationData] = {
     "Core Completion": P2CELocationData("sp_a2_core", LocationType.MAP_COMPLETION, [portal_gun_2, button, turrets], 5),
     # Chapter 6
     "Underground Completion": P2CELocationData("sp_a3_01", LocationType.MAP_COMPLETION, [portal_gun_2], 6),
-    "Cave Johnson Completion": P2CELocationData("sp_a3_03", LocationType.MAP_COMPLETION, [portal_gun_2], 6),
+    "Cave Johnson Completion": P2CELocationData("sp_a3_03", LocationType.MAP_COMPLETION, [portal_gun_2, blue_gel], 6),
     "Repulsion Intro Completion": P2CELocationData("sp_a3_jump_intro", LocationType.MAP_COMPLETION, [blue_gel, old_button, old_floor_button, antique_cube], 6),
     "Bomb Flings Completion": P2CELocationData("sp_a3_bomb_flings", LocationType.MAP_COMPLETION, [portal_gun_2, old_button, blue_gel], 6),
     "Crazy Box Completion": P2CELocationData("sp_a3_crazy_box", LocationType.MAP_COMPLETION, [portal_gun_2, old_button, blue_gel, antique_cube, old_floor_button], 6),
-    "PotatOS Completion": P2CELocationData("sp_a3_transition01", LocationType.MAP_COMPLETION, [portal_gun_2, potatos], 6),
+    "PotatOS Completion": P2CELocationData("sp_a3_transition01", LocationType.MAP_COMPLETION, [portal_gun_2, potatos, blue_gel, orange_gel], 6),
     # Chapter 7
     "Propulsion Intro Completion": P2CELocationData("sp_a3_speed_ramp", LocationType.MAP_COMPLETION, [portal_gun_2, blue_gel, orange_gel, antique_cube, old_floor_button, old_button], 7),
     "Propulsion Flings Completion": P2CELocationData("sp_a3_speed_flings", LocationType.MAP_COMPLETION, [portal_gun_2, blue_gel, orange_gel, antique_cube, old_floor_button], 7),
@@ -158,7 +159,7 @@ wheatley_maps_to_monitor_names: dict[str, str] = {value.map_name: key for key, v
 item_location_table: dict[str, P2CELocationData] = {
     portal_gun_1: P2CELocationData("sp_a1_intro3", LocationType.ITEM),
     portal_gun_2: P2CELocationData("sp_a2_intro", LocationType.ITEM),
-    potatos: P2CELocationData("sp_a3_transition01", LocationType.ITEM, [portal_gun_2]),
+    potatos: P2CELocationData("sp_a3_transition01", LocationType.ITEM, [portal_gun_2, blue_gel, orange_gel]),
 }
 
 item_maps_to_item_location : dict[str, str] = {value.map_name:key for key, value in item_location_table.items()}

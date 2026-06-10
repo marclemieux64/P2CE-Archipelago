@@ -125,7 +125,7 @@ sourcemods
 9. Download and install the [`p2ce.apworld`]() file into the Archipelago launcher using the "Install APWorld" option
 
 ## Linux Alternate Setup
-If you ancounter some crash those a likely related to gaming breaking bug affecting the native version of P2CE. The only fix seem to use proton. But you need to make a specific modification to make it work.
+If you ancounter some crash those a likely related to gaming breaking bug affecting the native version of P2CE. The only known fix seem to use proton. But you need to make a specific modification to make it work.
 
 1. Change the compatibility layer of "Portal 2 Community Edition - Archipelago" to a proton of you choice ex: Proton Experimental.
 2. Change the launch argument on p2ce by this `~/.steam/steam/steamapps/sourcemods/p2ce-archipelago/RunArchipelago.sh %command% -game "../../sourcemods/p2ce-archipelago"` 
@@ -133,6 +133,8 @@ If you ancounter some crash those a likely related to gaming breaking bug affect
    > [!NOTE]
    > If you want to play Vanilla P2CE you gonna need to remove that launch option. (Those instruction will be updated if a better setup is found.)
 
+> [!Tips]
+> Store the launch argument in the launch argument box of the mod to be able to retrive it later when you wanna comeback to Archipelago.
 
 
 

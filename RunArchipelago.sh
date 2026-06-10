@@ -6,7 +6,7 @@
 
 # 1. Path Definitions
 MOD_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLIENT_DIR="$MOD_FOLDER/P2CEClient"
+CLIENT_DIR="$MOD_FOLDER/client"
 CLIENT_PY="$CLIENT_DIR/run_client.py"
 PORTABLE_PY_DIR="$CLIENT_DIR/python_env_linux"
 PYTHON_EXE="$PORTABLE_PY_DIR/python/bin/python3"

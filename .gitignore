@@ -91,14 +91,14 @@ data/script_storage_server.db
 # Standalone Client Runtime, Bytecode & Archives
 __pycache__/
 *.pyc
-P2CEClient/python_env/
-P2CEClient/python_env_linux/
-P2CEClient/*.zip
-P2CEClient/*.tar.gz
+client/python_env/
+client/python_env_linux/
+client/*.zip
+client/*.tar.gz
 archipelago_debug.log
-P2CEClient/core/logs/
-P2CEClient/logs/
-P2CEClient/_persistent_storage.yaml
+client/core/logs/
+client/logs/
+client/_persistent_storage.yaml
 portal2_p2ce_apworld/
 build_apworld.py
 portal2_p2ce.apworld

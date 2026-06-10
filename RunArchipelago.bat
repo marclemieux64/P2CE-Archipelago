@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 
 :: 1. Define paths relative to the mod folder
 set "MOD_FOLDER=%~dp0"
-set "CLIENT_DIR=%MOD_FOLDER%P2CEClient"
+set "CLIENT_DIR=%MOD_FOLDER%client"
 set "CLIENT_PY=%CLIENT_DIR%\run_client.py"
 set "PORTABLE_PY_DIR=%CLIENT_DIR%\python_env"
 set "PYTHON_EXE=%PORTABLE_PY_DIR%\python.exe"

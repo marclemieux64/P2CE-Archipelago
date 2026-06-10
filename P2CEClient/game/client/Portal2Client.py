@@ -64,7 +64,7 @@ class P2CECommandProcessor(ClientCommandProcessor):
 
     def _cmd_help(self, *args):
         self.output("P2CE Archipelago Client Commands:")
-        super()._cmd_help()
+        super().__init__._cmd_help()
 
     def _cmd_check_connection(self):
         self.ctx.alert_game_connection()
@@ -672,10 +672,13 @@ class P2CEContext(CommonContext):
                 hkey = f"_read_hints_{self.team}_{self.slot}"
                 if hkey in args["keys"]:
                     self.notifier.process_hints(args["keys"][hkey])
+            
+            # FIX COMPLÈTE: On délègue l'exécution de RoomUpdate en priorité à la classe parente
+            # pour s'assurer que self.items_received est mis à jour côté client AVANT le calcul.
+            super().on_package(cmd, args)
             update_item_list()
             self.update_item_remove_commands()
-            if cmd == "Retrieved":
-                return
+            return
 
         if cmd == "SetReply":
             if self.team is not None:
@@ -704,7 +707,6 @@ class P2CEContext(CommonContext):
                 self.update_menu()
             return
         
-        # MODIFICATION DIRECTE : Exécution ordonnée de la base d'abord, puis mise à jour forcée des listes
         super().on_package(cmd, args)
         update_item_list()
         self.update_item_remove_commands()
@@ -784,9 +786,8 @@ class P2CEContext(CommonContext):
         if self.trap_handler:
             self.trap_handler.stop()
 
-        while self.input_requests > 0:
+        for _ in range(self.input_requests):
             self.input_queue.put_nowait(None)
-            self.input_requests -= 1
         self.keep_alive_task.cancel()
         if getattr(self, "ui_task", None):
             await self.ui_task

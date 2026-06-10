@@ -8,7 +8,7 @@ interface ImagePanel extends Panel { }
 interface LabelPanel extends Panel { }
 
 class ArchipelagoSync {
-    static VERSION: string = "1.1.3"; 
+    static VERSION: string = "1.1.4"; 
     static ENABLE_DEBUG: boolean = false;
     
     // Cache local pour éviter l'évaluation répétitive de parseApiStatus()
@@ -71,7 +71,7 @@ class ArchipelagoSync {
 
         const statusIconsList: string[] = map.statusIcons || [];
 
-        // REMOVAL : Plus de symbole textuel. On valide la complétion via l'état des icônes
+        // Validation de la complétion via l'état des icônes
         const isCompleted = map.completed === true || (statusIconsList.length > 0 && statusIconsList.every(icon => icon === "check"));
         if (isCompleted) return { completed: true, greenCount: 0, total: statusIconsList.length, doable: false, fullyDoable: false };
 
@@ -98,6 +98,7 @@ class ArchipelagoSync {
     static m_LastPortalGunStatus: number = -1;
     static m_LastPotatosStatus: number = -1;
     static m_LastWheatleyStatus: number = -1;
+    static m_LastMissingItemsStr: string = "";
     static m_LastSymbols: string = "INITIAL_SYNC_PENDING";
     static m_Initialized: boolean = false;
     private static m_Debug: boolean = false;
@@ -154,7 +155,7 @@ class ArchipelagoSync {
         if (this.m_PollSchedule) {
             try { $.CancelScheduled(this.m_PollSchedule); } catch(e) {}
         }
-        this.m_PollSchedule = $.Schedule(2.0, () => {
+        this.m_PollSchedule = $.Schedule(1.0, () => {
             const global: any = UiToolkitAPI.GetGlobalObject();
             if (global.ArchipelagoSyncInstance && global.ArchipelagoSyncInstance !== ArchipelagoSync) {
                 this.m_PollSchedule = null;
@@ -219,26 +220,35 @@ class ArchipelagoSync {
 
         const symbols = statusIconsList.join(",");
         const subKeys = (currentMapData.active_sub_keys || []).join(",");
+        const currentMissingItemsStr = apiStatus.missing_items || "";
 
+        // MODIFICATION DIRECTE : On intègre la chaîne d'objets manquants du serveur pour forcer l'actualisation lors d'un !send
         if (serverStatus === this.m_LastServerStatus &&
             ratmanStatus === this.m_LastRatmanStatus &&
             portalGunDone === this.m_LastPortalGunStatus &&
             potatosDone === this.m_LastPotatosStatus &&
-            symbols === this.m_LastSymbols) {
+            symbols === this.m_LastSymbols &&
+            currentMissingItemsStr === this.m_LastMissingItemsStr) {
             return;
         }
 
         this.m_LastServerStatus = serverStatus;
         this.m_LastRatmanStatus = ratmanStatus;
         this.m_LastPortalGunStatus = portalGunDone;
-        this.m_LastPortalGunStatus = portalGunDone;
         this.m_LastPotatosStatus = potatosDone;
         this.m_LastSymbols = symbols;
+        this.m_LastMissingItemsStr = currentMissingItemsStr;
         
         $.persistentStorage.setItem("ArchipelagoLastSymbols", symbols);
         $.persistentStorage.setItem("ArchipelagoLastSubKeys", subKeys);
         $.persistentStorage.setItem("ArchipelagoLastMapStatus", serverStatus);
         $.persistentStorage.setItem("ArchipelagoLastMapName", mapName);
+
+        // Si l'écran de sélection de map est actif au moment du cheat, on demande sa reconstruction immédiate
+        const mapSelectGlobal = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect;
+        if (mapSelectGlobal && typeof mapSelectGlobal.restoreActiveSelectionVisuals === "function") {
+            mapSelectGlobal.restoreActiveSelectionVisuals();
+        }
 
         if (this.m_Debug) {
             $.Msg("[AP] Status Updated: Map=" + serverStatus + " Symbols=[" + symbols + "]");

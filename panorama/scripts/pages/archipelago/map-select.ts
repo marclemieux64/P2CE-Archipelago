@@ -151,7 +151,13 @@ class ArchipelagoMapSelect {
         }
     }
 
+    static ArchipelagoMapSelectInit() {
+        // Expose la classe globalement pour l'accès dynamique depuis le rafraîchissement d'inventaire
+        (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect = ArchipelagoMapSelect;
+    }
+
     static onLoad() {
+        this.ArchipelagoMapSelectInit();
         this.g_LastApiJson = '';
         $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
 
@@ -416,6 +422,15 @@ class ArchipelagoMapSelect {
         const listInner = $('#LeftListInner');
         if (!listInner || !listInner.IsValid()) return;
 
+        // MODIFICATION DIRECTE : Si un élément a changé (ex: !send), on extrait l'état le plus frais de l'API avant le rendu
+        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        const apiStatus = api ? api.getStatus() : null;
+        if (apiStatus && apiStatus.menu && apiStatus.menu.chapters) {
+            const mappedData: any = {};
+            apiStatus.menu.chapters.forEach((ch: any) => { mappedData[ch.chapter_number] = ch; });
+            this.g_ChapterData = mappedData;
+        }
+
         for (let i = 0; i < listInner.GetChildCount(); i++) {
             const c = listInner.GetChild(i);
             if (c && c.IsValid() && c.HasClass('map_list')) {
@@ -423,10 +438,24 @@ class ArchipelagoMapSelect {
                 for (let j = 0; j < count; j++) {
                     const w = c.GetChild(j);
                     if (w && w.IsValid() && w.m_MapData) {
+                        
+                        // Recouvrement des propriétés de la map rafraîchie depuis l'API pour écraser le cache local
+                        if (this.g_ChapterData[w.m_MapData.chapter_number]) {
+                            const cloudMap = this.g_ChapterData[w.m_MapData.chapter_number].maps[j];
+                            if (cloudMap) {
+                                w.m_MapData = cloudMap;
+                                if (this.g_SelectedMapData && cloudMap.command === this.g_SelectedMapData.command) {
+                                    this.g_SelectedMapData = cloudMap;
+                                }
+                            }
+                        }
+
                         const mb = w.GetChild(0);
                         if (mb && mb.IsValid()) {
                             if (this.g_ClickedMapData && w.m_MapData.command === this.g_ClickedMapData.command) {
                                 mb.AddClass('map_button--selected');
+                                // Force la reconstruction immédiate du panneau de détails latéral (droite)
+                                this.selectMap(w.m_MapData, true);
                             } else {
                                 mb.RemoveClass('map_button--selected');
                             }
@@ -479,12 +508,28 @@ class ArchipelagoMapSelect {
             });
         }
 
-        const missingItemsList = mapData.required_item_icons || [];
+        // RECALCUL DYNAMIQUE DES ICÔNES : On ne fait plus confiance au required_item_icons figé.
+        // On compare les prérequis réels de la map avec l'inventaire possédé par le serveur AP.
+        let dynamicItemIcons: string[] = [];
+        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        const status = api ? api.getStatus() : null;
+
+        if (status && status.missing_items !== undefined && !mapData.is_chapter) {
+            const rawMissingString: string = status.missing_items;
+            const originalIcons: string[] = mapData.required_item_icons || [];
+            
+            // L'icône n'est conservée que si l'élément raccourci correspondant est présent dans missing_items
+            dynamicItemIcons = originalIcons.filter((iconName: string) => {
+                return rawMissingString.indexOf(iconName) !== -1;
+            });
+        } else {
+            dynamicItemIcons = mapData.required_item_icons || [];
+        }
 
         if (iconsContainer && iconsContainer.IsValid()) {
             iconsContainer.RemoveAndDeleteChildren();
-            if (missingItemsList.length > 0) {
-                const sortedItemIcons = [...missingItemsList];
+            if (dynamicItemIcons.length > 0) {
+                const sortedItemIcons = [...dynamicItemIcons];
                 sortedItemIcons.sort((a: string, b: string) => {
                     const orderA = ArchipelagoMapSelect.ITEM_SORT_ORDER[a] || 99;
                     const orderB = ArchipelagoMapSelect.ITEM_SORT_ORDER[b] || 99;
@@ -498,7 +543,7 @@ class ArchipelagoMapSelect {
         }
 
         const isChapter = mapData.is_chapter;
-        const hasMissingItems = missingItemsList.length > 0;
+        const hasMissingItems = dynamicItemIcons.length > 0;
 
         if (checks && checks.IsValid()) checks.visible = !isChapter;
         if (checksHeader && checksHeader.IsValid()) checksHeader.style.visibility = !isChapter ? 'visible' : 'collapse';

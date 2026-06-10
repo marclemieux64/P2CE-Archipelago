@@ -213,8 +213,21 @@ var ArchipelagoMapStatusHUD = class {
             });
         }
 
-        const missingItemsList = currentMapData.required_item_icons || [];
-        const sortedItemIcons = [...missingItemsList];
+        // RECALCUL DYNAMIQUE DES PRÉREQUIS POUR LE HUD IN-GAME
+        let dynamicItemIcons: string[] = [];
+        if (apiStatus && apiStatus.missing_items !== undefined) {
+            const rawMissingString: string = apiStatus.missing_items;
+            const originalIcons: string[] = currentMapData.required_item_icons || [];
+            
+            // Filtre à la volée : si l'item n'est plus marqué comme manquant par le serveur, on vire l'icône du HUD
+            dynamicItemIcons = originalIcons.filter((iconName: string) => {
+                return rawMissingString.indexOf(iconName) !== -1;
+            });
+        } else {
+            dynamicItemIcons = currentMapData.required_item_icons || [];
+        }
+
+        const sortedItemIcons = [...dynamicItemIcons];
         sortedItemIcons.sort((a: string, b: string) => {
             const orderA = ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[a] || 99;
             const orderB = ArchipelagoMapStatusHUD.ITEM_SORT_ORDER[b] || 99;

@@ -17,6 +17,7 @@ void DoMapSpecificSetup() {
         if (gun_trigger !is null) {
             SafeAddOutput(gun_trigger, "OnStartTouch", "InitCmd", "Command", "PrintItem Upgraded Portal Gun", 0.0f, 1);
         }
+        
         // Upgraded Portal Gun (Backup - by Vector)
         AddEntityOutputScriptAtPos(Vector(-360, 440, -10680), "trigger_once", "OnStartTouch", "PrintItem Upgraded Portal Gun", 0.0f, 1);
         
@@ -43,6 +44,9 @@ void DoMapSpecificSetup() {
             v2.SetString("ent_fire laser_catcher_door_holo SetParent laser_catcher_door:0.8:-1");
             cmd.FireInput("Command", v2, 0.5f, null, null, 0);
         }
+    } else if (current_map == "sp_a2_laser_vs_turret") {
+        // Remplacement magique de la bouteille
+        PreventPickupForModel("water_bottle.mdl");
     } else if (current_map == "sp_a2_bts4") {
         CBaseEntity@ existingTimer = EntityList().FindByName(null, "bts4_conveyor_timer");
         if (existingTimer is null) {

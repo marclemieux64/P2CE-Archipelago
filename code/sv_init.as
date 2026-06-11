@@ -27,17 +27,18 @@
 #include "Function/Buttons/LockButtonByName.as"
 
 // --- CHECK ---
-#include "Function/Check/AddMapCheck.as"
-#include "Function/Check/AddVitrifiedDoorChecks.as"
-#include "Function/Check/AddWheatleyMonitorBreakCheck.as"
-#include "Function/Check/CreateCompleteLevelAlertHook.as"
-#include "Function/Check/InitLocationRegistries.as"
-#include "Function/Check/PrintMapComplete.as"
-#include "Function/Check/PrintMapCompleteNoExit.as"
-#include "Function/Check/PrintMapName.as"
+#include "Function/Check/Map/AddMapCheck.as"
+#include "Function/Check/Vitrified Door/AddVitrifiedDoorChecks.as"
+#include "Function/Check/Wheatley Monitor/AddWheatleyMonitorBreakCheck.as"
+#include "Function/Check/Map/CreateCompleteLevelAlertHook.as"
+#include "Function/Check/Vitrified Door/InitLocationRegistries.as"
+#include "Function/Check/Map/PrintMapComplete.as"
+#include "Function/Check/Map/PrintMapCompleteNoExit.as"
+#include "Function/Check/Wheatley Monitor/InitMonitorData.as"
+#include "Function/Check/Ratman Den/SetCheckedButtons.as"
 
 // --- ENTITY ---
- #include "Function/Entity/AddTractorBeamFrame.as"
+#include "Function/Entity/AddTractorBeamFrame.as"
 #include "Function/Entity/CreateClearGel.as"
 #include "Function/Entity/DeleteCoreOnOutput.as"
 #include "Function/Entity/DeleteEntity.as"
@@ -64,11 +65,11 @@
 #include "Function/Misc/BlockWheatleyFight.as"
 #include "Function/Misc/DoMapSpecificSetup.as"
 #include "Function/Misc/HandleMonitorWarp.as"
-#include "Function/Misc/InitMonitorData.as"
 #include "Function/Misc/SafeRemoveEntity.as"
 #include "Function/Misc/SpawnPaintBomb.as"
 #include "Function/Misc/WaitExecute.as"
 #include "Function/Misc/WarpToMenu.as"
+#include "Function/Misc/PrintMapName.as"
 
 // --- PORTAL GUN ---
 #include "Function/Portal_Gun/DisablePortalGun.as"

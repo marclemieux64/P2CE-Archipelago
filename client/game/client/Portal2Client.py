@@ -20,15 +20,18 @@ from CommonClient import CommonContext, server_loop, ClientCommandProcessor, log
 from NetUtils import ClientStatus, NetworkItem
 from Utils import async_start, init_logging
 
-from game.mod_helpers.ItemHandling import add_ratman_commands, handle_item, handle_map_start, handle_trap, portal_gun_upgrade_not_inplace, potatos_not_inplace
+from game.mod_helpers.ItemHandling import add_ratman_commands, handle_item, handle_trap, portal_gun_upgrade_not_inplace, potatos_not_inplace
 from game.mod_helpers.MapMenu import Menu
 from game.mod_helpers.Notifications import NotificationManager
 from game.mod_helpers.DeathLinkHandler import DeathLinkHandler
 from game.mod_helpers.TrapHandler import TrapHandler
 from game.mod_helpers.APIServer import APIServer
 from game.client.DeathMessages import get_death_message
-from game.Locations import location_names_to_map_codes, map_codes_to_location_names, wheatley_maps_to_monitor_names, all_locations_table, wheatley_monitor_table, ratman_den_locations_table
+from game.Locations import location_names_to_map_codes, map_codes_to_location_names, all_locations_table
 from game.Options import GameModeOption
+
+# Importation du gestionnaire unifié de checks
+from game.mod_helpers.CheckHandling import parse_incoming_check, get_map_sync_commands
 
 def get_p2ce_data_package():
     from game.Items import item_table
@@ -64,7 +67,7 @@ class P2CECommandProcessor(ClientCommandProcessor):
 
     def _cmd_help(self, *args):
         self.output("P2CE Archipelago Client Commands:")
-        super().__init__._cmd_help()
+        super()._cmd_help()
 
     def _cmd_check_connection(self):
         self.ctx.alert_game_connection()
@@ -197,6 +200,7 @@ class P2CEContext(CommonContext):
         self.command_queue = []
         self.game_message_queue = []
         self.completed_maps = set()
+        self.current_map_code = ""
         
         self.trap_handler.set_map_transition_state(True)
 
@@ -218,6 +222,7 @@ class P2CEContext(CommonContext):
         self.game_message_queue = []
         self.go_mode_announced = False
         self.finished_game = False
+        self.current_map_code = ""
 
     game = "P2CE"
     items_handling = 0b111 
@@ -309,6 +314,27 @@ class P2CEContext(CommonContext):
             self.menu.complete_check(location_id)
         self.update_menu()
 
+    def sync_map_state(self):
+        """
+        Pousse l'intégralité des commandes de synchronisation de la console au moteur de jeu via Netcon :
+        1. Les infrastructures d'items via handle_map_start (Item Handling)
+        2. L'état de complétion des objectifs Archipelago (Check Handling)
+        """
+        if not self.current_map_code:
+            return
+            
+        # 1. Traitement des infrastructures d'items (Ex: PotatOS)
+        from game.mod_helpers.ItemHandling import handle_map_start
+        item_cmds = handle_map_start(self.current_map_code, self.item_list)
+        if item_cmds:
+            self.command_queue += item_cmds
+            
+        # 2. Traitement des objectifs Archipelago de la carte (Ex: Moniteurs, Boutons Ratman)
+        from game.mod_helpers.CheckHandling import get_map_sync_commands
+        sync_cmds = get_map_sync_commands(self.current_map_code, self.item_list, self.checked_locations, self.location_names)
+        if sync_cmds:
+            self.command_queue += sync_cmds
+
     def on_print(self, text: str):
         self.notifier.on_print(text)
 
@@ -390,6 +416,9 @@ class P2CEContext(CommonContext):
                 self.sender_active = False
                 self.listener_active = False
 
+    def _cmd_check_connection(self):
+        self.ctx.alert_game_connection()
+
     def send_level_begin_commands(self):
         if self.item_remove_commands:
             for cmd in self.item_remove_commands:
@@ -444,9 +473,12 @@ class P2CEContext(CommonContext):
 
         if message.startswith("map_name:"):
             map_name = message.split(':', 1)[1].strip()
+            self.current_map_code = map_name
             self.trap_handler.set_map_transition_state(False)
             self.send_level_begin_commands()
-            self.command_queue += handle_map_start(map_name, self.item_list, self.get_wheatley_monitor_names(self.checked_locations), self.get_ratman_den_names(self.checked_locations))
+            
+            # Utilisation de la nouvelle fonction sync_map_state
+            self.sync_map_state()
             
             if self.deferred_events:
                 for ev in self.deferred_events:
@@ -474,26 +506,21 @@ class P2CEContext(CommonContext):
                 await self.check_locations([map_id])
                 self.update_menu(map_id)
         
-        elif message.startswith("item_collected:"):
-            item_collected = message.split(":", 1)[1]
-            if item_collected in all_locations_table:
-                check_id = all_locations_table[item_collected].id
+        # Interception unifiée via le parseur de CheckHandling.py
+        elif message.startswith("button_check:") or message.startswith("item_collected:") or message.startswith("monitor_break:") or message.startswith("vitrified_check:"):
+            msg_type = message.split(":", 1)[0].strip()
+            msg_payload = message.split(":", 1)[1].strip()
+            
+            target_location_name = parse_incoming_check(msg_type, msg_payload)
+
+            if target_location_name in all_locations_table:
+                check_id = all_locations_table[target_location_name].id
                 await self.check_locations([check_id])
                 self.update_menu(check_id)
-        elif message.startswith("monitor_break:"):
-            map_name = message.split(":", 1)[1]
-            if map_name in wheatley_maps_to_monitor_names:
-                check_name = wheatley_maps_to_monitor_names[map_name]
-                if check_name in all_locations_table:
-                    check_id = all_locations_table[check_name].id
-                    await self.check_locations([check_id])
-                    self.update_menu(check_id)
-        elif message.startswith("button_check:"):
-            check_name = message.split(":", 1)[1]
-            if check_name in all_locations_table:
-                check_id = all_locations_table[check_name].id
-                await self.check_locations([check_id])
-                self.update_menu(check_id)
+                
+                # RE-SYNC INSTANTANÉE : Si un objectif change en cours de partie, on rafraîchit le moteur
+                self.sync_map_state()
+        
         elif message.startswith("send_deathlink"):
             if self.death_link_active and time.time() - getattr(self.deathlink_handler, 'last_death_link_executed', 0) > 10:
                 map_name = message.strip().split()[1]
@@ -548,6 +575,7 @@ class P2CEContext(CommonContext):
         return self.location_name_to_id[location_name]
     
     def get_wheatley_monitor_names(self, location_ids: list[int]) -> list[str]:
+        from game.Locations import wheatley_monitor_table
         monitors_checked = []
         for loc in location_ids:
             location_name = self.location_names.lookup_in_game(loc)
@@ -655,6 +683,9 @@ class P2CEContext(CommonContext):
             self.item_list = list(set(full_list) - set(recv_names))
             self.refresh_menu()
             
+            # FORCE RE-SYNC : Dès que l'inventaire change (ex: !send), on pousse la re-synchronisation console immédiate
+            self.sync_map_state()
+            
             finale_loc_name = map_codes_to_location_names.get("sp_a4_finale4")
             if finale_loc_name and finale_loc_name in all_locations_table:
                 requirements = all_locations_table[finale_loc_name].required_items
@@ -673,8 +704,6 @@ class P2CEContext(CommonContext):
                 if hkey in args["keys"]:
                     self.notifier.process_hints(args["keys"][hkey])
             
-            # FIX COMPLÈTE: On délègue l'exécution de RoomUpdate en priorité à la classe parente
-            # pour s'assurer que self.items_received est mis à jour côté client AVANT le calcul.
             super().on_package(cmd, args)
             update_item_list()
             self.update_item_remove_commands()

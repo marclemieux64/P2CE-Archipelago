@@ -48,6 +48,7 @@ bool g_bConveyor1TemplateHoloActive = false;
     array<string> g_suppressed_entities;
     array<string> g_suppressed_classes;
     array<string> g_reported_monitors;
+    array<string> checked_buttons;
     array<int> g_processed_turret_indices;
     array<int> g_processed_entity_indices;
     array<string> trap_colors = { "255 0 0", "0 255 0", "0 0 255", "255 255 0", "255 0 255", "0 255 255" };

@@ -307,8 +307,40 @@ void CreateAPButtonLegacyCmd(const CommandArgs@ args) {
     float scale = (args.ArgC() > 8) ? args.Arg(8).toFloat() : 1.0f;
     int skin = (args.ArgC() > 9) ? args.Arg(9).toInt() : 0;
     
-    Archipelago::ArchipelagoLog("[AP RECV] CreateAPButton: " + name);
     Archipelago::CreateAPButton(name, pos, ang, scale, skin);
+}
+
+[ServerCommand("SetCheckedButtons", "Updates the list of checked buttons")]
+void SetCheckedButtonsCmd(const CommandArgs@ args) {
+    array<string> checkedButtons;
+    string currentString = "";
+
+    for (int i = 1; i < args.ArgC(); i++) {
+        string arg = args.Arg(i);
+        arg = arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
+        
+        if (arg.length() > 0) {
+            if (arg == "1" || arg == "2" || arg == "3" || arg == "4" || arg == "5" || arg == "6" || arg == "7") {
+                if (currentString.length() > 0) {
+                    currentString += "_" + arg;
+                    checkedButtons.insertLast(currentString.tolower());
+                    currentString = "";
+                }
+            } else {
+                if (currentString.length() > 0) {
+                    currentString += "_" + arg;
+                } else {
+                    currentString = arg;
+                }
+            }
+        }
+    }
+    
+    if (currentString.length() > 0) {
+        checkedButtons.insertLast(currentString.tolower().replace(" ", "_"));
+    }
+
+    Archipelago::SetCheckedButtons(checkedButtons);
 }
 
 [ServerCommand("RemoveGel", "Legacy RemoveGel command")]

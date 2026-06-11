@@ -10,16 +10,36 @@ DELETE_CUBE = ItemTag.CUBE | ItemTag.DELETE
 DELETE_ENTITY = ItemTag.ENTITY | ItemTag.DELETE
 DISABLE_PICKUP = ItemTag.ENTITY | ItemTag.DISABLE
 
+# Liste réelle et exhaustive des cartes contenant PotatOS sur le Portal Gun
+maps_with_potatos = [
+    "sp_a3_00", "sp_a3_01", 
+    "sp_a3_speed_ramp", 
+    "sp_a3_speed_flings",
+    "sp_a3_portal_intro", 
+    "sp_a3_end", "sp_a4_intro", 
+    "sp_a4_tb_intro",
+    "sp_a4_tb_trust_drop", 
+    "sp_a4_tb_wall_button", 
+    "sp_a4_tb_polarity",
+    "sp_a4_tb_catch", 
+    "sp_a4_stop_the_box", 
+    "sp_a4_laser_catapult",
+    "sp_a4_laser_platform", 
+    "sp_a4_speed_tb_catch", 
+    "sp_a4_jump_polarity",
+    "sp_a4_finale1", 
+    "sp_a4_finale2", 
+    "sp_a4_finale3", 
+    "sp_a4_finale4"
+]
+
 def handle_item(item_name: str) -> list[str]:
     '''Handles items not yet checked, to be run on connect/ reconnect to archipelago server. 
     Returns command that will be run in Portal 2 on every level entry so that the item is affected in game'''
-    # Get item data
-    # If item is not present don't handle it
     if item_name not in game_item_table:
         return None
     
     item_data = item_table[item_name]
-    # If is filler item don't handle it
     if item_data.classification == ItemClassification.filler:
         return None
 
@@ -28,7 +48,6 @@ def handle_item(item_name: str) -> list[str]:
 
     return_commands = []
 
-    # Check if item tags are set just in case
     if not item_tags:
         return None
 
@@ -46,10 +65,8 @@ def handle_item(item_name: str) -> list[str]:
         else:
             return_commands.append(f'DeleteEntity "{ent_name}"')
     
-    # No longer handle gel removal generically, now under map specific commands
-    
     if ItemTag.WEAPON in item_tags:
-        if item_name == portal_gun_1: # Removed Item for improved randomized levels (too many levels rely on this)
+        if item_name == portal_gun_1:
             return_commands.append(f'DisablePortalGun 1 0')
         if item_name == portal_gun_2:
             return_commands.append(f'DisablePortalGun 0 1')
@@ -64,6 +81,16 @@ def handle_item(item_name: str) -> list[str]:
         return_commands.append(f'DeleteEntity "{"core"+core_name[-1]+"_display"}"')
     
     return return_commands
+
+def handle_map_start(map_code: str, items_missing: list) -> list[str]:
+    """
+    Gère les actions d'infrastructure d'items au chargement d'un niveau (comme c'était le cas auparavant).
+    """
+    from game.ItemNames import potatos
+    commands = []
+    if map_code in maps_with_potatos and potatos in items_missing:
+        commands.append("RemovePotatosFromGun\n")
+    return commands
     
 def handle_trap(trap_name: str) -> str:
     if trap_name not in trap_items_table:
@@ -79,52 +106,6 @@ def handle_trap(trap_name: str) -> str:
         return "CubeConfettiTrap\n"
     elif trap_name == slippery_floor_trap:
         return "SlipperyFloorTrap\n"
-    
-
-maps_with_potatos = ["sp_a3_00",
-                    "sp_a3_01",
-                    "sp_a3_speed_ramp",
-                     "sp_a3_speed_flings",
-                     "sp_a3_portal_intro",
-                     "sp_a3_end",
-                     "sp_a4_intro",
-                     "sp_a4_tb_intro",
-                     "sp_a4_tb_trust_drop",
-                     "sp_a4_tb_wall_button",
-                     "sp_a4_tb_polarity",
-                     "sp_a4_tb_catch",
-                     "sp_a4_stop_the_box",
-                     "sp_a4_laser_catapult",
-                     "sp_a4_laser_platform",
-                     "sp_a4_speed_tb_catch",
-                     "sp_a4_jump_polarity",
-                     "sp_a4_finale1",
-                     "sp_a4_finale2",
-                     "sp_a4_finale3",
-                     "sp_a4_finale4"]
-
-def handle_map_start(map_code: str, items_missing: list[str], wheatley_monitors_checked: list[str], ratman_dens_checked: list[str]) -> list[str]:
-    commands: list[str] = []
-    
-    if map_code in maps_with_potatos and potatos in items_missing:
-        commands.append("RemovePotatosFromGun\n")
-    
-    for mc in map_specific_commands:
-        if map_code == mc.map_code and (mc.condition_item == None or mc.condition_item in items_missing):
-            # For ratman den commands, check if pressed
-            if mc.type == LocationType.RATMAN_DEN and any(den in mc.commands[0] for den in ratman_dens_checked):
-                replacement_command = mc.commands[0].replace("\n", " 1\n")
-                commands.append(replacement_command)
-            else:
-                commands += mc.commands
-    
-    # Mark wheatley monitors that have already been checked
-    map_names = [wheatley_monitor_table[monitor].map_name for monitor in wheatley_monitors_checked]
-    commands.append(f'SetCheckedScreens {" ".join(map_names)}\n')
-    commands += ["AddWheatleyMonitorBreakCheck\n"]
-    
-    return commands
-
 
 @dataclass
 class MapCommand:
@@ -153,10 +134,8 @@ map_specific_commands: list[MapCommand] = [
     MapCommand("sp_a3_funnel_intro", blue_gel, ["LockButtonByName pump_machine_blue_button\n"]),
     MapCommand("sp_a3_funnel_intro", orange_gel, ["LockButtonByName pump_machine_orange_button\n"]),
     MapCommand("sp_a3_funnel_intro", white_gel, ["LockButtonByName pump_machine_white_button\n"]),
-    
 ]
 
-# map specific gel removal commands
 for map, gels in map_gel_table.items():
     if map == "sp_a3_jump_intro":
         map_specific_commands.append(MapCommand(map, blue_gel, ['removeallpaint\n']))
@@ -175,7 +154,6 @@ def portal_gun_upgrade_not_inplace():
     global map_specific_commands
     map_specific_commands.append(MapCommand("sp_a2_intro", portal_gun_2, ["IncineratorDisablePortalGun\n"]))
 
-# Option based commands
 ratman_den_commands: list[MapCommand] = [
     MapCommand("sp_a1_intro4", None, ['CreateAPButton "Ratman Den 1" 847 -703 255 0 -90 0 0.8\n'], LocationType.RATMAN_DEN),
     MapCommand("sp_a2_dual_lasers", None, ['CreateAPButton "Ratman Den 2" 438 -636 762 0 135 0 0.8\n'], LocationType.RATMAN_DEN),
@@ -188,4 +166,6 @@ ratman_den_commands: list[MapCommand] = [
 
 def add_ratman_commands():
     global map_specific_commands
-    map_specific_commands += ratman_den_commands
+    for cmd in ratman_den_commands:
+        if cmd not in map_specific_commands:
+            map_specific_commands.append(cmd)

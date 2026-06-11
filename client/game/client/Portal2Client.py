@@ -27,7 +27,7 @@ from game.mod_helpers.DeathLinkHandler import DeathLinkHandler
 from game.mod_helpers.TrapHandler import TrapHandler
 from game.mod_helpers.APIServer import APIServer
 from game.client.DeathMessages import get_death_message
-from game.Locations import location_names_to_map_codes, map_codes_to_location_names, all_locations_table
+from game.Locations import location_names_to_map_codes, map_codes_to_location_names, all_locations_table, ratman_den_locations_table
 from game.Options import GameModeOption
 
 # Importation du gestionnaire unifié de checks

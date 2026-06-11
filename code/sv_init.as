@@ -36,6 +36,7 @@
 #include "Function/Check/Map/PrintMapCompleteNoExit.as"
 #include "Function/Check/Wheatley Monitor/InitMonitorData.as"
 #include "Function/Check/Ratman Den/SetCheckedButtons.as"
+#include "Function/Check/Map/SetCheckedMaps.as"
 
 // --- ENTITY ---
 #include "Function/Entity/AddTractorBeamFrame.as"

@@ -313,34 +313,68 @@ void CreateAPButtonLegacyCmd(const CommandArgs@ args) {
 [ServerCommand("SetCheckedButtons", "Updates the list of checked buttons")]
 void SetCheckedButtonsCmd(const CommandArgs@ args) {
     array<string> checkedButtons;
-    string currentString = "";
 
     for (int i = 1; i < args.ArgC(); i++) {
         string arg = args.Arg(i);
+        // Nettoyage standard des caractères parasites résiduels
         arg = arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
         
         if (arg.length() > 0) {
-            if (arg == "1" || arg == "2" || arg == "3" || arg == "4" || arg == "5" || arg == "6" || arg == "7") {
-                if (currentString.length() > 0) {
-                    currentString += "_" + arg;
-                    checkedButtons.insertLast(currentString.tolower());
-                    currentString = "";
-                }
-            } else {
-                if (currentString.length() > 0) {
-                    currentString += "_" + arg;
-                } else {
-                    currentString = arg;
-                }
-            }
+            // On insère chaque identifiant de bouton individuellement et en minuscules
+            checkedButtons.insertLast(arg.tolower());
+            Archipelago::ArchipelagoLog("AP DEBUG: Inserted button -> '" + arg.tolower() + "'");
         }
     }
     
-    if (currentString.length() > 0) {
-        checkedButtons.insertLast(currentString.tolower().replace(" ", "_"));
+    Archipelago::ArchipelagoLog("AP: Checked buttons updated (" + checkedButtons.length() + " items)");
+    Archipelago::SetCheckedButtons(checkedButtons);
+}
+
+[ServerCommand("SetCheckedPickup", "Disables or hides physical items if already checked in Archipelago")]
+void SetCheckedPickupCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+
+    // Récupération et conversion en minuscules de l'argument d'item (ex: portal_gun_1)
+    string itemPayload = args.Arg(1).tolower();
+    
+    // Utilisation de la variable globale existante de ton mod passée en minuscules
+    string currentMap = ::current_map.tolower();
+
+    // 1. Emplacement : Portal Gun 1 (Chambre 03 - sp_a1_intro3)
+    if (currentMap == "sp_a1_intro3" && itemPayload.locate("portal_gun_1") != uint(-1)) {
+        CBaseEntity@ holo = EntityList().FindByName(null, "intro3_portalgun_holo");
+        if (holo !is null) {
+            CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
+            if (animHolo !is null) {
+                animHolo.SetSkin(4); // Changement du skin à 4 (Fait)
+            }
+        }
+        return;
     }
 
-    Archipelago::SetCheckedButtons(checkedButtons);
+    // 2. Emplacement : Portal Gun 2 (Incinerator - sp_a2_intro)
+    if (currentMap == "sp_a2_intro" && itemPayload.locate("portal_gun_2") != uint(-1)) {
+        CBaseEntity@ holo = EntityList().FindByName(null, "a2_intro_gun_holo");
+        if (holo !is null) {
+            CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
+            if (animHolo !is null) {
+                animHolo.SetSkin(4); // Changement du skin à 4 (Fait)
+            }
+        }
+        return;
+    }
+
+    // 3. Emplacement : PotatOS (Chambre de transition - sp_a3_transition01)
+    if (currentMap == "sp_a3_transition01" && itemPayload.locate("potatos") != uint(-1)) {
+        CBaseEntity@ holo = EntityList().FindByName(null, "a3_potatos_button_holo");
+        if (holo !is null) {
+            CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
+            if (animHolo !is null) {
+                animHolo.SetSkin(4); // Changement du skin à 4 (Fait)
+            }
+        }
+        return;
+    }
 }
 
 [ServerCommand("RemoveGel", "Legacy RemoveGel command")]

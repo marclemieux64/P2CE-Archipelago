@@ -41,6 +41,8 @@ function SmartWarpNextMap(currentMapName: string) {
                 if (map.command.trim() === currentMapCmd.trim()) continue;
 
                 const status = syncHelper ? syncHelper.getMapStatus(map, chapters) : { completed: false, doable: false, fullyDoable: false };
+                
+                // Si la carte est marquée complétée (ou "0/0"), on l'exclut complètement des choix possibles
                 if (status.completed) continue;
 
                 if (status.fullyDoable) {
@@ -69,16 +71,14 @@ function SmartWarpNextMap(currentMapName: string) {
         const localizedMapName = $.Localize(mapToken);
         const mapNameDisplay = ((localizedMapName !== mapToken) ? localizedMapName : (targetMap.title || technicalName)).trim();
 
-        // TITRE
         let locTitle = $.Localize("#Archipelago_HUD_Warp_Title");
         if (!locTitle || locTitle.trim() === "" || locTitle === "#Archipelago_HUD_Warp_Title") {
             locTitle = "SMART WARP";
         }
 
-        // DESTINATION (Correction du bug de la chaîne vide)
         let locDest = $.Localize("#Archipelago_HUD_Warp_Dest");
         if (!locDest || locDest.trim() === "" || locDest === "#Archipelago_HUD_Warp_Dest") {
-            locDest = "Destination: %s1"; // Fallback garanti
+            locDest = "Destination: %s1";
         }
 
         if (locDest.indexOf("%s1") !== -1) {
@@ -87,7 +87,6 @@ function SmartWarpNextMap(currentMapName: string) {
             locDest = locDest + " <font color='#00ffff'>" + mapNameDisplay + "</font>";
         }
 
-        // DELAI
         let locDelay = $.Localize("#Archipelago_HUD_Warp_Delay");
         if (!locDelay || locDelay.trim() === "" || locDelay === "#Archipelago_HUD_Warp_Delay") {
             locDelay = "Warping in 3 seconds...";
@@ -108,7 +107,6 @@ function SmartWarpNextMap(currentMapName: string) {
         });
 
     } else {
-        // MENU WARP FALLBACKS
         let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu_Title");
         if (!locTitle || locTitle.trim() === "" || locTitle === "#Archipelago_HUD_Warp_Menu_Title") {
             locTitle = "WARP TO MENU";

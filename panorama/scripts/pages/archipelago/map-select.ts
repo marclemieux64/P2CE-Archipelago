@@ -152,7 +152,6 @@ class ArchipelagoMapSelect {
     }
 
     static ArchipelagoMapSelectInit() {
-        // Expose la classe globalement pour l'accès dynamique depuis le rafraîchissement d'inventaire
         (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect = ArchipelagoMapSelect;
     }
 
@@ -422,7 +421,6 @@ class ArchipelagoMapSelect {
         const listInner = $('#LeftListInner');
         if (!listInner || !listInner.IsValid()) return;
 
-        // MODIFICATION DIRECTE : Si un élément a changé (ex: !send), on extrait l'état le plus frais de l'API avant le rendu
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         const apiStatus = api ? api.getStatus() : null;
         if (apiStatus && apiStatus.menu && apiStatus.menu.chapters) {
@@ -439,7 +437,6 @@ class ArchipelagoMapSelect {
                     const w = c.GetChild(j);
                     if (w && w.IsValid() && w.m_MapData) {
                         
-                        // Recouvrement des propriétés de la map rafraîchie depuis l'API pour écraser le cache local
                         if (this.g_ChapterData[w.m_MapData.chapter_number]) {
                             const cloudMap = this.g_ChapterData[w.m_MapData.chapter_number].maps[j];
                             if (cloudMap) {
@@ -454,7 +451,6 @@ class ArchipelagoMapSelect {
                         if (mb && mb.IsValid()) {
                             if (this.g_ClickedMapData && w.m_MapData.command === this.g_ClickedMapData.command) {
                                 mb.AddClass('map_button--selected');
-                                // Force la reconstruction immédiate du panneau de détails latéral (droite)
                                 this.selectMap(w.m_MapData, true);
                             } else {
                                 mb.RemoveClass('map_button--selected');
@@ -508,8 +504,6 @@ class ArchipelagoMapSelect {
             });
         }
 
-        // RECALCUL DYNAMIQUE DES ICÔNES : On ne fait plus confiance au required_item_icons figé.
-        // On compare les prérequis réels de la map avec l'inventaire possédé par le serveur AP.
         let dynamicItemIcons: string[] = [];
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         const status = api ? api.getStatus() : null;
@@ -518,7 +512,6 @@ class ArchipelagoMapSelect {
             const rawMissingString: string = status.missing_items;
             const originalIcons: string[] = mapData.required_item_icons || [];
             
-            // L'icône n'est conservée que si l'élément raccourci correspondant est présent dans missing_items
             dynamicItemIcons = originalIcons.filter((iconName: string) => {
                 return rawMissingString.indexOf(iconName) !== -1;
             });
@@ -682,19 +675,34 @@ class ArchipelagoMapSelect {
                 statusLabel.style.verticalAlign = "center";
                 statusLabel.style.horizontalAlign = "right";
                 statusLabel.style.marginRight = "15px";
+
+                // ÉTAPE UNIFORME : Création du conteneur d'image dédié lié à la classe SCSS ChapterStatusIcon
+                const statusIcon = $.CreatePanel('Image', entry, `ChapterStatusIcon_${chId}`) as ImagePanel;
+                statusIcon.AddClass('ChapterStatusIcon');
+                statusIcon.SetAttributeString('scaling', 'stretch-to-fit-preserve-aspect');
             }
 
             const chStatus = entry.FindChildTraverse('ChapterStatus_' + chId) as LabelPanel;
-            if (chStatus && chStatus.IsValid()) {
-                if (chapter.all_completed) {
-                    chStatus.text = "check";
-                    chStatus.visible = true;
-                    this.updateChapterStyle(chStatus, 1, 1, true);
+            const chStatusIcon = entry.FindChildTraverse('ChapterStatusIcon_' + chId) as ImagePanel;
+            
+            if (chStatus && chStatus.IsValid() && chStatusIcon && chStatusIcon.IsValid()) {
+                // Remplacement dynamique du mot brut "check" ou du texte "0/0" par le fichier SVG
+                if (chapter.all_completed || (chapter.progress_text === "0/0" && !isHidingCounts)) {
+                    chStatus.style.visibility = "collapse";
+                    
+                    chStatusIcon.SetImage("file://{images}/archipelago/icons/check.svg");
+                    chStatusIcon.style.visibility = "visible";
+                    this.updateChapterStyle(chStatusIcon, 1, 1, true);
                 } else if (chapter.progress_text && !isHidingCounts) {
+                    chStatusIcon.style.visibility = "collapse";
+                    
                     chStatus.text = chapter.progress_text;
-                    chStatus.visible = true;
+                    chStatus.style.visibility = "visible";
                     this.updateChapterStyle(chStatus, chapter.valid_count || 0, chapter.total_count || 0, false);
-                } else chStatus.visible = false;
+                } else {
+                    chStatus.style.visibility = "collapse";
+                    chStatusIcon.style.visibility = "collapse";
+                }
             }
 
             const chTitle = entry.FindChildTraverse('ChapterTitle_' + chId) as LabelPanel;
@@ -796,6 +804,10 @@ class ArchipelagoMapSelect {
                         progressLabel.style.verticalAlign = "center";
                         progressLabel.style.marginRight = "10px";
 
+                        // Création du conteneur d'image dédié pour l'icône check.svg
+                        const progressIcon = $.CreatePanel('Image', mapBtn, `MapProgressIcon_${chId}_${index}`) as ImagePanel;
+                        progressIcon.AddClass('MapProgressIcon');
+
                         const lockIcon = $.CreatePanel('Image', mapBtn, `MapLock_${chId}_${index}`) as ImagePanel;
                         lockIcon.AddClass('MapLockIcon');
                         lockIcon.SetAttributeString('scaling', 'stretch-to-fit-preserve-aspect');
@@ -827,21 +839,30 @@ class ArchipelagoMapSelect {
                     }
 
                     const progressLabel = mapBtn.FindChildTraverse(`MapProgress_${chId}_${index}`) as LabelPanel;
-                    if (progressLabel && progressLabel.IsValid()) {
-                        if (map.progress_text && !isHidingCounts && !isDeactivated) {
+                    const progressIcon = mapBtn.FindChildTraverse(`MapProgressIcon_${chId}_${index}`) as ImagePanel;
+                    
+                    if (progressLabel && progressLabel.IsValid() && progressIcon && progressIcon.IsValid()) {
+                        // Si la map est complétée ou affiche "0/0", on masque le texte et on injecte le fichier SVG check
+                        if ((map.completed || map.progress_text === "0/0") && !isDeactivated) {
+                            progressLabel.style.visibility = "collapse";
+                            
+                            progressIcon.SetImage("file://{images}/archipelago/icons/check.svg");
+                            progressIcon.style.visibility = "visible";
+                            this.updateChapterStyle(progressIcon, 1, 1, true);
+                        } else if (map.progress_text && !isHidingCounts && !isDeactivated) {
+                            progressIcon.style.visibility = "collapse";
+                            
                             progressLabel.text = map.progress_text;
-                            progressLabel.visible = true;
+                            progressLabel.style.visibility = "visible";
                             this.updateChapterStyle(progressLabel, map.valid_count || 0, map.total_count || 0, false);
-                        } else if (map.completed && !isDeactivated) {
-                            progressLabel.text = "check";
-                            progressLabel.visible = true;
-                            this.updateChapterStyle(progressLabel, 1, 1, true);
-                        } else progressLabel.visible = false;
+                        } else {
+                            progressLabel.style.visibility = "collapse";
+                            progressIcon.style.visibility = "collapse";
+                        }
                     }
 
                     const lockIcon = mapBtn.FindChildTraverse(`MapLock_${chId}_${index}`) as ImagePanel;
                     if (lockIcon && lockIcon.IsValid()) {
-                        // Nettoyage explicite des classes mutuellement exclusives pour éviter les conflits d'alignement/rendu du layout
                         lockIcon.RemoveClass('icon--locked');
                         lockIcon.RemoveClass('icon--unlocked');
                         

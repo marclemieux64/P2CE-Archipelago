@@ -65,29 +65,40 @@ class ArchipelagoSync {
     }
 
     static getMapStatus(map: any, allData: any) {
-        const fullCommand = map.command || map.command_deactivated || "";
-        const mapCmdName = fullCommand ? fullCommand.replace("map ", "").trim().toLowerCase() : "";
-        const mItems = map.subtitle || "";
-
         const statusIconsList: string[] = map.statusIcons || [];
 
-        // Validation de la complétion via l'état des icônes
-        const isCompleted = map.completed === true || (statusIconsList.length > 0 && statusIconsList.every(icon => icon === "check"));
-        if (isCompleted) return { completed: true, greenCount: 0, total: statusIconsList.length, doable: false, fullyDoable: false };
-
+        // Compte précis des indicateurs de la carte
         let greenCount = 0;
+        let uncheckCount = 0;
+
         statusIconsList.forEach((iconName: string) => {
             if (iconName !== "uncheck") {
                 greenCount++;
+            } else {
+                uncheckCount++;
             }
         });
+
+        // Si l'emplacement est complété par Archipelago, ou si le compteur affiche "0/0"
+        // (c'est-à-dire aucun check restant à faire, l'icône check.svg est active), la carte doit être catégorisée comme résolue.
+        const isCompleted = map.completed === true || map.progress_text === "0/0" || (statusIconsList.length > 0 && uncheckCount === 0);
+        
+        if (isCompleted) {
+            return { completed: true, greenCount: 0, total: statusIconsList.length, doable: false, fullyDoable: false };
+        }
+
+        // Détermination des bassins de sélection (Vert vs Jaune)
+        // - fullyDoable (Vert) : Tous les checks accessibles de la carte sont au vert (uncheckCount === 0 et des objectifs existent)
+        // - doable (Jaune) : Au moins un objectif est vert, mais il reste des verrous "uncheck" sur la carte
+        const isFullyDoable = (greenCount === statusIconsList.length && statusIconsList.length > 0);
+        const isPartiallyDoable = (greenCount > 0 && uncheckCount > 0);
 
         return {
             completed: false,
             greenCount: greenCount,
             total: statusIconsList.length,
-            doable: greenCount > 0,
-            fullyDoable: (greenCount === statusIconsList.length && statusIconsList.length > 0)
+            doable: isPartiallyDoable,
+            fullyDoable: isFullyDoable
         };
     }
 
@@ -120,6 +131,8 @@ class ArchipelagoSync {
         $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
             if (global.ArchipelagoSyncInstance !== ArchipelagoSync) return;
             const parts = payload.split('|');
+            
+            // CORRECTIF : Index 0 restauré pour cibler la chaîne du nom de la map
             const mapName = parts[0];
             if (!mapName || mapName === "main_menu") return;
             this.m_LastSymbols = "MAP_CHANGE_DETECTED";
@@ -222,7 +235,6 @@ class ArchipelagoSync {
         const subKeys = (currentMapData.active_sub_keys || []).join(",");
         const currentMissingItemsStr = apiStatus.missing_items || "";
 
-        // MODIFICATION DIRECTE : On intègre la chaîne d'objets manquants du serveur pour forcer l'actualisation lors d'un !send
         if (serverStatus === this.m_LastServerStatus &&
             ratmanStatus === this.m_LastRatmanStatus &&
             portalGunDone === this.m_LastPortalGunStatus &&
@@ -244,7 +256,6 @@ class ArchipelagoSync {
         $.persistentStorage.setItem("ArchipelagoLastMapStatus", serverStatus);
         $.persistentStorage.setItem("ArchipelagoLastMapName", mapName);
 
-        // Si l'écran de sélection de map est actif au moment du cheat, on demande sa reconstruction immédiate
         const mapSelectGlobal = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect;
         if (mapSelectGlobal && typeof mapSelectGlobal.restoreActiveSelectionVisuals === "function") {
             mapSelectGlobal.restoreActiveSelectionVisuals();

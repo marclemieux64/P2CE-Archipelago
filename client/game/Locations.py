@@ -1,4 +1,6 @@
 
+from P2CEClient.game.ItemNames import laser_catcher
+from P2CEClient.game.ItemNames import laser
 from enum import Flag, auto
 from attr import dataclass
 from BaseClasses import Location
@@ -220,8 +222,8 @@ speedrun_logic_table: dict[str, list[str]] = {
     "Catapult Intro Completion": [portal_gun_2, floor_button],
     "Trust Fling Completion": [portal_gun_2, faith_plate, floor_button],
     "Pit Flings Completion": [portal_gun_2],
-    "Fizzler Intro Completion": [portal_gun_2],
-    "Ricochet Completion": [portal_gun_2, weighted_cube],
+    "Fizzler Intro Completion": [portal_gun_2, laser, laser_catcher],
+    "Ricochet Completion": [portal_gun_2, weighted_cube, floor_button],
     "Bridge Intro Completion": [portal_gun_2, floor_button],
     "Bridge the Gap Completion": [weighted_cube, button, floor_button],
     "Turret Intro Completion": [floor_button],

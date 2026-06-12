@@ -676,7 +676,6 @@ class ArchipelagoMapSelect {
                 statusLabel.style.horizontalAlign = "right";
                 statusLabel.style.marginRight = "15px";
 
-                // ÉTAPE UNIFORME : Création du conteneur d'image dédié lié à la classe SCSS ChapterStatusIcon
                 const statusIcon = $.CreatePanel('Image', entry, `ChapterStatusIcon_${chId}`) as ImagePanel;
                 statusIcon.AddClass('ChapterStatusIcon');
                 statusIcon.SetAttributeString('scaling', 'stretch-to-fit-preserve-aspect');
@@ -686,7 +685,6 @@ class ArchipelagoMapSelect {
             const chStatusIcon = entry.FindChildTraverse('ChapterStatusIcon_' + chId) as ImagePanel;
             
             if (chStatus && chStatus.IsValid() && chStatusIcon && chStatusIcon.IsValid()) {
-                // Remplacement dynamique du mot brut "check" ou du texte "0/0" par le fichier SVG
                 if (chapter.all_completed || (chapter.progress_text === "0/0" && !isHidingCounts)) {
                     chStatus.style.visibility = "collapse";
                     
@@ -804,7 +802,7 @@ class ArchipelagoMapSelect {
                         progressLabel.style.verticalAlign = "center";
                         progressLabel.style.marginRight = "10px";
 
-                        // Création du conteneur d'image dédié pour l'icône check.svg
+                        // Ancrage natif direct de l'icône de progression à droite du bouton
                         const progressIcon = $.CreatePanel('Image', mapBtn, `MapProgressIcon_${chId}_${index}`) as ImagePanel;
                         progressIcon.AddClass('MapProgressIcon');
 
@@ -842,8 +840,7 @@ class ArchipelagoMapSelect {
                     const progressIcon = mapBtn.FindChildTraverse(`MapProgressIcon_${chId}_${index}`) as ImagePanel;
                     
                     if (progressLabel && progressLabel.IsValid() && progressIcon && progressIcon.IsValid()) {
-                        // Si la map est complétée ou affiche "0/0", on masque le texte et on injecte le fichier SVG check
-                        if ((map.completed || map.progress_text === "0/0") && !isDeactivated) {
+                        if (map.progress_text === "0/0" && !isDeactivated) {
                             progressLabel.style.visibility = "collapse";
                             
                             progressIcon.SetImage("file://{images}/archipelago/icons/check.svg");
@@ -855,6 +852,12 @@ class ArchipelagoMapSelect {
                             progressLabel.text = map.progress_text;
                             progressLabel.style.visibility = "visible";
                             this.updateChapterStyle(progressLabel, map.valid_count || 0, map.total_count || 0, false);
+                        } else if (map.completed && !isDeactivated) {
+                            progressIcon.style.visibility = "collapse";
+                            
+                            progressLabel.text = "check";
+                            progressLabel.style.visibility = "visible";
+                            this.updateChapterStyle(progressLabel, 1, 1, true);
                         } else {
                             progressLabel.style.visibility = "collapse";
                             progressIcon.style.visibility = "collapse";

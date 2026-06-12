@@ -103,7 +103,6 @@
     margin-right: 15px;
     texture-sampling: normal;
     img-shadow: 2px 2px 8px 3.0 #333333b0 alpha-only;
-    // Pas de wash-color ici pour préserver la couleur blanche SVG native du check conformément à ton choix
 }
 
 //=============================================================================
@@ -181,28 +180,15 @@
     }
 }
 
-// Classe native MapProgressIcon pour configurer les propriétés de taille et d'alignement de l'image
+// Classe native MapProgressIcon pour configurer l'icône check.svg lorsqu'elle remplace le texte 0/0
 .MapProgressIcon {
-    width: 24px;
-    height: 24px;
+    width: 34px;
+    height: 34px;
     vertical-align: center;
     horizontal-align: right;
     margin-right: 10px;
     texture-sampling: normal;
-    img-shadow: 1px 1px 3px 1.0 #000000aa alpha-only;
-
-    // Gestion de la teinte Panorama wash-color selon les classes dynamiques d'inventaire
-    &.progress--green {
-        width: 34px;
-        height: 34px;
-        img-shadow: 2px 2px 8px 3.0 #333333b0 alpha-only;
-    }
-    &.progress--yellow {
-        wash-color: #ffcc00;
-    }
-    &.progress--red {
-        wash-color: #ff4444;
-    }
+    img-shadow: 2px 2px 8px 3.0 #333333b0 alpha-only;
 }
 
 .MapLockIcon {
@@ -315,6 +301,15 @@
     text-overflow: shrink;
 }
 
+// RESTAURATION : Rétablissement de flow-children: right; sur le conteneur des icônes de checks (gauche)
+.map_status_icons_container {
+    flow-children: right;
+    width: fit-children; 
+    height: 60px; 
+    vertical-align: center;
+    horizontal-align: left;
+}
+
 .status_svg_icon {
     max-width: 60px;      
     max-height: 60px;     
@@ -323,9 +318,10 @@
     img-shadow: 2px 2px 8px 3.0 #333333b0 alpha-only;
 }
 
+// RESTAURATION : Rétablissement de flow-children: right; sur le conteneur des icônes d'objets requis (droite)
 .map_required_icons_container {
     flow-children: right;
-    width: fill-parent-flow(1.0);
+    width: fit-children; 
     height: 60px; 
     vertical-align: center;
     horizontal-align: left; 

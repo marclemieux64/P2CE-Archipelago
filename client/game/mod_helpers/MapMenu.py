@@ -37,6 +37,7 @@ items_shortened = {
     butter_fingers_trap: "trap",
     cube_confetti_trap: "trap",
     slippery_floor_trap: "trap",
+    dialog_trap: "trap",
 }
 
 indicator_characters = {

@@ -59,7 +59,7 @@ map_complete_table: dict[str, P2CELocationData] = {
     "Bridge the Gap Completion": P2CELocationData("sp_a2_bridge_the_gap", LocationType.MAP_COMPLETION, [portal_gun_2, bridge, floor_button, button, weighted_cube], 3),
     "Turret Intro Completion": P2CELocationData("sp_a2_turret_intro", LocationType.MAP_COMPLETION, [portal_gun_2, weighted_cube, floor_button, turrets], 3),
     "Laser Relays Completion": P2CELocationData("sp_a2_laser_relays", LocationType.MAP_COMPLETION, [portal_gun_2, laser, reflection_cube, laser_relays], 3),
-    "Turret Blocker Completion": P2CELocationData("sp_a2_turret_blocker", LocationType.MAP_COMPLETION, [portal_gun_2, bridge, faith_plate, floor_button, weighted_cube], 3),
+    "Turret Blocker Completion": P2CELocationData("sp_a2_turret_blocker", LocationType.MAP_COMPLETION, [portal_gun_2, bridge, faith_plate, floor_button, weighted_cube, turrets], 3),
     "Laser Vs. Turret Completion": P2CELocationData("sp_a2_laser_vs_turret", LocationType.MAP_COMPLETION, [portal_gun_2, laser, laser_catcher, weighted_cube, reflection_cube, floor_button], 3),
     "Pull The Rug Completion": P2CELocationData("sp_a2_pull_the_rug", LocationType.MAP_COMPLETION, [portal_gun_2, bridge, weighted_cube, floor_button, laser, laser_catcher], 3),
     # Chapter 4

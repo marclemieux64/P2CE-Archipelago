@@ -90,6 +90,7 @@ trap_items_table: dict[str, P2CEItemData] = {
     butter_fingers_trap: P2CEItemData(classification = ItemClassification.trap),
     cube_confetti_trap: P2CEItemData(classification = ItemClassification.trap),
     slippery_floor_trap: P2CEItemData(classification = ItemClassification.trap),
+    dialog_trap: P2CEItemData(classification = ItemClassification.trap),
 }
 
 trap_items = [trap for trap in trap_items_table.keys()]

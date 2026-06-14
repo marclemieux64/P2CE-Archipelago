@@ -106,6 +106,8 @@ def handle_trap(trap_name: str) -> str:
         return "CubeConfettiTrap\n"
     elif trap_name == slippery_floor_trap:
         return "SlipperyFloorTrap\n"
+    elif trap_name == dialog_trap:
+        return "DialogTrap\n"
 
 @dataclass
 class MapCommand:

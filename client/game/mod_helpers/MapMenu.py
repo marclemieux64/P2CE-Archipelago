@@ -95,14 +95,13 @@ class MapMenuElement(MenuElement):
         self.refresh_title()
 
     def check_logic(self, required_items):
-        # MODIFICATION DIRECTE : On vérifie directement si l'item a été reçu par le client, peu importe comment (cheat ou légitime)
+        # FIX: Validate logic checks against the active item_list directly.
+        # Since item_list tracks missing items, if an item is NOT in item_list, it has been received.
         client = self.parent.parent.client
-        if not client or not hasattr(client, "items_received"):
+        if not client or not hasattr(client, "item_list"):
             return False
         
-        # Traduction des items reçus en chaînes de caractères pour la comparaison de logique
-        received_names = {client.item_names.lookup_in_game(i.item, client.game) for i in client.items_received}
-        return all(item in received_names for item in required_items)
+        return all(item not in client.item_list for item in required_items)
 
     def refresh_title(self):
         client = self.parent.parent.client
@@ -274,11 +273,10 @@ class Menu:
             self.chapters.append(ChapterMenuElement(self, chapter_number, map_names))
 
     def to_dict(self):
-        data, prev = [], True
+        data = []
         for ch in self.chapters:
-            ch_dict = ch.to_dict(previous_completed=prev)
+            ch_dict = ch.to_dict(previous_completed=True)
             data.append(ch_dict)
-            prev = ch_dict.get("all_completed", False)
         return {"is_open_world": self.is_open_world, "chapters": data}
 
     def complete_map(self, map_id):

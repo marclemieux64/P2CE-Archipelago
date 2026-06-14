@@ -315,21 +315,14 @@ class P2CEContext(CommonContext):
         self.update_menu()
 
     def sync_map_state(self):
-        """
-        Pousse l'intégralité des commandes de synchronisation de la console au moteur de jeu via Netcon :
-        1. Les infrastructures d'items via handle_map_start (Item Handling)
-        2. L'état de complétion des objectifs Archipelago (Check Handling)
-        """
         if not self.current_map_code:
             return
             
-        # 1. Traitement des infrastructures d'items (Ex: PotatOS)
         from game.mod_helpers.ItemHandling import handle_map_start
         item_cmds = handle_map_start(self.current_map_code, self.item_list)
         if item_cmds:
             self.command_queue += item_cmds
             
-        # 2. Traitement des objectifs Archipelago de la carte (Ex: Moniteurs, Boutons Ratman)
         from game.mod_helpers.CheckHandling import get_map_sync_commands
         sync_cmds = get_map_sync_commands(self.current_map_code, self.item_list, self.checked_locations, self.location_names)
         if sync_cmds:
@@ -477,7 +470,6 @@ class P2CEContext(CommonContext):
             self.trap_handler.set_map_transition_state(False)
             self.send_level_begin_commands()
             
-            # Utilisation de la nouvelle fonction sync_map_state
             self.sync_map_state()
             
             if self.deferred_events:
@@ -492,6 +484,11 @@ class P2CEContext(CommonContext):
 
         elif message.startswith("map_complete:"):
             done_map = message.split(':', 1)[1].strip()
+            logger.info(f"Received map completion notification for: {done_map}")
+            
+            if done_map in location_names_to_map_codes:
+                done_map = location_names_to_map_codes[done_map]
+
             self.trap_handler.set_map_transition_state(done_map != "sp_a4_finale4")
             
             if done_map in self.completed_maps:
@@ -503,10 +500,12 @@ class P2CEContext(CommonContext):
             
             map_id = self.map_code_to_location_id(done_map)
             if map_id:
+                logger.info(f"Processing check location ID {map_id} for map {done_map}")
                 await self.check_locations([map_id])
                 self.update_menu(map_id)
+            else:
+                logger.warning(f"Could not resolve location ID for completed map string: {done_map}")
         
-        # Interception unifiée via le parseur de CheckHandling.py
         elif message.startswith("button_check:") or message.startswith("item_collected:") or message.startswith("monitor_break:") or message.startswith("vitrified_check:"):
             msg_type = message.split(":", 1)[0].strip()
             msg_payload = message.split(":", 1)[1].strip()
@@ -517,8 +516,6 @@ class P2CEContext(CommonContext):
                 check_id = all_locations_table[target_location_name].id
                 await self.check_locations([check_id])
                 self.update_menu(check_id)
-                
-                # RE-SYNC INSTANTANÉE : Si un objectif change en cours de partie, on rafraîchit le moteur
                 self.sync_map_state()
         
         elif message.startswith("send_deathlink"):
@@ -568,11 +565,14 @@ class P2CEContext(CommonContext):
         if map_code not in map_codes_to_location_names:
             return None
         location_name = map_codes_to_location_names[map_code]
-        if not hasattr(self, 'location_name_to_id') or not self.location_name_to_id:
-            return None
-        if location_name not in self.location_name_to_id:
-            return None
-        return self.location_name_to_id[location_name]
+        
+        if hasattr(self, 'location_name_to_id') and self.location_name_to_id and location_name in self.location_name_to_id:
+            return self.location_name_to_id[location_name]
+            
+        if location_name in all_locations_table:
+            return all_locations_table[location_name].id
+            
+        return None
     
     def get_wheatley_monitor_names(self, location_ids: list[int]) -> list[str]:
         from game.Locations import wheatley_monitor_table
@@ -683,7 +683,6 @@ class P2CEContext(CommonContext):
             self.item_list = list(set(full_list) - set(recv_names))
             self.refresh_menu()
             
-            # FORCE RE-SYNC : Dès que l'inventaire change (ex: !send), on pousse la re-synchronisation console immédiate
             self.sync_map_state()
             
             finale_loc_name = map_codes_to_location_names.get("sp_a4_finale4")
@@ -729,7 +728,7 @@ class P2CEContext(CommonContext):
             super().on_package(cmd, args)
             update_item_list()
             self.update_item_remove_commands()
-            return
+            # FIX: Supprimé le court-circuit (return) pour laisser s'exécuter la fin du bloc on_package
             
         if cmd == "PrintJSON":
             if args.get("type") == "Collect":

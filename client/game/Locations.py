@@ -1,6 +1,4 @@
 
-from P2CEClient.game.ItemNames import laser_catcher
-from P2CEClient.game.ItemNames import laser
 from enum import Flag, auto
 from attr import dataclass
 from BaseClasses import Location
@@ -182,9 +180,9 @@ vitrified_door_locations_table: dict[str, P2CELocationData] = {
     "Vitrified Door 1": P2CELocationData("sp_a3_03", LocationType.OTHER, [portal_gun_2], 6),
     "Vitrified Door 2": P2CELocationData("sp_a3_03", LocationType.OTHER, [portal_gun_2], 6),
     "Vitrified Door 3": P2CELocationData("sp_a3_03", LocationType.OTHER, [portal_gun_2], 6),
-    "Vitrified Door 4": P2CELocationData("sp_a3_transition01", LocationType.OTHER, [portal_gun_2], 6),
-    "Vitrified Door 5": P2CELocationData("sp_a3_transition01", LocationType.OTHER, [portal_gun_2], 6),
-    "Vitrified Door 6": P2CELocationData("sp_a3_transition01", LocationType.OTHER, [portal_gun_2], 6),
+    "Vitrified Door 4": P2CELocationData("sp_a3_transition01", LocationType.OTHER, [portal_gun_2, orange_gel, blue_gel ], 6),
+    "Vitrified Door 5": P2CELocationData("sp_a3_transition01", LocationType.OTHER, [portal_gun_2, orange_gel, blue_gel ], 6),
+    "Vitrified Door 6": P2CELocationData("sp_a3_transition01", LocationType.OTHER, [portal_gun_2, orange_gel, blue_gel ], 6),
 }
  
 vitrified_map_to_vitrified_door: dict[str, list[str]] = {

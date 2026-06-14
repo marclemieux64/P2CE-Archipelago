@@ -49,17 +49,6 @@ class MenuManager {
 		if (!global.ArchipelagoMessageQueue) {
 			global.ArchipelagoMessageQueue = [];
 		}
-
-		$.RegisterForUnhandledEvent('ArchipelagoNotify', (payload: string) => {
-			$.Msg('[AP Persistence] Captured message in Main Menu: ' + payload);
-			global.ArchipelagoMessageQueue.push({
-				payload: payload,
-				shown: false,
-				timestamp: Date.now()
-			});
-			// Notify the HUD to check the queue
-			$.DispatchEvent('ArchipelagoQueueUpdated', "");
-		});
 	}
 	
 	static {

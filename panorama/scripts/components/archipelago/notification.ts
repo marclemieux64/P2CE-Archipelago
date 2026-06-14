@@ -14,9 +14,70 @@ function GetHudRoot(): Panel | null {
     return null;
 }
 
+function checkPersistentQueue() {
+    const isHud = GetHudRoot() !== null;
+    const uiState = GameInterfaceAPI.GetGameUIState();
+    const isMenuState = (uiState === GameUIState.MAINMENU || uiState === GameUIState.PAUSEMENU);
+    
+    const shouldProcess = isHud ? !isMenuState : isMenuState;
+    if (!shouldProcess) return;
+
+    const globalObj: any = UiToolkitAPI.GetGlobalObject();
+    if (globalObj.ArchipelagoMessageQueue && Array.isArray(globalObj.ArchipelagoMessageQueue)) {
+        globalObj.ArchipelagoMessageQueue.forEach((msg: any) => {
+            if (!msg.shown) {
+                msg.shown = true;
+                OnArchipelagoNotify(msg.payload);
+            }
+        });
+    }
+}
+
+$.RegisterForUnhandledEvent("ArchipelagoQueueUpdated", () => {
+    checkPersistentQueue();
+});
+
+$.RegisterForUnhandledEvent('ShowMainMenu', () => {
+    checkPersistentQueue();
+});
+
+$.RegisterForUnhandledEvent('ShowPauseMenu', () => {
+    checkPersistentQueue();
+});
+
+$.RegisterForUnhandledEvent('HideMainMenu', () => {
+    $.Schedule(0.1, () => {
+        $.DispatchEvent('ArchipelagoQueueUpdated', "");
+    });
+});
+
+$.RegisterForUnhandledEvent('HidePauseMenu', () => {
+    $.Schedule(0.1, () => {
+        $.DispatchEvent('ArchipelagoQueueUpdated', "");
+    });
+});
+
+$.RegisterForUnhandledEvent('ArchipelagoNotify', (payload: string) => {
+    const globalObj: any = UiToolkitAPI.GetGlobalObject();
+    if (!globalObj.ArchipelagoMessageQueue) {
+        globalObj.ArchipelagoMessageQueue = [];
+    }
+    
+    const exists = globalObj.ArchipelagoMessageQueue.some((msg: any) => msg.payload === payload && Date.now() - msg.timestamp < 1000);
+    if (!exists) {
+        globalObj.ArchipelagoMessageQueue.push({
+            payload: payload,
+            shown: false,
+            timestamp: Date.now()
+        });
+        $.DispatchEvent('ArchipelagoQueueUpdated', "");
+    }
+});
+
 (function () {
     const hud = GetHudRoot();
     if (hud) hud.RemoveClass("fade-active");
+    checkPersistentQueue();
 })();
 
 // --- DÉCLARATIONS DES ÉVÉNEMENTS PANORAMA ---
@@ -139,7 +200,42 @@ $.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (payload: any) => {
     }
 });
 
+function getSkippedTrapIds(): number[] {
+    const val = $.persistentStorage.getItem("AP_SkippedTrapIds");
+    if (!val) return [];
+    try {
+        const arr = JSON.parse(val);
+        return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function addSkippedTrapId(id: number) {
+    const arr = getSkippedTrapIds();
+    if (arr.indexOf(id) === -1) {
+        arr.push(id);
+        $.persistentStorage.setItem("AP_SkippedTrapIds", JSON.stringify(arr));
+    }
+}
+
+function removeSkippedTrapId(id: number) {
+    const arr = getSkippedTrapIds();
+    const idx = arr.indexOf(id);
+    if (idx !== -1) {
+        arr.splice(idx, 1);
+        $.persistentStorage.setItem("AP_SkippedTrapIds", JSON.stringify(arr));
+    }
+}
+
 function ProcessChat(payload: any) {
+    const isHud = GetHudRoot() !== null;
+    const uiState = GameInterfaceAPI.GetGameUIState();
+    const isMenuState = (uiState === GameUIState.MAINMENU || uiState === GameUIState.PAUSEMENU);
+    
+    const shouldProcess = isHud ? !isMenuState : isMenuState;
+    if (!shouldProcess) return;
+
     try {
         // CORRECTIF INTERCEPTEUR V8 : Détection adaptative du type de données (Objet vs String)
         let chat = payload;
@@ -149,10 +245,9 @@ function ProcessChat(payload: any) {
         
         if (!Array.isArray(chat) || chat.length === 0) return;
 
-        const globalObj: any = UiToolkitAPI.GetGlobalObject();
-
-        let lastId = globalObj.AP_SharedNotificationId;
-        if (lastId === undefined) lastId = -1;
+        let lastIdVal = $.persistentStorage.getItem("AP_LastProcessedNotificationId");
+        let lastId = (lastIdVal !== null && lastIdVal !== undefined) ? parseInt(lastIdVal.toString()) : -1;
+        if (isNaN(lastId)) lastId = -1;
 
         const latestMsgId = chat[chat.length - 1].id;
 
@@ -161,7 +256,7 @@ function ProcessChat(payload: any) {
         }
 
         if (lastId === -1) {
-            globalObj.AP_SharedNotificationId = latestMsgId;
+            $.persistentStorage.setItem("AP_LastProcessedNotificationId", latestMsgId);
             return;
         }
 
@@ -178,9 +273,24 @@ function ProcessChat(payload: any) {
         } catch (e) { }
 
         for (const msg of chat) {
-            if (msg.id > lastId) {
-                lastId = msg.id;
-                globalObj.AP_SharedNotificationId = lastId;
+            const apType = msg.ap_msg_type || "default";
+            const isTrap = (apType === "trap") || (msg.html && msg.html.toLowerCase().includes("trap")) || (msg.text && msg.text.toLowerCase().includes("trap"));
+            const isSkippedTrap = isHud && isTrap && getSkippedTrapIds().indexOf(msg.id) !== -1;
+
+            if (msg.id > lastId || isSkippedTrap) {
+                if (isTrap && !isHud) {
+                    addSkippedTrapId(msg.id);
+                    lastId = Math.max(lastId, msg.id);
+                    $.persistentStorage.setItem("AP_LastProcessedNotificationId", lastId);
+                    continue;
+                }
+
+                if (isSkippedTrap) {
+                    removeSkippedTrapId(msg.id);
+                }
+
+                lastId = Math.max(lastId, msg.id);
+                $.persistentStorage.setItem("AP_LastProcessedNotificationId", lastId);
 
                 if (msg.muted === true) {
                     continue; 

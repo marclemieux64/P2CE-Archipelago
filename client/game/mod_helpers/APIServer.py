@@ -6,7 +6,6 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
-# --- STANDALONE FIX ---
 archipelago_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 if archipelago_root not in sys.path:
     sys.path.insert(0, archipelago_root)
@@ -19,7 +18,6 @@ class APIServer:
         self.server = None
         self.thread = None
         
-        # Cache serveur pour éviter json.dumps() et calculs MD5 redondants
         self._cache = {
             "sync_key": None, "sync_json": b"", "sync_etag": "",
             "status_key": None, "status_json": b"", "status_etag": "",
@@ -27,7 +25,6 @@ class APIServer:
             "hints_key": None, "hints_json": b"", "hints_etag": ""
         }
         
-        # Tracking de version pour découpler la sérialisation du menu principal
         self._menu_version = 0
         self._last_menu_key = None
         self._cached_menu_dict = None
@@ -38,7 +35,7 @@ class APIServer:
 
         class APIHandler(BaseHTTPRequestHandler):
             def log_message(self, format, *args):
-                pass  # Supprime les logs console pour éliminer l'overhead d'I/O disque
+                pass  
 
             def do_OPTIONS(self):
                 self.send_response(200)
@@ -51,18 +48,12 @@ class APIServer:
 
                 is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
                 
-                # MODIFICATION DIRECTE : Génération dynamique et sécurisée de l'état des items manquants à la volée
                 if hasattr(client_self, "items_received") and hasattr(client_self, "item_names"):
-                    # On traduit l'inventaire reçu en set de chaînes lisibles
                     received_names = {client_self.item_names.lookup_in_game(i.item, client_self.game) for i in client_self.items_received}
-                    # L'élément n'est ajouté à missing_str QUE s'il n'est pas trouvé dans les reçus (gère le !send instantanément)
-                    missing_str = "".join([items_shortened[item] for item in items_shortened if item not in received_names])
+                    missing_str = ",".join([items_shortened[item] for item in items_shortened if item not in received_names])
                 else:
-                    missing_str = "".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
+                    missing_str = ",".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
 
-                # =============================================================
-                # 1. CANAL UNIFIÉ DELTA SYNC (Haute performance pour le V8)
-                # =============================================================
                 if self.path.startswith('/api/sync'):
                     query = parse_qs(urlparse(self.path).query)
                     try:
@@ -78,10 +69,10 @@ class APIServer:
                     chat_log = client_self.notifier.chat_log
                     chat_delta = [msg for msg in chat_log if msg["id"] > last_chat_id]
 
-                    # Calcul de validité de l'état structurel du menu des maps
                     current_menu_key = (
                         len(client_self.checked_locations),
                         len(client_self.items_received) if hasattr(client_self, "items_received") else 0,
+                        len(client_self.item_list) if hasattr(client_self, "item_list") else 0,
                         client_self.slot
                     )
                     
@@ -90,13 +81,13 @@ class APIServer:
                         server_self._menu_version += 1
                         server_self._cached_menu_dict = client_self.menu.to_dict() if client_self.menu else None
 
-                    # Clé de cache composite incluant le décompte précis des items reçus pour forcer l'invalidation d'un !send
                     current_key = (
                         is_conn,
                         client_self.check_game_connection(),
                         client_self.slot,
                         len(client_self.checked_locations),
                         len(client_self.items_received) if hasattr(client_self, "items_received") else 0,
+                        len(client_self.item_list) if hasattr(client_self, "item_list") else 0,
                         getattr(client_self, "hint_points", 0),
                         getattr(client_self, "hint_cost", 0),
                         getattr(client_self, "logic_difficulty", 0),
@@ -109,7 +100,6 @@ class APIServer:
                     if current_key != server_self._cache["sync_key"]:
                         server_self._cache["sync_key"] = current_key
                         
-                        # Si l'interface possède déjà la version à jour, on omet le dictionnaire complet
                         should_send_menu = (client_menu_version != server_self._menu_version)
                         
                         payload = {
@@ -146,9 +136,6 @@ class APIServer:
                     self.wfile.write(server_self._cache["sync_json"])
                     return
 
-                # =============================================================
-                # 2. ROUTES HISTORIQUES PRÉSERVÉES POUR SÉCURISER L'INTERFACE
-                # =============================================================
                 elif self.path in ('/status', '/status_full'):
                     current_key = (
                         is_conn,
@@ -156,6 +143,7 @@ class APIServer:
                         client_self.slot,
                         len(client_self.checked_locations),
                         len(client_self.items_received) if hasattr(client_self, "items_received") else 0,
+                        len(client_self.item_list) if hasattr(client_self, "item_list") else 0,
                         getattr(client_self, "hint_points", 0),
                         getattr(client_self, "hint_cost", 0),
                         getattr(client_self, "logic_difficulty", 0)

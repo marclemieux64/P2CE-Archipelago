@@ -10,7 +10,8 @@ interface LabelPanel extends Panel { }
 class ArchipelagoMapSelect {
     static g_ChapterData: any = {};
     static g_SelectedMapCommand: string = '';
-    static g_LastApiJson: string = '';
+    static g_LastMenuVersion: number = -1; // REPLACED: Track exact structural signature versions directly
+    static g_LastCheckedCount: number = -1; // REPLACED: Track absolute completion mutations directly
     static g_OpenChapterId: string = '';
     static g_SelectedMapData: any = null;
     static g_ClickedMapData: any = null; 
@@ -157,7 +158,8 @@ class ArchipelagoMapSelect {
 
     static onLoad() {
         this.ArchipelagoMapSelectInit();
-        this.g_LastApiJson = '';
+        this.g_LastMenuVersion = -1;
+        this.g_LastCheckedCount = -1;
         $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
 
         const contextPanel = $.GetContextPanel();
@@ -191,9 +193,17 @@ class ArchipelagoMapSelect {
         if (api) {
             api.registerStatusListener($.GetContextPanel(), (status: any) => {
                 if (!status) return;
-                const jsonString = JSON.stringify(status);
-                if (jsonString === this.g_LastApiJson) return;
-                this.g_LastApiJson = jsonString;
+                
+                // FIX: Verify signature metrics instead of converting large payload states to string variants
+                const menuVer = status.menu_version !== undefined ? status.menu_version : 0;
+                const checkedCount = (status.checked_locations && status.checked_locations.length) ? status.checked_locations.length : 0;
+                
+                if (menuVer === this.g_LastMenuVersion && checkedCount === this.g_LastCheckedCount) {
+                    return; // Reconciled layout states matching exactly. Escape payload.
+                }
+                
+                this.g_LastMenuVersion = menuVer;
+                this.g_LastCheckedCount = checkedCount;
 
                 if (!status.connected || !status.menu) {
                     this.g_ChapterData = {};
@@ -377,7 +387,7 @@ class ArchipelagoMapSelect {
             if (iconIndex === 0) {
                 targetBadgeText = "#Archipelago_Maps_Check_Tag";
             } else if (typeKey && ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey]) {
-                targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey];
+                targetBadgeText = "#Archipelago_Maps_Check_Tag";
             } else if (svgName && ArchipelagoMapSelect.ICON_BADGE_MAP[svgName]) {
                 targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[svgName];
             }
@@ -463,6 +473,13 @@ class ArchipelagoMapSelect {
     }
 
     static selectMap(mapData: any, bShowPlayButton: boolean = true) {
+        if (mapData && !mapData.is_chapter) {
+            const isDeactivated = mapData.command_deactivated !== null && mapData.command_deactivated !== false && mapData.command_deactivated !== undefined;
+            this.g_SelectedMapCommand = (!isDeactivated && mapData.command) ? mapData.command : (typeof mapData.command_deactivated === 'string' ? mapData.command_deactivated : "");
+        } else {
+            this.g_SelectedMapCommand = '';
+        }
+
         const previewImage = $('#PreviewImage') as ImagePanel;
         const mapSubtitleLabel = $('#MapSubtitleLabel') as LabelPanel;
         
@@ -510,10 +527,11 @@ class ArchipelagoMapSelect {
 
         if (status && status.missing_items !== undefined && !mapData.is_chapter) {
             const rawMissingString: string = status.missing_items;
+            const missingArray = rawMissingString.split(",");
             const originalIcons: string[] = mapData.required_item_icons || [];
             
             dynamicItemIcons = originalIcons.filter((iconName: string) => {
-                return rawMissingString.indexOf(iconName) !== -1;
+                return missingArray.indexOf(iconName) !== -1;
             });
         } else {
             dynamicItemIcons = mapData.required_item_icons || [];
@@ -681,22 +699,36 @@ class ArchipelagoMapSelect {
                 statusIcon.SetAttributeString('scaling', 'stretch-to-fit-preserve-aspect');
             }
 
+            let computedValid = 0;
+            let computedTotal = 0;
+            let hasActiveMaps = false;
+
+            if (chapter.maps) {
+                chapter.maps.forEach((m: any) => {
+                    const isMDeactivated = m.command_deactivated !== null && m.command_deactivated !== false && m.command_deactivated !== undefined;
+                    computedTotal += (m.total_count || 0);
+
+                    if (!isMDeactivated) {
+                        hasActiveMaps = true;
+                        computedValid += (m.valid_count || 0);
+                    }
+                });
+            }
+
             const chStatus = entry.FindChildTraverse('ChapterStatus_' + chId) as LabelPanel;
             const chStatusIcon = entry.FindChildTraverse('ChapterStatusIcon_' + chId) as ImagePanel;
             
             if (chStatus && chStatus.IsValid() && chStatusIcon && chStatusIcon.IsValid()) {
-                if (chapter.all_completed || (chapter.progress_text === "0/0" && !isHidingCounts)) {
+                if (chapter.all_completed || (computedValid === chapter.total_count && chapter.total_count > 0)) {
                     chStatus.style.visibility = "collapse";
-                    
                     chStatusIcon.SetImage("file://{images}/archipelago/icons/check.svg");
                     chStatusIcon.style.visibility = "visible";
                     this.updateChapterStyle(chStatusIcon, 1, 1, true);
-                } else if (chapter.progress_text && !isHidingCounts) {
+                } else if (hasActiveMaps && computedTotal > 0 && !isHidingCounts) {
                     chStatusIcon.style.visibility = "collapse";
-                    
-                    chStatus.text = chapter.progress_text;
+                    chStatus.text = computedValid + "/" + computedTotal;
                     chStatus.style.visibility = "visible";
-                    this.updateChapterStyle(chStatus, chapter.valid_count || 0, chapter.total_count || 0, false);
+                    this.updateChapterStyle(chStatus, computedValid, computedTotal, false);
                 } else {
                     chStatus.style.visibility = "collapse";
                     chStatusIcon.style.visibility = "collapse";
@@ -802,7 +834,6 @@ class ArchipelagoMapSelect {
                         progressLabel.style.verticalAlign = "center";
                         progressLabel.style.marginRight = "10px";
 
-                        // Ancrage natif direct de l'icône de progression à droite du bouton
                         const progressIcon = $.CreatePanel('Image', mapBtn, `MapProgressIcon_${chId}_${index}`) as ImagePanel;
                         progressIcon.AddClass('MapProgressIcon');
 
@@ -840,21 +871,21 @@ class ArchipelagoMapSelect {
                     const progressIcon = mapBtn.FindChildTraverse(`MapProgressIcon_${chId}_${index}`) as ImagePanel;
                     
                     if (progressLabel && progressLabel.IsValid() && progressIcon && progressIcon.IsValid()) {
-                        if (map.progress_text === "0/0" && !isDeactivated) {
+                        if (isDeactivated) {
                             progressLabel.style.visibility = "collapse";
-                            
-                            progressIcon.SetImage("file://{images}/archipelago/icons/check.svg");
-                            progressIcon.style.visibility = "visible";
-                            this.updateChapterStyle(progressIcon, 1, 1, true);
-                        } else if (map.progress_text && !isHidingCounts && !isDeactivated) {
                             progressIcon.style.visibility = "collapse";
-                            
+                        } else if (map.progress_text === "0/0") {
+                            progressLabel.style.visibility = "collapse";
+                            progressIcon.style.visibility = "visible";
+                            progressIcon.SetImage("file://{images}/archipelago/icons/check.svg");
+                            this.updateChapterStyle(progressIcon, 1, 1, true);
+                        } else if (map.progress_text && !isHidingCounts) {
+                            progressIcon.style.visibility = "collapse";
                             progressLabel.text = map.progress_text;
                             progressLabel.style.visibility = "visible";
                             this.updateChapterStyle(progressLabel, map.valid_count || 0, map.total_count || 0, false);
-                        } else if (map.completed && !isDeactivated) {
+                        } else if (map.completed) {
                             progressIcon.style.visibility = "collapse";
-                            
                             progressLabel.text = "check";
                             progressLabel.style.visibility = "visible";
                             this.updateChapterStyle(progressLabel, 1, 1, true);
@@ -868,7 +899,6 @@ class ArchipelagoMapSelect {
                     if (lockIcon && lockIcon.IsValid()) {
                         lockIcon.RemoveClass('icon--locked');
                         lockIcon.RemoveClass('icon--unlocked');
-                        
                         lockIcon.SetImage(isDeactivated ? 'file://{images}/archipelago/lock-solid.svg' : 'file://{images}/archipelago/unlock-solid.svg');
                         lockIcon.AddClass(isDeactivated ? 'icon--locked' : 'icon--unlocked');
                     }

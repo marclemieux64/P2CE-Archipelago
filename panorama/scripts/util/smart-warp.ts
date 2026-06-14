@@ -7,9 +7,17 @@ function SmartWarpNextMap(currentMapName: string) {
     if (g_IsSmartWarping) return;
     g_IsSmartWarping = true;
 
-    $.Msg("[AP] Smart Warp triggered for map: " + currentMapName + ". Searching for best next map...");
-    
-    if (!currentMapName) currentMapName = "";
+    // NETTOYAGE DU NOM DE LA MAP : Éliminer les préfixes et l'extension .bsp
+    let cleanCurrentMap = currentMapName || "";
+    if (cleanCurrentMap.indexOf("maps/") === 0 || cleanCurrentMap.indexOf("maps\\") === 0) {
+        cleanCurrentMap = cleanCurrentMap.substring(5);
+    }
+    if (cleanCurrentMap.toLowerCase().endsWith(".bsp")) {
+        cleanCurrentMap = cleanCurrentMap.substring(0, cleanCurrentMap.length - 4);
+    }
+    cleanCurrentMap = cleanCurrentMap.trim().toLowerCase();
+
+    $.Msg("[AP] Smart Warp triggered. Active clean map: " + cleanCurrentMap + ". Synchronizing API status...");
 
     const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
     const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
@@ -21,46 +29,70 @@ function SmartWarpNextMap(currentMapName: string) {
         return;
     }
 
-    const chapters = syncHelper ? syncHelper.parseApiStatus(apiStatus) : {};
-    
-    if (Object.keys(chapters).length === 0) {
+    // MISE À JOUR : Forcer la reconstruction complète du cache d'état
+    let chapters: any = {};
+    if (syncHelper && typeof syncHelper.parseApiStatus === "function") {
+        chapters = syncHelper.parseApiStatus(apiStatus);
+        syncHelper.m_CachedChapters = chapters;
+        if (api.m_MenuVersion !== undefined) {
+            syncHelper.m_LastParsedMenuVersion = api.m_MenuVersion;
+        }
+    }
+
+    if (!chapters || Object.keys(chapters).length === 0) {
         GameInterfaceAPI.ConsoleCommand("disconnect");
         g_IsSmartWarping = false;
         return;
     }
 
-    const currentMapCmd = "map " + currentMapName;
-    const fullyDoableMaps: any[] = [];
-    const partiallyDoableMaps: any[] = [];
+    const fullyDoableMaps: any[] = [];    // État Vert (valid_count === total_count)
+    const partiallyDoableMaps: any[] = []; // État Jaune (valid_count > 0 && valid_count < total_count)
 
     for (const chId in chapters) {
         const chapter = chapters[chId];
         if (chapter.maps) {
             for (const map of chapter.maps) {
-                if (!map.command) continue;
-                if (map.command.trim() === currentMapCmd.trim()) continue;
+                // 1. SÉCURITÉ : Ignorer impérativement les boutons désactivés ou sans commande
+                const isDeactivated = map.command_deactivated !== null && map.command_deactivated !== false && map.command_deactivated !== undefined;
+                if (isDeactivated || !map.command) continue;
 
-                const status = syncHelper ? syncHelper.getMapStatus(map, chapters) : { completed: false, doable: false, fullyDoable: false };
-                
-                // Si la carte est marquée complétée (ou "0/0"), on l'exclut complètement des choix possibles
-                if (status.completed) continue;
+                // Nettoyer la commande de la map cible pour la comparaison (ex: "map sp_a1_intro1" -> "sp_a1_intro1")
+                let targetMapName = map.command.replace("map ", "").trim().toLowerCase();
 
-                if (status.fullyDoable) {
-                    fullyDoableMaps.push(map);
-                } else if (status.doable) {
-                    partiallyDoableMaps.push(map);
+                // 2. EXCLUSION DE LA MAP ACTUELLE : On compare les deux noms nettoyés
+                if (targetMapName === cleanCurrentMap) continue;
+
+                // 3. CLASSIFICATION DES 4 ÉTATS : Basée sur les compteurs synchronisés
+                const isCompleted = map.completed === true || map.progress_text === "0/0";
+                if (isCompleted) continue; // État Complété -> Remplacé par check.svg, exclu du warp
+
+                const validCount = map.valid_count || 0;
+                const totalCount = map.total_count || 0;
+
+                if (totalCount > 0) {
+                    if (validCount === totalCount) {
+                        // État Vert : Tous les checks de la map sont accessibles
+                        fullyDoableMaps.push(map);
+                    } else if (validCount > 0 && validCount < totalCount) {
+                        // État Jaune : Une partie seulement des checks est faisable
+                        partiallyDoableMaps.push(map);
+                    }
+                    // État Rouge : validCount === 0 -> Aucun check faisable, la boucle l'ignore
                 }
             }
         }
     }
 
+    // 4. PIPELINE DE SÉLECTION HIÉRARCHISÉ : Vert -> Jaune -> Menu Principal
     let targetMap: any = null;
     if (fullyDoableMaps.length > 0) {
         const randomIndex = Math.floor(Math.random() * fullyDoableMaps.length);
         targetMap = fullyDoableMaps[randomIndex];
+        $.Msg("[AP] Smart Warp selected an available GREEN map.");
     } else if (partiallyDoableMaps.length > 0) {
         const randomIndex = Math.floor(Math.random() * partiallyDoableMaps.length);
         targetMap = partiallyDoableMaps[randomIndex];
+        $.Msg("[AP] Smart Warp selected an available YELLOW map.");
     }
 
     const notifyFn = (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify;
@@ -107,6 +139,7 @@ function SmartWarpNextMap(currentMapName: string) {
         });
 
     } else {
+        // Aucune map éligible trouvée -> Retour au menu principal
         let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu_Title");
         if (!locTitle || locTitle.trim() === "" || locTitle === "#Archipelago_HUD_Warp_Menu_Title") {
             locTitle = "WARP TO MENU";

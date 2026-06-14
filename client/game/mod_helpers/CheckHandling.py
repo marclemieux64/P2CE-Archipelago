@@ -99,9 +99,11 @@ def get_map_sync_commands(map_code: str, items_missing: list, checked_locations:
             elif map_code == "sp_a3_transition01":
                 commands.append('SetCheckedPickup potatos\n')
 
-    # 5. Transmission unifiée de la liste de toutes les cartes terminées (Chambres + Cinématiques)
-    if maps_completed_checked:
-        commands.append(f'SetCheckedMaps {" ".join(maps_completed_checked)}\n')
+    # 5. Transmission unifiée de l'état de complétion pour la carte actuelle
+    # (Pour éviter le débordement de tampon console Cbuf_AddText de 512 caractères)
+    current_map_lower = map_code.lower() if map_code else ""
+    if current_map_lower and any(m.lower() == current_map_lower for m in maps_completed_checked):
+        commands.append(f'SetCheckedMaps {current_map_lower}\n')
     else:
         commands.append('SetCheckedMaps\n')
 

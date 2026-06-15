@@ -135,25 +135,23 @@ namespace Archipelago {
         }
         
         if (classname == "prop_wall_projector") {
-            shouldParent = false;   // Pas de parentage pour éviter les glitchs de matrice
-            absoluteAngles = true;  // Force l'utilisation d'angles mondiaux absolus adaptés à la surface
+            shouldParent = false;   
+            absoluteAngles = true;  
             targetScale = 0.66f;
             targetSkin = 4;
 
-            // 1. Extraction des axes directionnels réels du projecteur mural
+            // 1. Force calculation of true runtime world vectors from absolute angles
             Vector forward, right, up;
             AngleVectors(ent.GetAbsAngles(), forward, right, up);
 
-            // 2. Calcul de la position mondiale absolue voulue (Avance de 15 unités sur l'axe local Forward)
-            Vector worldPos = ent.GetAbsOrigin() + (forward * 15.0f) + (up * 5.0f);
-
-            // Contre-mesure pour DeleteEntity : on soustrait l'origine pour injecter la position absolue parfaite
-            targetPos = worldPos - ent.GetAbsOrigin();
-
-            // 3. Calcul de la rotation mondiale absolue voulue (Pivotement de 90° propre)
-            // On utilise la signature native à deux vecteurs pour calculer le Pitch, le Yaw et le Roll
-            // requis pour suivre l'orientation du mur sur lequel est posé le projecteur.
+            // 2. Reconstruct orientation completely independent of mounting axis.
+            // Putting 'up' first ensures the badge stays flat relative to the mounting floor/wall frame,
+            // while 'forward' sets the front baseline vector context.
             VectorAngles(up, forward, targetAng);
+
+            // 3. Uniformly push out 16 units out of the wall surface (forward vector direction)
+            // and shift up 8 units parallel to the projector structure (up vector direction)
+            targetPos = (forward * 16.0f) + (up * 8.0f);
             return;
         }
 

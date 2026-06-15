@@ -706,10 +706,11 @@ class ArchipelagoMapSelect {
             if (chapter.maps) {
                 chapter.maps.forEach((m: any) => {
                     const isMDeactivated = m.command_deactivated !== null && m.command_deactivated !== false && m.command_deactivated !== undefined;
-                    computedTotal += (m.total_count || 0);
-
+                    
+                    // FIX: Accumulate maps dynamically based strictly on active validation sets
                     if (!isMDeactivated) {
                         hasActiveMaps = true;
+                        computedTotal += (m.total_count || 0);
                         computedValid += (m.valid_count || 0);
                     }
                 });
@@ -719,7 +720,8 @@ class ArchipelagoMapSelect {
             const chStatusIcon = entry.FindChildTraverse('ChapterStatusIcon_' + chId) as ImagePanel;
             
             if (chStatus && chStatus.IsValid() && chStatusIcon && chStatusIcon.IsValid()) {
-                if (chapter.all_completed || (computedValid === chapter.total_count && chapter.total_count > 0)) {
+                // FIX: Check absolute local counters matching exactly against accumulated maps
+                if (chapter.all_completed || (computedValid === computedTotal && computedTotal > 0)) {
                     chStatus.style.visibility = "collapse";
                     chStatusIcon.SetImage("file://{images}/archipelago/icons/check.svg");
                     chStatusIcon.style.visibility = "visible";

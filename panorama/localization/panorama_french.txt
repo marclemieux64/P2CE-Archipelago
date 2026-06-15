@@ -372,7 +372,7 @@
 		"Archipelago_HUD_Deathlink"    "LIEN DE MORT"
 
 
-		"Archipelago_HUD_Trap"         "PIÈGE ACTIVÉ"
+		"Archipelago_HUD_Trap"         "PIÈGE"
 
 
 		"Archipelago_HUD_Warp_Menu"    "RETOUR AU MENU"

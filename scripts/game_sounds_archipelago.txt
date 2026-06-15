@@ -49,10 +49,10 @@
 
 "Archipelago.Goal"
 {
-    "channel"       "CHAN_VOICE"
+    "channel"       "CHAN_STATIC"
     "volume"        "1.0"
     "pitch"         "100"
-    "soundlevel"    "SNDLVL_NONE"
+    "soundlevel"    ""SNDLVL_150dB"
     "wave"          "playonce/level/sad_party_horn_01.wav"
 
 }    

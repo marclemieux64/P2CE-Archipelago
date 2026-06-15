@@ -22,6 +22,14 @@ if (!globalObj.ArchipelagoAPI) {
         static m_LastChatId: number = -1;
         static m_MenuVersion: number = 0;
 
+        // Adaptive polling: faster after changes, slower when idle
+        static m_PollInterval: number = 1.0;        // current interval in seconds
+        static m_PollIntervalFast: number = 0.5;     // after receiving data
+        static m_PollIntervalSlow: number = 2.0;     // after 304 / no change
+        static m_ConsecutiveIdle: number = 0;         // count of consecutive 304s
+        static m_InFlight: boolean = false;           // prevent overlapping requests
+        static m_PendingPulse: any = null;            // debounce scheduled pulse
+
         static m_StatusListeners: { panel: any, callback: (data: any) => void }[] = [];
         static m_ChatListeners: { panel: any, callback: (data: any) => void }[] = [];
 
@@ -35,10 +43,14 @@ if (!globalObj.ArchipelagoAPI) {
                 try { $.CancelScheduled(this.m_PollSchedule); } catch(e) {}
             }
             this.pulse();
-            this.m_PollSchedule = $.Schedule(1.0, () => this.startPolling());
+            this.m_PollSchedule = $.Schedule(this.m_PollInterval, () => this.startPolling());
         }
 
         static pulse() {
+            // Prevent overlapping requests
+            if (this.m_InFlight) return;
+            this.m_InFlight = true;
+
             const headers: Record<string, string> = {};
             if (this.m_SyncETag) {
                 headers["If-None-Match"] = this.m_SyncETag;
@@ -50,11 +62,22 @@ if (!globalObj.ArchipelagoAPI) {
                 type: 'GET',
                 headers: headers,
                 complete: (res: any) => {
+                    this.m_InFlight = false;
+
                     if (res.status === 304) {
+                        // Nothing changed — back off polling interval
+                        this.m_ConsecutiveIdle++;
+                        if (this.m_ConsecutiveIdle >= 3) {
+                            this.m_PollInterval = this.m_PollIntervalSlow;
+                        }
                         return;
                     }
 
                     if (res.status === 200 && res.responseText) {
+                        // Data received — speed up polling
+                        this.m_ConsecutiveIdle = 0;
+                        this.m_PollInterval = this.m_PollIntervalFast;
+
                         const eTagHeader = res.getheader ? res.getheader("ETag") : "";
                         if (eTagHeader) this.m_SyncETag = eTagHeader;
 
@@ -97,6 +120,9 @@ if (!globalObj.ArchipelagoAPI) {
                             $.Warning("[AP] SyntaxError prevention triggered during single-pulse resolution: " + e);
                         }
                     } else {
+                        // Server unreachable — slow down and mark offline
+                        this.m_ConsecutiveIdle++;
+                        this.m_PollInterval = this.m_PollIntervalSlow;
                         const offlinePayload = { connected: false, game_connected: false, client_offline: true, menu: null, menu_version: 0 };
                         this.m_Status = offlinePayload;
                         this.m_MenuVersion = 0;
@@ -115,7 +141,8 @@ if (!globalObj.ArchipelagoAPI) {
                 data: { command: cmd },
                 complete: () => { 
                     if (callback) callback();
-                    this.pulse(); 
+                    // Debounced pulse: if a pulse is already pending, skip
+                    this.scheduleDebouncedPulse();
                 }
             });
         }
@@ -124,7 +151,17 @@ if (!globalObj.ArchipelagoAPI) {
             this.m_SyncETag = "";
             $.AsyncWebRequest(this.API_BASE + "/hints/refresh", { 
                 type: 'POST',
-                complete: () => { this.pulse(); }
+                complete: () => { this.scheduleDebouncedPulse(); }
+            });
+        }
+
+        // Debounced pulse: coalesces multiple rapid calls into a single delayed pulse
+        static scheduleDebouncedPulse() {
+            if (this.m_PendingPulse) return;  // already scheduled
+            this.m_PendingPulse = $.Schedule(0.15, () => {
+                this.m_PendingPulse = null;
+                this.m_PollInterval = this.m_PollIntervalFast;  // speed up next poll cycle
+                this.pulse();
             });
         }
 

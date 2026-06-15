@@ -1,4 +1,3 @@
-from math import ceil
 import sys
 from typing import Any, ClassVar
 
@@ -19,27 +18,6 @@ if not __name__.startswith("game"):
     debug_mode = False
 
     class P2CESettings(settings.Group):
-        import os
-        import logging
-        # Robust search for extras.txt to avoid blocking file dialogs
-        _mod_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        _possible_paths = [
-            os.path.join(_mod_root, "scripts", "extras.txt"),
-            os.path.abspath(os.path.join(os.getcwd(), "scripts", "extras.txt")),
-            "C:/Program Files (x86)/Steam/steamapps/sourcemods/p2ce-archipelago/scripts/extras.txt"
-        ]
-        extras_path = ""
-        for _p in _possible_paths:
-            if os.path.exists(_p):
-                extras_path = _p
-                break
-    
-        if not extras_path:
-            extras_path = _possible_paths[0]
-    
-        # Use a simple string instead of UserFilePath to prevent blocking dialogs
-        menu_file: str = extras_path
-
         class P2CENetConPort(int):
             """The port set in the P2CE launch options e.g. 3000"""
 
@@ -55,7 +33,7 @@ if not __name__.startswith("game"):
             language="English",
             file_name="setup_en.md",
             link="setup/en",
-            authors=["GlassToadstool" "marclemieux"]
+            authors=["GlassToadstool", "marclemieux"]
         )
 
         tutorials = [setup_en]
@@ -117,7 +95,7 @@ if not __name__.startswith("game"):
                     else:
                         chapter_maps[f"Chapter {all_locations_table[map_choice].chapter}"].append(map_choice)
 
-            chapter_maps: dict[str, list[str]] = {f"Chapter {i}": [] for i in range(1,9)}
+            chapter_maps: dict[str, list[str]] = {f"Chapter {i}": [] for i in range(1, 8)}
 
             map_pool: list[str] = []
             used_maps: list[str] = []
@@ -129,12 +107,12 @@ if not __name__.startswith("game"):
 
             # Maps with no requirements
             map_pool += [name for name in possible_maps if len(self.location_logic[name]) == 0]
-            pick_maps(ceil(len(map_pool) * proportion_map_pick))
+            pick_maps(round(len(map_pool) * proportion_map_pick))
         
             # Maps with just portal gun upgrade
             map_pool += [name for name in possible_maps if len(self.location_logic[name]) <= 2
                          and name not in used_maps and name not in map_pool]
-            pick_maps(ceil(len(map_pool) * proportion_map_pick))
+            pick_maps(round(len(map_pool) * proportion_map_pick))
 
             # All other maps
             map_pool += [name for name in possible_maps if name not in used_maps and name not in map_pool]
@@ -189,7 +167,7 @@ if not __name__.startswith("game"):
                         self.create_in_level_check(sub_location, vitrified_requirements, region_start)
             
                 # Connect to chapter region if there was no previous level or if open world
-                if self.options.game_mode == GameModeOption.OPEN_WORLD or last_region == None:
+                if self.options.game_mode == GameModeOption.OPEN_WORLD or last_region is None:
                     chapter_region.connect(region_start)
                 else:
                     last_region.connect(region_start)
@@ -240,7 +218,7 @@ if not __name__.startswith("game"):
             if not (self.chapter_maps_dict or self.options.game_mode == GameModeOption.OPEN_WORLD):
                 self.chapter_maps_dict = self.create_randomized_maps()
             # Add chapters to those regions
-            for i in range(1,9):
+            for i in range(1, 9):
                 if self.options.game_mode == GameModeOption.OPEN_WORLD:
                     chapter_region, last_region = self.create_connected_maps(i)
                 else:
@@ -270,7 +248,9 @@ if not __name__.startswith("game"):
                                        self.options.fizzle_portal_trap_weight.value,
                                        self.options.butter_fingers_trap_weight.value,
                                        self.options.cube_confetti_trap_weight.value,
-                                       self.options.slippery_floor_trap_weight.value]
+                                       self.options.slippery_floor_trap_weight.value,
+                                       self.options.dialog_trap_weight.value
+                                       ]
 
             if sum(trap_weights) > 0 and trap_fill_number > 0:
                 traps = self.random.choices(trap_items, weights=trap_weights, k=trap_fill_number)

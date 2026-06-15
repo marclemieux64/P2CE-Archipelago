@@ -110,6 +110,12 @@ class SlipperyFloorTrapWeight(BaseTrapWeight):
     """
     display_name = slippery_floor_trap + " Weight"
 
+class DialogTrapWeight(BaseTrapWeight):
+    """
+    Likelihood of receiving a trap which cover the screen with red text
+    """
+    display_name = dialog_trap + " Weight"
+
 class WheatleyMonitors(Toggle):
     """
     Determines whether breaking Wheatly monitors will send location checks
@@ -145,7 +151,8 @@ p2ce_option_groups = [
         FizzlePortalTrapWeight,
         ButterFingersTrapWeight,
         CubeConfettiTrapWeight,
-        SlipperyFloorTrapWeight
+        SlipperyFloorTrapWeight,
+        DialogTrapWeight
     ])
 ]
 
@@ -177,3 +184,4 @@ class P2CEOptions(PerGameCommonOptions):
     butter_fingers_trap_weight: ButterFingersTrapWeight
     cube_confetti_trap_weight: CubeConfettiTrapWeight
     slippery_floor_trap_weight: SlipperyFloorTrapWeight
+    dialog_trap_weight: DialogTrapWeight

@@ -28,6 +28,10 @@ class APIServer:
         self._menu_version = 0
         self._last_menu_key = None
         self._cached_menu_dict = None
+        
+        # Separate cache for missing_str (only changes when item counts change)
+        self._missing_items_key = None
+        self._cached_missing_str = ""
 
     def start(self):
         client_self = self.ctx
@@ -43,16 +47,26 @@ class APIServer:
                 self.send_header('Access-Control-Allow-Headers', 'Content-Type, If-None-Match')
                 self.end_headers()
 
-            def do_GET(self):
+            def _get_missing_str(self):
+                """Cached missing_str — only recomputed when item counts change."""
                 from game.mod_helpers.MapMenu import items_shortened
-
-                is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
+                items_received_len = len(client_self.items_received) if hasattr(client_self, "items_received") else 0
+                item_list_len = len(client_self.item_list) if hasattr(client_self, "item_list") else 0
+                missing_key = (items_received_len, item_list_len)
                 
-                if hasattr(client_self, "items_received") and hasattr(client_self, "item_names"):
-                    received_names = {client_self.item_names.lookup_in_game(i.item, client_self.game) for i in client_self.items_received}
-                    missing_str = ",".join([items_shortened[item] for item in items_shortened if item not in received_names])
-                else:
-                    missing_str = ",".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
+                if missing_key != server_self._missing_items_key:
+                    server_self._missing_items_key = missing_key
+                    if hasattr(client_self, "items_received") and hasattr(client_self, "item_names"):
+                        received_names = {client_self.item_names.lookup_in_game(i.item, client_self.game) for i in client_self.items_received}
+                        server_self._cached_missing_str = ",".join([items_shortened[item] for item in items_shortened if item not in received_names])
+                    else:
+                        server_self._cached_missing_str = ",".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
+                
+                return server_self._cached_missing_str
+
+            def do_GET(self):
+                is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
+                game_conn = client_self.check_game_connection()  # call once, reuse
 
                 if self.path.startswith('/api/sync'):
                     query = parse_qs(urlparse(self.path).query)
@@ -66,13 +80,18 @@ class APIServer:
                     except (ValueError, IndexError):
                         client_menu_version = -1
 
+                    # Build a lightweight state key that does NOT include chat_delta
+                    # (chat_delta depends on the client's last_chat_id query param,
+                    # which caused false cache invalidations on every consumed message)
+                    items_received_len = len(client_self.items_received) if hasattr(client_self, "items_received") else 0
+                    item_list_len = len(client_self.item_list) if hasattr(client_self, "item_list") else 0
                     chat_log = client_self.notifier.chat_log
-                    chat_delta = [msg for msg in chat_log if msg["id"] > last_chat_id]
+                    chat_head_id = chat_log[-1]["id"] if chat_log else -1
 
                     current_menu_key = (
                         len(client_self.checked_locations),
-                        len(client_self.items_received) if hasattr(client_self, "items_received") else 0,
-                        len(client_self.item_list) if hasattr(client_self, "item_list") else 0,
+                        items_received_len,
+                        item_list_len,
                         client_self.slot
                     )
                     
@@ -81,33 +100,45 @@ class APIServer:
                         server_self._menu_version += 1
                         server_self._cached_menu_dict = client_self.menu.to_dict() if client_self.menu else None
 
+                    # State key uses chat_head_id (latest msg id) instead of len(chat_delta)
                     current_key = (
                         is_conn,
-                        client_self.check_game_connection(),
+                        game_conn,
                         client_self.slot,
                         len(client_self.checked_locations),
-                        len(client_self.items_received) if hasattr(client_self, "items_received") else 0,
-                        len(client_self.item_list) if hasattr(client_self, "item_list") else 0,
+                        items_received_len,
+                        item_list_len,
                         getattr(client_self, "hint_points", 0),
                         getattr(client_self, "hint_cost", 0),
                         getattr(client_self, "logic_difficulty", 0),
-                        len(chat_delta),
+                        chat_head_id,
+                        last_chat_id,
                         client_menu_version,
                         server_self._menu_version,
                         len(client_self.notifier.hint_log)
                     )
 
-                    if current_key != server_self._cache["sync_key"]:
+                    if current_key == server_self._cache["sync_key"]:
+                        # State unchanged — check ETag immediately (skip all computation)
+                        if self.headers.get('If-None-Match') == server_self._cache["sync_etag"]:
+                            self.send_response(304)
+                            self.send_header('Access-Control-Allow-Origin', '*')
+                            self.send_header('Content-Length', '0')
+                            self.end_headers()
+                            return
+                    else:
+                        # State changed — rebuild payload
                         server_self._cache["sync_key"] = current_key
                         
                         should_send_menu = (client_menu_version != server_self._menu_version)
+                        chat_delta = [msg for msg in chat_log if msg["id"] > last_chat_id]
                         
                         payload = {
                             "connected": is_conn,
-                            "game_connected": client_self.check_game_connection(),
+                            "game_connected": game_conn,
                             "slot": client_self.slot,
                             "checked_locations": list(client_self.checked_locations),
-                            "missing_items": missing_str,
+                            "missing_items": self._get_missing_str(),
                             "hint_points": getattr(client_self, "hint_points", 0),
                             "hint_cost": getattr(client_self, "hint_cost", 0),
                             "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
@@ -119,13 +150,6 @@ class APIServer:
                         }
                         server_self._cache["sync_json"] = json.dumps(payload).encode('utf-8')
                         server_self._cache["sync_etag"] = hashlib.md5(server_self._cache["sync_json"]).hexdigest()
-
-                    if self.headers.get('If-None-Match') == server_self._cache["sync_etag"]:
-                        self.send_response(304)
-                        self.send_header('Access-Control-Allow-Origin', '*')
-                        self.send_header('Content-Length', '0')
-                        self.end_headers()
-                        return
 
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
@@ -139,7 +163,7 @@ class APIServer:
                 elif self.path in ('/status', '/status_full'):
                     current_key = (
                         is_conn,
-                        client_self.check_game_connection(),
+                        game_conn,
                         client_self.slot,
                         len(client_self.checked_locations),
                         len(client_self.items_received) if hasattr(client_self, "items_received") else 0,
@@ -154,10 +178,10 @@ class APIServer:
                         
                         data_to_serialize = {
                             "connected": is_conn, 
-                            "game_connected": client_self.check_game_connection(), 
+                            "game_connected": game_conn, 
                             "slot": client_self.slot, 
                             "checked_locations": list(client_self.checked_locations), 
-                            "missing_items": missing_str, 
+                            "missing_items": self._get_missing_str(), 
                             "hint_points": getattr(client_self, "hint_points", 0), 
                             "hint_cost": getattr(client_self, "hint_cost", 0), 
                             "logic_difficulty": getattr(client_self, "logic_difficulty", 0),

@@ -65,14 +65,20 @@ namespace Archipelago {
 
         SafeAddOutput(EntityList().FindByName(null, "sphere_entrance_potatos_button"), "OnPressed", "hudhint_no_potatos", "ShowHint", "", 0.0f, -1);
         
-        // --- Silence GLaDOSVO exclusively here ---
+        // --- FIX: Kill active voice scenes and completely flatten both potential audio mixers ---
         CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
         if (cmd !is null) {
-            Variant vMix;
-            vMix.SetString("snd_setmixer PotatOS vol 0.0");
-            cmd.FireInput("Command", vMix, 0.0f, null, null, 0);
-            CallVScript("MutePotatOSSubtitles(true)");
+            Variant vMix1, vMix2;
+            
+            // Force muting both channels to cover Old Aperture and standard chamber audio routing safely
+            vMix1.SetString("snd_setmixer potatosVO vol 0.0");
+            cmd.FireInput("Command", vMix1, 0.0f, null, null, 0);
+            
+            vMix2.SetString("snd_setmixer gladosVO vol 0.0");
+            cmd.FireInput("Command", vMix2, 0.0f, null, null, 0);
 
+            // Halt any current voice scripts or choreo files running in the background map threads
+            CallVScript("MutePotatOSSubtitles(true)");
         }
     }
 

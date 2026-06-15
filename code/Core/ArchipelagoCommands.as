@@ -247,6 +247,13 @@ void ArchipelagoVitrifiedFoundLegacyCmd(const CommandArgs@ args) {
     Archipelago::ArchipelagoLog("[AP] Vitrified Door Found: " + index + " | New Bitmask: " + newBitmask);
 }
 
+[ServerCommand("SetVitrifiedStatus", "Updates the local vitrified door bitmask and hologram skins")]
+void SetVitrifiedStatusCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 2) return;
+    string bitmask = args.Arg(1);
+    Archipelago::SetVitrifiedStatus(bitmask);
+}
+
 [ServerCommand("PrintItem", "Prints collected item")]
 void PrintItemLegacyCmd(const CommandArgs@ args) {
     string raw = args.GetCommandString();

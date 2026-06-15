@@ -61,6 +61,8 @@
 #include "Function/Hologram/Overrides/GetHologramVisualOverrides.as"
 #include "Function/Hologram/Overrides/OverrideGel.as"
 #include "Function/Hologram/Overrides/OverrideCube.as"
+#include "Function/Hologram/Overrides/OverrideProjector.as"
+
 
 
 // --- MISC ---

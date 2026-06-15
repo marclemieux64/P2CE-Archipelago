@@ -135,23 +135,8 @@ namespace Archipelago {
         }
         
         if (classname == "prop_wall_projector") {
-            shouldParent = false;   
-            absoluteAngles = true;  
-            targetScale = 0.66f;
-            targetSkin = 4;
-
-            // 1. Force calculation of true runtime world vectors from absolute angles
-            Vector forward, right, up;
-            AngleVectors(ent.GetAbsAngles(), forward, right, up);
-
-            // 2. Reconstruct orientation completely independent of mounting axis.
-            // Putting 'up' first ensures the badge stays flat relative to the mounting floor/wall frame,
-            // while 'forward' sets the front baseline vector context.
-            VectorAngles(up, forward, targetAng);
-
-            // 3. Uniformly push out 16 units out of the wall surface (forward vector direction)
-            // and shift up 8 units parallel to the projector structure (up vector direction)
-            targetPos = (forward * 16.0f) + (up * 8.0f);
+            // FIX: Pass mapName parameter context cleanly matching function layout rules
+            OverrideProjector(mapName, ent, targetPos, targetAng, targetSkin, targetScale, shouldParent, absoluteAngles);
             return;
         }
 

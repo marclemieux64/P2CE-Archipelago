@@ -354,6 +354,7 @@ class ConsoleLogManager:
             "priority": mirror_to_hud,  
             "ap_msg_type": self._current_ap_msg_type if not is_death_event else "deathlink",
             "time": time.time(),
+            "time_str": time.strftime("%H:%M"),
             "muted": is_processing
         })
         

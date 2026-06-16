@@ -236,8 +236,13 @@ class ArchipelagoConsole {
         let fullText = "";
         for (const msg of chat) {
             if (!msg) continue;
-            const d = new Date(msg.time * 1000);
-            const timeStr = "[" + d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0') + "]";
+            let timeStr = "";
+            if (msg.time_str) {
+                timeStr = "[" + msg.time_str + "]";
+            } else {
+                const d = new Date(msg.time * 1000);
+                timeStr = "[" + d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0') + "]";
+            }
             
             let lineText = "";
             if (msg.html) {

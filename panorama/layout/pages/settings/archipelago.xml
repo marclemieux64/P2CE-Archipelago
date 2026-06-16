@@ -51,6 +51,7 @@
 				<SettingsKeyBinder
 					id="MapStatusKeyBinder"
 					text="#Archipelago_Settings_Key_ShowStatus"
+					infomessage="#Archipelago_Settings_Key_ShowStatus_info"
 					bind="ShowStatus"
 				/>
 

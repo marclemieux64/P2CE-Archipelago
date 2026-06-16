@@ -43,7 +43,7 @@
     "channel"       "CHAN_STATIC"
     "volume"        "1.0"
     "pitch"         "100"
-    "soundlevel"    "SNDLVL_NONE"
+    "soundlevel"    "SNDLVL_150dB"
     "wave"          "vo/wheatley/bw_a4_finale01_smash03.wav" 
 }
 
@@ -52,7 +52,7 @@
     "channel"       "CHAN_STATIC"
     "volume"        "1.0"
     "pitch"         "100"
-    "soundlevel"    ""SNDLVL_150dB"
+    "soundlevel"    "SNDLVL_150dB"
     "wave"          "playonce/level/sad_party_horn_01.wav"
 
 }    

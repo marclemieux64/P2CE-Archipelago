@@ -629,6 +629,10 @@ class P2CEContext(CommonContext):
             if slot_data["vitrified_doors"]:
                 self.menu.has_vitrified_doors = True
         
+        if "security_cameras" in slot_data:
+            if slot_data["security_cameras"]:
+                self.menu.has_security_cameras = True
+        
         if "portal_gun_upgrade_inplace" not in slot_data:
             portal_gun_upgrade_not_inplace()
             

@@ -1,6 +1,6 @@
 namespace Archipelago {
 
-CBaseEntity@ CreateAPHologram(Vector position, QAngle angles, float scale, CBaseEntity@ parent = null, string attachment = "", int skin = 0, string name = "", bool animate = true) {
+CBaseEntity@ CreateAPHologram(Vector position, QAngle angles, float scale, CBaseEntity@ parent = null, string attachment = "", int skin = 0, string name = "", bool animate = true, float playbackRate = 1.0f) {
         CBaseEntity@ h = null;
 
         if (name != "") {
@@ -11,7 +11,7 @@ CBaseEntity@ CreateAPHologram(Vector position, QAngle angles, float scale, CBase
         if (h !is null) {
             if (h.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
                 if (Archipelago::cv_ArchipelagoDebug.GetBool()) {
-                    Archipelago::ArchipelagoLog("[AP DEBUG] Updating Hologram '" + name + "' to " + angles.x + " " + angles.y + " " + angles.z + " | Skin: " + skin);
+                    Archipelago::ArchipelagoLog("[AP DEBUG] Updating Hologram '" + name + "' to " + angles.x + " " + angles.y + " " + angles.z + " | Skin: " + skin + " | PlaybackRate: " + playbackRate);
                 }
             
             // 1. Re-parentage et gestion d'origine stricte à chaque snapshot pour contrer le reload
@@ -33,10 +33,11 @@ CBaseEntity@ CreateAPHologram(Vector position, QAngle angles, float scale, CBase
                     h.SetAbsAngles(angles);
                 }
             
-            // 2. Refresh instantané du matériau via CBaseAnimating
+            // 2. Refresh instantané du matériau et de la vitesse d'animation via CBaseAnimating
                 CBaseAnimating@ animH = cast<CBaseAnimating>(h);
                 if (animH !is null) {
                     animH.SetSkin(skin);
+                    animH.SetPlaybackRate(playbackRate); // AJOUT : Mise à jour de la vitesse de lecture
                 } else {
                     h.KeyValue("skin", "" + skin); 
                 }
@@ -92,6 +93,12 @@ CBaseEntity@ CreateAPHologram(Vector position, QAngle angles, float scale, CBase
                 }
             }
 
+            // AJOUT : Application de la vitesse de lecture initiale via l'interface d'animation
+            CBaseAnimating@ animH = cast<CBaseAnimating>(h);
+            if (animH !is null) {
+                animH.SetPlaybackRate(playbackRate);
+            }
+
         // Apply visibility settings
             int hideOption = Archipelago::cv_ArchipelagoHideHolograms.GetInt();
             bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
@@ -106,4 +113,4 @@ CBaseEntity@ CreateAPHologram(Vector position, QAngle angles, float scale, CBase
         return h;
     }
 
-}// namespace archipelago
+} // namespace Archipelago

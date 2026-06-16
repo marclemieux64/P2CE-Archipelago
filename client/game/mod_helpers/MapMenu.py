@@ -55,11 +55,13 @@ indicator_characters = {
 def items_to_shortened(items_list):
     return [items_shortened[x] for x in items_list if x in items_shortened]
 
-def get_sub_locations(location_name, has_wheatley, has_ratman, has_vitrified):
+# CORRECTIF: Filtrage dynamique basé sur l'état de l'option de génération
+def get_sub_locations(location_name, has_wheatley, has_ratman, has_vitrified, has_cameras):
     subs = sub_locations_in_maps.get(location_name, [])
     if not has_wheatley: subs = [s for s in subs if "Wheatley Monitor" not in s]
     if not has_ratman: subs = [s for s in subs if "Ratman Den" not in s]
     if not has_vitrified: subs = [s for s in subs if "Vitrified Door" not in s]
+    if not has_cameras: subs = [s for s in subs if "Security Camera" not in s]
     return {s: False for s in subs}
 
 class MenuElement:
@@ -91,14 +93,19 @@ class MapMenuElement(MenuElement):
     def __init__(self, parent, chapter_number, map_number, title, map_code, location_id, required_items, pic):
         self.location_id = location_id
         self.required_items = required_items
-        self.sub_location_completion = get_sub_locations(title, parent.parent.has_wheatley_monitors, parent.parent.has_ratman_dens, parent.parent.has_vitrified_doors)
+        # CORRECTIF: Envoi du flag de l'option des caméras de sécurité
+        self.sub_location_completion = get_sub_locations(
+            title, 
+            parent.parent.has_wheatley_monitors, 
+            parent.parent.has_ratman_dens, 
+            parent.parent.has_vitrified_doors,
+            parent.parent.has_security_cameras
+        )
         subtitle = "".join(items_to_shortened(self.required_items))
         super().__init__(parent, f"vgui/chapters/chapter{chapter_number}", map_code, subtitle, f"map {map_code}", pic)
         self.refresh_title()
 
     def check_logic(self, required_items):
-        # FIX: Validate logic checks against the active item_list directly.
-        # Since item_list tracks missing items, if an item is NOT in item_list, it has been received.
         client = self.parent.parent.client
         if not client or not hasattr(client, "item_list"):
             return False
@@ -130,8 +137,9 @@ class MapMenuElement(MenuElement):
                         self.info_text.append(indicator_characters["ratman"])
                     elif "Vitrified Door" in sub_location:
                         self.info_text.append(indicator_characters["vitrified_door"])
-                    elif "Security Cameras" in sub_location:
-                        self.info_text.append(indicator_characters["camera"])
+                    # CORRECTIF: Repassé au singulier "Security Camera" pour intercepter la table
+                    elif "Security Camera" in sub_location:
+                        self.info_text.append(indicator_characters["security_camera"])
                     elif len(reqs) == 1:
                         shortened = items_to_shortened(reqs)
                         self.info_text.append(shortened[0] if shortened else indicator_characters["map"])
@@ -169,7 +177,8 @@ class MapMenuElement(MenuElement):
         for k in self.sub_location_completion.keys():
             k_lower = k.lower()
             if "wheatley monitor" in k_lower: active_sub_keys.append("monitor")
-            elif "security cameras" in k_lower: active_sub_keys.append("camera")
+            # CORRECTIF: Repassé au singulier "security camera" pour injecter la bonne clé attendue par Panorama
+            elif "security camera" in k_lower: active_sub_keys.append("camera")
             elif "ratman den" in k_lower: active_sub_keys.append("ratmansdent")
             elif "vitrified door" in k_lower: active_sub_keys.append("door")
             elif "potatos" in k_lower: active_sub_keys.append("potatos") 

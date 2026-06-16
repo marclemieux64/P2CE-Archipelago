@@ -121,6 +121,12 @@ void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
     Archipelago::AddWheatleyMonitorBreakCheck();
 }
 
+[ServerCommand("AddCameraCheck", "Runs the automatic camera check logic")]
+void AddCameraCheckCmd(const CommandArgs@ args) {
+    Archipelago::AddCameraCheck();
+}
+
+
 [ServerCommand("WarpMonitor", "Warps player on monitor break")]
 void WarpMonitorCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
@@ -167,9 +173,6 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("CreateMapSpecificHolos() completed");
     Archipelago::AttachDeathTrigger();
     Msgl("AttachDeathTrigger() completed");
-    Archipelago::AddCameraCheck();
-    Msgl("AddCameraCheck() completed");
-
     // FIX : On envoie toujours le nom de la map à Panorama, mais on lui passe l'état de la ConVar en paramètre.
     // "0" signifie que le HUD est activé (il doit clignoter 5s), "1" signifie qu'il est éteint.
     ConVarRef showHUDConVar("ap_show_map_status_hud");

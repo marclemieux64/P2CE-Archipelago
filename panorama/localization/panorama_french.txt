@@ -218,7 +218,7 @@
 		
 		"Archipelago_Wheathley_Monitor_Check_Tag" "MW"
 
-		"Archipelago_Cameras_Check_Tag" 		  "CS"
+		"Archipelago_Camera_Check_Tag" 		  "CS"
 
 
 		"Archipelago_Map_Checks"                "Validations"	

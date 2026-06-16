@@ -1,7 +1,7 @@
 from ..ItemNames import blue_gel, weighted_cube
 from dataclasses import dataclass
 from ..Items import *
-from ..ItemNames import motion_blur_trap, fizzle_portal_trap, butter_fingers_trap
+from ..ItemNames import motion_blur_trap, fizzle_portal_trap, butter_fingers_trap, dialog_trap
 from .Gels import *
 from ..Locations import wheatley_monitor_table, LocationType
 

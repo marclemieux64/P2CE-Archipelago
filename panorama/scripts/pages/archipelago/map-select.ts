@@ -37,11 +37,10 @@ class ArchipelagoMapSelect {
         "door": "#Archipelago_Vitrified_Doors_Check_Tag", 
         "potatos": "#Archipelago_Potatos_Check_Tag", 
         "monitor": "#Archipelago_Wheathley_Monitor_Check_Tag",
-        "camera" : "#Archipelago_Camera_Check_Tag"
+        "camera": "#Archipelago_Camera_Check_Tag"
     };
 
     static LOCALIZED_TOKEN_MAP: { [key: string]: string } = {
-        "camera": "#Archipelago_Help_Check_Camera",
         "flag": "#Archipelago_Help_Check_Generic",
         "ratmansdent": "#Archipelago_Help_Check_Ratman",
         "monitor": "#Archipelago_Help_Check_Wheatley",
@@ -404,6 +403,7 @@ class ArchipelagoMapSelect {
 
         let targetBadgeText = "";
         const activeSubs = mapData.active_sub_keys || [];
+        // CORRECTIF 1: Rétablissement du décalage de -1 car le premier index (0) de statusList correspond à la map elle-même
         const typeKey = activeSubs[iconIndex - 1];
 
         if (!isMissingItem) {
@@ -412,7 +412,8 @@ class ArchipelagoMapSelect {
             if (iconIndex === 0) {
                 targetBadgeText = "#Archipelago_Maps_Check_Tag";
             } else if (typeKey && ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey]) {
-                targetBadgeText = "#Archipelago_Maps_Check_Tag";
+                // CORRECTIF 2: Remplacement de la chaîne codée en dur par la valeur dynamique de la caméra ("camera")
+                targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey];
             } else if (svgName && ArchipelagoMapSelect.ICON_BADGE_MAP[svgName]) {
                 targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[svgName];
             }

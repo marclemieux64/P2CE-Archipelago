@@ -118,8 +118,8 @@
 					</Panel>
 					<Panel class="help-popup__row">
 						<Panel class="hud_icon_cell">
-							<Image src="file://{images}/archipelago/icons/Camera.svg" class="help-popup__icon-img" />
-							<Label class="hud_icon_badge" text="#Archipelago_Cameras_Check_Tag" />
+							<Image src="file://{images}/archipelago/icons/camera.svg" class="help-popup__icon-img" />
+							<Label class="hud_icon_badge" text="#Archipelago_Camera_Check_Tag" />
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Camera" />
 					</Panel>

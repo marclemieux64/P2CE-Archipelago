@@ -141,4 +141,5 @@ def get_map_sync_commands(map_code: str, items_missing: list, checked_locations:
         commands.append('SetCheckedMaps\n')
 
     commands.append("AddWheatleyMonitorBreakCheck\n")
+    commands.append("AddCameraCheck\n")
     return commands

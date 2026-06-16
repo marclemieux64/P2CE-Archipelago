@@ -27,7 +27,8 @@ var ArchipelagoMapStatusHUD = class {
         "portalgun2": "#Archipelago_Portal_Guns2_Check_Tag", 
         "door": "#Archipelago_Vitrified_Doors_Check_Tag", 
         "potatos": "#Archipelago_Potatos_Check_Tag", 
-        "monitor": "#Archipelago_Wheathley_Monitor_Check_Tag"
+        "monitor": "#Archipelago_Wheathley_Monitor_Check_Tag",
+        "camera": "#Archipelago_Camera_Check_Tag"
     };
 
     static init() {

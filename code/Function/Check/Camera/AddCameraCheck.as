@@ -20,7 +20,8 @@ string GetCameraUniqueID(string map, Vector pos) {
     }
     else if (map == "sp_a1_intro4") {
         if (x == -596 && y == 256) return "1";
-        if (x == 160 && y == 0) return "2"; // Gère le doublon de coordonnée native
+        if (x == 160 && y == 0) return "2"; 
+        if (x == 40 && y == -656) return "3"; 
     }
     else if (map == "sp_a1_intro6") {
         if (x == 464 && y == -256) return "1";
@@ -73,7 +74,7 @@ string GetCameraUniqueID(string map, Vector pos) {
         if (x == 7456 && y == -5998) return "1";
     }
 
-    // Fallback dynamique de sécurité indexé si une caméra n'est pas répertoriée dans la liste
+    // Fallback de sécurité
     return "unk";
 }
 
@@ -88,25 +89,21 @@ void AddCameraCheck() {
         g_CameraIdentifiers[i] = "";
     }
 
-    // Compteurs locaux pour attribuer l'ID dynamique de secours si GetCameraUniqueID renvoie "unk"
-    int backupIDCounter = 1;
-
     // Boucle pour trouver toutes les caméras existantes au chargement de la map et y attacher un hologramme
     CBaseEntity@ camera = null;
     while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) !is null) {
         int entIndex = camera.GetEntityIndex();
-        string holoName = "camera_check_holo_" + entIndex;
-
-        // Sauvegarde de la position d'origine exacte avant tout mouvement de physique
         Vector camPos = camera.GetAbsOrigin();
-        g_CameraInitialPositions[entIndex] = camPos;
 
-        // Déterminer et assigner l'identifiant permanent basé sur la map et la coordonnée
+        // Déterminer l'identifiant permanent basé sur la map et la coordonnée
         string camID = GetCameraUniqueID(current_map, camPos);
-        if (camID == "unk") {
-            camID = string(backupIDCounter);
-            backupIDCounter++;
-        }
+        
+        // FIX: Si la caméra n'est pas explicitement enregistrée dans notre table de coordonnées, 
+        // on l'ignore complètement pour éviter les fausses entités décoratives (comme sur pull_the_rug)
+        if (camID == "unk") continue;
+
+        string holoName = "camera_check_holo_" + entIndex;
+        g_CameraInitialPositions[entIndex] = camPos;
         g_CameraIdentifiers[entIndex] = current_map + "_" + camID;
 
         // On vérifie si l'hologramme pour cette caméra spécifique existe déjà pour éviter les doublons
@@ -142,8 +139,7 @@ void AddCameraCheck() {
             // Calcul de l'orientation finale combinée avec les offsets d'angle
             QAngle finalAng(camAng.x + pitchOffset, camAng.y + yawOffset, camAng.z + rollOffset);
 
-            // 1. Création de l'hologramme avec la position et les angles ajustés
-            // NOTE : L'appel à SetParent a été retiré, l'hologramme reste maintenant fixe au mur.
+            // Détermination du skin selon l'état de complétion Archipelago
             int skin = 0;
             string lowerCamID = g_CameraIdentifiers[entIndex].tolower();
             for (uint i = 0; i < checked_cameras.length(); i++) {
@@ -183,8 +179,8 @@ void CheckCameraPhysicsTick() {
     while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) !is null) {
         int entIndex = camera.GetEntityIndex();
         
-        // Skip checking if this specific camera index was already handled
-        if (g_CameraFallingDetected[entIndex]) continue;
+        // Skip checking if this specific camera index was already handled ou non-initialisée
+        if (g_CameraFallingDetected[entIndex] || g_CameraIdentifiers[entIndex] == "") continue;
 
         // 1. Check if the movement type changed to physics simulation
         bool isPhysicsMove = (camera.GetMoveType() == MOVETYPE_VPHYSICS);

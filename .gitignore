@@ -113,3 +113,5 @@ build_mod.py
 data/*.db
 build/*zip
 
+blender/
+blender/hologram.blend

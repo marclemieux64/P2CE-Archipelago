@@ -99,6 +99,42 @@ function SaveStatusIndicatorModeSetting() {
     }
 }
 
+function SaveSkipBirdSceneSetting() {
+    const enumPanel = $('#SkipBirdSceneSetting');
+    if (enumPanel) {
+        const children = enumPanel.FindChildTraverse('values')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].paneltype === "RadioButton" && children[i].IsSelected()) {
+                const val = children[i].GetAttributeString('value', '0');
+                $.persistentStorage.setItem('cv_SkipBirdScene', val);
+                
+                // Synchronize setting directly with engine's convar backend
+                GameInterfaceAPI.ConsoleCommand(`cv_SkipBirdScene ${val}`);
+                $.Msg(`[AP] Skip Bird Scene setting saved and synced: ${val}`);
+                break;
+            }
+        }
+    }
+}
+
+function SaveSkipCeilingSceneSetting() {
+    const enumPanel = $('#SkipCeilingSceneSetting');
+    if (enumPanel) {
+        const children = enumPanel.FindChildTraverse('values')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].paneltype === "RadioButton" && children[i].IsSelected()) {
+                const val = children[i].GetAttributeString('value', '0');
+                $.persistentStorage.setItem('cv_SkipCeilingScene', val);
+                
+                // Synchronize directly with engine convar backend
+                GameInterfaceAPI.ConsoleCommand(`cv_SkipCeilingScene ${val}`);
+                $.Msg(`[AP] Skip Ceiling Scene setting saved and synced: ${val}`);
+                break;
+            }
+        }
+    }
+}
+
 function UpdateMapStatusHUDKeyBinder() {
     const keyBinder = $('#MapStatusKeyBinder');
     if (keyBinder) {
@@ -134,6 +170,12 @@ function LoadArchipelagoSettings() {
     }
     if ($.persistentStorage.getItem('ap_hide_location_counts') === null) {
         $.persistentStorage.setItem('ap_hide_location_counts', '0');
+    }
+    if ($.persistentStorage.getItem('cv_SkipBirdScene') === null) {
+        $.persistentStorage.setItem('cv_SkipBirdScene', '0');
+    }
+    if ($.persistentStorage.getItem('cv_SkipCeilingScene') === null) {
+        $.persistentStorage.setItem('cv_SkipCeilingScene', '0');
     }
 
     // 1. Hide Location Counts
@@ -180,6 +222,34 @@ function LoadArchipelagoSettings() {
     const statusIndDropdown = $('#StatusIndicatorModeSetting')?.FindChildTraverse('DropDown') as any;
     if (statusIndDropdown) statusIndDropdown.SetSelected('ap_status_indicator_mode_' + statusIndVal.toString());
 
+    // 6. Skip Bird Scene Convar UI state sync
+    const skipBirdVal = $.persistentStorage.getItem('cv_SkipBirdScene') ?? "0";
+    const skipBirdPanel = $('#SkipBirdSceneSetting');
+    if (skipBirdPanel) {
+        const children = skipBirdPanel.FindChildTraverse('values')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].GetAttributeString('value', '0') === skipBirdVal.toString()) {
+                children[i].checked = true;
+                break;
+            }
+        }
+    }
+    GameInterfaceAPI.ConsoleCommand(`cv_SkipBirdScene ${skipBirdVal}`);
+
+    // 7. Skip Ceiling Scene Convar UI state sync
+    const skipCeilingVal = $.persistentStorage.getItem('cv_SkipCeilingScene') ?? "0";
+    const skipCeilingPanel = $('#SkipCeilingSceneSetting');
+    if (skipCeilingPanel) {
+        const children = skipCeilingPanel.FindChildTraverse('values')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].GetAttributeString('value', '0') === skipCeilingVal.toString()) {
+                children[i].checked = true;
+                break;
+            }
+        }
+    }
+    GameInterfaceAPI.ConsoleCommand(`cv_SkipCeilingScene ${skipCeilingVal}`);
+
     UpdateMapStatusHUDKeyBinder();
 
     $.Schedule(0.2, () => {
@@ -193,6 +263,8 @@ function LoadArchipelagoSettings() {
 (UiToolkitAPI.GetGlobalObject() as any).SaveSmartWarpSetting = SaveSmartWarpSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveHideHologramsSetting = SaveHideHologramsSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveStatusIndicatorModeSetting = SaveStatusIndicatorModeSetting;
+(UiToolkitAPI.GetGlobalObject() as any).SaveSkipBirdSceneSetting = SaveSkipBirdSceneSetting;
+(UiToolkitAPI.GetGlobalObject() as any).SaveSkipCeilingSceneSetting = SaveSkipCeilingSceneSetting;
 (UiToolkitAPI.GetGlobalObject() as any).LoadArchipelagoSettings = LoadArchipelagoSettings;
 (UiToolkitAPI.GetGlobalObject() as any).UpdateMapStatusHUDKeyBinder = UpdateMapStatusHUDKeyBinder;
 

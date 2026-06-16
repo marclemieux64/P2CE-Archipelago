@@ -291,6 +291,14 @@
 
 		"Archipelago_Settings_Key_ShowStatus" "Affiche le HUD d'état de niveau sur demande"
 
+		"Archipelago_Settings_SkipBirdScene" "Passe la scène d'oiseaux"
+		
+		"Archipelago_Settings_SkipBirdScene_info" "Passe la scène d'oiseaux sur le niveau Combler l'écart"
+		
+		"Archipelago_Settings_SkipCeilingScene" "Passe la scène de plafond"
+		
+		"Archipelago_Settings_SkipCeilingScene_info" "Passe la scène de plafond sur le niveau Surplomb de la sphère"
+
 
 		"Archipelago_Settings_Cosmetics"       "Cosmétiques"
 

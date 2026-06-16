@@ -78,6 +78,28 @@
 					<Label text="#Archipelago_Settings_StatusIndicatorMode_1" value="1" id="ap_status_indicator_mode_1" />
 					<Label text="#Archipelago_Settings_StatusIndicatorMode_2" value="2" id="ap_status_indicator_mode_2" />
 				</SettingsEnumDropDown>
+
+				<SettingsEnum
+					id="SkipBirdSceneSetting"
+					text="#Archipelago_Settings_SkipBirdScene"
+					psvar="cv_SkipBirdScene"
+					infomessage="#Archipelago_Settings_SkipBirdScene_info"
+					hasdocspage="false"
+				>
+					<RadioButton group="cv_SkipBirdScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipBirdSceneSetting()" />
+					<RadioButton group="cv_SkipBirdScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipBirdSceneSetting()" />
+				</SettingsEnum>
+
+				<SettingsEnum
+					id="SkipCeilingSceneSetting"
+					text="#Archipelago_Settings_SkipCeilingScene"
+					psvar="cv_SkipCeilingScene"
+					infomessage="#Archipelago_Settings_SkipCeilingScene_info"
+					hasdocspage="false"
+				>
+					<RadioButton group="cv_SkipCeilingScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipCeilingSceneSetting()" />
+					<RadioButton group="cv_SkipCeilingScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipCeilingSceneSetting()" />
+				</SettingsEnum>
 			</Panel>
 			<Panel class="settings-page__spacer" />
 

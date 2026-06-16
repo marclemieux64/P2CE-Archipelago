@@ -17,6 +17,7 @@ class ArchipelagoMapSelect {
     static g_ClickedMapData: any = null; 
     static g_ResetSchedule: any = null;
     static g_IsTransitioning: boolean = false; 
+    static g_LastSelectedEntryData: any = null;
 
     static ITEM_SORT_ORDER: { [key: string]: number } = {
         "portalgun1": 1, "portalgun2": 2, "weightedcube": 3, "lasercube": 4,
@@ -189,6 +190,7 @@ class ArchipelagoMapSelect {
             }
         });
 
+        let bFirstFocus = true;
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
             api.registerStatusListener($.GetContextPanel(), (status: any) => {
@@ -239,7 +241,27 @@ class ArchipelagoMapSelect {
                     }
                 }
 
-                if (savedCommand) this.restoreSelection(savedCommand);
+                if (savedCommand) {
+                    this.restoreSelection(savedCommand);
+                } else if (bFirstFocus) {
+                    bFirstFocus = false;
+                    const container = $('#LeftListInner');
+                    if (container && container.IsValid() && container.GetChildCount() > 0) {
+                        container.GetChild(0).SetFocus();
+                        const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));
+                        if (sortedKeys.length > 0) {
+                            const firstChId = sortedKeys[0];
+                            const openCh = this.g_ChapterData[firstChId];
+                            if (openCh) {
+                                this.g_LastSelectedEntryData = {
+                                    chapter_number: firstChId,
+                                    title: $.Localize(`#portal2_Chapter${firstChId}_Title`) || openCh.title,
+                                    subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
+                                };
+                            }
+                        }
+                    }
+                }
             });
         }
         this.updateConnectionState();
@@ -253,6 +275,7 @@ class ArchipelagoMapSelect {
                 if (cmd === savedCommand) {
                     this.g_SelectedMapData = map;
                     this.g_ClickedMapData = map; 
+                    this.g_LastSelectedEntryData = map;
                     this.selectMap(map, true);
                     this.restoreActiveSelectionVisuals();
                     break;
@@ -476,8 +499,6 @@ class ArchipelagoMapSelect {
         if (mapData && !mapData.is_chapter) {
             const isDeactivated = mapData.command_deactivated !== null && mapData.command_deactivated !== false && mapData.command_deactivated !== undefined;
             this.g_SelectedMapCommand = (!isDeactivated && mapData.command) ? mapData.command : (typeof mapData.command_deactivated === 'string' ? mapData.command_deactivated : "");
-        } else {
-            this.g_SelectedMapCommand = '';
         }
 
         const previewImage = $('#PreviewImage') as ImagePanel;
@@ -554,14 +575,23 @@ class ArchipelagoMapSelect {
         }
 
         const isChapter = mapData.is_chapter;
-        const hasMissingItems = dynamicItemIcons.length > 0;
+        const hasChecks = !isChapter && (mapData.status_text_list || []).length > 0;
+        const hasMissingItems = !isChapter && dynamicItemIcons.length > 0;
 
-        if (checks && checks.IsValid()) checks.visible = !isChapter;
-        if (checksHeader && checksHeader.IsValid()) checksHeader.style.visibility = !isChapter ? 'visible' : 'collapse';
+        if (checks && checks.IsValid()) {
+            checks.visible = hasChecks;
+            checks.style.visibility = hasChecks ? 'visible' : 'collapse';
+        }
+        if (checksHeader && checksHeader.IsValid()) {
+            checksHeader.style.visibility = hasChecks ? 'visible' : 'collapse';
+        }
 
-        if (reqs && reqs.IsValid()) reqs.visible = (!isChapter && hasMissingItems);
+        if (reqs && reqs.IsValid()) {
+            reqs.visible = hasMissingItems;
+            reqs.style.visibility = hasMissingItems ? 'visible' : 'collapse';
+        }
         if (missingItemsHeader && missingItemsHeader.IsValid()) {
-            missingItemsHeader.style.visibility = (!isChapter && hasMissingItems) ? 'visible' : 'collapse';
+            missingItemsHeader.style.visibility = hasMissingItems ? 'visible' : 'collapse';
         }
 
         if (playButton && playButton.IsValid()) {
@@ -633,6 +663,11 @@ class ArchipelagoMapSelect {
                 wrapper.SetPanelEvent('onmouseover', () => {
                     if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                     $.PlaySoundEvent('UIPanorama.P2CE.MenuFocus');
+                    this.selectMap({
+                        chapter_number: chId,
+                        title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title,
+                        subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
+                    }, false);
                 });
 
                 wrapper.SetPanelEvent('onmouseout', () => {
@@ -641,16 +676,24 @@ class ArchipelagoMapSelect {
                         if (this.g_ClickedMapData) {
                             this.selectMap(this.g_ClickedMapData, true);
                             this.restoreActiveSelectionVisuals();
-                        } else {
-                            const targetChapterId = this.g_OpenChapterId || chId;
-                            const openCh = this.g_ChapterData[targetChapterId];
+                        } else if (this.g_OpenChapterId) {
+                            const openCh = this.g_ChapterData[this.g_OpenChapterId];
                             if (openCh) {
                                 this.selectMap({
-                                    chapter_number: targetChapterId,
-                                    title: $.Localize(`#portal2_Chapter${targetChapterId}_Title`) || openCh.title,
+                                    chapter_number: this.g_OpenChapterId,
+                                    title: $.Localize(`#portal2_Chapter${this.g_OpenChapterId}_Title`) || openCh.title,
                                     subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
                                 }, false);
                             }
+                            this.clearMapSelectionVisuals();
+                        } else if (this.g_LastSelectedEntryData) {
+                            this.selectMap(this.g_LastSelectedEntryData, !this.g_LastSelectedEntryData.is_chapter);
+                            if (!this.g_LastSelectedEntryData.is_chapter) {
+                                this.restoreActiveSelectionVisuals();
+                            } else {
+                                this.clearMapSelectionVisuals();
+                            }
+                        } else {
                             this.clearMapSelectionVisuals();
                         }
                         this.g_ResetSchedule = null;
@@ -661,21 +704,26 @@ class ArchipelagoMapSelect {
                     $.PlaySoundEvent('UIPanorama.P2CE.MenuAccept');
                     this.g_ClickedMapData = null; 
                     this.g_SelectedMapData = null; 
+                    this.g_SelectedMapCommand = '';
+                    const openCh = this.g_ChapterData[chId];
+                    if (openCh) {
+                        this.g_LastSelectedEntryData = {
+                            chapter_number: chId,
+                            title: $.Localize(`#portal2_Chapter${chId}_Title`) || openCh.title,
+                            subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
+                        };
+                    }
                     this.clearMapSelectionVisuals(); 
                     this.toggleChapter(chId);
                 });
 
                 wrapper.SetPanelEvent('onfocus', () => {
-                    if (this.g_ClickedMapData) {
-                        this.selectMap(this.g_ClickedMapData, false);
-                    } else {
-                        this.clearMapSelectionVisuals(); 
-                        this.selectMap({
-                            chapter_number: chId,
-                            title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title,
-                            subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
-                        }, false);
-                    }
+                    this.clearMapSelectionVisuals(); 
+                    this.selectMap({
+                        chapter_number: chId,
+                        title: $.Localize(`#portal2_Chapter${chId}_Title`) || chapter.title,
+                        subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
+                    }, false);
                 });
 
                 entry.style.flowChildren = "none";
@@ -780,8 +828,16 @@ class ArchipelagoMapSelect {
 
                             if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
                             this.g_ResetSchedule = $.Schedule(0.15, () => {
-                                if (this.g_ClickedMapData) {
+                                if (this.g_LastSelectedEntryData) {
+                                    this.selectMap(this.g_LastSelectedEntryData, !this.g_LastSelectedEntryData.is_chapter);
+                                    if (!this.g_LastSelectedEntryData.is_chapter) {
+                                        this.restoreActiveSelectionVisuals();
+                                    } else {
+                                        this.clearMapSelectionVisuals();
+                                    }
+                                } else if (this.g_ClickedMapData) {
                                     this.selectMap(this.g_ClickedMapData, true);
+                                    this.restoreActiveSelectionVisuals();
                                 } else {
                                     const openCh = this.g_ChapterData[this.g_OpenChapterId || chId];
                                     if (openCh) {
@@ -791,8 +847,8 @@ class ArchipelagoMapSelect {
                                             subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
                                         }, false);
                                     }
+                                    this.restoreActiveSelectionVisuals();
                                 }
-                                this.restoreActiveSelectionVisuals(); 
                                 this.g_ResetSchedule = null;
                             });
                         });
@@ -804,6 +860,7 @@ class ArchipelagoMapSelect {
                             
                             this.g_ClickedMapData = currentData; 
                             this.g_SelectedMapData = currentData; 
+                            this.g_LastSelectedEntryData = currentData;
                             this.selectMap(currentData, true);
                             this.restoreActiveSelectionVisuals();
 
@@ -823,6 +880,7 @@ class ArchipelagoMapSelect {
                             
                             this.g_ClickedMapData = currentData;
                             this.g_SelectedMapData = currentData; 
+                            this.g_LastSelectedEntryData = currentData;
                             this.selectMap(currentData, false);
                             this.restoreActiveSelectionVisuals();
                         });

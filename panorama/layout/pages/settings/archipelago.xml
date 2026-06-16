@@ -20,11 +20,10 @@
 					text="#Archipelago_Settings_HideLocationCounts"
 					psvar="ap_hide_location_counts"
 					infomessage="#Archipelago_Settings_HideLocationCounts_info"
-					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveHideCountsSetting()"
 					hasdocspage="false"
 				>
-					<RadioButton group="ap_hide_location_counts" text="#Common_Off" value="0" />
-					<RadioButton group="ap_hide_location_counts" text="#Common_On" value="1" />
+					<RadioButton group="ap_hide_location_counts" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveHideCountsSetting()" />
+					<RadioButton group="ap_hide_location_counts" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveHideCountsSetting()" />
 				</SettingsEnum>
 
 				<SettingsEnumDropDown
@@ -43,11 +42,10 @@
 					text="#Archipelago_Settings_MapStatusHUD"
 					psvar="ap_show_map_status_hud"
 					infomessage="#Archipelago_Settings_MapStatusHUD_info"
-					onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveMapStatusHUDSetting()"
 					hasdocspage="false"
 				>
-					<RadioButton group="ap_show_map_status_hud" text="#Common_Off" value="0" />
-					<RadioButton group="ap_show_map_status_hud" text="#Common_On" value="1" />
+					<RadioButton group="ap_show_map_status_hud" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveMapStatusHUDSetting()" />
+					<RadioButton group="ap_show_map_status_hud" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveMapStatusHUDSetting()" />
 				</SettingsEnum>
 				
 				<SettingsKeyBinder

@@ -393,10 +393,8 @@ class P2CEContext(CommonContext):
                         self.exit_event.set()
                         break
                 
-                if attempt_count <= 5:
-                    logger.info(f"Waiting for P2CE to start on {self.HOST}:{self.PORT}... (Attempt {attempt_count})")
-                else:
-                    logger.warning(f"Connection refused on {self.HOST}:{self.PORT}. Is the game running with -netconport {self.PORT}?")
+                if attempt_count == 1:
+                    logger.info(f"Waiting for P2CE to start on {self.HOST}:{self.PORT}...")
                 self.sender_active = False
                 self.listener_active = False
                 await asyncio.sleep(1)

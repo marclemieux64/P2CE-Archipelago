@@ -35,7 +35,10 @@ var ArchipelagoMapStatusHUD = class {
             if (!payload) return;
             const parts = payload.split('|');
             ArchipelagoMapStatusHUD.m_CurrentMapName = parts[0] || "";
-            const isManual = parts[1] === "1";
+            const serverHudMode = parts[1] || "0";
+
+            // Sync persistentStorage with the ConVar state received from the server
+            $.persistentStorage.setItem('ap_show_map_status_hud', serverHudMode);
             
             if (ArchipelagoMapStatusHUD.m_HideSchedule) { 
                 $.CancelScheduled(ArchipelagoMapStatusHUD.m_HideSchedule); 
@@ -45,10 +48,10 @@ var ArchipelagoMapStatusHUD = class {
             ArchipelagoMapStatusHUD.m_LastStatusKey = "";
             ArchipelagoMapStatusHUD.m_LastMissingKey = "";
             
-            if (isManual) { 
-                ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, true, true); 
-            } else { 
-                $.Schedule(0.5, () => ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, true)); 
+            if (serverHudMode === "0") {
+                ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, true); 
+            } else {
+                ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, false); 
             }
         });
 
@@ -60,6 +63,8 @@ var ArchipelagoMapStatusHUD = class {
                 }
             });
         }
+        
+        (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatusHUD = ArchipelagoMapStatusHUD;
     }
 
     static updateStatus(currentMapName: string, isManual: boolean, forceShow: boolean) {
@@ -84,8 +89,19 @@ var ArchipelagoMapStatusHUD = class {
             wrapperPanel.style.height = "fit-children";
         }
 
-        const hudSetting = $.persistentStorage.getItem('ap_show_map_status_hud');
-        if (hudSetting !== null && (hudSetting == 1 || hudSetting == '1' || hudSetting === true)) {
+        if (forceShow) {
+            if (ArchipelagoMapStatusHUD.m_HideSchedule) {
+                $.CancelScheduled(ArchipelagoMapStatusHUD.m_HideSchedule);
+                ArchipelagoMapStatusHUD.m_HideSchedule = null;
+            }
+        }
+
+        const hudSetting = $.persistentStorage.getItem('ap_show_map_status_hud') ?? "1";
+        const isHUDDisabled = (hudSetting == 1 || hudSetting == '1' || hudSetting === true || hudSetting === "true");
+
+        // Block execution (keep collapsed) if the HUD is completely disabled,
+        // or we are not forcing it to show and there is no active hide timer running.
+        if (isHUDDisabled || (!forceShow && !ArchipelagoMapStatusHUD.m_HideSchedule)) {
             container.RemoveClass('visible');
             container.AddClass('collapse');
             return;
@@ -124,16 +140,17 @@ var ArchipelagoMapStatusHUD = class {
 
         if (!titleLabel || !statusIconsContainer || !missingIconsContainer) return;
 
+        // Gestion de l'affichage temporaire de 5 secondes
         if (forceShow) {
             container.AddClass('visible');
             container.RemoveClass('collapse');
             container.RemoveClass('hide');
             container.RemoveClass('hidden');
 
-            if (ArchipelagoMapStatusHUD.m_HideSchedule) $.CancelScheduled(ArchipelagoMapStatusHUD.m_HideSchedule);
             ArchipelagoMapStatusHUD.m_HideSchedule = $.Schedule(5.0, () => { 
                 if (container.IsValid()) {
                     container.RemoveClass('visible');
+                    container.AddClass('collapse');
                 }
                 ArchipelagoMapStatusHUD.m_HideSchedule = null; 
             });
@@ -213,14 +230,12 @@ var ArchipelagoMapStatusHUD = class {
             });
         }
 
-        // RECALCUL DYNAMIQUE DES PRÉREQUIS POUR LE HUD IN-GAME
         let dynamicItemIcons: string[] = [];
         if (apiStatus && apiStatus.missing_items !== undefined) {
             const rawMissingString: string = apiStatus.missing_items;
             const missingArray = rawMissingString.split(",");
             const originalIcons: string[] = currentMapData.required_item_icons || [];
             
-            // Filtre à la volée : si l'item n'est plus marqué comme manquant par le serveur, on vire l'icône du HUD
             dynamicItemIcons = originalIcons.filter((iconName: string) => {
                 return missingArray.indexOf(iconName) !== -1;
             });

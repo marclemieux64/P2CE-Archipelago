@@ -90,7 +90,7 @@ class ArchipelagoHint {
                 } catch (e) { }
             });
 
-            // 2. AMARRE DE SYNCHRONISATION INSTANTANÉE (Points ET Tableau d'indices unifiés)
+            // 2. AMARRE DE SYNCHRONISATION DES POINTS
             api.registerStatusListener($.GetContextPanel(), (payload: any) => {
                 try {
                     let status = typeof payload === 'string' ? JSON.parse(payload) : payload;
@@ -111,14 +111,18 @@ class ArchipelagoHint {
                             ptsLabel.style.color = status.hint_points >= cost ? "#44ff44" : "#ff5555";
                         }
                     }
+                } catch (e) { }
+            });
 
-                    // --- ENVOI DIRECT VERS LE MOTEUR DE RENDU SANS REQUÊTE HTTP PARALLÈLE ---
-                    if (status.hints) {
-                        const rawHintsStr = JSON.stringify(status.hints);
+            // 3. ÉCOUTEUR DÉDIÉ POUR LES INDICES
+            api.registerHintsListener($.GetContextPanel(), (hintsList: any[]) => {
+                try {
+                    if (hintsList) {
+                        const rawHintsStr = JSON.stringify(hintsList);
                         if (rawHintsStr !== ArchipelagoHint.m_LastRawHints) {
                             ArchipelagoHint.m_LastRawHints = rawHintsStr;
                             $.persistentStorage.setItem("ArchipelagoLastHintsCacheData", rawHintsStr);
-                            ArchipelagoHint.render(status.hints);
+                            ArchipelagoHint.render(hintsList);
                         }
                     }
                 } catch (e) { }

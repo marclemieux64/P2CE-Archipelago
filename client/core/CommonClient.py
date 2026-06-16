@@ -816,11 +816,7 @@ class CommonContext:
                 if parent_process():
                     return  # ignore MultiProcessing pipe
 
-            # steam overlay breaks when starting console_loop
-            if 'gameoverlayrenderer' in os.environ.get('LD_PRELOAD', ''):
-                logger.info("Skipping terminal input, due to conflicting Steam Overlay detected. Please use GUI only.")
-            else:
-                self.input_task = asyncio.create_task(console_loop(self), name="Input")
+            self.input_task = asyncio.create_task(console_loop(self), name="Input")
 
 
 async def keep_alive(ctx: CommonContext, seconds_between_checks=100):

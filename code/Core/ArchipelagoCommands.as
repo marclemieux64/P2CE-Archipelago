@@ -168,14 +168,13 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Archipelago::AttachDeathTrigger();
     Msgl("AttachDeathTrigger() completed");
 
-    // Only forward map name changes to HUD display if it is active (Set to 0)
+    // FIX : On envoie toujours le nom de la map à Panorama, mais on lui passe l'état de la ConVar en paramètre.
+    // "0" signifie que le HUD est activé (il doit clignoter 5s), "1" signifie qu'il est éteint.
     ConVarRef showHUDConVar("ap_show_map_status_hud");
-    if (showHUDConVar.IsValid() && showHUDConVar.GetInt() == 0) {
-        Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|0\")");
-        Msgl("SendToPanorama() completed");
-    } else {
-        Msgl("SendToPanorama() skipped - Status HUD is toggled off");
-    }
+    int hudMode = (showHUDConVar.IsValid()) ? showHUDConVar.GetInt() : 0;
+    
+    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|" + hudMode + "\")");
+    Msgl("SendToPanorama() completed with HUD Mode: " + hudMode);
 
     Archipelago::ArchipelagoLog("DelayedInit complete for: " + ::current_map);
     Msgl("=====================");
@@ -220,7 +219,7 @@ void ShowStatusLegacyCmd(const CommandArgs@ args) {
     }
 
     Archipelago::UpdateInternalMapName();
-    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|1\")");
+    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|0\")");
 }
 
 [ServerCommand("RefreshMapName", "Forces a map name update to Panorama")]

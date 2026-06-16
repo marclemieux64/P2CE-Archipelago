@@ -126,6 +126,25 @@ void DoMapSpecificSetup() {
                 timer.FireInput("Enable", empty, 0.0f, null, null, 0);
             }
         }
+    } else if (current_map == "sp_a4_finale2") {
+        CBaseEntity@ existingTimer = EntityList().FindByName(null, "finale2_turret_timer");
+        if (existingTimer is null) {
+            // Create a logic_timer to tick the finale 2 turret skin check
+            CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
+            if (timer !is null) {
+                timer.KeyValue("targetname", "finale2_turret_timer");
+                timer.KeyValue("RefireTime", "0.2");
+                
+                string payload = "InitCmd\x1BCommand\x1BFinale2TurretTick\x1B0\x1B-1";
+                timer.KeyValue("OnTimer", payload);
+                
+                timer.Spawn();
+                
+                // Enable the timer
+                Variant empty;
+                timer.FireInput("Enable", empty, 0.0f, null, null, 0);
+            }
+        }
     }
 }
 

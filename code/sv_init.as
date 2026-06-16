@@ -56,6 +56,7 @@
 #include "Function/Hologram/UpdateHologramsVisibility.as"
 #include "Function/Hologram/AttachHologramToEntity.as"
 #include "Function/Hologram/BTS4ConveyorLogic.as"
+#include "Function/Hologram/Finale2TurretLogic.as"
 #include "Function/Hologram/CreateMapSpecificHolos.as"
 // --- HOLOGRAM/OVERRIDES ---
 #include "Function/Hologram/Overrides/GetHologramVisualOverrides.as"

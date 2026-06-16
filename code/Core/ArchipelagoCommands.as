@@ -287,6 +287,11 @@ void AP_BTS4_ConveyorTickCmd(const CommandArgs@ args) {
     Archipelago::AP_BTS4_ConveyorTick();
 }
 
+[ServerCommand("Finale2TurretTick", "Finale 2 turret ticking logic to restore skins")]
+void Finale2_TurretTickCmd(const CommandArgs@ args) {
+    Archipelago::Finale2TurretTick();
+}
+
 [ServerCommand("RemovePotatosFromGun", "Removes PotatOS from the portal gun and world")]
 void RemovePotatosFromGunLegacyCmd(const CommandArgs@ args) {
     Archipelago::ArchipelagoLog("[AP RECV] RemovePotatosFromGun");

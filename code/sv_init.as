@@ -32,6 +32,9 @@
 #include "Function/Check/Map/SetCheckedMaps.as"
 #include "Function/Check/Ratman Den/ButtonScenarios.as"
 #include "Function/Check/Ratman Den/CreateAPButton.as"
+#include "Function/Check/Vitrified Door/SetVitrifiedDoorChecks.as"
+#include "Function/Check/Camera/AddCameraCheck.as"
+#include "Function/Check/Camera/SetCheckedCamera.as"
 
 // --- ENTITY ---
 #include "Function/Entity/AddTractorBeamFrame.as"

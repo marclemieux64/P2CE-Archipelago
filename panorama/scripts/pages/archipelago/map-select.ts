@@ -36,10 +36,12 @@ class ArchipelagoMapSelect {
         "portalgun2": "#Archipelago_Portal_Guns2_Check_Tag", 
         "door": "#Archipelago_Vitrified_Doors_Check_Tag", 
         "potatos": "#Archipelago_Potatos_Check_Tag", 
-        "monitor": "#Archipelago_Wheathley_Monitor_Check_Tag"
+        "monitor": "#Archipelago_Wheathley_Monitor_Check_Tag",
+        "camera" : "#Archipelago_Camera_Check_Tag"
     };
 
     static LOCALIZED_TOKEN_MAP: { [key: string]: string } = {
+        "camera": "#Archipelago_Help_Check_Camera",
         "flag": "#Archipelago_Help_Check_Generic",
         "ratmansdent": "#Archipelago_Help_Check_Ratman",
         "monitor": "#Archipelago_Help_Check_Wheatley",

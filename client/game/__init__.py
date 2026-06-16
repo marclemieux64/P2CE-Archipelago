@@ -95,7 +95,7 @@ if not __name__.startswith("game"):
                     else:
                         chapter_maps[f"Chapter {all_locations_table[map_choice].chapter}"].append(map_choice)
 
-            chapter_maps: dict[str, list[str]] = {f"Chapter {i}": [] for i in range(1, 8)}
+            chapter_maps: dict[str, list[str]] = {f"Chapter {i}": [] for i in range(1, 9)}
 
             map_pool: list[str] = []
             used_maps: list[str] = []
@@ -165,6 +165,9 @@ if not __name__.startswith("game"):
                     elif self.options.vitrified_doors and sub_location in vitrified_door_locations_table:
                         vitrified_requirements = vitrified_door_locations_table[sub_location].required_items
                         self.create_in_level_check(sub_location, vitrified_requirements, region_start)
+                    elif self.options.security_cameras and sub_location in security_camera_table:
+                        camera_requirements = security_camera_table[sub_location].required_items
+                        self.create_in_level_check(sub_location, camera_requirements, region_start)
             
                 # Connect to chapter region if there was no previous level or if open world
                 if self.options.game_mode == GameModeOption.OPEN_WORLD or last_region is None:

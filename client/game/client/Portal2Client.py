@@ -504,7 +504,7 @@ class P2CEContext(CommonContext):
             else:
                 logger.warning(f"Could not resolve location ID for completed map string: {done_map}")
         
-        elif message.startswith("button_check:") or message.startswith("item_collected:") or message.startswith("monitor_break:") or message.startswith("vitrified_check:"):
+        elif message.startswith("button_check:") or message.startswith("item_collected:") or message.startswith("monitor_break:") or message.startswith("vitrified_check:") or message.startswith("camera_knocked:"):
             msg_type = message.split(":", 1)[0].strip()
             msg_payload = message.split(":", 1)[1].strip()
             

@@ -46,6 +46,7 @@ indicator_characters = {
     "wheatley": "monitor",
     "ratman": "ratmansdent", 
     "vitrified_door": "door",
+    "security_camera": "camera",
     portal_gun_1: "portalgun1",
     portal_gun_2: "portalgun2",
     potatos: "potatos",
@@ -129,6 +130,8 @@ class MapMenuElement(MenuElement):
                         self.info_text.append(indicator_characters["ratman"])
                     elif "Vitrified Door" in sub_location:
                         self.info_text.append(indicator_characters["vitrified_door"])
+                    elif "Security Cameras" in sub_location:
+                        self.info_text.append(indicator_characters["camera"])
                     elif len(reqs) == 1:
                         shortened = items_to_shortened(reqs)
                         self.info_text.append(shortened[0] if shortened else indicator_characters["map"])
@@ -166,6 +169,7 @@ class MapMenuElement(MenuElement):
         for k in self.sub_location_completion.keys():
             k_lower = k.lower()
             if "wheatley monitor" in k_lower: active_sub_keys.append("monitor")
+            elif "security cameras" in k_lower: active_sub_keys.append("camera")
             elif "ratman den" in k_lower: active_sub_keys.append("ratmansdent")
             elif "vitrified door" in k_lower: active_sub_keys.append("door")
             elif "potatos" in k_lower: active_sub_keys.append("potatos") 
@@ -266,6 +270,7 @@ class Menu:
         self.has_wheatley_monitors = kwargs.get("wheatley_monitors", False)
         self.has_ratman_dens = kwargs.get("ratman_dens", False)
         self.has_vitrified_doors = kwargs.get("vitrified_doors", False)
+        self.has_security_cameras = kwargs.get("security_cameras", False)
         self.chapter_dict = chapter_dict
         self.chapters = []
 

@@ -134,6 +134,12 @@ class VitrifiedDoors(Toggle):
     """
     display_name = "Vitrified Doors"
 
+class SecurityCameras(Toggle):
+    """
+    Determines whether locating Security Cameras will send location checks
+    """
+    display_name = "Security Cameras"
+
 p2ce_option_groups = [
     OptionGroup("Location Options", [
         GameMode,
@@ -143,7 +149,8 @@ p2ce_option_groups = [
         CutsceneLevels,
         WheatleyMonitors,
         RatmanDens,
-        VitrifiedDoors
+        VitrifiedDoors,
+        SecurityCameras
     ]),
     OptionGroup("Trap Options", [
         TrapFillPercentage,
@@ -177,6 +184,7 @@ class P2CEOptions(PerGameCommonOptions):
     wheatley_monitors: WheatleyMonitors
     ratman_dens: RatmanDens
     vitrified_doors: VitrifiedDoors
+    security_cameras: SecurityCameras
 
     trap_fill_percentage: TrapFillPercentage
     motion_blur_trap_weight: MotionBlurTrapWeight

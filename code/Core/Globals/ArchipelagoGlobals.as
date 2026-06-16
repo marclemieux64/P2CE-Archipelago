@@ -32,6 +32,8 @@ bool g_bConveyor1TemplateHoloActive = false;
 
 // --- INTEGERS ---
     dictionary g_vitrified_door_names;
+    dictionary screen_names;
+    array<string> checked_screens;
     ConVar cv_ArchipelagoVitrifiedStatus("ArchipelagoVitrifiedStatus", "000000", FCVAR_ARCHIVE);
     int g_ButterFingersTicks = 0;
     int g_bts4ConveyorTickCounter = 0;
@@ -51,6 +53,7 @@ bool g_bConveyor1TemplateHoloActive = false;
     array<string> g_suppressed_classes;
     array<string> g_reported_monitors;
     array<string> checked_buttons;
+    array<string> checked_cameras;
     array<int> g_processed_turret_indices;
     array<int> g_processed_entity_indices;
     array<string> trap_colors = { "255 0 0", "0 255 0", "0 0 255", "255 255 0", "255 0 255", "0 255 255" };

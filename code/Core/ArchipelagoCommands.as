@@ -167,6 +167,8 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("CreateMapSpecificHolos() completed");
     Archipelago::AttachDeathTrigger();
     Msgl("AttachDeathTrigger() completed");
+    Archipelago::AddCameraCheck();
+    Msgl("AddCameraCheck() completed");
 
     // FIX : On envoie toujours le nom de la map à Panorama, mais on lui passe l'état de la ConVar en paramètre.
     // "0" signifie que le HUD est activé (il doit clignoter 5s), "1" signifie qu'il est éteint.
@@ -208,6 +210,11 @@ void AddScriptLegacyCmd(const CommandArgs@ args) {
     for (uint i = 0; i < ents.length(); i++) {
         Archipelago::SafeAddOutput(ents[i], output, "InitCmd", "Command", cmd, delay, maxTimes);
     }
+}
+
+[ServerCommand("CheckCameraPhysicsTick", "Evaluates physical security camera falling loops natively")]
+void CheckCameraPhysicsTickCmd(const CommandArgs@ args) {
+    Archipelago::CheckCameraPhysicsTick();
 }
 
 [ServerCommand("ShowStatus", "Manually show the map status HUD")]
@@ -339,6 +346,24 @@ void SetCheckedButtonsCmd(const CommandArgs@ args) {
     
     Archipelago::ArchipelagoLog("AP: Checked buttons updated (" + checkedButtons.length() + " items)");
     Archipelago::SetCheckedButtons(checkedButtons);
+}
+
+[ServerCommand("SetCheckedCameras", "Updates the list of checked cameras")]
+void SetCheckedCamerasCmd(const CommandArgs@ args) {
+    Archipelago::checked_cameras.resize(0);
+
+    for (int i = 1; i < args.ArgC(); i++) {
+        string arg = args.Arg(i);
+        arg = arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
+        
+        if (arg.length() > 0) {
+            Archipelago::checked_cameras.insertLast(arg.tolower());
+            Archipelago::ArchipelagoLog("AP DEBUG: Inserted camera -> '" + arg.tolower() + "'");
+        }
+    }
+    
+    Archipelago::ArchipelagoLog("AP: Checked cameras updated (" + Archipelago::checked_cameras.length() + " items)");
+    Archipelago::SetCheckedCameras();
 }
 
 [ServerCommand("SetCheckedPickup", "Disables or hides physical items if already checked in Archipelago")]

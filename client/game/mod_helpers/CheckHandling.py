@@ -6,7 +6,10 @@ from game.Locations import (
     ratman_den_locations_table,
     item_location_table,
     map_complete_table,          # Importation de la table de complétion des chambres
-    cutscene_completion_table    # Importation de la table de complétion des cinématiques
+    cutscene_completion_table,   # Importation de la table de complétion des cinématiques
+    security_camera_table,
+    camera_maps_to_camera_names,
+    camera_names_to_camera_ids
 )
 from game.mod_helpers.ItemHandling import map_specific_commands
 from game.Locations import LocationType
@@ -38,6 +41,12 @@ def parse_incoming_check(message_type: str, raw_payload: str) -> str:
             if loc_name.lower() == payload.lower() or payload.lower().replace("_", " ") in loc_name.lower():
                 return loc_name
 
+    # 2b. Gestion des caméras de sécurité
+    if message_type == "camera_knocked":
+        if payload in camera_maps_to_camera_names:
+            return camera_maps_to_camera_names[payload]
+        return payload
+
     # 3. Fallback général sur la table globale de locations
     for loc_name in all_locations_table.keys():
         if loc_name.lower() == payload.lower():
@@ -56,6 +65,7 @@ def get_map_sync_commands(map_code: str, items_missing: list, checked_locations:
     ratman_dens_checked = []
     items_picked_up_checked = []
     maps_completed_checked = [] # Liste pour stocker les codes des cartes résolues
+    security_cameras_checked = []
     
     for loc_id in checked_locations:
         loc_name = location_names_helper.lookup_in_game(loc_id)
@@ -69,6 +79,8 @@ def get_map_sync_commands(map_code: str, items_missing: list, checked_locations:
             maps_completed_checked.append(map_complete_table[loc_name].map_name)
         elif loc_name in cutscene_completion_table:
             maps_completed_checked.append(cutscene_completion_table[loc_name].map_name)
+        elif loc_name in security_camera_table:
+            security_cameras_checked.append(loc_name)
 
     # 1. Application des configurations de structures initiales de la map
     for mc in map_specific_commands:
@@ -101,6 +113,13 @@ def get_map_sync_commands(map_code: str, items_missing: list, checked_locations:
         commands.append(f'SetCheckedScreens {" ".join(checked_monitor_maps)}\n')
     else:
         commands.append('SetCheckedScreens\n')
+
+    # 3b. Transmission de la liste des caméras détruites
+    checked_camera_ids = [camera_names_to_camera_ids[c] for c in security_cameras_checked if c in camera_names_to_camera_ids]
+    if checked_camera_ids:
+        commands.append(f'SetCheckedCameras {" ".join(checked_camera_ids)}\n')
+    else:
+        commands.append('SetCheckedCameras\n')
 
     # 4. Transmission de l'état de ramassage du Portal Gun / PotatOS pour la carte en cours
     for item_name in items_picked_up_checked:

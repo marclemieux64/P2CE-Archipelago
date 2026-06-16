@@ -218,6 +218,8 @@
 		
 		"Archipelago_Wheathley_Monitor_Check_Tag" "MW"
 
+		"Archipelago_Cameras_Check_Tag" 		  "CS"
+
 
 		"Archipelago_Map_Checks"                "Validations"	
 
@@ -4432,6 +4434,8 @@ Ce message ne s’affichera qu’une seule fois et ne s’affichera plus après 
 
 
 		"Archipelago_Help_Check_Wheatley" "Moniteur de Wheatley"
+
+		"Archipelago_Help_Check_Camera" 		  "Caméra de sécurité"
 
 
 		"Archipelago_Help_Section_Items" "Objets"

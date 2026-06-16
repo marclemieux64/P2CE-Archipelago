@@ -1,4 +1,3 @@
-
 from enum import Flag, auto
 from attr import dataclass
 from BaseClasses import Location
@@ -15,6 +14,7 @@ class LocationType(Flag):
     ACHIEVEMENT = auto()
     WHEATLY_MONITOR = auto()
     RATMAN_DEN = auto()
+    SECURITY_CAMERA = auto()
     OTHER = auto()
 
 class P2CELocationData:
@@ -190,6 +190,42 @@ vitrified_map_to_vitrified_door: dict[str, list[str]] = {
     "sp_a3_transition01": ["Vitrified Door 4", "Vitrified Door 5", "Vitrified Door 6"]
 }
 
+security_camera_table: dict[str, P2CELocationData] = {
+    "Security Camera 1": P2CELocationData("sp_a1_intro3", LocationType.SECURITY_CAMERA, [portal_gun_1]),
+    "Security Camera 2": P2CELocationData("sp_a1_intro4", LocationType.SECURITY_CAMERA, [portal_gun_1]),
+    "Security Camera 3": P2CELocationData("sp_a1_intro4", LocationType.SECURITY_CAMERA, [portal_gun_1]),
+    "Security Camera 4": P2CELocationData("sp_a1_intro6", LocationType.SECURITY_CAMERA, [portal_gun_1]),
+    "Security Camera 5": P2CELocationData("sp_a1_intro6", LocationType.SECURITY_CAMERA, [portal_gun_1]),
+    "Security Camera 6": P2CELocationData("sp_a1_intro6", LocationType.SECURITY_CAMERA, [portal_gun_1]),
+    "Security Camera 7": P2CELocationData("sp_a2_intro", LocationType.SECURITY_CAMERA, [portal_gun_2]),
+    "Security Camera 8": P2CELocationData("sp_a2_laser_stairs", LocationType.SECURITY_CAMERA, [portal_gun_2, laser, laser_catcher]),
+    "Security Camera 9": P2CELocationData("sp_a2_dual_lasers", LocationType.SECURITY_CAMERA, [portal_gun_2, laser, laser_catcher]),
+    "Security Camera 10": P2CELocationData("sp_a2_catapult_intro", LocationType.SECURITY_CAMERA, [portal_gun_2, faith_plate]),
+    "Security Camera 11": P2CELocationData("sp_a2_catapult_intro", LocationType.SECURITY_CAMERA, [portal_gun_2, faith_plate]),
+    "Security Camera 12": P2CELocationData("sp_a2_fizzler_intro", LocationType.SECURITY_CAMERA, [portal_gun_2, laser, laser_catcher, reflection_cube]),
+    "Security Camera 13": P2CELocationData("sp_a2_bridge_intro", LocationType.SECURITY_CAMERA, [portal_gun_2, bridge]),
+    "Security Camera 14": P2CELocationData("sp_a2_bridge_the_gap", LocationType.SECURITY_CAMERA, [portal_gun_2, bridge]),
+    "Security Camera 15": P2CELocationData("sp_a2_turret_intro", LocationType.SECURITY_CAMERA, [portal_gun_2, turrets]),
+    "Security Camera 16": P2CELocationData("sp_a2_turret_intro", LocationType.SECURITY_CAMERA, [portal_gun_2, turrets]),
+    "Security Camera 17": P2CELocationData("sp_a2_laser_relays", LocationType.SECURITY_CAMERA, [portal_gun_2, laser, laser_catcher, reflection_cube, laser_relays]),
+    "Security Camera 18": P2CELocationData("sp_a2_turret_blocker", LocationType.SECURITY_CAMERA, [portal_gun_2, turrets, bridge]),
+    "Security Camera 19": P2CELocationData("sp_a2_turret_blocker", LocationType.SECURITY_CAMERA, [portal_gun_2, turrets, bridge]),
+    "Security Camera 20": P2CELocationData("sp_a2_laser_vs_turret", LocationType.SECURITY_CAMERA, [portal_gun_2, laser, laser_catcher, turrets, reflection_cube]),
+    "Security Camera 21": P2CELocationData("sp_a2_pull_the_rug", LocationType.SECURITY_CAMERA, [portal_gun_2, laser, laser_catcher, turrets]),
+    "Security Camera 22": P2CELocationData("sp_a2_laser_chaining", LocationType.SECURITY_CAMERA, [portal_gun_2, laser, laser_catcher, reflection_cube, button]),
+    "Security Camera 23": P2CELocationData("sp_a2_triple_laser", LocationType.SECURITY_CAMERA, [portal_gun_2, laser, laser_catcher, reflection_cube, turrets]),
+}
+
+camera_maps_to_camera_names: dict[str, str] = {}
+camera_by_map_counts: dict[str, int] = {}
+for name, data in security_camera_table.items():
+    map_name = data.map_name
+    camera_by_map_counts[map_name] = camera_by_map_counts.get(map_name, 0) + 1
+    key = f"{map_name}_{camera_by_map_counts[map_name]}"
+    camera_maps_to_camera_names[key] = name
+
+camera_names_to_camera_ids: dict[str, str] = {value: key for key, value in camera_maps_to_camera_names.items()}
+
 all_locations_table: dict[str, P2CELocationData] = map_complete_table.copy()
 all_locations_table.update(cutscene_completion_table)
 
@@ -200,12 +236,14 @@ all_locations_table.update(wheatley_monitor_table)
 all_locations_table.update(item_location_table)
 all_locations_table.update(ratman_den_locations_table)
 all_locations_table.update(vitrified_door_locations_table)
+all_locations_table.update(security_camera_table)
 
 location_groups: dict[str, set[str]] = {
     "Chambers": {name for name in map_complete_table} | {name for name in cutscene_completion_table},
     "Wheatley Monitors": {name for name in wheatley_monitor_table},
     "Ratman Dens": {name for name in ratman_den_locations_table},
-    "Pickups": {name for name in item_location_table}
+    "Pickups": {name for name in item_location_table},
+    "Security Cameras": {name for name in security_camera_table}
 }
 
 speedrun_logic_table: dict[str, list[str]] = {
@@ -261,8 +299,8 @@ speedrun_logic_table: dict[str, list[str]] = {
 }
 
 sub_locations_in_maps: dict[str, list[str]] = {
-    "Portal Gun Completion": [portal_gun_1],
-    "Incinerator Completion": [portal_gun_2],
+    "Portal Gun Completion": [portal_gun_1, "Security Camera 1"],
+    "Incinerator Completion": [portal_gun_2, "Security Camera 7"],
     "PotatOS Completion": [potatos, "Vitrified Door 4", "Vitrified Door 5", "Vitrified Door 6"],
     "Funnel Intro Completion": ["Wheatley Monitor 1"],
     "Ceiling Button Completion": ["Wheatley Monitor 2"],
@@ -275,12 +313,21 @@ sub_locations_in_maps: dict[str, list[str]] = {
     "Propulsion Catch Completion": ["Wheatley Monitor 10"],
     "Repulsion Polarity Completion": ["Wheatley Monitor 11"],
     "Finale 3 Completion": ["Wheatley Monitor 12"],
-    "Smooth Jazz Completion": ["Ratman Den 1"],
-    "Dual Lasers Completion": ["Ratman Den 2"],
+    "Smooth Jazz Completion": ["Ratman Den 1", "Security Camera 2", "Security Camera 3"],
+    "Future Starter Completion": ["Security Camera 4", "Security Camera 5", "Security Camera 6"],
+    "Laser Stairs Completion": ["Security Camera 8"],
+    "Dual Lasers Completion": ["Ratman Den 2", "Security Camera 9"],
+    "Catapult Intro Completion": ["Security Camera 10", "Security Camera 11"],
+    "Fizzler Intro Completion": ["Security Camera 12"],
     "Trust Fling Completion": ["Ratman Den 3"],
-    "Bridge Intro Completion": ["Ratman Den 4"],
-    "Bridge the Gap Completion": ["Ratman Den 5"],
-    "Laser Vs. Turret Completion": ["Ratman Den 6"],
-    "Pull The Rug Completion": ["Ratman Den 7"],
+    "Bridge Intro Completion": ["Ratman Den 4", "Security Camera 13"],
+    "Bridge the Gap Completion": ["Ratman Den 5", "Security Camera 14"],
+    "Turret Intro Completion": ["Security Camera 15", "Security Camera 16"],
+    "Laser Relays Completion": ["Security Camera 17"],
+    "Turret Blocker Completion": ["Security Camera 18", "Security Camera 19"],
+    "Laser Vs. Turret Completion": ["Ratman Den 6", "Security Camera 20"],
+    "Pull The Rug Completion": ["Ratman Den 7", "Security Camera 21"],
+    "Laser Chaining Completion": ["Security Camera 22"],
+    "Triple Laser Completion": ["Security Camera 23"],
     "Cave Johnson Completion": ["Vitrified Door 1", "Vitrified Door 2", "Vitrified Door 3"],
 }

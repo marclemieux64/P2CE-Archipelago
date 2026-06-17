@@ -220,6 +220,25 @@
 
 		"Archipelago_Camera_Check_Tag" 		  "CS"
 
+		"Archipelago_Help_Section_Check_Status" "Status des validations"
+
+		"Archipelago_Help_Check_Status_Checked" "Collecté"
+
+		"Archipelago_Help_Section_Hologram" "Hologrammes"
+		
+		"Archipelago_Help_hologram_Neutral" "Validation non collectée"
+
+		"Archipelago_Help_hologram_skin2" "Tourelle ne peut pas être ramassée"
+
+		"Archipelago_Help_hologram_skin3" "Sphère Info non obtenue"
+
+		"Archipelago_Help_hologram_skin4" "Objet non obtenu/Validation collectée"
+
+		"Archipelago_Help_hologram_skin5" "Sphère Aventure non obtenue"
+
+		"Archipelago_Help_hologram_skin6" "Sphère Espace non obtenue"
+
+
 
 		"Archipelago_Map_Checks"                "Validations"	
 

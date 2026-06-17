@@ -12,7 +12,7 @@
 	
 	// Set this to 1 to enable Workshop addon integration
 	// This is disabled by default to prevent WS addons from being mounted in mods
-	WorkshopEnabled 0
+	WorkshopEnabled 1
 
 	FileSystem
 	{

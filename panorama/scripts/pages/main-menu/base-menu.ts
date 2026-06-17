@@ -14,6 +14,17 @@ class BaseMenu {
             }
         },
         {
+			id: 'AddonsBtn',
+			headline: '#MainMenu_Navigation_Addons',
+			tagline: '#MainMenu_Navigation_Addons_Tagline',
+			activated: () => {
+				$.DispatchEvent('MainMenuOpenNestedPage', 'Content', 'main-menu/addons', undefined);
+			},
+			focused: () => {
+				this.hideContinueDetails();
+			}
+		},
+        {
             id: 'SettingsKeyboardBtn',
             headline: '#MainMenu_Navigation_Options',
             tagline: '#MainMenu_Navigation_Options_Tagline',

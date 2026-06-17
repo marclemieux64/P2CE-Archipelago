@@ -468,6 +468,6 @@ class ConsoleLogManager:
         """Announces that Go Mode has been reached (all requirements met)."""
         self._current_ap_msg_type = "go_mode"
         self._current_ap_msg_priority = True
-        self.on_print_silently("GO MODE: All victory conditions have been met!", mirror_to_hud=True)
+        self.on_print_silently("GO MODE: All requirements met!", mirror_to_hud=True)
         self._current_ap_msg_type = "default"
         self._current_ap_msg_priority = False

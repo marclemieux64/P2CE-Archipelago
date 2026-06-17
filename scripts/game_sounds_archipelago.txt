@@ -4,7 +4,7 @@
 
 "Archipelago.Trap"
 {
-    "channel"       "CHAN_STATIC"
+    "channel"       "CHAN_USER_BASE1	"
     "volume"        "1.0"
     "pitch"         "100"
     "soundlevel"    "SNDLVL_NONE"
@@ -13,7 +13,7 @@
 
 "Archipelago.Warp"
 {
-    "channel"       "CHAN_STATIC"
+    "channel"       "CHAN_USER_BASE2"
     "volume"        "1.0"
     "pitch"         "100"
     "soundlevel"    "SNDLVL_NONE"
@@ -22,7 +22,7 @@
 
 "Archipelago.Deathlink"
 {
-    "channel"       "CHAN_STATIC"
+    "channel"       "CHAN_USER_BASE3 	"
     "volume"        "1.0"
     "pitch"         "100"
     "soundlevel"    "SNDLVL_NONE"
@@ -31,7 +31,7 @@
 
 "Archipelago.Default"
 {
-    "channel"       "CHAN_STATIC"
+    "channel"       "CHAN_USER_BASE4"
     "volume"        "1.0"
     "pitch"         "100"
     "soundlevel"    "SNDLVL_NONE"
@@ -40,19 +40,18 @@
 
 "Archipelago.GoMode"
 {
-    "channel"       "CHAN_STATIC"
+    "channel"       "CHAN_USER_BASE5"
     "volume"        "1.0"
     "pitch"         "100"
-    "soundlevel"    "SNDLVL_150dB"
+    "soundlevel"    "SNDLVL_TALKING"
     "wave"          "vo/wheatley/bw_a4_finale01_smash03.wav" 
 }
 
 "Archipelago.Goal"
 {
-    "channel"       "CHAN_STATIC"
+    "channel"       "CHAN_USER_BASE6"
     "volume"        "1.0"
     "pitch"         "100"
-    "soundlevel"    "SNDLVL_150dB"
+    "soundlevel"    "SNDLVL_NONE"
     "wave"          "playonce/level/sad_party_horn_01.wav"
-
-}    
+}

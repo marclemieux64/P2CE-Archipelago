@@ -34,7 +34,8 @@ bool g_bConveyor1TemplateHoloActive = false;
     dictionary g_vitrified_door_names;
     dictionary screen_names;
     array<string> checked_screens;
-    ConVar cv_ArchipelagoVitrifiedStatus("ArchipelagoVitrifiedStatus", "000000", FCVAR_ARCHIVE);
+    array<string> checked_vitrified_doors;
+    ConVar cv_ArchipelagoVitrifiedStatus("ArchipelagoVitrifiedStatus", "000000");
     int g_ButterFingersTicks = 0;
     int g_bts4ConveyorTickCounter = 0;
     

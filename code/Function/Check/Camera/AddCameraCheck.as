@@ -9,69 +9,71 @@ array<Vector> g_CameraInitialPositions(util::GetMaxEntities(), Vector(0, 0, 0));
 // Tableau global pour stocker la chaîne d'identification finale de chaque caméra
 array<string> g_CameraIdentifiers(util::GetMaxEntities(), "");
 
+bool MatchPos2D(Vector pos, float targetX, float targetY) {
+    float dx = pos.x - targetX;
+    float dy = pos.y - targetY;
+    return (dx * dx + dy * dy) < 10000.0f; // tolerance of 100 units (100^2 = 10000)
+}
+
 // Fonction pour déterminer l'ID unique et permanent d'une caméra selon ses coordonnées
 string GetCameraUniqueID(string map, Vector pos) {
-    int x = RoundFloatToInt(pos.x);
-    int y = RoundFloatToInt(pos.y);
-    int z = RoundFloatToInt(pos.z);
-
     if (map == "sp_a1_intro3") {
-        if (x == -1472 && y == 2528) return "1";
+        if (MatchPos2D(pos, -1472.0f, 2528.0f)) return "1";
     }
     else if (map == "sp_a1_intro4") {
-        if (x == -596 && y == 256) return "1";
-        if (x == 160 && y == 0) return "2"; 
-        if (x == 40 && y == -656) return "3"; 
+        if (MatchPos2D(pos, -596.0f, 256.0f)) return "1";
+        if (MatchPos2D(pos, 160.0f, 0.0f)) return "2"; 
+        if (MatchPos2D(pos, 40.0f, -656.0f)) return "3"; 
     }
     else if (map == "sp_a1_intro6") {
-        if (x == 464 && y == -256) return "1";
-        if (x == 320 && y == -288) return "2";
-        if (x == 1436 && y == -384) return "3";
+        if (MatchPos2D(pos, 464.0f, -256.0f)) return "1";
+        if (MatchPos2D(pos, 320.0f, -288.0f)) return "2";
+        if (MatchPos2D(pos, 1436.0f, -384.0f)) return "3";
     }
     else if (map == "sp_a2_intro") {
-        if (x == -32 && y == 576) return "1";
+        if (MatchPos2D(pos, -32.0f, 576.0f)) return "1";
     }
     else if (map == "sp_a2_laser_stairs") {
-        if (x == 232 && y == -480) return "1";
+        if (MatchPos2D(pos, 232.0f, -480.0f)) return "1";
     }
     else if (map == "sp_a2_dual_lasers") {
-        if (x == 122 && y == 352) return "1";
+        if (MatchPos2D(pos, 122.0f, 352.0f)) return "1";
     }
     else if (map == "sp_a2_catapult_intro") {
-        if (x == -224 && y == 864) return "1";
-        if (x == 96 && y == -1440) return "2";
+        if (MatchPos2D(pos, -224.0f, 864.0f)) return "1";
+        if (MatchPos2D(pos, 96.0f, -1440.0f)) return "2";
     }
     else if (map == "sp_a2_fizzler_intro") {
-        if (x == 368 && y == 96) return "1";
+        if (MatchPos2D(pos, 368.0f, 96.0f)) return "1";
     }
     else if (map == "sp_a2_bridge_intro") {
-        if (x == 280 && y == -896) return "1";
+        if (MatchPos2D(pos, 280.0f, -896.0f)) return "1";
     }
     else if (map == "sp_a2_bridge_the_gap") {
-        if (x == -448 && y == -32) return "1";
+        if (MatchPos2D(pos, -448.0f, -32.0f)) return "1";
     }
     else if (map == "sp_a2_turret_intro") {
-        if (x == 576 && y == -1415) return "1";
-        if (x == 1152 && y == -296) return "2";
+        if (MatchPos2D(pos, 576.0f, -1415.0f)) return "1";
+        if (MatchPos2D(pos, 1152.0f, -296.0f)) return "2";
     }
     else if (map == "sp_a2_laser_relays") {
-        if (x == -704 && y == -1014) return "1";
+        if (MatchPos2D(pos, -704.0f, -1014.0f)) return "1";
     }
     else if (map == "sp_a2_turret_blocker") {
-        if (x == -302 && y == 384) return "1";
-        if (x == 336 && y == 640) return "2";
+        if (MatchPos2D(pos, -302.0f, 384.0f)) return "1";
+        if (MatchPos2D(pos, 336.0f, 640.0f)) return "2";
     }
     else if (map == "sp_a2_laser_vs_turret") {
-        if (x == 384 && y == -288) return "1";
+        if (MatchPos2D(pos, 384.0f, -288.0f)) return "1";
     }
     else if (map == "sp_a2_pull_the_rug") {
-        if (x == 320 && y == -160) return "1";
+        if (MatchPos2D(pos, 320.0f, -160.0f)) return "1";
     }
     else if (map == "sp_a2_laser_chaining") {
-        if (x == -384 && y == -480) return "1";
+        if (MatchPos2D(pos, -384.0f, -480.0f)) return "1";
     }
     else if (map == "sp_a2_triple_laser") {
-        if (x == 7456 && y == -5998) return "1";
+        if (MatchPos2D(pos, 7456.0f, -5998.0f)) return "1";
     }
 
     // Fallback de sécurité
@@ -102,7 +104,7 @@ void AddCameraCheck() {
         // on l'ignore complètement pour éviter les fausses entités décoratives (comme sur pull_the_rug)
         if (camID == "unk") continue;
 
-        string holoName = "camera_check_holo_" + entIndex;
+        string holoName = "camera_check_holo_" + current_map + "_" + camID;
         g_CameraInitialPositions[entIndex] = camPos;
         g_CameraIdentifiers[entIndex] = current_map + "_" + camID;
 

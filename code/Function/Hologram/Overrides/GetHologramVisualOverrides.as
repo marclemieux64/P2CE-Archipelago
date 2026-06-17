@@ -97,11 +97,19 @@ namespace Archipelago {
             shouldParent = true;
             absoluteAngles = true; 
 
-            if (name_lower == "dummy_chamber_button") {
+            uint idx = name_lower.locate("dummy_chamber_button");
+            uint idx2 = name_lower.locate("dummy_chamber_button2");
+            uint idx3 = name_lower.locate("dummy_chamber_button3");
+
+            bool is_btn1 = (idx != uint(-1) && (idx + 20 == name_lower.length()));
+            bool is_btn2 = (idx2 != uint(-1) && (idx2 + 21 == name_lower.length()));
+            bool is_btn3 = (idx3 != uint(-1) && (idx3 + 21 == name_lower.length()));
+
+            if (is_btn1) {
                 if (::current_map == "sp_a3_03") { targetPos = Vector(-6.0f, -44.0f, -34.5f); targetAng = QAngle(0, 90, 0); } else if (::current_map == "sp_a3_transition01") { targetPos = Vector(44.0f, -6.0f, -34.5f); targetAng = QAngle(0, 180, 0); }
-            } else if (name_lower == "dummy_chamber_button2") {
+            } else if (is_btn2) {
                 if (::current_map == "sp_a3_03") { targetPos = Vector(-6.0f, -44.0f, -34.5f); targetAng = QAngle(0, 90, 0); } else if (::current_map == "sp_a3_transition01") { targetPos = Vector(-44.0f, -6.0f, -34.5f); targetAng = QAngle(0, 180, 0); }
-            } else if (name_lower == "dummy_chamber_button3") {
+            } else if (is_btn3) {
                 if (::current_map == "sp_a3_03") { targetPos = Vector(-44.0f, 5.5f, -34.5f); targetAng = QAngle(0, 0, 0); } else if (::current_map == "sp_a3_transition01") { targetPos = Vector(-4.05f, -45.0f, -34.5f); targetAng = QAngle(0, -90, 0); }
             }
             return;

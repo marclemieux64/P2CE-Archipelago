@@ -254,13 +254,24 @@ void ArchipelagoVitrifiedFoundLegacyCmd(const CommandArgs@ args) {
 
     Archipelago::cv_ArchipelagoVitrifiedStatus.SetValue(newBitmask);
     Archipelago::ArchipelagoLog("[AP] Vitrified Door Found: " + index + " | New Bitmask: " + newBitmask);
+
+    string checkName = "Vitrified Door " + index;
+    if (Archipelago::checked_vitrified_doors.find(checkName) == -1) {
+        Archipelago::checked_vitrified_doors.insertLast(checkName);
+    }
 }
 
-[ServerCommand("SetVitrifiedStatus", "Updates the local vitrified door bitmask and hologram skins")]
+[ServerCommand("SetVitrifiedStatus", "Updates the local vitrified door checked list and hologram skins")]
 void SetVitrifiedStatusCmd(const CommandArgs@ args) {
-    if (args.ArgC() < 2) return;
-    string bitmask = args.Arg(1);
-    Archipelago::SetVitrifiedStatus(bitmask);
+    array<string> checkedDoors;
+    for (int i = 1; i < args.ArgC(); i++) {
+        string arg = args.Arg(i);
+        arg = arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
+        if (arg.length() > 0) {
+            checkedDoors.insertLast(arg);
+        }
+    }
+    Archipelago::SetVitrifiedStatus(checkedDoors);
 }
 
 [ServerCommand("PrintItem", "Prints collected item")]

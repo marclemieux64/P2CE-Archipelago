@@ -11,11 +11,26 @@ void AddVitrifiedDoorChecks(string map_name) {
                 string checkName;
                 g_vitrified_door_names.get(key, checkName);
             
-                CBaseEntity@ ent = EntityList().FindByName(null, entName);
+                CBaseEntity@ ent = null;
+                CBaseEntity@ searchEnt = null;
+                string lowerEntName = entName.tolower();
+                while ((@searchEnt = EntityList().FindByClassname(searchEnt, "*")) !is null) {
+                    string nameLower = searchEnt.GetEntityName().tolower();
+                    uint idx = nameLower.locate(lowerEntName);
+                    if (idx != uint(-1) && (idx + lowerEntName.length() == nameLower.length())) {
+                        @ent = searchEnt;
+                        break;
+                    }
+                }
                 if (ent !is null) {
                 // 1. LOGIC HOOK
                     int doorIndex = 0;
-                    if (checkName.locate("Vitrified Door 2") != uint(-1) || entName.locate("button2") != uint(-1)) doorIndex = 2; else if (checkName.locate("Vitrified Door 3") != uint(-1) || entName.locate("button3") != uint(-1)) doorIndex = 3; else if (checkName.locate("Vitrified Door 1") != uint(-1) || entName.locate("button") != uint(-1)) doorIndex = 1; else if (checkName.locate("Vitrified Door 4") != uint(-1)) doorIndex = 4; else if (checkName.locate("Vitrified Door 5") != uint(-1)) doorIndex = 5; else if (checkName.locate("Vitrified Door 6") != uint(-1)) doorIndex = 6;
+                    if (checkName.locate("Vitrified Door 1") != uint(-1)) doorIndex = 1;
+                    else if (checkName.locate("Vitrified Door 2") != uint(-1)) doorIndex = 2;
+                    else if (checkName.locate("Vitrified Door 3") != uint(-1)) doorIndex = 3;
+                    else if (checkName.locate("Vitrified Door 4") != uint(-1)) doorIndex = 4;
+                    else if (checkName.locate("Vitrified Door 5") != uint(-1)) doorIndex = 5;
+                    else if (checkName.locate("Vitrified Door 6") != uint(-1)) doorIndex = 6;
 
                     SafeAddOutput(ent, "OnPressed", "InitCmd", "Command", "PrintItem " + checkName, 0.0f, 1);
                 
@@ -33,9 +48,8 @@ void AddVitrifiedDoorChecks(string map_name) {
                     bool hAbs = false;
                     Archipelago::GetHologramVisualOverrides(ent, hPos, hAng, hSkin, hScale, hParent, hAbs);
 
-                    // Check local save state for skin override
-                    string bitmask = cv_ArchipelagoVitrifiedStatus.GetString();
-                    if (doorIndex > 0 && bitmask.length() >= uint(doorIndex) && bitmask.substr(doorIndex - 1, 1) == "1") {
+                    // Check global save state for skin override
+                    if (doorIndex > 0 && checked_vitrified_doors.find(checkName) != -1) {
                         hSkin = 4;
                     }
 

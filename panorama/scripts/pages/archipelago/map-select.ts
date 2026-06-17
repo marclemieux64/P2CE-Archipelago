@@ -771,8 +771,7 @@ class ArchipelagoMapSelect {
             const chStatusIcon = entry.FindChildTraverse('ChapterStatusIcon_' + chId) as ImagePanel;
             
             if (chStatus && chStatus.IsValid() && chStatusIcon && chStatusIcon.IsValid()) {
-                // FIX: Check absolute local counters matching exactly against accumulated maps
-                if (chapter.all_completed || (computedValid === computedTotal && computedTotal > 0)) {
+                if (chapter.all_completed) {
                     chStatus.style.visibility = "collapse";
                     chStatusIcon.SetImage("file://{images}/archipelago/icons/check.svg");
                     chStatusIcon.style.visibility = "visible";
@@ -948,10 +947,10 @@ class ArchipelagoMapSelect {
                             progressLabel.style.visibility = "visible";
                             this.updateChapterStyle(progressLabel, map.valid_count || 0, map.total_count || 0, false);
                         } else if (map.completed) {
-                            progressIcon.style.visibility = "collapse";
-                            progressLabel.text = "check";
-                            progressLabel.style.visibility = "visible";
-                            this.updateChapterStyle(progressLabel, 1, 1, true);
+                            progressLabel.style.visibility = "collapse";
+                            progressIcon.style.visibility = "visible";
+                            progressIcon.SetImage("file://{images}/archipelago/icons/check.svg");
+                            this.updateChapterStyle(progressIcon, 1, 1, true);
                         } else {
                             progressLabel.style.visibility = "collapse";
                             progressIcon.style.visibility = "collapse";

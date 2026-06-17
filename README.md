@@ -50,6 +50,7 @@ Additional optional locations include:
 - Breaking **Wheatley Monitors** in Chapter 8 (and one in Chapter 9)
 - Custom buttons in **Ratman Dens**
 - Vitrified doors
+- Security Cameras
 
 ## Items
 
@@ -76,29 +77,30 @@ At the moment the only goal is to finish the final level in Chapter 9 (Chapter 9
 - Quality of life if you do some wheatley monitor screens you get telported to prevent you death
 - Multi Language support on the ui (English and French currently)
 - Simple setup
+- Cinematics Skip
+- Help Page
 
 # Using the Mod
 
 ## Installation
 
 To use this mod you must first have a copy of Portal 2 and Portal 2 Community Edition downloaded in your Steam library.
-> [!NOTE]
-   > Those instruction are written assuming you never installed or run Portal 2 Community Edition before.
-   > If you already have P2CE installed and running, you can skip to step 4.
 
+> [!NOTE]
+> Those instruction are written assuming you never installed or run Portal 2 Community Edition before.
+> If you already have P2CE installed and running, you can skip to step 4.
 
 1. Download and install [Steam](https://store.steampowered.com/about/) and install [Portal 2](https://store.steampowered.com/app/620/Portal_2/).
 2. Download and install [Portal 2 Community Edition](https://store.steampowered.com/app/440000/Portal_2_Community_Edition/).
 3. Launch Portal 2: Community Edition once. P2CE gonna make a copy of portal 2 content.
-(Optional). You can uninstall Portal 2 after step 3 to reduce the the foot print of portal on your hard drive. But refer to the Change language section before doing so if you want to play with another language then english.
+   (Optional). You can uninstall Portal 2 after step 3 to reduce the the foot print of portal on your hard drive. But refer to the Change language section before doing so if you want to play with another language then english.
 4. Download the [latest Zip archive release of the p2ce-archipelago](https://github.com/marclemieux64/P2CE-Archipelago/releases).
 5. Extract the top-level folder from the Zip file.
 6. Place the `p2ce-archipelago` folder in the `sourcemods` Steam folder.
    - On Windows, this may be found at:
      - `C:\Program Files (x86)\Steam\steamapps\sourcemods`
-   - On Linux, this may be found at:
-     - `~/.local/share/Steam/steamapps/sourcemods/`
-(linux only) You need to make the launch script executable  at the root of the mod folder. The script is called "RunArchipelago.sh"   
+   - On Linux, this may be found at: - `~/.local/share/Steam/steamapps/sourcemods/`
+     (linux only) You need to make the launch script executable at the root of the mod folder. The script is called "RunArchipelago.sh"
 
 The folder structure should look like this:
 
@@ -125,10 +127,11 @@ sourcemods
 9. Download and install the [`p2ce.apworld`]() file into the Archipelago launcher using the "Install APWorld" option
 
 ## Linux Alternate Setup
+
 If you ancounter some crash those a likely related to gaming breaking bug affecting the native version of P2CE. The only known fix seem to use proton. But you need to make a specific modification to make it work.
 
 1. Change the compatibility layer of "Portal 2 Community Edition - Archipelago" to a proton of you choice ex: Proton Experimental.
-2. Change the launch argument on p2ce by this `~/.steam/steam/steamapps/sourcemods/p2ce-archipelago/RunArchipelago.sh %command% -game "../../sourcemods/p2ce-archipelago"` 
+2. Change the launch argument on p2ce by this `~/.steam/steam/steamapps/sourcemods/p2ce-archipelago/RunArchipelago.sh %command% -game "../../sourcemods/p2ce-archipelago"`
 3. Launch P2CE instead of the mod.
    > [!NOTE]
    > If you want to play Vanilla P2CE you gonna need to remove that launch option. (Those instruction will be updated if a better setup is found.)
@@ -136,25 +139,25 @@ If you ancounter some crash those a likely related to gaming breaking bug affect
 > [!Tips]
 > Store the launch argument in the launch argument box of the mod to be able to retrive it later when you wanna comeback to Archipelago.
 
-
-
 ## 🌐 Change Language & Localization Support
 
 ### 📊 Language Support Matrix
 
-| Language | Interface | Full audio | Subtiles
-| :--- | :---: | :---: |  :---: | 
-| **English** | ✓ | ✓ | ✓ |
-| **French** | ✓ | ✓ | ✓ |
-| **German** | English | ✓ | ✓ |
-| **Spanish - Spain** | English | ✓ | English |
-| **Russian** | English | ✓ | English |
-| **All Other Languages** | English | English | English |
+| Language                | Interface | Full audio | Subtiles |
+| :---------------------- | :-------: | :--------: | :------: |
+| **English**             |     ✓     |     ✓      |    ✓     |
+| **French**              |     ✓     |     ✓      |    ✓     |
+| **German**              |  English  |     ✓      |    ✓     |
+| **Spanish - Spain**     |  English  |     ✓      | English  |
+| **Russian**             |  English  |     ✓      | English  |
+| **All Other Languages** |  English  |  English   | English  |
 
 ### Audio Language Setup
- > [!NOTE]
-   > Those instruction will only work for French,German,Spanish-Spain and Russian.
-­­   > If you want to use a fan voice translation just skip to step 4.
+
+> [!NOTE]
+> Those instruction will only work for French,German,Spanish-Spain and Russian.
+> ­­ > If you want to use a fan voice translation just skip to step 4.
+
 1. Right-click **Portal 2** in your Steam Library and select **Properties...**.
 2. In the General Tab, navigate to Language and make sure you have the langauge that you want is selected. Otherwise select the language you want to use and wait for the download to complete. Close the properties page.
 3. Right-click **Portal 2** in your Steam Library and select **Manage** then **Browse Local Files**.

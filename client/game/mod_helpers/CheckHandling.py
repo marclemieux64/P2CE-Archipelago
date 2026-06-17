@@ -94,18 +94,20 @@ def get_map_sync_commands(map_code: str, items_missing: list, checked_locations:
         commands.append('SetCheckedButtons\n')
 
     # Transmission du statut des portes vitrifiées (Vitrified Doors)
-    vitrified_doors_checked = [0] * 6
+    vitrified_doors_checked = []
     for loc_id in checked_locations:
         loc_name = location_names_helper.lookup_in_game(loc_id)
         if loc_name and loc_name.startswith("Vitrified Door "):
             try:
                 door_num = int(loc_name.split(" ")[-1])
                 if 1 <= door_num <= 6:
-                    vitrified_doors_checked[door_num - 1] = 1
+                    vitrified_doors_checked.append(str(door_num))
             except ValueError:
                 pass
-    vitrified_bitmask = "".join(str(bit) for bit in vitrified_doors_checked)
-    commands.append(f'SetVitrifiedStatus {vitrified_bitmask}\n')
+    if vitrified_doors_checked:
+        commands.append(f'SetVitrifiedStatus {" ".join(vitrified_doors_checked)}\n')
+    else:
+        commands.append('SetVitrifiedStatus\n')
 
     # 3. Transmission de la liste des écrans détruits
     checked_monitor_maps = [wheatley_monitor_table[m].map_name for m in wheatley_monitors_checked if m in wheatley_monitor_table]

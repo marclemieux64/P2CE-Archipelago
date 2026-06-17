@@ -249,7 +249,8 @@ class ChapterMenuElement(MenuElement):
             maps_list.append(m)
             if curr.location_id != -1:
                 has_valid_maps = True
-                if not m.get("completed"):
+                is_map_complete = (m.get("total_count", 0) == 0)
+                if not is_map_complete:
                     all_maps_complete = False
                 
                 chapter_valid += m.get("valid_count", 0)

@@ -243,28 +243,36 @@
 
 
 		"Archipelago_Settings_General"          "Paramètres Généraux"
+		
+		"Common_Hide"			"Cacher"
+		
+		"Common_Show"			"Afficher"
+
+		"Archipelago_Settings_HideLocationCounts" "Compteur des validations"
 
 
-		"Archipelago_Settings_HideLocationCounts" "Cacher le compteur de validations"
+		"Archipelago_Settings_HideLocationCounts_info" "Cache le compteur des validations des chapitres et des niveaux."
 
 
-		"Archipelago_Settings_HideLocationCounts_info" "Cache le nombre de validations des chapitres et des niveaux."
-
-
-		"Archipelago_Settings_HideHolograms"   "Masquer les Hologrammes"
+		"Archipelago_Settings_HideHolograms"   "Hologrammes"
 
 		"Archipelago_Settings_HideHolograms_info" "Contrôle l'affichage des hologrammes Archipelago en jeu."
 
-		"Archipelago_Settings_HideHolograms_0"   "Afficher tous les hologrammes"
+		"Archipelago_Settings_HideHolograms_0"   "Afficher tous"
 
 		"Archipelago_Settings_HideHolograms_1"   "Masquer les objets non obtenus"
 
-		"Archipelago_Settings_HideHolograms_2"   "Masquer tous les hologrammes"
+		"Archipelago_Settings_HideHolograms_2"   "Masquer tous"
 
-		"Archipelago_Settings_StatusIndicatorMode"   "Indicateur de Statut"
+		
+		"Archipelago_Settings_StatusIndicatorMode"   "Indicateur de connection"
+		
 		"Archipelago_Settings_StatusIndicatorMode_info" "Configurez quand afficher l'indicateur de connexion Archipelago sur votre HUD."
+		
 		"Archipelago_Settings_StatusIndicatorMode_0"   "Toujours afficher"
+		
 		"Archipelago_Settings_StatusIndicatorMode_1"   "Afficher uniquement en cas de problème"
+		
 		"Archipelago_Settings_StatusIndicatorMode_2"   "Toujours masquer"
 
 		"Archipelago_Settings_TransitionType"   "Type de changement de niveau"
@@ -285,21 +293,21 @@
 		"Archipelago_Settings_Transition_Smart_info" "Passe automatiquement au niveau suivant si possible, sinon retourne au menu."
 
 
-		"Archipelago_Settings_MapStatusHUD"     "Cacher le HUD de l'état de niveau"
+		"Archipelago_Settings_MapStatusHUD"     "HUD de l'état de niveau"
 
 
 		"Archipelago_Settings_MapStatusHUD_info" "Montre l'état du niveau au début du niveau et sur demande."
 
 
-		"Archipelago_Settings_Key_ShowStatus" "Affiche le HUD d'état de niveau sur demande"
+		"Archipelago_Settings_Key_ShowStatus" "Touche HUD de l'état de niveau"
 
-		"Archipelago_Settings_SkipBirdScene" "Passe la scène d'oiseaux"
+		"Archipelago_Settings_SkipBirdScene" "Passer l'intro de Combler l'écart"
 		
 		"Archipelago_Settings_SkipBirdScene_info" "Passe la scène d'oiseaux sur le niveau Combler l'écart"
 		
-		"Archipelago_Settings_SkipCeilingScene" "Passe la scène de plafond"
+		"Archipelago_Settings_SkipCeilingScene" "Passer l'intro de Surplomb de la sphère"
 		
-		"Archipelago_Settings_SkipCeilingScene_info" "Passe la scène de plafond sur le niveau Surplomb de la sphère"
+		"Archipelago_Settings_SkipCeilingScene_info" "Passe la scène du plafond sur le niveau Surplomb de la sphère"
 
 
 		"Archipelago_Settings_Cosmetics"       "Cosmétiques"

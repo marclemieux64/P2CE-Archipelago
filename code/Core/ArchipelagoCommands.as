@@ -162,7 +162,6 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
         Archipelago::ArchipelagoLog("DelayedInit: Map name unknown, skipping.");
         return;
     }
-
     Archipelago::ResetPersistentSystems();
     Msgl("Archipelago::ResetPersistentSystems() completed");
     Archipelago::DoMapSpecificSetup();

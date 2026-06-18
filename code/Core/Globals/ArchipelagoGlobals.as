@@ -21,6 +21,7 @@ namespace Archipelago {
     ConVar cv_ArchipelagoShowMapStatusHUD("ap_show_map_status_hud", "1", FCVAR_ARCHIVE);
     ConVar cv_SkipBirdScene("cv_SkipBirdScene", "0", FCVAR_ARCHIVE);
     ConVar cv_SkipCeilingScene("cv_SkipCeilingScene", "0", FCVAR_ARCHIVE);
+    ConVar cv_SkipIntroContainerScene("cv_SkipIntroContainerScene", "0", FCVAR_ARCHIVE);
     
 
 

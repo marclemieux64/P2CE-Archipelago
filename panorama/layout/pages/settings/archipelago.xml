@@ -80,6 +80,17 @@
 				</SettingsEnumDropDown>
 
 				<SettingsEnum
+					id="SkipIntroContainerSetting"
+					text="#Archipelago_Settings_SkipIntroContainer"
+					psvar="cv_SkipIntroContainerScene"
+					infomessage="#Archipelago_Settings_SkipIntroContainer_info"
+					hasdocspage="false"
+				>
+					<RadioButton group="cv_SkipIntroContainerScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipIntroContainerSetting()" />
+					<RadioButton group="cv_SkipIntroContainerScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipIntroContainerSetting()" />
+				</SettingsEnum>
+
+				<SettingsEnum
 					id="SkipBirdSceneSetting"
 					text="#Archipelago_Settings_SkipBirdScene"
 					psvar="cv_SkipBirdScene"
@@ -100,6 +111,7 @@
 					<RadioButton group="cv_SkipCeilingScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipCeilingSceneSetting()" />
 					<RadioButton group="cv_SkipCeilingScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipCeilingSceneSetting()" />
 				</SettingsEnum>
+
 			</Panel>
 			<Panel class="settings-page__spacer" />
 

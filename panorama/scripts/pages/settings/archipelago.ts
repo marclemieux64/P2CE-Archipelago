@@ -2,10 +2,10 @@
 
 /**
  * ARCHIPELAGO SETTINGS MANAGER
- * Gère la persistance des réglages entre les sessions de jeu.
+ * Pure JavaScript runtime version safe from compilation type-errors.
  */
 
-if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
+if (!$.Msg) { $.Msg = UiToolkitAPI.GetGlobalObject().Msg; }
 
 function SaveHideCountsSetting() {
     const enumPanel = $('#HideCountsSetting');
@@ -38,10 +38,9 @@ function SaveMapStatusHUDSetting() {
         }
         UpdateMapStatusHUDKeyBinder();
 
-        const mapStatusHUD = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapStatusHUD;
+        const mapStatusHUD = UiToolkitAPI.GetGlobalObject().ArchipelagoMapStatusHUD;
         if (mapStatusHUD && mapStatusHUD.m_CurrentMapName) {
             const isHiding = ($.persistentStorage.getItem('ap_show_map_status_hud') ?? "1") === "1";
-            // Lors du changement d'option, on force la mise à jour immédiate
             mapStatusHUD.updateStatus(mapStatusHUD.m_CurrentMapName, false, !isHiding);
         }
     }
@@ -50,7 +49,7 @@ function SaveMapStatusHUDSetting() {
 function SaveSmartWarpSetting() {
     const dropdown = $('#TransitionTypeSetting');
     if (dropdown) {
-        const realDropdown = dropdown.FindChildTraverse('DropDown') as any;
+        const realDropdown = dropdown.FindChildTraverse('DropDown');
         if (realDropdown) {
             const selected = realDropdown.GetSelected();
             if (selected) {
@@ -67,7 +66,7 @@ function SaveSmartWarpSetting() {
 function SaveHideHologramsSetting() {
     const dropdown = $('#HideHologramsSetting');
     if (dropdown) {
-        const realDropdown = dropdown.FindChildTraverse('DropDown') as any;
+        const realDropdown = dropdown.FindChildTraverse('DropDown');
         if (realDropdown) {
             const selected = realDropdown.GetSelected();
             if (selected) {
@@ -85,12 +84,12 @@ function SaveHideHologramsSetting() {
 function SaveStatusIndicatorModeSetting() {
     const dropdown = $('#StatusIndicatorModeSetting');
     if (dropdown) {
-        const realDropdown = dropdown.FindChildTraverse('DropDown') as any;
+        const realDropdown = dropdown.FindChildTraverse('DropDown');
         if (realDropdown) {
             const val = realDropdown.GetSelected().GetAttributeInt('value', 0);
             $.persistentStorage.setItem('ap_status_indicator_mode', val);
             
-            const statusIndicator = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoStatusIndicator;
+            const statusIndicator = UiToolkitAPI.GetGlobalObject().ArchipelagoStatusIndicator;
             if (statusIndicator) {
                 statusIndicator.refreshVisibility();
             }
@@ -108,7 +107,6 @@ function SaveSkipBirdSceneSetting() {
                 const val = children[i].GetAttributeString('value', '0');
                 $.persistentStorage.setItem('cv_SkipBirdScene', val);
                 
-                // Synchronize setting directly with engine's convar backend
                 GameInterfaceAPI.ConsoleCommand(`cv_SkipBirdScene ${val}`);
                 $.Msg(`[AP] Skip Bird Scene setting saved and synced: ${val}`);
                 break;
@@ -126,9 +124,25 @@ function SaveSkipCeilingSceneSetting() {
                 const val = children[i].GetAttributeString('value', '0');
                 $.persistentStorage.setItem('cv_SkipCeilingScene', val);
                 
-                // Synchronize directly with engine convar backend
                 GameInterfaceAPI.ConsoleCommand(`cv_SkipCeilingScene ${val}`);
                 $.Msg(`[AP] Skip Ceiling Scene setting saved and synced: ${val}`);
+                break;
+            }
+        }
+    }
+}
+
+function SaveSkipIntroContainerSetting() {
+    const enumPanel = $('#SkipIntroContainerSetting');
+    if (enumPanel) {
+        const children = enumPanel.FindChildTraverse('values')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].paneltype === "RadioButton" && children[i].IsSelected()) {
+                const val = children[i].GetAttributeString('value', '0');
+                $.persistentStorage.setItem('cv_SkipIntroContainerScene', val);
+                
+                GameInterfaceAPI.ConsoleCommand(`cv_SkipIntroContainerScene ${val}`);
+                $.Msg(`[AP] Skip Intro Container setting saved and synced: ${val}`);
                 break;
             }
         }
@@ -140,15 +154,14 @@ function UpdateMapStatusHUDKeyBinder() {
     if (keyBinder) {
         keyBinder.hittest = true;
         keyBinder.hittestchildren = true;
-
         keyBinder.RemoveClass('disabled');
         keyBinder.SetPanelEvent('onactivate', () => {
             $.DispatchEvent('SettingsKeyBinderActivate', keyBinder);
         });
 
         try {
-            if (typeof (Object.create(null).OptionsMenuAPI) !== 'undefined' || (UiToolkitAPI.GetGlobalObject() as any).OptionsMenuAPI) {
-                const api = (UiToolkitAPI.GetGlobalObject() as any).OptionsMenuAPI || Object.create(null).OptionsMenuAPI;
+            if (typeof (Object.create(null).OptionsMenuAPI) !== 'undefined' || UiToolkitAPI.GetGlobalObject().OptionsMenuAPI) {
+                const api = UiToolkitAPI.GetGlobalObject().OptionsMenuAPI || Object.create(null).OptionsMenuAPI;
                 if (api && typeof api.RefreshKeybdMouseBindingDefaults === 'function') {
                     api.RefreshKeybdMouseBindingDefaults();
                 }
@@ -164,7 +177,6 @@ function UpdateMapStatusHUDKeyBinder() {
 }
 
 function LoadArchipelagoSettings() {
-    // Initialize default values in persistentStorage if they are not already set
     if ($.persistentStorage.getItem('ap_show_map_status_hud') === null) {
         $.persistentStorage.setItem('ap_show_map_status_hud', '1');
     }
@@ -177,8 +189,10 @@ function LoadArchipelagoSettings() {
     if ($.persistentStorage.getItem('cv_SkipCeilingScene') === null) {
         $.persistentStorage.setItem('cv_SkipCeilingScene', '0');
     }
+    if ($.persistentStorage.getItem('cv_SkipIntroContainerScene') === null) {
+        $.persistentStorage.setItem('cv_SkipIntroContainerScene', '0');
+    }
 
-    // 1. Hide Location Counts
     const hideCountsVal = $.persistentStorage.getItem('ap_hide_location_counts') ?? "0";
     const hideCountsPanel = $('#HideCountsSetting');
     if (hideCountsPanel) {
@@ -191,7 +205,6 @@ function LoadArchipelagoSettings() {
         }
     }
 
-    // 2. HUD Visibility
     const hudVal = $.persistentStorage.getItem('ap_show_map_status_hud') ?? "1";
     const hudPanel = $('#MapStatusHUDSetting');
     if (hudPanel) {
@@ -204,25 +217,19 @@ function LoadArchipelagoSettings() {
         }
     }
 
-    // 3. Smart Warp
     const warpVal = $.persistentStorage.getItem('ap_smart_warp') ?? "0";
-    const warpDropdown = $('#TransitionTypeSetting')?.FindChildTraverse('DropDown') as any;
+    const warpDropdown = $('#TransitionTypeSetting')?.FindChildTraverse('DropDown');
     if (warpDropdown) warpDropdown.SetSelected(warpVal.toString() === "1" ? 'ap_transition_smart' : 'ap_transition_menu');
     
-    // 4. Hide Holograms
     const hideHoloValRaw = $.persistentStorage.getItem('ap_hide_holograms') ?? "0";
-    const hideHoloDropdown = $('#HideHologramsSetting')?.FindChildTraverse('DropDown') as any;
+    const hideHoloDropdown = $('#HideHologramsSetting')?.FindChildTraverse('DropDown');
     if (hideHoloDropdown) hideHoloDropdown.SetSelected('ap_hide_holograms_' + hideHoloValRaw.toString());
-    
-    const hideHoloValNum = parseInt(hideHoloValRaw.toString(), 10) || 0;
-    GameInterfaceAPI.SetSettingInt('ap_hide_holograms', hideHoloValNum);
+    GameInterfaceAPI.SetSettingInt('ap_hide_holograms', parseInt(hideHoloValRaw.toString(), 10) || 0);
 
-    // 5. Status Indicator Mode
     const statusIndVal = $.persistentStorage.getItem('ap_status_indicator_mode') ?? "0";
-    const statusIndDropdown = $('#StatusIndicatorModeSetting')?.FindChildTraverse('DropDown') as any;
+    const statusIndDropdown = $('#StatusIndicatorModeSetting')?.FindChildTraverse('DropDown');
     if (statusIndDropdown) statusIndDropdown.SetSelected('ap_status_indicator_mode_' + statusIndVal.toString());
 
-    // 6. Skip Bird Scene Convar UI state sync
     const skipBirdVal = $.persistentStorage.getItem('cv_SkipBirdScene') ?? "0";
     const skipBirdPanel = $('#SkipBirdSceneSetting');
     if (skipBirdPanel) {
@@ -236,7 +243,6 @@ function LoadArchipelagoSettings() {
     }
     GameInterfaceAPI.ConsoleCommand(`cv_SkipBirdScene ${skipBirdVal}`);
 
-    // 7. Skip Ceiling Scene Convar UI state sync
     const skipCeilingVal = $.persistentStorage.getItem('cv_SkipCeilingScene') ?? "0";
     const skipCeilingPanel = $('#SkipCeilingSceneSetting');
     if (skipCeilingPanel) {
@@ -250,6 +256,19 @@ function LoadArchipelagoSettings() {
     }
     GameInterfaceAPI.ConsoleCommand(`cv_SkipCeilingScene ${skipCeilingVal}`);
 
+    const skipIntroContainerVal = $.persistentStorage.getItem('cv_SkipIntroContainerScene') ?? "0";
+    const skipIntroContainerPanel = $('#SkipIntroContainerSetting');
+    if (skipIntroContainerPanel) {
+        const children = skipIntroContainerPanel.FindChildTraverse('values')?.Children() || [];
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].GetAttributeString('value', '0') === skipIntroContainerVal.toString()) {
+                children[i].checked = true;
+                break;
+            }
+        }
+    }
+    GameInterfaceAPI.ConsoleCommand(`cv_SkipIntroContainerScene ${skipIntroContainerVal}`);
+
     UpdateMapStatusHUDKeyBinder();
 
     $.Schedule(0.2, () => {
@@ -257,16 +276,16 @@ function LoadArchipelagoSettings() {
     });
 }
 
-// --- EXPOSITION GLOBALE HARMONISÉE ---
-(UiToolkitAPI.GetGlobalObject() as any).SaveHideCountsSetting = SaveHideCountsSetting;
-(UiToolkitAPI.GetGlobalObject() as any).SaveMapStatusHUDSetting = SaveMapStatusHUDSetting;
-(UiToolkitAPI.GetGlobalObject() as any).SaveSmartWarpSetting = SaveSmartWarpSetting;
-(UiToolkitAPI.GetGlobalObject() as any).SaveHideHologramsSetting = SaveHideHologramsSetting;
-(UiToolkitAPI.GetGlobalObject() as any).SaveStatusIndicatorModeSetting = SaveStatusIndicatorModeSetting;
-(UiToolkitAPI.GetGlobalObject() as any).SaveSkipBirdSceneSetting = SaveSkipBirdSceneSetting;
-(UiToolkitAPI.GetGlobalObject() as any).SaveSkipCeilingSceneSetting = SaveSkipCeilingSceneSetting;
-(UiToolkitAPI.GetGlobalObject() as any).LoadArchipelagoSettings = LoadArchipelagoSettings;
-(UiToolkitAPI.GetGlobalObject() as any).UpdateMapStatusHUDKeyBinder = UpdateMapStatusHUDKeyBinder;
+UiToolkitAPI.GetGlobalObject().SaveHideCountsSetting = SaveHideCountsSetting;
+UiToolkitAPI.GetGlobalObject().SaveMapStatusHUDSetting = SaveMapStatusHUDSetting;
+UiToolkitAPI.GetGlobalObject().SaveSmartWarpSetting = SaveSmartWarpSetting;
+UiToolkitAPI.GetGlobalObject().SaveHideHologramsSetting = SaveHideHologramsSetting;
+UiToolkitAPI.GetGlobalObject().SaveStatusIndicatorModeSetting = SaveStatusIndicatorModeSetting;
+UiToolkitAPI.GetGlobalObject().SaveSkipBirdSceneSetting = SaveSkipBirdSceneSetting;
+UiToolkitAPI.GetGlobalObject().SaveSkipCeilingSceneSetting = SaveSkipCeilingSceneSetting;
+UiToolkitAPI.GetGlobalObject().SaveSkipIntroContainerSetting = SaveSkipIntroContainerSetting;
+UiToolkitAPI.GetGlobalObject().LoadArchipelagoSettings = LoadArchipelagoSettings;
+UiToolkitAPI.GetGlobalObject().UpdateMapStatusHUDKeyBinder = UpdateMapStatusHUDKeyBinder;
 
 $.GetContextPanel().OnShow = () => {
     LoadArchipelagoSettings();

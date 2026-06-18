@@ -327,6 +327,8 @@
 		"Archipelago_Settings_SkipCeilingScene" "Passer l'intro de Surplomb de la sphère"
 		
 		"Archipelago_Settings_SkipCeilingScene_info" "Passe la scène du plafond sur le niveau Surplomb de la sphère"
+		"Archipelago_Settings_SkipIntroContainer" "Passer la traversée en conteneur"
+		"Archipelago_Settings_SkipIntroContainer_info" "Passe la scène du conteneur au début du jeu (sp_a1_intro1)"
 
 
 		"Archipelago_Settings_Cosmetics"       "Cosmétiques"

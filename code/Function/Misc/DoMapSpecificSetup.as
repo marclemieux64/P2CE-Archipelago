@@ -1,7 +1,12 @@
 namespace Archipelago {
 
 void DoMapSpecificSetup() {
-    if (current_map == "sp_a1_intro3") {
+    if (current_map == "sp_a1_intro1") {
+        ConVarRef skipIntroContainerCvar("cv_SkipIntroContainerScene");
+        if (skipIntroContainerCvar.IsValid() && skipIntroContainerCvar.GetInt() == 1) {
+            SkipContainer();
+        }
+    } else if (current_map == "sp_a1_intro3") {
         // Portal Gun pickup trigger (Primary - by Vector)
         AddEntityOutputScriptAtPos(Vector(25, 1958, -299), "trigger_once", "OnStartTouch", "PrintItem Portal Gun", 0.0f, 1);
         // Portal Gun pickup trigger (Backup for speedrun pickup)

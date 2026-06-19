@@ -85,10 +85,10 @@ void InitializeCubeDatabase() {
 
 void UpdateActiveCubeCache() {
     InitializeCubeDatabase();
-    if (::current_map == g_LastCubeCachedMap) return;
+    if (current_map == g_LastCubeCachedMap) return;
 
     g_ActiveCubeCache.resize(0);
-    g_LastCubeCachedMap = ::current_map;
+    g_LastCubeCachedMap = current_map;
     for (uint i = 0; i < g_CubeDatabase.length(); i++) {
         if (g_CubeDatabase[i].map_name == g_LastCubeCachedMap) {
             g_ActiveCubeCache.insertLast(g_CubeDatabase[i]);

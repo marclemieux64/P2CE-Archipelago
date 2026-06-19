@@ -134,10 +134,10 @@ void InitializeGelDatabase() {
 
 void UpdateActiveGelCache() {
     InitializeGelDatabase();
-    if (::current_map == g_LastGelCachedMap) return;
+    if (current_map == g_LastGelCachedMap) return;
 
     g_ActiveGelCache.resize(0);
-    g_LastGelCachedMap = ::current_map;
+    g_LastGelCachedMap = current_map;
 
     for (uint i = 0; i < g_GelDatabase.length(); i++) {
         if (g_GelDatabase[i].map_name == g_LastGelCachedMap) {

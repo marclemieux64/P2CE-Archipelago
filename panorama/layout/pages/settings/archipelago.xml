@@ -135,7 +135,7 @@
 
             <Panel class="settings-page__spacer" />
 
-            <Panel id="ArchipelagoCosmetic" class="settings-group">
+            <!-- <Panel id="ArchipelagoCosmetic" class="settings-group">
                 <Panel class="settings-group__header">
                     <Label class="settings-group__title" text="#Archipelago_Settings_Cosmetic" />
                 </Panel>
@@ -185,12 +185,12 @@
                     hasdocspage="false"
                 />
 				
-            </Panel>
+            </Panel> -->
 
 			
 			
 
-            <Panel class="settings-page__spacer" />
+            <!-- <Panel class="settings-page__spacer" /> -->
 
         </Panel>
     </Panel>

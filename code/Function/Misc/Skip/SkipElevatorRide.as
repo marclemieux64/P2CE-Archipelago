@@ -41,6 +41,11 @@ void CheckElevatorRide() {
 
 // Fonction d'initialisation à appeler au chargement de la map
 void SkipElevatorRide() {
+    ConVarRef cv_SkipElavatorRide("cv_SkipElavatorRide");
+    if (cv_SkipElavatorRide.IsValid() && cv_SkipElavatorRide.GetInt() == 0) {
+        return;
+    }
+
     CBaseEntity@ train = null;
     
     // Recherche de l'ascenseur de départ

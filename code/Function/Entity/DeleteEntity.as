@@ -25,7 +25,7 @@ void DeleteEntity(const string&in entity_name, bool create_holo = true) {
         create_holo = false;
     }
 
-    if (entity_name == "trigger_catapult" && ItemInList(mapName, scripted_fling_levels)) {
+    if (entity_name == "trigger_catapult" && scripted_fling_levels.find(0, mapName) != -1) {
         Archipelago::ArchipelagoLog("not removing trigger_catapult");
         return;
     }

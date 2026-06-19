@@ -99,7 +99,7 @@ map_complete_table: dict[str, P2CELocationData] = {
     "Repulsion Polarity Completion": P2CELocationData("sp_a4_jump_polarity", LocationType.MAP_COMPLETION, [portal_gun_2, blue_gel, white_gel, funnel, floor_button, button], 8),
     # Chapter 9
     "Finale 1 Completion": P2CELocationData("sp_a4_finale1", LocationType.MAP_COMPLETION, [portal_gun_2, faith_plate, funnel, white_gel], 9),
-    "Finale 2 Completion": P2CELocationData("sp_a4_finale2", LocationType.MAP_COMPLETION, [portal_gun_2, funnel, blue_gel, floor_button, turrets], 9),
+    "Finale 2 Completion": P2CELocationData("sp_a4_finale2", LocationType.MAP_COMPLETION, [portal_gun_2, funnel, blue_gel, floor_button, turrets, faith_plate], 9),
     "Finale 3 Completion": P2CELocationData("sp_a4_finale3", LocationType.MAP_COMPLETION, [portal_gun_2, orange_gel, white_gel, funnel], 9),
     "Finale 4 Completion": P2CELocationData("sp_a4_finale4", LocationType.MAP_COMPLETION, [portal_gun_2, potatos, blue_gel, orange_gel, white_gel, adventure_core, space_core, fact_core], 9),
 }

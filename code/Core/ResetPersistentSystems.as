@@ -1,17 +1,15 @@
 // =============================================================
 // Reset Persistent Systems
 // =============================================================
-// This Module Resets stuff that cannot be reset if something 
-// unexpected happen like a crash, closing the game, changing maps by the menu.
+// This module resets stuff that cannot be reset if something 
+// unexpected happens, like a crash, closing the game, or changing maps via the menu.
 
 namespace Archipelago {
 
 void ResetPersistentSystems() {
-   
     CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
     if (cmd !is null) {
         Variant v;
-        
 
         // Reset Visuals (Motion Blur Trap)
         v.SetString("sv_friction 4");
@@ -32,12 +30,12 @@ void ResetPersistentSystems() {
             lpp.FireInput("SetMotionBlurAmount", vBlur, 0.0f, null, null);
         }
 
-        // Réinitialisation du PostProcess (pour retirer le brouillard résiduel)
+        // Reset Console Log modes
         v.SetString("con_log_channel_mode 0");
-        cmd.FireInput("Command", v, 0.1f, null, null, 0); // Léger délai
-         // Réinitialisation du PostProcess (pour retirer le brouillard résiduel)
+        cmd.FireInput("Command", v, 0.1f, null, null, 0); // Light delay
+        
         v.SetString("con_log_severity_mode 0");
-        cmd.FireInput("Command", v, 0.1f, null, null, 0); // Léger délai
+        cmd.FireInput("Command", v, 0.1f, null, null, 0); // Light delay
 
         // Reset Sound Mixers (PotatOS Silence restoration)
         v.SetString("snd_setmixer potatosVO vol 0.4");

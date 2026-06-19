@@ -48,9 +48,6 @@
 #include "Function/Entity/Gel/CreateClearGel.as"
 #include "Function/Entity/Gel/RemoveGel.as"
 #include "Function/Entity/Gel/LockButtonByName.as"
-// -- ENTITY/RAINBOW --
-#include "Function/Entity/Rainbow/RunRainbowTick.as"
-#include "Function/Entity/Rainbow/ToggleRainbow.as"
 
 // --- HOLOGRAM ---
 #include "Function/Hologram/CreateAPHologram.as"
@@ -99,7 +96,6 @@
 // --- UTILS ---
 #include "Utils/FindEntities.as"
 #include "Utils/GetPlayer.as"
-#include "Utils/ItemInList.as"
 #include "Utils/MathUtils.as"
 
 /**

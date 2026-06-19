@@ -20,7 +20,6 @@ void HandleMonitorWarp(string monitorID) {
         targetAng = QAngle(0, -90, 0);
         shouldWarp = true;
     } else if (monitorID == "sp_a4_tb_catch 1") {
-        // Changement : on évite le 0.0 absolu qui peut bugger sur certaines maps
         targetPos = Vector(10.0, -1260.0, -80.0); 
         targetAng = QAngle(0, 90, 0);
         shouldWarp = true;
@@ -30,7 +29,7 @@ void HandleMonitorWarp(string monitorID) {
         shouldWarp = true;
     }
 
-if (shouldWarp) {
+    if (shouldWarp) {
         CBaseEntity@ cam = util::CreateEntityByName("point_viewcontrol");
         if (cam !is null) {
             cam.SetAbsOrigin(targetPos);
@@ -40,19 +39,19 @@ if (shouldWarp) {
 
             Variant empty;
             
-            // 1. On prend le contrôle de la vue
+            // 1. Take control of view
             cam.FireInput("Enable", empty, 0.0f, player, player);
             
-            // 2. On téléporte le joueur sur la caméra (Position + Vue !)
+            // 2. Teleport player to camera
             cam.FireInput("TeleportToView", empty, 0.02f, player, player);
             
-            // 3. On rend le contrôle au joueur
+            // 3. Restore control to player
             cam.FireInput("Disable", empty, 0.1f, player, player);
             
-            // 4. On nettoie l'entité
+            // 4. Cleanup camera entity
             cam.FireInput("Kill", empty, 0.2f, null, null);
             
-            // Sécurité physique
+            // Physics safety check
             player.SetAbsVelocity(Vector(0, 0, 0));
         }
     }

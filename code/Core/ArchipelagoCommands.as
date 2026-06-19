@@ -2,7 +2,12 @@
 // ARCHIPELAGO SERVER COMMANDS
 // =============================================================
 
-//This file is used to declare a server command so python can call them via the netcon
+// This file is used to declare server commands so python can call them via the netcon
+
+// --- Helper Functions ---
+string CleanArg(const string&in arg) {
+    return arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
+}
 
 // =============================================================
 // --- CORE ---
@@ -12,7 +17,7 @@
 void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("=====Archipelago=====");
     Archipelago::UpdateInternalMapName();
-    if (::current_map == "unknown" || ::current_map == "") {
+    if (Archipelago::current_map == "unknown" || Archipelago::current_map == "") {
         Archipelago::ArchipelagoLog("DelayedInit: Map name unknown, skipping.");
         return;
     }
@@ -21,30 +26,30 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("Archipelago::ResetPersistentSystems() completed");
     Archipelago::DoMapSpecificSetup();
     Msgl("DoMapSpecificSetup() completed");
-    //Set level transition trigger to output completon message
-    Archipelago::CreateCompleteLevelAlertHook(::current_map);
+    // Set level transition trigger to output completion message
+    Archipelago::CreateCompleteLevelAlertHook(Archipelago::current_map);
     Msgl("CreateCompleteLevelAlertHook() completed");
     Archipelago::CreateMapSpecificHolos();
     Msgl("CreateMapSpecificHolos() completed");
-    //Spawn the module to detect player death sued for deathlink
+    // Spawn the module to detect player death used for deathlink
     Archipelago::AttachDeathTrigger();
     Msgl("AttachDeathTrigger() completed");
-    //Check if we show the Map status HUD
+    // Check if we show the Map status HUD
     ConVarRef showHUDConVar("ap_show_map_status_hud");
     int hudMode = (showHUDConVar.IsValid()) ? showHUDConVar.GetInt() : 0;
-    //Tell panorama the current map
-    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|" + hudMode + "\")");
+    // Tell panorama the current map
+    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + Archipelago::current_map + "|" + hudMode + "\")");
     Msgl("SendToPanorama() completed with HUD Mode: " + hudMode);
-    //Invoke the elavator ride skip module (module manage the activation of it)
+    // Invoke the elevator ride skip module (module manages the activation of it)
     Archipelago::SkipElevatorRide();
     Msgl("SkipElevatorRide() completed");
-    Archipelago::ArchipelagoLog("DelayedInit complete for: " + ::current_map);
+    Archipelago::ArchipelagoLog("DelayedInit complete for: " + Archipelago::current_map);
     Msgl("=====================");
 }
 
 [ServerCommand("RefreshMapName", "Forces a map name update to Panorama")]
 void RefreshMapNameLegacyCmd(const CommandArgs@ args) {
-    ::current_map = "";
+    Archipelago::current_map = "";
     Archipelago::UpdateInternalMapName();
 }
 
@@ -57,7 +62,7 @@ void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
     Archipelago::AddWheatleyMonitorBreakCheck();
 }
 
-[ServerCommand("PrintMapComplete()", "Print Map Completion")]
+[ServerCommand("PrintMapComplete", "Print Map Completion")]
 void PrintMapCompleteCmd(const CommandArgs@ args) {
     Archipelago::PrintMapComplete();
 }
@@ -72,12 +77,8 @@ void SetCheckedButtonsCmd(const CommandArgs@ args) {
     array<string> checkedButtons;
 
     for (int i = 1; i < args.ArgC(); i++) {
-        string arg = args.Arg(i);
-        // Nettoyage standard des caractères parasites résiduels
-        arg = arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
-        
+        string arg = CleanArg(args.Arg(i));
         if (arg.length() > 0) {
-            // On insère chaque identifiant de bouton individuellement et en minuscules
             checkedButtons.insertLast(arg.tolower());
             Archipelago::ArchipelagoLog("AP DEBUG: Inserted button -> '" + arg.tolower() + "'");
         }
@@ -132,8 +133,7 @@ void ArchipelagoVitrifiedFoundLegacyCmd(const CommandArgs@ args) {
 void SetVitrifiedStatusCmd(const CommandArgs@ args) {
     array<string> checkedDoors;
     for (int i = 1; i < args.ArgC(); i++) {
-        string arg = args.Arg(i);
-        arg = arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
+        string arg = CleanArg(args.Arg(i));
         if (arg.length() > 0) {
             checkedDoors.insertLast(arg);
         }
@@ -148,57 +148,51 @@ void AddCameraCheckCmd(const CommandArgs@ args) {
 
 [ServerCommand("SetCheckedCameras", "Updates the list of checked cameras")]
 void SetCheckedCamerasCmd(const CommandArgs@ args) {
-    Archipelago::checked_cameras.resize(0);
+    array<string> checkedCameras;
 
     for (int i = 1; i < args.ArgC(); i++) {
-        string arg = args.Arg(i);
-        arg = arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
-        
+        string arg = CleanArg(args.Arg(i));
         if (arg.length() > 0) {
-            Archipelago::checked_cameras.insertLast(arg.tolower());
+            checkedCameras.insertLast(arg.tolower());
             Archipelago::ArchipelagoLog("AP DEBUG: Inserted camera -> '" + arg.tolower() + "'");
         }
     }
     
-    Archipelago::ArchipelagoLog("AP: Checked cameras updated (" + Archipelago::checked_cameras.length() + " items)");
-    Archipelago::SetCheckedCameras();
+    Archipelago::ArchipelagoLog("AP: Checked cameras updated (" + checkedCameras.length() + " items)");
+    Archipelago::SetCheckedCameras(checkedCameras);
 }
 
 [ServerCommand("SetCheckedScreens", "Updates the list of checked monitors")]
 void SetCheckedScreensCmd(const CommandArgs@ args) {
-    Archipelago::checked_screens.resize(0);
+    array<string> checkedScreens;
     string fullCmd = args.GetCommandString();
     Archipelago::ArchipelagoLog("AP DEBUG RAW COMMAND: " + fullCmd);
 
     for (int i = 1; i < args.ArgC(); i++) {
-        string arg = args.Arg(i);
-        arg = arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
-        
+        string arg = CleanArg(args.Arg(i));
         if (arg.length() > 0) {
-            if ((arg == "1" || arg == "2") && Archipelago::checked_screens.length() > 0) {
-                uint lastIdx = Archipelago::checked_screens.length() - 1;
-                string prev = Archipelago::checked_screens.opIndex(lastIdx);
-                Archipelago::checked_screens.opIndex(lastIdx) = prev + " " + arg;
-                Archipelago::ArchipelagoLog("AP DEBUG: Merged to create -> '" + Archipelago::checked_screens.opIndex(lastIdx) + "'");
+            if ((arg == "1" || arg == "2") && checkedScreens.length() > 0) {
+                uint lastIdx = checkedScreens.length() - 1;
+                string prev = checkedScreens[lastIdx];
+                checkedScreens[lastIdx] = prev + " " + arg;
+                Archipelago::ArchipelagoLog("AP DEBUG: Merged to create -> '" + checkedScreens[lastIdx] + "'");
             } else {
-                Archipelago::checked_screens.insertLast(arg);
+                checkedScreens.insertLast(arg);
                 Archipelago::ArchipelagoLog("AP DEBUG: Inserted screen -> '" + arg + "'");
             }
         }
     }
     
-    Archipelago::ArchipelagoLog("AP: Checked screens updated (" + Archipelago::checked_screens.length() + " items)");
+    Archipelago::ArchipelagoLog("AP: Checked screens updated (" + checkedScreens.length() + " items)");
+    Archipelago::SetCheckedScreens(checkedScreens);
 }
 
 [ServerCommand("SetCheckedPickup", "Disables or hides physical items if already checked in Archipelago")]
 void SetCheckedPickupCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
 
-    // Récupération et conversion en minuscules de l'argument d'item (ex: portal_gun_1)
     string itemPayload = args.Arg(1).tolower();
-    
-    // Utilisation de la variable globale existante de ton mod passée en minuscules
-    string currentMap = ::current_map.tolower();
+    string currentMap = Archipelago::current_map.tolower();
 
     // 1. Emplacement : Portal Gun 1 (Chambre 03 - sp_a1_intro3)
     if (currentMap == "sp_a1_intro3" && itemPayload.locate("portal_gun_1") != uint(-1)) {
@@ -206,7 +200,7 @@ void SetCheckedPickupCmd(const CommandArgs@ args) {
         if (holo !is null) {
             CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
             if (animHolo !is null) {
-                animHolo.SetSkin(4); // Changement du skin à 4 (Fait)
+                animHolo.SetSkin(4); // Skin 4 (Fait)
             }
         }
         return;
@@ -218,7 +212,7 @@ void SetCheckedPickupCmd(const CommandArgs@ args) {
         if (holo !is null) {
             CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
             if (animHolo !is null) {
-                animHolo.SetSkin(4); // Changement du skin à 4 (Fait)
+                animHolo.SetSkin(4); // Skin 4 (Fait)
             }
         }
         return;
@@ -230,7 +224,7 @@ void SetCheckedPickupCmd(const CommandArgs@ args) {
         if (holo !is null) {
             CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
             if (animHolo !is null) {
-                animHolo.SetSkin(4); // Changement du skin à 4 (Fait)
+                animHolo.SetSkin(4); // Skin 4 (Fait)
             }
         }
         return;
@@ -295,17 +289,7 @@ void MakeFaithPlateFaultyLegacyCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("RainbowTick", "Internal master tick for rainbow effects")]
-void RainbowTickCmd(const CommandArgs@ args) { 
-    Archipelago::RunRainbowTick(); 
-}
-
-[ServerCommand("ToggleRainbow", "Toggles rainbow color swap effect for all entities")]
-void RainbowCmd(const CommandArgs@ args) { 
-    Archipelago::ToggleRainbow(); 
-}
-
-// --- ENTITY/BUTTONS ---
+// --- BUTTONS ---
 
 [ServerCommand("AddButtonFrame", "AddButtonFrame command")]
 void AddButtonFrameLegacyCmd(const CommandArgs@ args) {
@@ -319,7 +303,7 @@ void AddFloorButtonFrameLegacyCmd(const CommandArgs@ args) {
     Archipelago::AddFloorButtonFrame(args.Arg(1));
 }
 
-// --- ENTITY/GEL ---
+// --- GEL ---
 
 [ServerCommand("CreateClearGel", "Legacy CreateClearGel command")]
 void CreateClearGelLegacyCmd(const CommandArgs@ args) {
@@ -342,12 +326,8 @@ void RemoveGelLegacyCmd(const CommandArgs@ args) {
 }
 
 [ServerCommand("LockButtonByName", "LockButtonByName command")]
-void LockButtonByNameCmd(const CommandArgs@ args) 
-{
-    // Vérification qu'au moins un argument (le nom de l'entité) a été fourni
+void LockButtonByNameCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    
-    // Appel direct de la fonction globale d'exécution
     Archipelago::LockButtonByName(args.Arg(1));
 }
 
@@ -385,7 +365,7 @@ void Finale2_TurretTickCmd(const CommandArgs@ args) {
 void AddScriptAtPosLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 6) return;
     Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
-    Archipelago::ArchipelagoLog("[AP RECV] AddScriptAtPos à la position: " + pos.x + " " + pos.y + " " + pos.z);
+    Archipelago::ArchipelagoLog("[AP RECV] AddScriptAtPos at position: " + pos.x + " " + pos.y + " " + pos.z);
     Archipelago::AddEntityOutputScriptAtPos(pos, args.Arg(4), args.Arg(5), args.Arg(6), (args.ArgC() > 7 ? args.Arg(7).toFloat() : 0.0f), (args.ArgC() > 8 ? args.Arg(8).toInt() : -1));
 }
 
@@ -428,7 +408,6 @@ void AddScriptLegacyCmd(const CommandArgs@ args) {
     
     array<CBaseEntity@> ents = Archipelago::FindEntities(target);
     
-    // CORRECTIF SÉCURITÉ : Recherche partielle si le nom exact échoue à cause du préfixe d'instance
     if (ents.length() == 0) {
         CBaseEntity@ searchEnt = null;
         while ((@searchEnt = EntityList().FindByClassname(searchEnt, "*")) !is null) {
@@ -439,8 +418,7 @@ void AddScriptLegacyCmd(const CommandArgs@ args) {
         }
     }
 
-    // Affichage clair de la commande dans tes logs console pour débugger
-    Archipelago::ArchipelagoLog("[AP RECV] AddScript: target=" + target + " (Trouvé: " + ents.length() + " entités) | Output=" + output + " | Cmd=" + cmd);
+    Archipelago::ArchipelagoLog("[AP RECV] AddScript: target=" + target + " (Found: " + ents.length() + " entities) | Output=" + output + " | Cmd=" + cmd);
 
     for (uint i = 0; i < ents.length(); i++) {
         Archipelago::SafeAddOutput(ents[i], output, "InitCmd", "Command", cmd, delay, maxTimes);
@@ -459,39 +437,31 @@ void CheckElevatorRideCmd(const CommandArgs@ args) {
 
 [ServerCommand("ShowStatus", "Manually show the map status HUD")]
 void ShowStatusLegacyCmd(const CommandArgs@ args) {
-    // Verification safety net: Do not allow keybind execution if the option is toggled off
     ConVarRef showHUDConVar("ap_show_map_status_hud");
     if (!showHUDConVar.IsValid() || showHUDConVar.GetInt() == 1) {
         return; 
     }
 
     Archipelago::UpdateInternalMapName();
-    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|0\")");
+    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + Archipelago::current_map + "|0\")");
 }
 
-[ServerCommand("DisableTriggerAtPos", "Désactive un trigger à une position spécifique")]
+[ServerCommand("DisableTriggerAtPos", "Disables a trigger at a specific position")]
 void DisableTriggerAtPosCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
     
-    // Cherche le trigger_once le plus proche dans un rayon de 150 unités
     CBaseEntity@ ent = EntityList().FindByClassnameNearest("trigger_once", pos, 150.0f);
-    
-    // Si ce n'est pas un trigger_once, on cherche un trigger_multiple par sécurité
     if (ent is null) {
         @ent = EntityList().FindByClassnameNearest("trigger_multiple", pos, 150.0f);
     }
 
     if (ent !is null) {
-        // CORRECTIF COMPILATION : On crée une variable Variant vide pour respecter la signature d'AngelScript
         Variant emptyValue; 
-        
-        // Structure de l'appel corrigée : Input, Valeur, Délai (float), Activator, Caller
         ent.FireInput("Disable", emptyValue, 0.0f, null, null, 0);
-        
-        Archipelago::ArchipelagoLog("[AP] DisableTriggerAtPos: Trigger désactivé avec succès à la position " + pos.x + " " + pos.y + " " + pos.z);
+        Archipelago::ArchipelagoLog("[AP] DisableTriggerAtPos: Trigger disabled successfully at position " + pos.x + " " + pos.y + " " + pos.z);
     } else {
-        Archipelago::ArchipelagoLog("[AP] DisableTriggerAtPos: Aucun trigger trouvé à la position " + pos.x + " " + pos.y + " " + pos.z);
+        Archipelago::ArchipelagoLog("[AP] DisableTriggerAtPos: No trigger found at position " + pos.x + " " + pos.y + " " + pos.z);
     }
 }
 
@@ -504,23 +474,17 @@ void CheckDeathLinkQueueCmd(const CommandArgs@ args) {
 
     // --- CASE 1: THE PLAYER IS DEAD ---
     if (health <= 0) {
-        // If we are processing a remote death, it means an external DeathLink killed us.
-        // We set the tracker to true but return early. Crucially, we skip 
-        // firing the "RunScriptCode" that notifies the Archipelago server.
-        if (is_processing_remote_death) {
-            sent_death_link = true; 
+        if (Archipelago::is_processing_remote_death) {
+            Archipelago::sent_death_link = true; 
             return;
         }
 
-        // If we are NOT processing a remote death, this is an organic, local player death.
-        // We must report this to the rest of the multiworld.
-        if (!sent_death_link) {
-            sent_death_link = true;
+        if (!Archipelago::sent_death_link) {
+            Archipelago::sent_death_link = true;
             CBaseEntity@ world = EntityList().FindByClassname(null, "worldspawn");
             if (world !is null) {
                 Variant v;
-                v.SetString("printl(\"send_deathlink " +::current_map + "\")");
-                // This line broadcasts the death to the Archipelago server:
+                v.SetString("printl(\"send_deathlink " + Archipelago::current_map + "\")");
                 world.FireInput("RunScriptCode", v, 0.0f, null, null, 0);
             }
         }
@@ -529,28 +493,24 @@ void CheckDeathLinkQueueCmd(const CommandArgs@ args) {
 
     // --- CASE 2: THE PLAYER IS ALIVE ---
     if (health > 0) {
-        // Standard respawn reset for a normal death
-        if (sent_death_link && !is_processing_remote_death) {
-            sent_death_link = false;
+        if (Archipelago::sent_death_link && !Archipelago::is_processing_remote_death) {
+            Archipelago::sent_death_link = false;
         }
         
-        // If we were processing a remote death and the player has fully respawned (health >= 100),
-        // we safely turn off the shield so future organic deaths count normally.
-        if (is_processing_remote_death && health >= 100) {
-            is_processing_remote_death = false;
-            sent_death_link = false;
+        if (Archipelago::is_processing_remote_death && health >= 100) {
+            Archipelago::is_processing_remote_death = false;
+            Archipelago::sent_death_link = false;
             Archipelago::ArchipelagoLog("[AP] Player respawned. DeathLink safety disabled.");
         }
     }
 }
 
-[ServerCommand("PingGameServer", "Vérifie si le jeu est prêt à exécuter un événement")]
+[ServerCommand("PingGameServer", "Verifies if the game server is ready")]
 void PingGameServerCmd(const CommandArgs@ args) {
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
-    if (player is null) return; // Si on est au menu ou en chargement, l'entité n'existe pas -> Pas de réponse
+    if (player is null) return;
 
     int health = player.GetHealth();
-    // Si le joueur est en vie et actif sur la map, on renvoie le feu vert à Python via Netcon
     if (health > 0) {
         Msgl("deathlink_pong_ready");
     }
@@ -560,8 +520,32 @@ void PingGameServerCmd(const CommandArgs@ args) {
 void SetMutedDeathCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
     
-    is_processing_remote_death = (args.Arg(1) == "1");
-    Archipelago::ArchipelagoLog("[AP] is_processing_remote_death set to: " + (is_processing_remote_death ? "TRUE" : "FALSE"));
+    Archipelago::is_processing_remote_death = (args.Arg(1) == "1");
+    Archipelago::ArchipelagoLog("[AP] is_processing_remote_death set to: " + (Archipelago::is_processing_remote_death ? "TRUE" : "FALSE"));
+}
+
+[ServerCommand("ap_sync_settings", "Syncs Archipelago settings from Panorama to Server")]
+void SyncSettingsCmd(const CommandArgs@ args) {
+    if (args.ArgC() < 6) return;
+    ConVarRef cv_SkipBirdScene("cv_SkipBirdScene");
+    if (cv_SkipBirdScene.IsValid()) cv_SkipBirdScene.SetValue(args.Arg(0));
+
+    ConVarRef cv_SkipCeilingScene("cv_SkipCeilingScene");
+    if (cv_SkipCeilingScene.IsValid()) cv_SkipCeilingScene.SetValue(args.Arg(1));
+
+    ConVarRef cv_SkipIntroContainerScene("cv_SkipIntroContainerScene");
+    if (cv_SkipIntroContainerScene.IsValid()) cv_SkipIntroContainerScene.SetValue(args.Arg(2));
+
+    ConVarRef cv_SkipElavatorRide("cv_SkipElavatorRide");
+    if (cv_SkipElavatorRide.IsValid()) cv_SkipElavatorRide.SetValue(args.Arg(3));
+
+    ConVarRef ap_hide_holograms("ap_hide_holograms");
+    if (ap_hide_holograms.IsValid()) ap_hide_holograms.SetValue(args.Arg(4));
+
+    ConVarRef ap_show_map_status_hud("ap_show_map_status_hud");
+    if (ap_show_map_status_hud.IsValid()) ap_show_map_status_hud.SetValue(args.Arg(5));
+
+    Archipelago::UpdateHologramsVisibility();
 }
 
 [ServerCommand("PrintItem", "Prints collected item (ex: Portal gun and PotatOS)")]

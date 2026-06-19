@@ -1,9 +1,15 @@
+// =============================================================
+// CreateCompleteLevelAlertHook
+// =============================================================
+//This module is responsible to hook all the trigger related to completing a map.
+
+
 namespace Archipelago {
 
 void CreateCompleteLevelAlertHook(string map) {
     g_has_printed_map_complete = false;
     
-    // Initialisation du compteur pour les maps à double trigger
+    // INIT FOR MAP WITH 2 TRIGGER
     if (two_trigger_levels.find(map) >= 0) {
         transition_script_count = 1;
     }
@@ -19,7 +25,6 @@ void CreateCompleteLevelAlertHook(string map) {
                 Vector pos = tr.GetAbsOrigin();
                 bool is_target = false;
 
-                // CORRECTION : La chaîne des 'else if' est maintenant parfaite
                 if (map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 2.0f) is_target = true;
                 else if (map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 2.0f) is_target = true;
                 else if (map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 2.0f) is_target = true;
@@ -33,22 +38,21 @@ void CreateCompleteLevelAlertHook(string map) {
         }
     }
 
-    // --- RESTAURATION : Logique finale spéciale pour sp_a4_finale4 ---
+    // --- sp_a4_finale4 ---
     if (map == "sp_a4_finale4") {
         array<CBaseEntity@> relays = FindEntities("ending_relay");
         for (uint i = 0; i < relays.length(); i++) {
             SafeAddOutput(relays[i], "OnTrigger", "InitCmd", "Command", "PrintCompleteNoExit", 0.0f, -1);
         }
     } 
-    // --- LOGIQUE NON-ELEVATOR (Méthode Moderne) ---
+    // --- NON-ELEVATOR MAPS ---
     else if (non_elevator_maps.find(map) >= 0) {
         // Empêche le jeu de faire un "hot-swap"
         array<CBaseEntity@> logicScripts = FindEntities("@transition_script");
         for (uint i = 0; i < logicScripts.length(); i++) {
             logicScripts[i].Remove();
         }
-
-        // CORRECTION : Les doublons ont été retirés !
+    // --- CINEMATIC MAPS ---
         array<string> targets = { "transition_trigger", "relay_transition", "ending_relay", "potatos_end_relay" };
         for (uint s = 0; s < targets.length(); s++) {
             array<CBaseEntity@> ents = FindEntities(targets[s]);
@@ -58,7 +62,7 @@ void CreateCompleteLevelAlertHook(string map) {
             }
         }
     } 
-    // --- LOGIQUE ELEVATOR (Avec Restauration du hook) ---
+    // --- ELEVATOR MAPS ---
     else {
         array<CBaseEntity@> cls = FindEntities("@transition_from_map");
         for (uint i = 0; i < cls.length(); i++) {

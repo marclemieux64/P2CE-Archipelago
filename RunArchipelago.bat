@@ -6,7 +6,7 @@ setlocal enabledelayedexpansion
 set "MOD_FOLDER=%~dp0"
 set "CLIENT_DIR=%MOD_FOLDER%client"
 set "CLIENT_PY=%CLIENT_DIR%\run_client.py"
-set "PORTABLE_PY_DIR=%CLIENT_DIR%\python_env"
+set "PORTABLE_PY_DIR=%CLIENT_DIR%\python_env_window"
 set "PYTHON_EXE=%PORTABLE_PY_DIR%\python.exe"
 set "GAMEINFO_FILE=%MOD_FOLDER%gameinfo.txt"
 

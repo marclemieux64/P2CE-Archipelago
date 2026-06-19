@@ -1,3 +1,9 @@
+// =============================================================
+// Reset Persistent Systems
+// =============================================================
+// This Module Resets stuff that cannot be reset if something 
+// unexpected happen like a crash, closing the game, changing maps by the menu.
+
 namespace Archipelago {
 
 void ResetPersistentSystems() {

@@ -20,7 +20,15 @@ void CheckElevatorRide() {
 
     // Si la position Z a changé par rapport à la position initiale
     if (!closeTo(currentPos.z, g_flInitialElevatorZ, 0.00f)) {
-        SendToConsole("fadeout 0.2");
+           CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
+        if (cmd !is null) {
+            Variant vFade;
+            
+            vFade.SetString("fadeout 0.2");
+            cmd.FireInput("Command", vFade, 0.0f, null, null, 0);
+            
+            
+        }
         PrintMapComplete();
 
         // Mission accomplie : on détruit le timer pour stopper les vérifications

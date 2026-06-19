@@ -1,3 +1,9 @@
+// =============================================================
+// CALL VSCRIPT
+// =============================================================
+// This module is responsible to contact panorama UI from Anglescript.
+// This module exist because only vscript has the abitlity to directly talk to panorama UI.
+
 namespace Archipelago {
 
 void CallVScript(string code) {

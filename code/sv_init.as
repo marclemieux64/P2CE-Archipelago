@@ -2,7 +2,9 @@
 // ARCHIPELAGO SV INIT (ENTRY POINT)
 // =============================================================
 
-// --- DEBUG FIRST (Pour s'assurer que ArchipelagoLog est défini avant les commandes) ---
+// This file is the starting point of the AngelScript Section of the mod.
+
+// --- DEBUG FIRST  ---
 #include "Function/Debug/ArchipelagoLog.as"
 #include "Function/Debug/HologramDebug.as"
 
@@ -12,8 +14,6 @@
 #include "Core/Globals/ArchipelagoGlobals.as"
 #include "Core/ResetPersistentSystems.as"
 #include "Core/SafeAddOutput.as"
-#include "Core/SendToConsole.as"
-#include "Core/TextQueue.as"
 #include "Core/UpdateInternalMapName.as"
 
 // --- CHECK ---
@@ -35,14 +35,12 @@
 
 // --- ENTITY ---
 #include "Function/Entity/AddTractorBeamFrame.as"
-
 #include "Function/Entity/DeleteCoreOnOutput.as"
 #include "Function/Entity/DeleteEntity.as"
 #include "Function/Entity/DisableEntityPhysics.as"
 #include "Function/Entity/DisableEntityPickup.as"
 #include "Function/Entity/MakeFaithPlateFaulty.as"
 #include "Function/Entity/PreventPickupForModel.as"
-
 // --- ENTITY/BUTTONS ---
 #include "Function/Entity/Buttons/AddButtonFrame.as"
 #include "Function/Entity/Buttons/AddFloorButtonFrame.as"
@@ -50,6 +48,9 @@
 #include "Function/Entity/Gel/CreateClearGel.as"
 #include "Function/Entity/Gel/RemoveGel.as"
 #include "Function/Entity/Gel/LockButtonByName.as"
+// -- ENTITY/RAINBOW --
+#include "Function/Entity/Rainbow/RunRainbowTick.as"
+#include "Function/Entity/Rainbow/ToggleRainbow.as"
 
 // --- HOLOGRAM ---
 #include "Function/Hologram/CreateAPHologram.as"
@@ -63,8 +64,6 @@
 #include "Function/Hologram/Overrides/OverrideGel.as"
 #include "Function/Hologram/Overrides/OverrideCube.as"
 #include "Function/Hologram/Overrides/OverrideProjector.as"
-
-
 
 // --- MISC ---
 #include "Function/Misc/AddEntityOutputScriptAtPos.as"
@@ -104,7 +103,10 @@
 #include "Utils/MathUtils.as"
 
 /**
- * InitializeArchipelago - Atomic setup of core bridge entities.
+ * InitializeArchipelago.
+ That Function is responsible of creating the entity that gonna execute the 
+ command send by the python Server via netcon. It also Precacche the asset ussed by the mod. 
+ Lastly it's responsible to start the initialization sequence that act has a fail safe for the communication of the mod
  */
 bool InitializeArchipelago() {
     Msg("[Archipelago] INITIALIZING CORE...\n");

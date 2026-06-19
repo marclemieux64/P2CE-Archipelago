@@ -23,11 +23,14 @@ namespace Archipelago {
     ConVar cv_SkipIntroContainerScene("cv_SkipIntroContainerScene", "0", FCVAR_ARCHIVE);
     ConVar cv_SkipElavatorRide("cv_SkipElavatorRide", "0", FCVAR_ARCHIVE);
     ConVar cv_ArchipelagoVitrifiedStatus("ArchipelagoVitrifiedStatus", "000000");
+    ConVar cv_RainbowCubes("cv_RainbowCubes", "0", FCVAR_ARCHIVE);
+    ConVar cv_RainbowLasers("cv_RainbowLasers", "0",  FCVAR_ARCHIVE);
 
 // --- BOOLEANS ---
     bool portalgun_2_disabled = false;
     bool g_bInitialTemplateHoloActive = false;
     bool g_bConveyor1TemplateHoloActive = false;
+    bool g_rainbow_active = false;
 
 
 // -- DICTIONARY -- 
@@ -35,12 +38,9 @@ dictionary g_vitrified_door_names;
 dictionary screen_names;
 
 // --- INTEGERS ---
-    
-    array<string> checked_screens;
-    array<string> checked_vitrified_doors;
-   
     int g_ButterFingersTicks = 0;
     int g_bts4ConveyorTickCounter = 0;
+    int g_rainbow_r = 255, g_rainbow_g = 0, g_rainbow_b = 0;
     
 // --- STRINGS ---
     
@@ -56,15 +56,9 @@ dictionary screen_names;
         "sp_a3_00", "sp_a3_01", "sp_a4_laser_platform", "sp_a3_portal_intro", "sp_a4_finale1", 
         "sp_a4_finale2", "sp_a4_finale3", "sp_a4_finale4" 
     };
-    array<string> g_suppressed_entities;
-    array<string> g_suppressed_classes;
-    array<string> g_reported_monitors;
     array<string> checked_buttons;
     array<string> checked_cameras;
-    array<int> g_processed_turret_indices;
-    array<int> g_processed_entity_indices;
     array<string> trap_colors = { "255 0 0", "0 255 0", "0 0 255", "255 255 0", "255 0 255", "0 255 255" };
-
     array<string> scripted_fling_levels = { "sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity" };
 
     bool IsConveyorTurret(CBaseEntity@ ent) {

@@ -1,3 +1,8 @@
+// =============================================================
+// PrintMapComplete
+// =============================================================
+// This file contain the code related to the server command PrintMapComplete
+
 namespace Archipelago {
 
 void PrintMapComplete() {

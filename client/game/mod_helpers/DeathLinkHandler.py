@@ -55,7 +55,7 @@ class DeathLinkHandler:
                 if self.deathlink_queue and self.ctx.check_game_connection() and not self.ping_in_progress:
                     current_time = time.time()
                     if current_time - self.last_death_link_executed >= 6.0:
-                        self.ctx.command_queue.append("AP_PingReady\n")
+                        self.ctx.command_queue.append("PingGameServer\n")
             except Exception as e:
                 logger.error(f"Error in DeathLink handler loop: {e}")
             await asyncio.sleep(1.0)
@@ -71,7 +71,7 @@ class DeathLinkHandler:
         self.last_death_link_executed = time.time()
         self.save_last_death_link_time(self.last_death_link_executed)
         
-        self.ctx.command_queue.append("AP_SetMutedDeath 1\n")
+        self.ctx.command_queue.append("SetMutedDeath 1\n")
         
         fake_data = [{"text": f"DEATHLINK: {current_cause}", "is_death": True}]
         # This will be picked up by Notifications.py and logged exactly once

@@ -27,7 +27,7 @@ void CreateCompleteLevelAlertHook(string map) {
                 else if (map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 2.0f) is_target = true;
 
                 if (is_target) {
-                    SafeAddOutput(tr, "OnStartTouch", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
+                    SafeAddOutput(tr, "OnStartTouch", "InitCmd", "Command", "PrintMapComplete", 0.0f, -1);
                 }
             }
         }
@@ -53,8 +53,8 @@ void CreateCompleteLevelAlertHook(string map) {
         for (uint s = 0; s < targets.length(); s++) {
             array<CBaseEntity@> ents = FindEntities(targets[s]);
             for (uint i = 0; i < ents.length(); i++) {
-                SafeAddOutput(ents[i], "OnStartTouch", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
-                SafeAddOutput(ents[i], "OnTrigger", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
+                SafeAddOutput(ents[i], "OnStartTouch", "InitCmd", "Command", "PrintMapComplete", 0.0f, -1);
+                SafeAddOutput(ents[i], "OnTrigger", "InitCmd", "Command", "PrintMapComplete", 0.0f, -1);
             }
         }
     } 
@@ -62,7 +62,7 @@ void CreateCompleteLevelAlertHook(string map) {
     else {
         array<CBaseEntity@> cls = FindEntities("@transition_from_map");
         for (uint i = 0; i < cls.length(); i++) {
-            SafeAddOutput(cls[i], "OnTrigger", "InitCmd", "Command", "FinishedMap", 0.0f, -1);
+            SafeAddOutput(cls[i], "OnTrigger", "InitCmd", "Command", "PrintMapComplete", 0.0f, -1);
         }
         
         DeleteEntity("@exit_teleport", false);

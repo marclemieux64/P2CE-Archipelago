@@ -1,5 +1,5 @@
 // =============================================================
-// ARCHIPELAGO MAPSPAWN COMMANDS
+// ARCHIPELAGO SERVER COMMANDS
 // =============================================================
 
 [ServerCommand("DeleteEntity", "DeleteEntity command")]
@@ -138,13 +138,12 @@ void WarpMonitorCmd(const CommandArgs@ args) {
     Archipelago::HandleMonitorWarp(monitorID);
 }
 
-[ServerCommand("FinishedMap", "Triggers map completion logic")]
-void FinishedMapLegacyCmd(const CommandArgs@ args) {
-    Archipelago::ArchipelagoLog("COMMAND: FinishedMap triggered!");
+[ServerCommand("PrintMapComplete()", "Print Map Completion")]
+void PrintMapCompleteCmd(const CommandArgs@ args) {
     Archipelago::PrintMapComplete();
 }
 
-[ServerCommand("PrintCompleteNoExit", "Prints completion without warping")]
+[ServerCommand("PrintCompleteNoExit", "Prints completion without warping (used for final 4)")]
 void PrintCompleteNoExitLegacyCmd(const CommandArgs@ args) {
     Archipelago::PrintMapCompleteNoExit();
 }
@@ -162,23 +161,26 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
         Archipelago::ArchipelagoLog("DelayedInit: Map name unknown, skipping.");
         return;
     }
+    // Reset Effect of trap, gpotatos mute, and make sure the console will output text correctly
     Archipelago::ResetPersistentSystems();
     Msgl("Archipelago::ResetPersistentSystems() completed");
     Archipelago::DoMapSpecificSetup();
     Msgl("DoMapSpecificSetup() completed");
+    //Set level transition trigger to output completon message
     Archipelago::CreateCompleteLevelAlertHook(::current_map);
     Msgl("CreateCompleteLevelAlertHook() completed");
     Archipelago::CreateMapSpecificHolos();
     Msgl("CreateMapSpecificHolos() completed");
+    //Spawn the module to detect player death sued for deathlink
     Archipelago::AttachDeathTrigger();
     Msgl("AttachDeathTrigger() completed");
-    // FIX : On envoie toujours le nom de la map à Panorama, mais on lui passe l'état de la ConVar en paramètre.
-    // "0" signifie que le HUD est activé (il doit clignoter 5s), "1" signifie qu'il est éteint.
+    //Check if we show the Map status HUD
     ConVarRef showHUDConVar("ap_show_map_status_hud");
     int hudMode = (showHUDConVar.IsValid()) ? showHUDConVar.GetInt() : 0;
-    
+    //Tell panorama the current map
     Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|" + hudMode + "\")");
     Msgl("SendToPanorama() completed with HUD Mode: " + hudMode);
+    //Invoke the elavator ride skip module (module manage the activation of it)
     Archipelago::SkipElevatorRide();
     Msgl("SkipElevatorRide() completed");
     Archipelago::ArchipelagoLog("DelayedInit complete for: " + ::current_map);
@@ -279,7 +281,7 @@ void SetVitrifiedStatusCmd(const CommandArgs@ args) {
     Archipelago::SetVitrifiedStatus(checkedDoors);
 }
 
-[ServerCommand("PrintItem", "Prints collected item")]
+[ServerCommand("PrintItem", "Prints collected item (ex: Portal gun and PotatOS)")]
 void PrintItemLegacyCmd(const CommandArgs@ args) {
     string raw = args.GetCommandString();
     uint spaceIdx = raw.locate(" ");
@@ -323,9 +325,6 @@ void RemovePotatosFromGunLegacyCmd(const CommandArgs@ args) {
     Archipelago::ArchipelagoLog("[AP RECV] RemovePotatosFromGun");
     Archipelago::RemovePotatosFromGun();
 }
-
-[ServerCommand("SetStatus", "Dummy - Deprecated")]
-void SetStatusLegacyCmd(const CommandArgs@ args) { }
 
 [ServerCommand("AddScriptAtPos", "Legacy AddScriptAtPos command")]
 void AddScriptAtPosLegacyCmd(const CommandArgs@ args) {
@@ -532,45 +531,57 @@ void AP_UpdateHologramsVisibilityCmd(const CommandArgs@ args) {
     Archipelago::UpdateHologramsVisibility();
 }
 
-[ServerCommand("CheckDeathLinkQueue", "Gère la détection de la mort locale du joueur")]
+[ServerCommand("CheckDeathLinkQueue", "Handles local player death detection")]
 void CheckDeathLinkQueueCmd(const CommandArgs@ args) {
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
     if (player is null) return;
 
     int health = player.GetHealth();
 
+    // --- CASE 1: THE PLAYER IS DEAD ---
     if (health <= 0) {
-        if (is_faking_death) {
+        // If we are processing a remote death, it means an external DeathLink killed us.
+        // We set the tracker to true but return early. Crucially, we skip 
+        // firing the "RunScriptCode" that notifies the Archipelago server.
+        if (is_processing_remote_death) {
             sent_death_link = true; 
             return;
         }
 
+        // If we are NOT processing a remote death, this is an organic, local player death.
+        // We must report this to the rest of the multiworld.
         if (!sent_death_link) {
             sent_death_link = true;
             CBaseEntity@ world = EntityList().FindByClassname(null, "worldspawn");
             if (world !is null) {
                 Variant v;
                 v.SetString("printl(\"send_deathlink " +::current_map + "\")");
+                // This line broadcasts the death to the Archipelago server:
                 world.FireInput("RunScriptCode", v, 0.0f, null, null, 0);
             }
         }
         return;
     }
 
+    // --- CASE 2: THE PLAYER IS ALIVE ---
     if (health > 0) {
-        if (sent_death_link && !is_faking_death) {
+        // Standard respawn reset for a normal death
+        if (sent_death_link && !is_processing_remote_death) {
             sent_death_link = false;
         }
-        if (is_faking_death && health >= 100) {
-            is_faking_death = false;
+        
+        // If we were processing a remote death and the player has fully respawned (health >= 100),
+        // we safely turn off the shield so future organic deaths count normally.
+        if (is_processing_remote_death && health >= 100) {
+            is_processing_remote_death = false;
             sent_death_link = false;
-            Archipelago::ArchipelagoLog("[AP] Joueur réapparu. Sécurité DeathLink désactivée.");
+            Archipelago::ArchipelagoLog("[AP] Player respawned. DeathLink safety disabled.");
         }
     }
 }
 
-[ServerCommand("AP_PingReady", "Vérifie si le jeu est prêt à exécuter un événement")]
-void AP_PingReadyCmd(const CommandArgs@ args) {
+[ServerCommand("PingGameServer", "Vérifie si le jeu est prêt à exécuter un événement")]
+void PingGameServerCmd(const CommandArgs@ args) {
     CBaseEntity@ player = EntityList().FindByClassname(null, "player");
     if (player is null) return; // Si on est au menu ou en chargement, l'entité n'existe pas -> Pas de réponse
 
@@ -581,9 +592,10 @@ void AP_PingReadyCmd(const CommandArgs@ args) {
     }
 }
 
-[ServerCommand("AP_SetMutedDeath", "Active ou désactive la protection d'écho de mort")]
-void AP_SetMutedDeathCmd(const CommandArgs@ args) {
+[ServerCommand("SetMutedDeath", "Enables or disables death echo protection")]
+void SetMutedDeathCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    is_faking_death = (args.Arg(1) == "1");
-    Archipelago::ArchipelagoLog("[AP] is_faking_death mis à : " + (is_faking_death ? "TRUE" : "FALSE"));
+    
+    is_processing_remote_death = (args.Arg(1) == "1");
+    Archipelago::ArchipelagoLog("[AP] is_processing_remote_death set to: " + (is_processing_remote_death ? "TRUE" : "FALSE"));
 }

@@ -9,10 +9,7 @@
 // --- CORE ---
 #include "Core/ArchipelagoCommands.as"
 #include "Core/CallVScript.as"
-#include "Core/CreateLPP.as"
-#include "Core/EntFire.as"
 #include "Core/Globals/ArchipelagoGlobals.as"
-#include "Core/PrintAllEntities.as"
 #include "Core/ResetPersistentSystems.as"
 #include "Core/SafeAddOutput.as"
 #include "Core/SendToConsole.as"

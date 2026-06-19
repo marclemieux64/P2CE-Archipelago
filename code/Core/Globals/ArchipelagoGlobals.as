@@ -2,12 +2,12 @@
 // ARCHIPELAGO LEGACY GLOBALS
 // =============================================================
 
-// --- GLOBALS (TRUE GLOBAL SCOPE) ---
+// --- GLOBALS  ---
 string current_map = "unknown";
 int transition_script_count = 0;
 bool g_has_printed_map_complete = false;
 bool sent_death_link = false;
-bool is_faking_death = false; 
+bool is_processing_remote_death = false; 
 
 namespace Archipelago {
 
@@ -22,25 +22,33 @@ namespace Archipelago {
     ConVar cv_SkipCeilingScene("cv_SkipCeilingScene", "0", FCVAR_ARCHIVE);
     ConVar cv_SkipIntroContainerScene("cv_SkipIntroContainerScene", "0", FCVAR_ARCHIVE);
     ConVar cv_SkipElavatorRide("cv_SkipElavatorRide", "0", FCVAR_ARCHIVE);
+    ConVar cv_ArchipelagoVitrifiedStatus("ArchipelagoVitrifiedStatus", "000000");
 
 // --- BOOLEANS ---
     bool portalgun_2_disabled = false;
     bool g_bInitialTemplateHoloActive = false;
     bool g_bConveyor1TemplateHoloActive = false;
 
+
+// -- DICTIONARY -- 
+dictionary g_vitrified_door_names;
+dictionary screen_names;
+
 // --- INTEGERS ---
-    dictionary g_vitrified_door_names;
-    dictionary screen_names;
+    
     array<string> checked_screens;
     array<string> checked_vitrified_doors;
-    ConVar cv_ArchipelagoVitrifiedStatus("ArchipelagoVitrifiedStatus", "000000");
+   
     int g_ButterFingersTicks = 0;
     int g_bts4ConveyorTickCounter = 0;
     
 // --- STRINGS ---
-    // Moved to global scope
+    
 
 // --- ARRAYS ---
+
+    array<string> checked_screens;
+    array<string> checked_vitrified_doors;
     array<string> two_trigger_levels = { "sp_a1_intro1", "sp_a4_finale3" };
     array<string> non_elevator_maps = { 
         "sp_a1_intro1", "sp_a1_intro7", "sp_a1_wakeup", "sp_a2_turret_intro", "sp_a2_bts1", 

@@ -90,7 +90,7 @@ void SkipContainer()
                 
                 fadeEnt.Spawn();
                 fadeEnt.FireInput("Fade", emptyVariant, scheduledDelay, player, player);
-                Msg("[Sequence] Step " + i + ": Scheduled fade effect (" + actionInput + ") at " + scheduledDelay + "s\n");
+                ArchipelagoLog("[Sequence] Step " + i + ": Scheduled fade effect (" + actionInput + ") at " + scheduledDelay + "s\n");
             }
             continue;
         }
@@ -107,29 +107,29 @@ void SkipContainer()
         CBaseEntity@ ent = EntityList().FindByName(null, targetName);
         if (ent is null)
         {
-            Warning("[Sequence] Warning: Step " + i + " skipped. Entity '" + targetName + "' not found inside map data.\n");
+            ArchipelagoLog("[Sequence] Warning: Step " + i + " skipped. Entity '" + targetName + "' not found inside map data.\n");
             continue;
         }
 
         // Deletion Check: Scheduled Kill command
         if (lowerAction == "remove")
         {
-            Msg("[Sequence] Step " + i + ": Queued 'Kill' input -> " + targetName + " at " + scheduledDelay + "s\n");
+            ArchipelagoLog("[Sequence] Step " + i + ": Queued 'Kill' input -> " + targetName + " at " + scheduledDelay + "s\n");
             ent.FireInput("Kill", emptyVariant, scheduledDelay, player, player);
         }
         else if (lowerAction == "trigger")
         {
-            Msg("[Sequence] Step " + i + ": FireInput 'Trigger' -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
+            ArchipelagoLog("[Sequence] Step " + i + ": FireInput 'Trigger' -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
             ent.FireInput("Trigger", emptyVariant, scheduledDelay, player, player);
         }
         else if (lowerAction == "enable")
         {
-            Msg("[Sequence] Step " + i + ": FireInput 'Enable' -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
+            ArchipelagoLog("[Sequence] Step " + i + ": FireInput 'Enable' -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
             ent.FireInput("Enable", emptyVariant, scheduledDelay, player, player);
         }
         else if (lowerAction == "disable")
         {
-            Msg("[Sequence] Step " + i + ": FireInput 'Disable' -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
+            ArchipelagoLog("[Sequence] Step " + i + ": FireInput 'Disable' -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
             ent.FireInput("Disable", emptyVariant, scheduledDelay, player, player);
         }
         else if (lowerAction.locate("setvalue") == 0)
@@ -142,13 +142,13 @@ void SkipContainer()
             }
             Variant val;
             val.SetInt(value);
-            Msg("[Sequence] Step " + i + ": FireInput 'SetValue' (" + value + ") -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
+            ArchipelagoLog("[Sequence] Step " + i + ": FireInput 'SetValue' (" + value + ") -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
             ent.FireInput("SetValue", val, scheduledDelay, player, player);
         }
         // Input Fallback: Standard Entity Action transmission (Perfect Console Emulation Mode)
         else
         {
-            Msg("[Sequence] Step " + i + ": FireInput '" + actionInput + "' -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
+            ArchipelagoLog("[Sequence] Step " + i + ": FireInput '" + actionInput + "' -> " + targetName + " (Delay: " + scheduledDelay + "s)\n");
             ent.FireInput(actionInput, emptyVariant, scheduledDelay, player, player);
         }
     }

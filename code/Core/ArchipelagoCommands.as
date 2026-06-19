@@ -179,7 +179,8 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     
     Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + ::current_map + "|" + hudMode + "\")");
     Msgl("SendToPanorama() completed with HUD Mode: " + hudMode);
-
+    Archipelago::SkipElevatorRide();
+    Msgl("SkipElevatorRide() completed");
     Archipelago::ArchipelagoLog("DelayedInit complete for: " + ::current_map);
     Msgl("=====================");
 }
@@ -217,6 +218,11 @@ void AddScriptLegacyCmd(const CommandArgs@ args) {
 [ServerCommand("CheckCameraPhysicsTick", "Evaluates physical security camera falling loops natively")]
 void CheckCameraPhysicsTickCmd(const CommandArgs@ args) {
     Archipelago::CheckCameraPhysicsTick();
+}
+
+[ServerCommand("CheckElevatorRide", "Evaluates elevator Z-level changes periodically via timer")]
+void CheckElevatorRideCmd(const CommandArgs@ args) {
+    Archipelago::CheckElevatorRide();
 }
 
 [ServerCommand("ShowStatus", "Manually show the map status HUD")]

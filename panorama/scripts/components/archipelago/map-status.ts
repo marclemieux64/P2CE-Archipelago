@@ -41,6 +41,18 @@ var ArchipelagoMapStatusHUD = class {
             // Sync persistentStorage with the ConVar state received from the server
             $.persistentStorage.setItem('ap_show_map_status_hud', serverHudMode);
             
+            // Sync all settings from persistent storage to the server/AS convars
+            const skipBirdVal = $.persistentStorage.getItem('cv_SkipBirdScene') ?? "0";
+            const skipCeilingVal = $.persistentStorage.getItem('cv_SkipCeilingScene') ?? "0";
+            const skipIntroContainerVal = $.persistentStorage.getItem('cv_SkipIntroContainerScene') ?? "0";
+            const skipElevatorVal = $.persistentStorage.getItem('cv_SkipElavatorRide') ?? "0";
+
+            GameInterfaceAPI.ConsoleCommand(`cv_SkipBirdScene ${skipBirdVal}`);
+            GameInterfaceAPI.ConsoleCommand(`cv_SkipCeilingScene ${skipCeilingVal}`);
+            GameInterfaceAPI.ConsoleCommand(`cv_SkipIntroContainerScene ${skipIntroContainerVal}`);
+            GameInterfaceAPI.ConsoleCommand(`cv_SkipElavatorRide ${skipElevatorVal}`);
+            GameInterfaceAPI.ConsoleCommand('UpdateHologramsVisibility');
+            
             if (ArchipelagoMapStatusHUD.m_HideSchedule) { 
                 $.CancelScheduled(ArchipelagoMapStatusHUD.m_HideSchedule); 
                 ArchipelagoMapStatusHUD.m_HideSchedule = null; 

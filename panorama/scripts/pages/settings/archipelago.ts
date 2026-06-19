@@ -7,6 +7,15 @@
 
 if (!$.Msg) { $.Msg = UiToolkitAPI.GetGlobalObject().Msg; }
 
+/**
+ * Helper to run a console command only if currently in-game (server context is active).
+ */
+function RunConsoleCommandIfInGame(cmd: string) {
+    if (GameInterfaceAPI.GetGameUIState() === GameUIState.PAUSEMENU) {
+        GameInterfaceAPI.ConsoleCommand(cmd);
+    }
+}
+
 function SaveHideCountsSetting() {
     const enumPanel = $('#HideCountsSetting');
     if (enumPanel) {
@@ -31,7 +40,7 @@ function SaveMapStatusHUDSetting() {
                 const val = children[i].GetAttributeString('value', '0');
                 $.persistentStorage.setItem('ap_show_map_status_hud', val);
                 
-                GameInterfaceAPI.ConsoleCommand(`ap_show_map_status_hud ${val}`);
+                RunConsoleCommandIfInGame(`ap_show_map_status_hud ${val}`);
                 $.Msg(`[AP] Show Map Status HUD saved and pushed to Server: ${val}`);
                 break;
             }
@@ -74,7 +83,7 @@ function SaveHideHologramsSetting() {
                 $.persistentStorage.setItem('ap_hide_holograms', val);
                 
                 GameInterfaceAPI.SetSettingInt('ap_hide_holograms', val);
-                GameInterfaceAPI.ConsoleCommand('UpdateHologramsVisibility');
+                RunConsoleCommandIfInGame('UpdateHologramsVisibility');
                 $.Msg(`[AP] Hide Holograms setting saved: ${val}`);
             }
         }
@@ -107,7 +116,7 @@ function SaveSkipBirdSceneSetting() {
                 const val = children[i].GetAttributeString('value', '0');
                 $.persistentStorage.setItem('cv_SkipBirdScene', val);
                 
-                GameInterfaceAPI.ConsoleCommand(`cv_SkipBirdScene ${val}`);
+                RunConsoleCommandIfInGame(`cv_SkipBirdScene ${val}`);
                 $.Msg(`[AP] Skip Bird Scene setting saved and synced: ${val}`);
                 break;
             }
@@ -124,7 +133,7 @@ function SaveSkipCeilingSceneSetting() {
                 const val = children[i].GetAttributeString('value', '0');
                 $.persistentStorage.setItem('cv_SkipCeilingScene', val);
                 
-                GameInterfaceAPI.ConsoleCommand(`cv_SkipCeilingScene ${val}`);
+                RunConsoleCommandIfInGame(`cv_SkipCeilingScene ${val}`);
                 $.Msg(`[AP] Skip Ceiling Scene setting saved and synced: ${val}`);
                 break;
             }
@@ -141,7 +150,7 @@ function SaveSkipIntroContainerSetting() {
                 const val = children[i].GetAttributeString('value', '0');
                 $.persistentStorage.setItem('cv_SkipIntroContainerScene', val);
                 
-                GameInterfaceAPI.ConsoleCommand(`cv_SkipIntroContainerScene ${val}`);
+                RunConsoleCommandIfInGame(`cv_SkipIntroContainerScene ${val}`);
                 $.Msg(`[AP] Skip Intro Container setting saved and synced: ${val}`);
                 break;
             }
@@ -241,7 +250,7 @@ function LoadArchipelagoSettings() {
             }
         }
     }
-    GameInterfaceAPI.ConsoleCommand(`cv_SkipBirdScene ${skipBirdVal}`);
+    RunConsoleCommandIfInGame(`cv_SkipBirdScene ${skipBirdVal}`);
 
     const skipCeilingVal = $.persistentStorage.getItem('cv_SkipCeilingScene') ?? "0";
     const skipCeilingPanel = $('#SkipCeilingSceneSetting');
@@ -254,7 +263,7 @@ function LoadArchipelagoSettings() {
             }
         }
     }
-    GameInterfaceAPI.ConsoleCommand(`cv_SkipCeilingScene ${skipCeilingVal}`);
+    RunConsoleCommandIfInGame(`cv_SkipCeilingScene ${skipCeilingVal}`);
 
     const skipIntroContainerVal = $.persistentStorage.getItem('cv_SkipIntroContainerScene') ?? "0";
     const skipIntroContainerPanel = $('#SkipIntroContainerSetting');
@@ -267,12 +276,12 @@ function LoadArchipelagoSettings() {
             }
         }
     }
-    GameInterfaceAPI.ConsoleCommand(`cv_SkipIntroContainerScene ${skipIntroContainerVal}`);
+    RunConsoleCommandIfInGame(`cv_SkipIntroContainerScene ${skipIntroContainerVal}`);
 
     UpdateMapStatusHUDKeyBinder();
 
     $.Schedule(0.2, () => {
-        GameInterfaceAPI.ConsoleCommand('UpdateHologramsVisibility');
+        RunConsoleCommandIfInGame('UpdateHologramsVisibility');
     });
 }
 

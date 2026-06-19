@@ -118,7 +118,7 @@ class BaseMenu {
 
         // Set your custom logo
         $.DispatchEvent('MainMenuSetLogo', 'file://{images}/logo.png');
-        $.DispatchEvent('MainMenuSetLogoSize', CampaignLogoSizePreset.STANDARD);
+        $.DispatchEvent('MainMenuSetLogoSize', CampaignLogoSizePreset.LARGE);
 
         // Background layer
         const p = $.CreatePanel('Panel', $.GetContextPanel(), 'MenuBackgroundLayer');

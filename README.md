@@ -219,6 +219,8 @@ Portal 2 Community Edition/
 ### P2CE Mod
 
 - **marclemieux64** - Lead Tinkerer
+- **LimeDreaming** - Icon graphics
+- **MrGrindingGore** - Logo Graphics
 
 ### P2CE Mod Repo Foundation
 

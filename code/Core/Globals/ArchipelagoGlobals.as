@@ -9,7 +9,6 @@ bool g_has_printed_map_complete = false;
 bool sent_death_link = false;
 bool is_faking_death = false; 
 
-
 namespace Archipelago {
 
 // --- CONVARS & REFS ---
@@ -22,14 +21,12 @@ namespace Archipelago {
     ConVar cv_SkipBirdScene("cv_SkipBirdScene", "0", FCVAR_ARCHIVE);
     ConVar cv_SkipCeilingScene("cv_SkipCeilingScene", "0", FCVAR_ARCHIVE);
     ConVar cv_SkipIntroContainerScene("cv_SkipIntroContainerScene", "0", FCVAR_ARCHIVE);
-    
-
+    ConVar cv_SkipElavatorRide("cv_SkipElavatorRide", "0", FCVAR_ARCHIVE);
 
 // --- BOOLEANS ---
-bool portalgun_2_disabled = false;
-bool g_bInitialTemplateHoloActive = false;
-bool g_bConveyor1TemplateHoloActive = false;
-
+    bool portalgun_2_disabled = false;
+    bool g_bInitialTemplateHoloActive = false;
+    bool g_bConveyor1TemplateHoloActive = false;
 
 // --- INTEGERS ---
     dictionary g_vitrified_door_names;
@@ -60,7 +57,7 @@ bool g_bConveyor1TemplateHoloActive = false;
     array<int> g_processed_entity_indices;
     array<string> trap_colors = { "255 0 0", "0 255 0", "0 0 255", "255 255 0", "255 0 255", "0 255 255" };
 
-    array<string> scripted_fling_levels = {"sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity" };
+    array<string> scripted_fling_levels = { "sp_a3_03", "sp_a3_bomb_flings", "sp_a3_transition01", "sp_a3_speed_flings", "sp_a3_end", "sp_a4_jump_polarity" };
 
     bool IsConveyorTurret(CBaseEntity@ ent) {
         if (ent is null) return false;

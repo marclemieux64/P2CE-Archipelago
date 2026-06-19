@@ -80,7 +80,9 @@
 #include "Function/Misc/WaitExecute.as"
 #include "Function/Misc/WarpToMenu.as"
 #include "Function/Misc/PrintMapName.as"
-#include "Function/Misc/SkipContainer.as"
+// -- MISC/SKIP ---
+#include "Function/Misc/Skip/SkipContainer.as"
+#include "Function/Misc/Skip/SkipElevatorRide.as"
 
 // --- PORTAL GUN ---
 #include "Function/Portal_Gun/DisablePortalGun.as"

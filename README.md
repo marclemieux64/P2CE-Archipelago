@@ -99,7 +99,7 @@ To use this mod you must first have a copy of Portal 2 and Portal 2 Community Ed
 6. Place the `p2ce-archipelago` folder in the `sourcemods` Steam folder.
    - On Windows, this may be found at:
      - `C:\Program Files (x86)\Steam\steamapps\sourcemods`
-   - On Linux, this may be found at: - `~/.local/share/Steam/steamapps/sourcemods/`
+   - On Linux, this may be found at: - `~/home/username/.steam/steam/steamapps/sourcemods/`
      (linux only) You need to make the launch script executable at the root of the mod folder. The script is called "RunArchipelago.sh"
 
 The folder structure should look like this:
@@ -122,7 +122,7 @@ sourcemods
    - On Windows, put:
      - `"C:\Program Files (x86)\Steam\steamapps\sourcemods\p2ce-archipelago\RunArchipelago.bat" %command%`
    - On Linux, put:
-     - `~/.steam/steam/steamapps/sourcemods/p2ce-archipelago/RunArchipelago.sh %command%`
+     - bin/bash `~/.steam/steam/steamapps/sourcemods/p2ce-archipelago/RunArchipelago.sh %command%`
 
 9. Download and install the [`p2ce.apworld`]() file into the Archipelago launcher using the "Install APWorld" option
 

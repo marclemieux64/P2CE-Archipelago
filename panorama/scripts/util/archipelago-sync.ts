@@ -161,7 +161,11 @@ class ArchipelagoSync {
             }
         });
 
-        GameInterfaceAPI.ConsoleCommand("RefreshMapName");
+        const currentMap = GameInterfaceAPI.GetCurrentMap();
+        if (currentMap && currentMap !== "main_menu") {
+            this.m_CurrentMap = currentMap;
+            this.runSync(currentMap);
+        }
     }
 
     static startPolling() {

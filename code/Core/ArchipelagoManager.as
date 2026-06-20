@@ -147,7 +147,7 @@ class ArchipelagoManager {
     }
 }
 
-// Instantiate the global singleton coordinator
-ArchipelagoManager g_Archipelago;
+// Instantiate the global singleton coordinator handle
+ArchipelagoManager@ g_Archipelago;
 
 } // namespace Archipelago

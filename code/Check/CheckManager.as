@@ -1,5 +1,5 @@
 // =============================================================
-// ARCHIPELAGO CHECK MANAGER (OOP VERSION)
+// ARCHIPELAGO CHECK MANAGER (OOP OPTIMIZED VERSION)
 // =============================================================
 
 namespace Archipelago {
@@ -10,6 +10,17 @@ class HologramConfig {
     QAngle ang;
     bool animate;
     HologramConfig(Vector p, QAngle a, bool anim) { pos = p; ang = a; animate = anim; }
+}
+
+// Helper structure for high-efficiency camera tracking
+class TrackedCamera {
+    EHandle<CBaseEntity> handle;
+    string identifier;
+
+    TrackedCamera(CBaseEntity@ ent, const string&in id) {
+        handle.Set(ent);
+        identifier = id;
+    }
 }
 
 class CheckManager {
@@ -27,20 +38,15 @@ class CheckManager {
     private dictionary m_vitrifiedDoorNames;
     private dictionary m_screenNames;
 
-    // --- CAMERA PHYSICS STATE ---
-    private array<bool> m_cameraFallingDetected;
-    private array<Vector> m_cameraInitialPositions;
-    private array<string> m_cameraIdentifiers;
+    // --- OPTIMIZED CAMERA TRACKING CACHE ---
+    private array<TrackedCamera@> m_trackedCameras;
+    private string m_lastCameraMap;
 
     CheckManager() {
         // Constructor
     }
 
     void Initialize() {
-        m_cameraFallingDetected.resize(util::GetMaxEntities());
-        m_cameraInitialPositions.resize(util::GetMaxEntities());
-        m_cameraIdentifiers.resize(util::GetMaxEntities());
-
         ResetSession();
         InitVitrifiedDoorRegistry();
         InitMonitorData();
@@ -53,12 +59,8 @@ class CheckManager {
         m_checkedScreens.resize(0);
         m_checkedVitrifiedDoors.resize(0);
         m_activeLocations.resize(0);
-
-        for (int i = 0; i < util::GetMaxEntities(); i++) {
-            m_cameraFallingDetected[i] = false;
-            m_cameraInitialPositions[i] = Vector(0, 0, 0);
-            m_cameraIdentifiers[i] = "";
-        }
+        m_trackedCameras.resize(0);
+        m_lastCameraMap = "";
     }
 
     // --- GETTERS & STATE CHECKS ---
@@ -76,10 +78,16 @@ class CheckManager {
     // =============================================================
 
     void AddMapCheck() {
+        for (int i = int(m_activeLocations.length()) - 1; i >= 0; i--) {
+            MapLocation@ mapLoc = cast<MapLocation>(m_activeLocations[i]);
+            if (mapLoc !is null) {
+                m_activeLocations.removeAt(i);
+            }
+        }
+
         string currentMap = g_Archipelago.GetCurrentMap();
         if (currentMap == "unknown" || currentMap == "") return;
 
-        // OOP Registration
         MapLocation@ mapLoc = MapLocation(currentMap);
         bool isChecked = (m_checkedMaps.find(currentMap.tolower()) != -1);
         mapLoc.SetChecked(isChecked);
@@ -87,46 +95,21 @@ class CheckManager {
 
         bool isNonElevatorMap = (non_elevator_maps.find(currentMap) != -1);
 
-        // --- 1. NON-ELEVATOR MAPS ---
         if (isNonElevatorMap) {
-            dictionary staticHolograms = {
-                { "sp_a1_intro1",          HologramConfig(Vector(-9728, -2976, -550),      QAngle(0, 0, 0),       true) },
-                { "sp_a1_intro2",          HologramConfig(Vector(-8448, -4448, -550),      QAngle(0, 0, 0),       true) },
-                { "sp_a1_intro4",          HologramConfig(Vector(-5504, -4064, -220),      QAngle(0, 0, 0),       true) },
-                { "sp_a1_intro5",          HologramConfig(Vector(-3904, -3456, -350),      QAngle(0, 0, 0),       true) },
-                { "sp_a1_intro6",          HologramConfig(Vector(-1024, -3456, -350),      QAngle(0, 0, 0),       true) },
-                { "sp_a2_intro",           HologramConfig(Vector(192, 128, -90),           QAngle(0, 0, 0),       true) },
-                { "sp_a1_intro7",          HologramConfig(Vector(-2208, 376, 1280),        QAngle(0, 0, 0),       true) },
-                { "sp_a1_wakeup",          HologramConfig(Vector(6165, 3456, 904),         QAngle(0, -90, 90),    false) },
-                { "sp_a2_turret_intro",    HologramConfig(Vector(-352.380, 392, -206),     QAngle(0, 0, 0),       true) },
-                { "sp_a2_bts1",            HologramConfig(Vector(1264, -1344, -390),       QAngle(0, 0, 0),       true) },
-                { "sp_a2_bts2",            HologramConfig(Vector(2208, 1896, 688),         QAngle(0, 0, 0),       true) },
-                { "sp_a2_bts3",            HologramConfig(Vector(5952, 4624, -1736),       QAngle(0, 0, 0),       true) },
-                { "sp_a2_bts4",            HologramConfig(Vector(-4080, -7232, 6328),      QAngle(0, 0, 0),       true) },
-                { "sp_a2_bts5",            HologramConfig(Vector(1592.840, 512.986, 4492), QAngle(0, 90, 0),      false) },
-                { "sp_a2_bts6",            HologramConfig(Vector(-2656, -5120, 5228),      QAngle(0, 90, 0),      false) },
-                { "sp_a3_01",              HologramConfig(Vector(6016, 4496, -448),        QAngle(0, 0, 0),       true) },
-                { "sp_a3_portal_intro",    HologramConfig(Vector(3839.990, 348.800, 5674), QAngle(0, 0, 0),       true) },
-                { "sp_a4_laser_platform",  HologramConfig(Vector(3456, -1024, -2480),      QAngle(0, 0, 0),       true) },
-                { "sp_a4_finale1",         HologramConfig(Vector(-12832, -3040, -112),     QAngle(0, 0, 0),       true) },
-                { "sp_a4_finale2",         HologramConfig(Vector(-3152, -1928, -280),      QAngle(0, 0, 0),       true) },
-                { "sp_a4_finale3",         HologramConfig(Vector(-616, 5376, 580),         QAngle(0, 0, 0),       true) }
-            };
+            dictionary staticHolograms = { { "sp_a1_intro1", HologramConfig(Vector(-9728, -2976, -550), QAngle(0, 0, 0), true) }, { "sp_a1_intro2", HologramConfig(Vector(-8448, -4448, -550), QAngle(0, 0, 0), true) }, { "sp_a1_intro4", HologramConfig(Vector(-5504, -4064, -220), QAngle(0, 0, 0), true) }, { "sp_a1_intro5", HologramConfig(Vector(-3904, -3456, -350), QAngle(0, 0, 0), true) }, { "sp_a1_intro6", HologramConfig(Vector(-1024, -3456, -350), QAngle(0, 0, 0), true) }, { "sp_a2_intro", HologramConfig(Vector(192, 128, -90), QAngle(0, 0, 0), true) }, { "sp_a1_intro7", HologramConfig(Vector(-2208, 376, 1280), QAngle(0, 0, 0), true) }, { "sp_a1_wakeup", HologramConfig(Vector(6165, 3456, 904), QAngle(0, -90, 90), false) }, { "sp_a2_turret_intro", HologramConfig(Vector(-352.380, 392, -206), QAngle(0, 0, 0), true) }, { "sp_a2_bts1", HologramConfig(Vector(1264, -1344, -390), QAngle(0, 0, 0), true) }, { "sp_a2_bts2", HologramConfig(Vector(2208, 1896, 688), QAngle(0, 0, 0), true) }, { "sp_a2_bts3", HologramConfig(Vector(5952, 4624, -1736), QAngle(0, 0, 0), true) }, { "sp_a2_bts4", HologramConfig(Vector(-4080, -7232, 6328), QAngle(0, 0, 0), true) }, { "sp_a2_bts5", HologramConfig(Vector(1592.840, 512.986, 4492), QAngle(0, 90, 0), false) }, { "sp_a2_bts6", HologramConfig(Vector(-2656, -5120, 5228), QAngle(0, 90, 0), false) }, { "sp_a3_01", HologramConfig(Vector(6016, 4496, -448), QAngle(0, 0, 0), true) }, { "sp_a3_portal_intro", HologramConfig(Vector(3839.990, 348.800, 5674), QAngle(0, 0, 0), true) }, { "sp_a4_laser_platform", HologramConfig(Vector(3456, -1024, -2480), QAngle(0, 0, 0), true) }, { "sp_a4_finale1", HologramConfig(Vector(-12832, -3040, -112), QAngle(0, 0, 0), true) }, { "sp_a4_finale2", HologramConfig(Vector(-3152, -1928, -280), QAngle(0, 0, 0), true) }, { "sp_a4_finale3", HologramConfig(Vector(-616, 5376, 580), QAngle(0, 0, 0), true) } };
 
             int skin = mapLoc.IsChecked() ? 4 : 0;
 
             if (staticHolograms.exists(currentMap)) {
                 HologramConfig@ cfg = cast<HologramConfig>(staticHolograms[currentMap]);
                 CreateAPHologram(cfg.pos, cfg.ang, 1.0f, null, "", skin, currentMap + "_map_check_holo", cfg.animate);
-            }
-            else if (currentMap == "sp_a3_00") {
+            } else if (currentMap == "sp_a3_00") {
                 CBaseEntity@ shaft = EntityList().FindByName(null, "shaft_section_10");
                 if (shaft !is null) {
                     CreateAPHologram(Vector(0, 0, 350), QAngle(0, 0, 90), 1.5f, shaft, "", skin, "sp_a3_00_map_check_holo", false);
                 }
             }
 
-            // Named Relays (Dynamic Transition Entities)
             string[] transTargets = { "transition_logic_relay", "relay_exit_opened", "elevator_entry_relay", "end_relay" };
             for (uint s = 0; s < transTargets.length(); s++) {
                 CBaseEntity@ t = null;
@@ -135,8 +118,7 @@ class CheckManager {
                 }
             }
         }
-        
-        // --- 2. ELEVATOR MAPS ---
+
         if (!isNonElevatorMap || currentMap == "sp_a2_core" || currentMap == "sp_a1_intro1") {
             int skin = mapLoc.IsChecked() ? 4 : 0;
             CBaseEntity@ tEnt = null;
@@ -148,7 +130,6 @@ class CheckManager {
             }
         }
 
-        // --- 3. MOON HOLOGRAM (sp_a4_finale4) ---
         if (currentMap == "sp_a4_finale4") {
             int skin = mapLoc.IsChecked() ? 4 : 0;
             CBaseEntity@ moon = EntityList().FindByName(null, "sprite_moon_portal"); 
@@ -161,14 +142,12 @@ class CheckManager {
 
     void CreateCompleteLevelAlertHook(string map) {
         g_Archipelago.SetHasPrintedMapComplete(false);
-        
-        // Init logic for maps requiring 2 triggers to complete
+
         if (two_trigger_levels.find(map) >= 0) {
             g_Archipelago.SetTransitionScriptCount(1);
         }
 
-        // Hook anonymous triggers (map specific fixes)
-        array<string> triggerClasses = {"trigger_once", "trigger_multiple"};
+        array<string> triggerClasses = { "trigger_once", "trigger_multiple" };
         for (uint i = 0; i < triggerClasses.length(); i++) {
             CBaseEntity@ tr = null;
             while ((@tr = EntityList().FindByClassname(tr, triggerClasses[i])) !is null) {
@@ -176,11 +155,7 @@ class CheckManager {
                     Vector pos = tr.GetAbsOrigin();
                     bool is_target = false;
 
-                    if (map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 2.0f) is_target = true;
-                    else if (map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 2.0f) is_target = true;
-                    else if (map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 2.0f) is_target = true;
-                    else if (map == "sp_a4_finale1" && pos.DistTo(Vector(-12832, -3040, -112)) < 2.0f) is_target = true;
-                    else if (map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 2.0f) is_target = true;
+                    if (map == "sp_a2_bts3" && pos.DistTo(Vector(5952, 4624, -1736)) < 2.0f) is_target = true; else if (map == "sp_a2_bts4" && pos.DistTo(Vector(-4080, -7232, 6328)) < 2.0f) is_target = true; else if (map == "sp_a2_core" && pos.DistTo(Vector(0, 304, -10438)) < 2.0f) is_target = true; else if (map == "sp_a4_finale1" && pos.DistTo(Vector(-12832, -3040, -112)) < 2.0f) is_target = true; else if (map == "sp_a4_finale2" && pos.DistTo(Vector(-3152, -1928, -240)) < 2.0f) is_target = true;
 
                     if (is_target) {
                         g_Archipelago.SafeAddOutput(tr, "OnStartTouch", "InitCmd", "Command", "PrintMapComplete", 0.0f, -1);
@@ -189,15 +164,12 @@ class CheckManager {
             }
         }
 
-        // Final level handling
         if (map == "sp_a4_finale4") {
             array<CBaseEntity@> relays = FindEntities("ending_relay");
             for (uint i = 0; i < relays.length(); i++) {
                 g_Archipelago.SafeAddOutput(relays[i], "OnTrigger", "InitCmd", "Command", "PrintCompleteNoExit", 0.0f, -1);
             }
-        } 
-        // Non-elevator level handling
-        else if (non_elevator_maps.find(map) >= 0) {
+        } else if (non_elevator_maps.find(map) >= 0) {
             array<CBaseEntity@> logicScripts = FindEntities("@transition_script");
             for (uint i = 0; i < logicScripts.length(); i++) {
                 logicScripts[i].Remove();
@@ -210,28 +182,25 @@ class CheckManager {
                     g_Archipelago.SafeAddOutput(ents[i], "OnTrigger", "InitCmd", "Command", "PrintMapComplete", 0.0f, -1);
                 }
             }
-        } 
-        // Elevator level handling
-        else {
+        } else {
             array<CBaseEntity@> cls = FindEntities("@transition_from_map");
             for (uint i = 0; i < cls.length(); i++) {
                 g_Archipelago.SafeAddOutput(cls[i], "OnTrigger", "InitCmd", "Command", "PrintMapComplete", 0.0f, -1);
             }
-            // Remove exit teleport to prevent premature warps
             g_Archipelago.GetEntityManager().DeleteEntity("@exit_teleport", false);
         }
     }
 
     void PrintMapComplete() {
         if (g_Archipelago.HasPrintedMapComplete()) return;
-        
+
         int transitionCount = g_Archipelago.GetTransitionScriptCount();
         if (transitionCount > 0) {
             g_Archipelago.SetTransitionScriptCount(transitionCount - 1);
             return;
         }
         PrintMapCompleteNoExit();
-        WaitExecute("WarpToMenu", 2.0f, "return_to_menu");
+        g_Archipelago.GetWorkflowManager().WaitExecute("WarpToMenu", 2.0f, "return_to_menu");
     }
 
     void PrintMapCompleteNoExit() {
@@ -248,7 +217,7 @@ class CheckManager {
             Variant v;
             player.FireInput("Disable", v, 0.0f, null, null, 0);
         }
-    
+
         CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
         if (cmd !is null) {
             Variant vFade;
@@ -257,17 +226,8 @@ class CheckManager {
         }
     }
 
-    void SetCheckedMaps(const CommandArgs@ args) {
-        m_checkedMaps.resize(0);
-        for (int i = 1; i < args.ArgC(); i++) {
-            string arg = CleanArg(args.Arg(i));
-            if (arg.length() > 0) {
-                m_checkedMaps.insertLast(arg.tolower());
-                ArchipelagoLog("Completed map registered: '" + arg.tolower() + "'");
-            }
-        }
-        
-        ArchipelagoLog("Checked maps updated (" + m_checkedMaps.length() + " items)");
+    void SetCheckedMaps(const array<string>&in checkedMaps) {
+        m_checkedMaps = checkedMaps;
 
         for (uint i = 0; i < m_activeLocations.length(); i++) {
             MapLocation@ mapLoc = cast<MapLocation>(m_activeLocations[i]);
@@ -284,110 +244,85 @@ class CheckManager {
         string itemPayload = args.Arg(1).tolower();
         string currentMap = g_Archipelago.GetCurrentMap().tolower();
 
-        // 1. Emplacement : Portal Gun 1 (Chambre 03 - sp_a1_intro3)
         if (currentMap == "sp_a1_intro3" && itemPayload.locate("portal_gun_1") != uint(-1)) {
             CBaseEntity@ holo = EntityList().FindByName(null, "intro3_portalgun_holo");
             if (holo !is null) {
                 CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-                if (animHolo !is null) {
-                    animHolo.SetSkin(4); // Skin 4 (Fait)
-                }
+                if (animHolo !is null) animHolo.SetSkin(4);
             }
             return;
         }
 
-        // 2. Emplacement : Portal Gun 2 (Incinerator - sp_a2_intro)
         if (currentMap == "sp_a2_intro" && itemPayload.locate("portal_gun_2") != uint(-1)) {
             CBaseEntity@ holo = EntityList().FindByName(null, "a2_intro_gun_holo");
             if (holo !is null) {
                 CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-                if (animHolo !is null) {
-                    animHolo.SetSkin(4); // Skin 4 (Fait)
-                }
+                if (animHolo !is null) animHolo.SetSkin(4);
             }
             return;
         }
 
-        // 3. Emplacement : PotatOS (Chambre de transition - sp_a3_transition01)
         if (currentMap == "sp_a3_transition01" && itemPayload.locate("potatos") != uint(-1)) {
             CBaseEntity@ holo = EntityList().FindByName(null, "a3_potatos_button_holo");
             if (holo !is null) {
                 CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-                if (animHolo !is null) {
-                    animHolo.SetSkin(4); // Skin 4 (Fait)
-                }
+                if (animHolo !is null) animHolo.SetSkin(4);
             }
             return;
         }
     }
 
     // =============================================================
-    // SECURITY CAMERA CHECKS
+    // SECURITY CAMERA CHECKS (HIGH OPTIMIZATION SINK)
     // =============================================================
 
     private bool MatchPos2D(Vector pos, float targetX, float targetY) {
         float dx = pos.x - targetX;
         float dy = pos.y - targetY;
-        return (dx * dx + dy * dy) < 10000.0f; // tolerance of 100 units
+        return (dx * dx + dy * dy) < 10000.0f;
     }
 
     string GetCameraUniqueID(string map, Vector pos) {
         if (map == "sp_a1_intro3") {
             if (MatchPos2D(pos, -1472.0f, 2528.0f)) return "1";
-        }
-        else if (map == "sp_a1_intro4") {
+        } else if (map == "sp_a1_intro4") {
             if (MatchPos2D(pos, -596.0f, 256.0f)) return "1";
             if (MatchPos2D(pos, 160.0f, 0.0f)) return "2"; 
             if (MatchPos2D(pos, 40.0f, -656.0f)) return "3"; 
-        }
-        else if (map == "sp_a1_intro6") {
+        } else if (map == "sp_a1_intro6") {
             if (MatchPos2D(pos, 464.0f, -256.0f)) return "1";
             if (MatchPos2D(pos, 320.0f, -288.0f)) return "2";
             if (MatchPos2D(pos, 1436.0f, -384.0f)) return "3";
-        }
-        else if (map == "sp_a2_intro") {
+        } else if (map == "sp_a2_intro") {
             if (MatchPos2D(pos, -32.0f, 576.0f)) return "1";
-        }
-        else if (map == "sp_a2_laser_stairs") {
+        } else if (map == "sp_a2_laser_stairs") {
             if (MatchPos2D(pos, 232.0f, -480.0f)) return "1";
-        }
-        else if (map == "sp_a2_dual_lasers") {
+        } else if (map == "sp_a2_dual_lasers") {
             if (MatchPos2D(pos, 122.0f, 352.0f)) return "1";
-        }
-        else if (map == "sp_a2_catapult_intro") {
+        } else if (map == "sp_a2_catapult_intro") {
             if (MatchPos2D(pos, -224.0f, 864.0f)) return "1";
             if (MatchPos2D(pos, 96.0f, -1440.0f)) return "2";
-        }
-        else if (map == "sp_a2_fizzler_intro") {
+        } else if (map == "sp_a2_fizzler_intro") {
             if (MatchPos2D(pos, 368.0f, 96.0f)) return "1";
-        }
-        else if (map == "sp_a2_bridge_intro") {
+        } else if (map == "sp_a2_bridge_intro") {
             if (MatchPos2D(pos, 280.0f, -896.0f)) return "1";
-        }
-        else if (map == "sp_a2_bridge_the_gap") {
+        } else if (map == "sp_a2_bridge_the_gap") {
             if (MatchPos2D(pos, -448.0f, -32.0f)) return "1";
-        }
-        else if (map == "sp_a2_turret_intro") {
+        } else if (map == "sp_a2_turret_intro") {
             if (MatchPos2D(pos, 576.0f, -1415.0f)) return "1";
             if (MatchPos2D(pos, 1152.0f, -296.0f)) return "2";
-        }
-        else if (map == "sp_a2_laser_relays") {
+        } else if (map == "sp_a2_laser_relays") {
             if (MatchPos2D(pos, -704.0f, -1014.0f)) return "1";
-        }
-        else if (map == "sp_a2_turret_blocker") {
+        } else if (map == "sp_a2_turret_blocker") {
             if (MatchPos2D(pos, -302.0f, 384.0f)) return "1";
             if (MatchPos2D(pos, 336.0f, 640.0f)) return "2";
-        }
-        else if (map == "sp_a2_laser_vs_turret") {
+        } else if (map == "sp_a2_laser_vs_turret") {
             if (MatchPos2D(pos, 384.0f, -288.0f)) return "1";
-        }
-        else if (map == "sp_a2_pull_the_rug") {
+        } else if (map == "sp_a2_pull_the_rug") {
             if (MatchPos2D(pos, 320.0f, -160.0f)) return "1";
-        }
-        else if (map == "sp_a2_laser_chaining") {
+        } else if (map == "sp_a2_laser_chaining") {
             if (MatchPos2D(pos, -384.0f, -480.0f)) return "1";
-        }
-        else if (map == "sp_a2_triple_laser") {
+        } else if (map == "sp_a2_triple_laser") {
             if (MatchPos2D(pos, 7456.0f, -5998.0f)) return "1";
         }
         return "unk";
@@ -397,60 +332,53 @@ class CheckManager {
         string currentMap = g_Archipelago.GetCurrentMap();
         if (currentMap == "unknown") return;
 
-        // Reset tracking states for the cameras
-        for (int i = 0; i < util::GetMaxEntities(); i++) {
-            m_cameraFallingDetected[i] = false;
-            m_cameraInitialPositions[i] = Vector(0, 0, 0);
-            m_cameraIdentifiers[i] = "";
+        for (int i = int(m_activeLocations.length()) - 1; i >= 0; i--) {
+            CameraLocation@ camLoc = cast<CameraLocation>(m_activeLocations[i]);
+            if (camLoc !is null) {
+                m_activeLocations.removeAt(i);
+            }
+        }
+
+        // Map change configuration refresh
+        if (currentMap != m_lastCameraMap) {
+            m_lastCameraMap = currentMap;
+            m_trackedCameras.resize(0); // Wipe the old level tracking cache entirely
         }
 
         CBaseEntity@ camera = null;
         while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) !is null) {
-            int entIndex = camera.GetEntityIndex();
             Vector camPos = camera.GetAbsOrigin();
-
             string camID = GetCameraUniqueID(currentMap, camPos);
             if (camID == "unk") continue;
 
             string camIdentifier = currentMap + "_" + camID;
-            m_cameraInitialPositions[entIndex] = camPos;
-            m_cameraIdentifiers[entIndex] = camIdentifier;
+            bool isChecked = (m_checkedCameras.find(camIdentifier.tolower()) != -1);
 
-            QAngle camAng = camera.GetAbsAngles();
-
+            // Compute Visual transforms exactly once
             float holoScale = 0.6f;
-            float forwardOffset = 35.0f;
-            float rightOffset = 0.0f;
-            float upOffset = -15.0f;
-
-            float pitchOffset = 90.0f;
-            float yawOffset = 0.0f;
-            float rollOffset = 0.0f;
-
-            Vector forwardVec = AnglesToForward(camAng);
-            Vector rightVec = AnglesToRight(camAng);
-            Vector upVec = AnglesToUp(camAng);
-
-            Vector finalPos = camPos + (forwardVec * forwardOffset) + (rightVec * rightOffset) + (upVec * upOffset);
-            QAngle finalAng(camAng.x + pitchOffset, camAng.y + yawOffset, camAng.z + rollOffset);
+            QAngle baseAng = camera.GetAbsAngles();
+            Vector finalPos = camPos + (AnglesToForward(baseAng) * 35.0f) + (AnglesToUp(baseAng) * -15.0f);
+            QAngle finalAng(baseAng.x + 90.0f, baseAng.y, baseAng.z);
 
             CameraLocation@ camLoc = CameraLocation(camIdentifier, finalPos, finalAng, holoScale);
-            bool isChecked = (m_checkedCameras.find(camIdentifier.tolower()) != -1);
             camLoc.SetChecked(isChecked);
-
             m_activeLocations.insertLast(@camLoc);
+
+            // ONLY track the live handles of uncompleted checks
+            if (!isChecked) {
+                m_trackedCameras.insertLast(TrackedCamera(camera, camIdentifier));
+            }
         }
 
-        // Setup the tracking timer for physics checks
+        if (m_trackedCameras.length() == 0) return; // No camera to check, avoid spinning up timer
+
         CBaseEntity@ existingTimer = EntityList().FindByName(null, "archipelago_camera_timer");
         if (existingTimer is null) {
             CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
             if (timer !is null) {
                 timer.KeyValue("targetname", "archipelago_camera_timer");
-                timer.KeyValue("RefireTime", "0.05");
-                
-                string payload = "InitCmd\x1BCommand\x1BCheckCameraPhysicsTick\x1B0\x1B-1";
-                timer.KeyValue("OnTimer", payload);
+                timer.KeyValue("RefireTime", "0.1"); // Reduced frequency overhead (10Hz)
+                timer.KeyValue("OnTimer", "InitCmd\x1BCommand\x1BCheckCameraPhysicsTick\x1B0\x1B-1");
                 timer.Spawn();
 
                 Variant empty;
@@ -460,16 +388,37 @@ class CheckManager {
     }
 
     void CheckCameraPhysicsTick() {
-        CBaseEntity@ camera = null;
-        while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) !is null) {
-            int entIndex = camera.GetEntityIndex();
-            if (m_cameraFallingDetected[entIndex] || m_cameraIdentifiers[entIndex] == "") continue;
+        uint trackingCount = m_trackedCameras.length();
+        if (trackingCount == 0) {
+            // No more cameras to monitor on this level. Tear down tracking timer gracefully.
+            CBaseEntity@ existingTimer = EntityList().FindByName(null, "archipelago_camera_timer");
+            if (existingTimer !is null) existingTimer.Remove();
+            return;
+        }
+
+        for (int i = int(trackingCount) - 1; i >= 0; i--) {
+            CBaseEntity@ camera = m_trackedCameras[i].handle.Get();
+            
+            // Safe removal check if entity dropped out of game table bounds
+            if (camera is null) {
+                m_trackedCameras.removeAt(i);
+                continue;
+            }
+
+            string identifier = m_trackedCameras[i].identifier;
+
+            // Checked externally on Archipelago server? Pop tracker handle.
+            if (m_checkedCameras.find(identifier.tolower()) != -1) {
+                m_trackedCameras.removeAt(i);
+                continue;
+            }
 
             bool isPhysicsMove = (camera.GetMoveType() == MOVETYPE_VPHYSICS);
             Vector vel = camera.GetAbsVelocity();
             IPhysicsObject@ physObj = camera.GetPhysicsObject();
+
             if (physObj !is null) {
-                physObj.Wake();
+                // EXTREMELY IMPORTANT: We do not call Wake(). If the camera sleeps, its velocity is zero.
                 Vector physVel, physAngVel;
                 physObj.GetVelocity(physVel, physAngVel);
                 if (physVel.LengthSqr() > vel.LengthSqr()) {
@@ -477,9 +426,10 @@ class CheckManager {
                 }
             }
 
+            // Evaluation threshold parameters
             if ((isPhysicsMove && vel.z < -5.0f) || vel.z < -20.0f) {
-                m_cameraFallingDetected[entIndex] = true;
-                Msgl("camera_knocked:" + m_cameraIdentifiers[entIndex]);
+                Msgl("camera_knocked:" + identifier);
+                m_trackedCameras.removeAt(i); // Stop listening to this specific handle instantly
             }
         }
     }
@@ -532,14 +482,7 @@ class CheckManager {
 
     void RunButtonScenarioCheck(string buttonName) {
         buttonName = buttonName.trim();
-        if (buttonName == "rd1") ArchipelagoLog("button_check:Ratman Den 1");
-        else if (buttonName == "rd2") ArchipelagoLog("button_check:Ratman Den 2");
-        else if (buttonName == "rd3") ArchipelagoLog("button_check:Ratman Den 3");
-        else if (buttonName == "rd4") ArchipelagoLog("button_check:Ratman Den 4");
-        else if (buttonName == "rd5") ArchipelagoLog("button_check:Ratman Den 5");
-        else if (buttonName == "rd6") ArchipelagoLog("button_check:Ratman Den 6");
-        else if (buttonName == "rd7") ArchipelagoLog("button_check:Ratman Den 7");
-        else ArchipelagoLog("button_check:unknown_" + buttonName);
+        if (buttonName == "rd1") ArchipelagoLog("button_check:Ratman Den 1"); else if (buttonName == "rd2") ArchipelagoLog("button_check:Ratman Den 2"); else if (buttonName == "rd3") ArchipelagoLog("button_check:Ratman Den 3"); else if (buttonName == "rd4") ArchipelagoLog("button_check:Ratman Den 4"); else if (buttonName == "rd5") ArchipelagoLog("button_check:Ratman Den 5"); else if (buttonName == "rd6") ArchipelagoLog("button_check:Ratman Den 6"); else if (buttonName == "rd7") ArchipelagoLog("button_check:Ratman Den 7"); else ArchipelagoLog("button_check:unknown_" + buttonName);
     }
 
     void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale, int skin = 0) {
@@ -556,7 +499,7 @@ class CheckManager {
         while ((@entCheck = EntityList().FindInSphere(entCheck, position, 24.0f)) !is null) {
             string cls = entCheck.GetClassname();
             string entName = entCheck.GetEntityName();
-            
+        
             if (entName == scenarioName + "_model") {
                 if (is_pressed == 1) {
                     CBaseAnimating@ animBody = cast<CBaseAnimating>(entCheck);
@@ -568,7 +511,7 @@ class CheckManager {
                         brainEnt.KeyValue("m_bLocked", 1);
                         brainEnt.KeyValue("spawnflags", "3073");
                     }
-                    
+                
                     CBaseEntity@ holo = null;
                     while ((@holo = EntityList().FindByClassname(holo, "prop_dynamic")) !is null) {
                         if (holo.GetMoveParent() is entCheck && holo.GetEntityName() == holoName) {
@@ -580,7 +523,7 @@ class CheckManager {
                 }
                 return;
             }
-            
+        
             if (cls.locate("button") != uint(-1) || cls.locate("switch") != uint(-1) || cls.locate("dynamic") != uint(-1)) {
                 entsToRemove.insertLast(entCheck); 
             }
@@ -596,12 +539,11 @@ class CheckManager {
         if (body !is null) {
             body.KeyValue("targetname", scenarioName + "_model");
             body.SetModel("models/props/switch001.mdl");
-            body.SolidToModel();
             body.KeyValue("solid", "6");
             body.SetAbsOrigin(position);
             body.SetAbsAngles(angle);
             body.Spawn();
-            
+        
             if (is_pressed == 1) {
                 CBaseAnimating@ animBody = cast<CBaseAnimating>(body);
                 if (animBody !is null) {
@@ -633,7 +575,7 @@ class CheckManager {
         CBaseEntity@ brain = util::CreateEntityByName("func_rot_button");
         if (brain !is null) {
             brain.KeyValue("targetname", scenarioName);
-            
+        
             int spawnFlags = 1025;
             if (is_pressed == 1) spawnFlags += 2048;
             brain.KeyValue("spawnflags", "" + spawnFlags);
@@ -652,7 +594,7 @@ class CheckManager {
             brain.Spawn();
             brain.SetParent(body, -1);
             brain.SetLocalOrigin(Vector(0, 0, 0)); 
-            
+        
             if (is_pressed == 1) {
                 brain.KeyValue("m_bLocked", 1);
             }
@@ -683,8 +625,15 @@ class CheckManager {
     }
 
     void AddVitrifiedDoorChecks(string mapName) {
+        for (int i = int(m_activeLocations.length()) - 1; i >= 0; i--) {
+            VitrifiedDoorLocation@ doorLoc = cast<VitrifiedDoorLocation>(m_activeLocations[i]);
+            if (doorLoc !is null) {
+                m_activeLocations.removeAt(i);
+            }
+        }
+
         InitVitrifiedDoorRegistry();
-    
+        
         array<string>@ keys = m_vitrifiedDoorNames.getKeys();
         for (uint i = 0; i < keys.length(); i++) {
             string key = keys[i];
@@ -706,12 +655,7 @@ class CheckManager {
                 }
                 if (ent !is null) {
                     int doorIndex = 0;
-                    if (checkName.locate("Vitrified Door 1") != uint(-1)) doorIndex = 1;
-                    else if (checkName.locate("Vitrified Door 2") != uint(-1)) doorIndex = 2;
-                    else if (checkName.locate("Vitrified Door 3") != uint(-1)) doorIndex = 3;
-                    else if (checkName.locate("Vitrified Door 4") != uint(-1)) doorIndex = 4;
-                    else if (checkName.locate("Vitrified Door 5") != uint(-1)) doorIndex = 5;
-                    else if (checkName.locate("Vitrified Door 6") != uint(-1)) doorIndex = 6;
+                    if (checkName.locate("Vitrified Door 1") != uint(-1)) doorIndex = 1; else if (checkName.locate("Vitrified Door 2") != uint(-1)) doorIndex = 2; else if (checkName.locate("Vitrified Door 3") != uint(-1)) doorIndex = 3; else if (checkName.locate("Vitrified Door 4") != uint(-1)) doorIndex = 4; else if (checkName.locate("Vitrified Door 5") != uint(-1)) doorIndex = 5; else if (checkName.locate("Vitrified Door 6") != uint(-1)) doorIndex = 6;
 
                     g_Archipelago.SafeAddOutput(ent, "OnPressed", "InitCmd", "Command", "PrintItem " + checkName, 0.0f, 1);
                 
@@ -720,7 +664,6 @@ class CheckManager {
                     }
                     g_Archipelago.SafeAddOutput(ent, "OnPressed", entName + "_holo", "Skin", "4", 0.0f, 1);
                 
-                    // Visuals Override computation
                     Vector hPos(0, 0, 0);
                     QAngle hAng(0, 0, 0);
                     int hSkin = 0;
@@ -769,16 +712,20 @@ class CheckManager {
     void InitMonitorData() {
         if (!m_screenNames.isEmpty()) return;
 
-        dictionary sp_a4_tb_intro; sp_a4_tb_intro.set("monitor1-relay_break", "sp_a4_tb_intro");
+        dictionary sp_a4_tb_intro;
+        sp_a4_tb_intro.set("monitor1-relay_break", "sp_a4_tb_intro");
         m_screenNames.set("sp_a4_tb_intro", sp_a4_tb_intro);
 
-        dictionary sp_a4_tb_trust_drop; sp_a4_tb_trust_drop.set("monitor1-relay_break", "sp_a4_tb_trust_drop");
+        dictionary sp_a4_tb_trust_drop;
+        sp_a4_tb_trust_drop.set("monitor1-relay_break", "sp_a4_tb_trust_drop");
         m_screenNames.set("sp_a4_tb_trust_drop", sp_a4_tb_trust_drop);
 
-        dictionary sp_a4_tb_wall_button; sp_a4_tb_wall_button.set("wheatley_monitor-relay_break", "sp_a4_tb_wall_button");
+        dictionary sp_a4_tb_wall_button;
+        sp_a4_tb_wall_button.set("wheatley_monitor-relay_break", "sp_a4_tb_wall_button");
         m_screenNames.set("sp_a4_tb_wall_button", sp_a4_tb_wall_button);
 
-        dictionary sp_a4_tb_polarity; sp_a4_tb_polarity.set("monitor1-relay_break", "sp_a4_tb_polarity");
+        dictionary sp_a4_tb_polarity;
+        sp_a4_tb_polarity.set("monitor1-relay_break", "sp_a4_tb_polarity");
         m_screenNames.set("sp_a4_tb_polarity", sp_a4_tb_polarity);
 
         dictionary sp_a4_tb_catch; 
@@ -786,26 +733,39 @@ class CheckManager {
         sp_a4_tb_catch.set("monitor2-relay_break", "sp_a4_tb_catch 2");
         m_screenNames.set("sp_a4_tb_catch", sp_a4_tb_catch);
 
-        dictionary sp_a4_stop_the_box; sp_a4_stop_the_box.set("wheatley_monitor-relay_break", "sp_a4_stop_the_box");
+        dictionary sp_a4_stop_the_box;
+        sp_a4_stop_the_box.set("wheatley_monitor-relay_break", "sp_a4_stop_the_box");
         m_screenNames.set("sp_a4_stop_the_box", sp_a4_stop_the_box);
 
-        dictionary sp_a4_laser_catapult; sp_a4_laser_catapult.set("wheatley_monitor_1-relay_break", "sp_a4_laser_catapult");
+        dictionary sp_a4_laser_catapult;
+        sp_a4_laser_catapult.set("wheatley_monitor_1-relay_break", "sp_a4_laser_catapult");
         m_screenNames.set("sp_a4_laser_catapult", sp_a4_laser_catapult);
 
-        dictionary sp_a4_laser_platform; sp_a4_laser_platform.set("wheatley_monitor_1-relay_break", "sp_a4_laser_platform");
+        dictionary sp_a4_laser_platform;
+        sp_a4_laser_platform.set("wheatley_monitor_1-relay_break", "sp_a4_laser_platform");
         m_screenNames.set("sp_a4_laser_platform", sp_a4_laser_platform);
 
-        dictionary sp_a4_speed_tb_catch; sp_a4_speed_tb_catch.set("wheatley_monitor-relay_break", "sp_a4_speed_tb_catch");
+        dictionary sp_a4_speed_tb_catch;
+        sp_a4_speed_tb_catch.set("wheatley_monitor-relay_break", "sp_a4_speed_tb_catch");
         m_screenNames.set("sp_a4_speed_tb_catch", sp_a4_speed_tb_catch);
 
-        dictionary sp_a4_jump_polarity; sp_a4_jump_polarity.set("wheatley_monitor_1-relay_break", "sp_a4_jump_polarity");
+        dictionary sp_a4_jump_polarity;
+        sp_a4_jump_polarity.set("wheatley_monitor_1-relay_break", "sp_a4_jump_polarity");
         m_screenNames.set("sp_a4_jump_polarity", sp_a4_jump_polarity);
 
-        dictionary sp_a4_finale3; sp_a4_finale3.set("wheatley_screen-relay_break", "sp_a4_finale3");
+        dictionary sp_a4_finale3;
+        sp_a4_finale3.set("wheatley_screen-relay_break", "sp_a4_finale3");
         m_screenNames.set("sp_a4_finale3", sp_a4_finale3);
     }
 
     void AddWheatleyMonitorBreakCheck() {
+        for (int i = int(m_activeLocations.length()) - 1; i >= 0; i--) {
+            MonitorLocation@ monLoc = cast<MonitorLocation>(m_activeLocations[i]);
+            if (monLoc !is null) {
+                m_activeLocations.removeAt(i);
+            }
+        }
+
         InitMonitorData(); 
 
         string mapName = g_Archipelago.GetCurrentMap();
@@ -828,12 +788,10 @@ class CheckManager {
                 string checkName;
                 mapScreens.get(name, checkName);
 
-                // Setup the outputs when screen breaks
                 string scriptCode = "printl(\"monitor_break:" + checkName + "\")";
                 string payloadPrint = "worldspawn\x1BRunScriptCode\x1B" + scriptCode + "\x1B0\x1B-1";
                 relay.KeyValue("OnTrigger", payloadPrint);
 
-                // Add delay of 0.1s to allow particle animations or outputs to process
                 string payloadWarp = "InitCmd\x1BCommand\x1BWarpMonitor " + checkName + "\x1B0.1\x1B-1";
                 relay.KeyValue("OnTrigger", payloadWarp);
 
@@ -849,22 +807,14 @@ class CheckManager {
                 }
 
                 QAngle angles = relay.GetAbsAngles();
-                float forwardOffset = 0.0f; 
-                float rightOffset = -20.0f;
-                float upOffset = 50.0f;
-
-                Vector forwardVec = AnglesToForward(angles);
-                Vector rightVec = AnglesToRight(angles);
-                Vector upVec = AnglesToUp(angles);
-
-                Vector finalPos = relay.GetAbsOrigin() + (forwardVec * forwardOffset) + (rightVec * rightOffset) + (upVec * upOffset);
+                Vector finalPos = relay.GetAbsOrigin() + (AnglesToRight(angles) * -20.0f) + (AnglesToUp(angles) * 50.0f);
                 CreateAPHologram(finalPos, angles, 1.0f, null, "", skin, name + "_holo");
 
                 MonitorLocation@ monLoc = MonitorLocation(checkName, name);
                 bool isChecked = (m_checkedScreens.find(checkName) != -1);
                 monLoc.SetChecked(isChecked);
                 m_activeLocations.insertLast(@monLoc);
-                
+            
                 ArchipelagoLog("Attached monitor check '" + checkName + "' to relay '" + name + "'");
             }
         }

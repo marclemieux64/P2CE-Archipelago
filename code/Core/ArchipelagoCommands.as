@@ -1,8 +1,9 @@
 // =============================================================
-// ARCHIPELAGO SERVER COMMANDS
+// ARCHIPELAGO SERVER COMMANDS (OOP VERSION)
 // =============================================================
 
-// This file is used to declare server commands so python can call them via the netcon
+// This file declares server commands so the Python client can trigger them.
+// All commands are registered as global functions and delegate to g_Archipelago.
 
 // --- Helper Functions ---
 string CleanArg(const string&in arg) {
@@ -16,60 +17,70 @@ string CleanArg(const string&in arg) {
 [ServerCommand("RunDelayedInit", "Internal - Runs the delayed initialization sequence")]
 void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Msgl("=====Archipelago=====");
-    Archipelago::UpdateInternalMapName();
-    if (Archipelago::current_map == "unknown" || Archipelago::current_map == "") {
+    Archipelago::g_Archipelago.UpdateInternalMapName();
+    string currentMap = Archipelago::g_Archipelago.GetCurrentMap();
+    if (currentMap == "unknown" || currentMap == "") {
         Archipelago::ArchipelagoLog("DelayedInit: Map name unknown, skipping.");
         return;
     }
     // Reset Effect of trap, gpotatos mute, and make sure the console will output text correctly
-    Archipelago::ResetPersistentSystems();
+    Archipelago::g_Archipelago.ResetPersistentSystems();
     Msgl("Archipelago::ResetPersistentSystems() completed");
-    Archipelago::DoMapSpecificSetup();
+    Archipelago::g_Archipelago.GetWorkflowManager().DoMapSpecificSetup();
     Msgl("DoMapSpecificSetup() completed");
     // Set level transition trigger to output completion message
-    Archipelago::CreateCompleteLevelAlertHook(Archipelago::current_map);
+    Archipelago::g_Archipelago.GetCheckManager().CreateCompleteLevelAlertHook(currentMap);
     Msgl("CreateCompleteLevelAlertHook() completed");
-    Archipelago::CreateMapSpecificHolos();
+    Archipelago::g_Archipelago.GetHologramManager().CreateMapSpecificHolos();
     Msgl("CreateMapSpecificHolos() completed");
     // Spawn the module to detect player death used for deathlink
-    Archipelago::AttachDeathTrigger();
+    Archipelago::g_Archipelago.GetWorkflowManager().AttachDeathTrigger();
     Msgl("AttachDeathTrigger() completed");
     // Check if we show the Map status HUD
     ConVarRef showHUDConVar("ap_show_map_status_hud");
     int hudMode = (showHUDConVar.IsValid()) ? showHUDConVar.GetInt() : 0;
     // Tell panorama the current map
-    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + Archipelago::current_map + "|" + hudMode + "\")");
+    Archipelago::g_Archipelago.CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + currentMap + "|" + hudMode + "\")");
     Msgl("SendToPanorama() completed with HUD Mode: " + hudMode);
     // Invoke the elevator ride skip module (module manages the activation of it)
-    Archipelago::SkipElevatorRide();
+    Archipelago::g_Archipelago.GetWorkflowManager().SkipElevatorRide();
     Msgl("SkipElevatorRide() completed");
-    Archipelago::ArchipelagoLog("DelayedInit complete for: " + Archipelago::current_map);
+    Archipelago::ArchipelagoLog("DelayedInit complete for: " + currentMap);
     Msgl("=====================");
 }
-
-[ServerCommand("RefreshMapName", "Forces a map name update to Panorama")]
-void RefreshMapNameLegacyCmd(const CommandArgs@ args) {
-    Archipelago::current_map = "";
-    Archipelago::UpdateInternalMapName();
-}
-
 // =============================================================
 // --- CHECK ---
 // =============================================================
 
 [ServerCommand("AddWheatleyMonitorBreakCheck", "Runs the automatic monitor check logic")]
 void AddWheatleyMonitorBreakCheckCmd(const CommandArgs@ args) {
-    Archipelago::AddWheatleyMonitorBreakCheck();
+    Archipelago::g_Archipelago.GetCheckManager().AddWheatleyMonitorBreakCheck();
 }
 
 [ServerCommand("PrintMapComplete", "Print Map Completion")]
 void PrintMapCompleteCmd(const CommandArgs@ args) {
-    Archipelago::PrintMapComplete();
+    Archipelago::g_Archipelago.GetCheckManager().PrintMapComplete();
 }
 
 [ServerCommand("PrintCompleteNoExit", "Prints completion without warping (used for final 4)")]
 void PrintCompleteNoExitLegacyCmd(const CommandArgs@ args) {
-    Archipelago::PrintMapCompleteNoExit();
+    Archipelago::g_Archipelago.GetCheckManager().PrintMapCompleteNoExit();
+}
+
+[ServerCommand("SetCheckedMaps", "Updates the list of completed maps and updates map check holograms")]
+void SetCheckedMapsCmd(const CommandArgs@ args) {
+    array<string> checkedMaps;
+
+    for (int i = 1; i < args.ArgC(); i++) {
+        string arg = CleanArg(args.Arg(i));
+        if (arg.length() > 0) {
+            checkedMaps.insertLast(arg.tolower());
+            Archipelago::ArchipelagoLog("AP DEBUG: Completed map registered -> '" + arg.tolower() + "'");
+        }
+    }
+
+    Archipelago::ArchipelagoLog("AP: Checked maps updated (" + checkedMaps.length() + " items)");
+    Archipelago::g_Archipelago.GetCheckManager().SetCheckedMaps(checkedMaps);
 }
 
 [ServerCommand("SetCheckedButtons", "Updates the list of checked buttons")]
@@ -85,13 +96,13 @@ void SetCheckedButtonsCmd(const CommandArgs@ args) {
     }
     
     Archipelago::ArchipelagoLog("AP: Checked buttons updated (" + checkedButtons.length() + " items)");
-    Archipelago::SetCheckedButtons(checkedButtons);
+    Archipelago::g_Archipelago.GetCheckManager().SetCheckedButtons(checkedButtons);
 }
 
 [ServerCommand("ReportAPButton", "Logs a custom AP button press")]
 void ReportAPButtonLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    Archipelago::RunButtonScenarioCheck(args.Arg(1));
+    Archipelago::g_Archipelago.GetCheckManager().RunButtonScenarioCheck(args.Arg(1));
 }
 
 [ServerCommand("CreateAPButton", "Legacy CreateAPButton command")]
@@ -103,7 +114,7 @@ void CreateAPButtonLegacyCmd(const CommandArgs@ args) {
     float scale = (args.ArgC() > 8) ? args.Arg(8).toFloat() : 1.0f;
     int skin = (args.ArgC() > 9) ? args.Arg(9).toInt() : 0;
     
-    Archipelago::CreateAPButton(name, pos, ang, scale, skin);
+    Archipelago::g_Archipelago.GetCheckManager().CreateAPButton(name, pos, ang, scale, skin);
 }
 
 [ServerCommand("ArchipelagoVitrifiedFound", "Internal - Updates the local vitrified door bitmask")]
@@ -124,8 +135,8 @@ void ArchipelagoVitrifiedFoundLegacyCmd(const CommandArgs@ args) {
     Archipelago::ArchipelagoLog("[AP] Vitrified Door Found: " + index + " | New Bitmask: " + newBitmask);
 
     string checkName = "Vitrified Door " + index;
-    if (Archipelago::checked_vitrified_doors.find(checkName) == -1) {
-        Archipelago::checked_vitrified_doors.insertLast(checkName);
+    if (Archipelago::g_Archipelago.GetCheckManager().GetCheckedVitrifiedDoors().find(checkName) == -1) {
+        Archipelago::g_Archipelago.GetCheckManager().GetCheckedVitrifiedDoors().insertLast(checkName);
     }
 }
 
@@ -138,12 +149,12 @@ void SetVitrifiedStatusCmd(const CommandArgs@ args) {
             checkedDoors.insertLast(arg);
         }
     }
-    Archipelago::SetVitrifiedStatus(checkedDoors);
+    Archipelago::g_Archipelago.GetCheckManager().SetVitrifiedStatus(checkedDoors);
 }
 
 [ServerCommand("AddCameraCheck", "Runs the automatic camera check logic")]
 void AddCameraCheckCmd(const CommandArgs@ args) {
-    Archipelago::AddCameraCheck();
+    Archipelago::g_Archipelago.GetCheckManager().AddCameraCheck();
 }
 
 [ServerCommand("SetCheckedCameras", "Updates the list of checked cameras")]
@@ -159,7 +170,7 @@ void SetCheckedCamerasCmd(const CommandArgs@ args) {
     }
     
     Archipelago::ArchipelagoLog("AP: Checked cameras updated (" + checkedCameras.length() + " items)");
-    Archipelago::SetCheckedCameras(checkedCameras);
+    Archipelago::g_Archipelago.GetCheckManager().SetCheckedCameras(checkedCameras);
 }
 
 [ServerCommand("SetCheckedScreens", "Updates the list of checked monitors")]
@@ -184,51 +195,12 @@ void SetCheckedScreensCmd(const CommandArgs@ args) {
     }
     
     Archipelago::ArchipelagoLog("AP: Checked screens updated (" + checkedScreens.length() + " items)");
-    Archipelago::SetCheckedScreens(checkedScreens);
+    Archipelago::g_Archipelago.GetCheckManager().SetCheckedScreens(checkedScreens);
 }
 
 [ServerCommand("SetCheckedPickup", "Disables or hides physical items if already checked in Archipelago")]
 void SetCheckedPickupCmd(const CommandArgs@ args) {
-    if (args.ArgC() < 2) return;
-
-    string itemPayload = args.Arg(1).tolower();
-    string currentMap = Archipelago::current_map.tolower();
-
-    // 1. Emplacement : Portal Gun 1 (Chambre 03 - sp_a1_intro3)
-    if (currentMap == "sp_a1_intro3" && itemPayload.locate("portal_gun_1") != uint(-1)) {
-        CBaseEntity@ holo = EntityList().FindByName(null, "intro3_portalgun_holo");
-        if (holo !is null) {
-            CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-            if (animHolo !is null) {
-                animHolo.SetSkin(4); // Skin 4 (Fait)
-            }
-        }
-        return;
-    }
-
-    // 2. Emplacement : Portal Gun 2 (Incinerator - sp_a2_intro)
-    if (currentMap == "sp_a2_intro" && itemPayload.locate("portal_gun_2") != uint(-1)) {
-        CBaseEntity@ holo = EntityList().FindByName(null, "a2_intro_gun_holo");
-        if (holo !is null) {
-            CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-            if (animHolo !is null) {
-                animHolo.SetSkin(4); // Skin 4 (Fait)
-            }
-        }
-        return;
-    }
-
-    // 3. Emplacement : PotatOS (Chambre de transition - sp_a3_transition01)
-    if (currentMap == "sp_a3_transition01" && itemPayload.locate("potatos") != uint(-1)) {
-        CBaseEntity@ holo = EntityList().FindByName(null, "a3_potatos_button_holo");
-        if (holo !is null) {
-            CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-            if (animHolo !is null) {
-                animHolo.SetSkin(4); // Skin 4 (Fait)
-            }
-        }
-        return;
-    }
+    Archipelago::g_Archipelago.GetCheckManager().SetCheckedPickup(args);
 }
 
 // =============================================================
@@ -238,13 +210,13 @@ void SetCheckedPickupCmd(const CommandArgs@ args) {
 [ServerCommand("AddTractorBeamFrame", "AddButtonFrame command")]
 void AddTractorBeamFrameLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    Archipelago::AddTractorBeamFrame(args.Arg(1));
+    Archipelago::g_Archipelago.GetEntityManager().AddTractorBeamFrame(args.Arg(1));
 }
 
 [ServerCommand("DeleteCoreOnOutput", "DeleteCoreOnOutput command")]
 void DeleteCoreOnOutputLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
-    Archipelago::DeleteCoreOnOutput(args.Arg(1), args.Arg(2), args.Arg(3));
+    Archipelago::g_Archipelago.GetEntityManager().DeleteCoreOnOutput(args.Arg(1), args.Arg(2), args.Arg(3));
 }
 
 [ServerCommand("DeleteEntity", "DeleteEntity command")]
@@ -253,26 +225,26 @@ void DeleteEntityLegacyCmd(const CommandArgs@ args) {
     string target = args.Arg(1);
     bool create_holo = (args.ArgC() > 2) ? (args.Arg(2) == "1") : true;
     Archipelago::ArchipelagoLog("[AP RECV] DeleteEntity: " + target + " (holo: " + create_holo + ")");
-    Archipelago::DeleteEntity(target, create_holo);
+    Archipelago::g_Archipelago.GetEntityManager().DeleteEntity(target, create_holo);
 }
 
 [ServerCommand("DeleteEntityHolo", "Version compacte sans espace pour les déclencheurs")]
 void DeleteEntityHoloCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
     string target = args.Arg(1);
-    Archipelago::DeleteEntity(target, true);
+    Archipelago::g_Archipelago.GetEntityManager().DeleteEntity(target, true);
 }
 
 [ServerCommand("DisableEntityPhysics", "DisableEntityPhysics command")]
 void DisableEntityPhysicsLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    Archipelago::DisableEntityPhysics(args.Arg(1));
+    Archipelago::g_Archipelago.GetEntityManager().DisableEntityPhysics(args.Arg(1));
 }
 
 [ServerCommand("DisableEntityPickup", "DisableEntityPickup command")]
 void DisableEntityPickupLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    Archipelago::DisableEntityPickup(args.Arg(1));
+    Archipelago::g_Archipelago.GetEntityManager().DisableEntityPickup(args.Arg(1));
 }
 
 [ServerCommand("MakeFaithPlateFaulty", "MakeFaithPlateFaulty command")]
@@ -285,7 +257,7 @@ void MakeFaithPlateFaultyLegacyCmd(const CommandArgs@ args) {
     CBaseEntity@ target = EntityList().FindByName(null, entName);
     if (target is null) @target = EntityList().FindByClassname(null, entName);
     if (target !is null) {
-        Archipelago::MakeFaithPlateFaulty(target);
+        Archipelago::g_Archipelago.GetEntityManager().MakeFaithPlateFaulty(target);
     }
 }
 
@@ -294,13 +266,13 @@ void MakeFaithPlateFaultyLegacyCmd(const CommandArgs@ args) {
 [ServerCommand("AddButtonFrame", "AddButtonFrame command")]
 void AddButtonFrameLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    Archipelago::AddButtonFrame(args.Arg(1));
+    Archipelago::g_Archipelago.GetEntityManager().AddButtonFrame(args.Arg(1));
 }
 
 [ServerCommand("AddFloorButtonFrame", "AddFloorButtonFrame command")]
 void AddFloorButtonFrameLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    Archipelago::AddFloorButtonFrame(args.Arg(1));
+    Archipelago::g_Archipelago.GetEntityManager().AddFloorButtonFrame(args.Arg(1));
 }
 
 // --- GEL ---
@@ -310,7 +282,7 @@ void CreateClearGelLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
     float offset = (args.ArgC() > 4) ? args.Arg(4).toFloat() : -100.0f;
-    Archipelago::CreateClearGel(pos, offset);
+    Archipelago::g_Archipelago.GetEntityManager().CreateClearGel(pos, offset);
 }
 
 [ServerCommand("RemoveGel", "Legacy RemoveGel command")]
@@ -322,13 +294,13 @@ void RemoveGelLegacyCmd(const CommandArgs@ args) {
     Vector pos(x, y, z);
     string filter = (args.ArgC() > 4) ? args.Arg(4) : "";
     string name = (args.ArgC() > 5) ? args.Arg(5) : "";
-    Archipelago::RemoveGel(pos, filter, name);
+    Archipelago::g_Archipelago.GetEntityManager().RemoveGel(pos, filter, name);
 }
 
 [ServerCommand("LockButtonByName", "LockButtonByName command")]
 void LockButtonByNameCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
-    Archipelago::LockButtonByName(args.Arg(1));
+    Archipelago::g_Archipelago.GetEntityManager().LockButtonByName(args.Arg(1));
 }
 
 // =============================================================
@@ -337,24 +309,24 @@ void LockButtonByNameCmd(const CommandArgs@ args) {
 
 [ServerCommand("UpdateHologramsVisibility", "Updates the visibility of all holograms based on settings")]
 void AP_UpdateHologramsVisibilityCmd(const CommandArgs@ args) {
-    Archipelago::UpdateHologramsVisibility();
+    Archipelago::g_Archipelago.GetHologramManager().UpdateHologramsVisibility();
 }
 
 [ServerCommand("AttachHologramToEntity", "Forces a hologram to stick to a moving entity")]
 void AttachHologramToEntityLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 6) return;
     Archipelago::ArchipelagoLog("[AP RECV] AttachHologram: " + args.Arg(1));
-    Archipelago::AttachHologramToEntity(args.Arg(1), args.Arg(2), args.Arg(3).toFloat(), args.Arg(4).toFloat(), args.Arg(5).toInt());
+    Archipelago::g_Archipelago.GetHologramManager().AttachHologramToEntity(args.Arg(1), args.Arg(2), args.Arg(3).toFloat(), args.Arg(4).toFloat(), args.Arg(5).toInt());
 }
 
 [ServerCommand("AP_BTS4_ConveyorTick", "Conveyor turret ticking logic for sp_a2_bts4")]
 void AP_BTS4_ConveyorTickCmd(const CommandArgs@ args) {
-    Archipelago::AP_BTS4_ConveyorTick();
+    Archipelago::g_Archipelago.GetHologramManager().AP_BTS4_ConveyorTick();
 }
 
 [ServerCommand("Finale2TurretTick", "Finale 2 turret ticking logic to restore skins")]
 void Finale2_TurretTickCmd(const CommandArgs@ args) {
-    Archipelago::Finale2TurretTick();
+    Archipelago::g_Archipelago.GetHologramManager().Finale2TurretTick();
 }
 
 // =============================================================
@@ -366,12 +338,12 @@ void AddScriptAtPosLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 6) return;
     Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
     Archipelago::ArchipelagoLog("[AP RECV] AddScriptAtPos at position: " + pos.x + " " + pos.y + " " + pos.z);
-    Archipelago::AddEntityOutputScriptAtPos(pos, args.Arg(4), args.Arg(5), args.Arg(6), (args.ArgC() > 7 ? args.Arg(7).toFloat() : 0.0f), (args.ArgC() > 8 ? args.Arg(8).toInt() : -1));
+    Archipelago::g_Archipelago.GetWorkflowManager().AddEntityOutputScriptAtPos(pos, args.Arg(4), args.Arg(5), args.Arg(6), (args.ArgC() > 7 ? args.Arg(7).toFloat() : 0.0f), (args.ArgC() > 8 ? args.Arg(8).toInt() : -1));
 }
 
 [ServerCommand("BlockWheatleyFight", "BlockWheatleyFight command")]
 void BlockWheatleyFightLegacyCmd(const CommandArgs@ args) {
-    Archipelago::BlockWheatleyFight();
+    Archipelago::g_Archipelago.GetWorkflowManager().BlockWheatleyFight();
 }
 
 [ServerCommand("WarpMonitor", "Warps player on monitor break")]
@@ -382,19 +354,19 @@ void WarpMonitorCmd(const CommandArgs@ args) {
         monitorID += " " + args.Arg(2);
     }
     
-    Archipelago::HandleMonitorWarp(monitorID);
+    Archipelago::g_Archipelago.GetWorkflowManager().HandleMonitorWarp(monitorID);
 }
 
 [ServerCommand("SpawnPaintBomb", "Legacy SpawnPaintBomb command")]
 void SpawnPaintBombLegacyCmd(const CommandArgs@ args) {
     if (args.ArgC() < 4) return;
     Vector pos(args.Arg(1).toFloat(), args.Arg(2).toFloat(), args.Arg(3).toFloat());
-    Archipelago::SpawnPaintBomb(pos);
+    Archipelago::g_Archipelago.GetWorkflowManager().SpawnPaintBomb(pos);
 }
 
 [ServerCommand("WarpToMenu", "Internal - Warps back to menu")]
 void WarpToMenuLegacyCmd(const CommandArgs@ args) {
-    Archipelago::WarpToMenu();
+    Archipelago::g_Archipelago.GetWorkflowManager().WarpToMenu();
 }
 
 [ServerCommand("AddScript", "Connects an entity output to a console command")]
@@ -421,18 +393,18 @@ void AddScriptLegacyCmd(const CommandArgs@ args) {
     Archipelago::ArchipelagoLog("[AP RECV] AddScript: target=" + target + " (Found: " + ents.length() + " entities) | Output=" + output + " | Cmd=" + cmd);
 
     for (uint i = 0; i < ents.length(); i++) {
-        Archipelago::SafeAddOutput(ents[i], output, "InitCmd", "Command", cmd, delay, maxTimes);
+        Archipelago::g_Archipelago.SafeAddOutput(ents[i], output, "InitCmd", "Command", cmd, delay, maxTimes);
     }
 }
 
 [ServerCommand("CheckCameraPhysicsTick", "Evaluates physical security camera falling loops natively")]
 void CheckCameraPhysicsTickCmd(const CommandArgs@ args) {
-    Archipelago::CheckCameraPhysicsTick();
+    Archipelago::g_Archipelago.GetCheckManager().CheckCameraPhysicsTick();
 }
 
 [ServerCommand("CheckElevatorRide", "Evaluates elevator Z-level changes periodically via timer")]
 void CheckElevatorRideCmd(const CommandArgs@ args) {
-    Archipelago::CheckElevatorRide();
+    Archipelago::g_Archipelago.GetWorkflowManager().CheckElevatorRide();
 }
 
 [ServerCommand("ShowStatus", "Manually show the map status HUD")]
@@ -442,8 +414,8 @@ void ShowStatusLegacyCmd(const CommandArgs@ args) {
         return; 
     }
 
-    Archipelago::UpdateInternalMapName();
-    Archipelago::CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + Archipelago::current_map + "|0\")");
+    Archipelago::g_Archipelago.UpdateInternalMapName();
+    Archipelago::g_Archipelago.CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + Archipelago::g_Archipelago.GetCurrentMap() + "|0\")");
 }
 
 [ServerCommand("DisableTriggerAtPos", "Disables a trigger at a specific position")]
@@ -474,17 +446,17 @@ void CheckDeathLinkQueueCmd(const CommandArgs@ args) {
 
     // --- CASE 1: THE PLAYER IS DEAD ---
     if (health <= 0) {
-        if (Archipelago::is_processing_remote_death) {
-            Archipelago::sent_death_link = true; 
+        if (Archipelago::g_Archipelago.IsProcessingRemoteDeath()) {
+            Archipelago::g_Archipelago.SetSentDeathLink(true); 
             return;
         }
 
-        if (!Archipelago::sent_death_link) {
-            Archipelago::sent_death_link = true;
+        if (!Archipelago::g_Archipelago.HasSentDeathLink()) {
+            Archipelago::g_Archipelago.SetSentDeathLink(true);
             CBaseEntity@ world = EntityList().FindByClassname(null, "worldspawn");
             if (world !is null) {
                 Variant v;
-                v.SetString("printl(\"send_deathlink " + Archipelago::current_map + "\")");
+                v.SetString("printl(\"send_deathlink " + Archipelago::g_Archipelago.GetCurrentMap() + "\")");
                 world.FireInput("RunScriptCode", v, 0.0f, null, null, 0);
             }
         }
@@ -493,13 +465,13 @@ void CheckDeathLinkQueueCmd(const CommandArgs@ args) {
 
     // --- CASE 2: THE PLAYER IS ALIVE ---
     if (health > 0) {
-        if (Archipelago::sent_death_link && !Archipelago::is_processing_remote_death) {
-            Archipelago::sent_death_link = false;
+        if (Archipelago::g_Archipelago.HasSentDeathLink() && !Archipelago::g_Archipelago.IsProcessingRemoteDeath()) {
+            Archipelago::g_Archipelago.SetSentDeathLink(false);
         }
         
-        if (Archipelago::is_processing_remote_death && health >= 100) {
-            Archipelago::is_processing_remote_death = false;
-            Archipelago::sent_death_link = false;
+        if (Archipelago::g_Archipelago.IsProcessingRemoteDeath() && health >= 100) {
+            Archipelago::g_Archipelago.SetIsProcessingRemoteDeath(false);
+            Archipelago::g_Archipelago.SetSentDeathLink(false);
             Archipelago::ArchipelagoLog("[AP] Player respawned. DeathLink safety disabled.");
         }
     }
@@ -520,8 +492,9 @@ void PingGameServerCmd(const CommandArgs@ args) {
 void SetMutedDeathCmd(const CommandArgs@ args) {
     if (args.ArgC() < 2) return;
     
-    Archipelago::is_processing_remote_death = (args.Arg(1) == "1");
-    Archipelago::ArchipelagoLog("[AP] is_processing_remote_death set to: " + (Archipelago::is_processing_remote_death ? "TRUE" : "FALSE"));
+    bool isMuted = (args.Arg(1) == "1");
+    Archipelago::g_Archipelago.SetIsProcessingRemoteDeath(isMuted);
+    Archipelago::ArchipelagoLog("[AP] is_processing_remote_death set to: " + (isMuted ? "TRUE" : "FALSE"));
 }
 
 [ServerCommand("ap_sync_settings", "Syncs Archipelago settings from Panorama to Server")]
@@ -545,7 +518,7 @@ void SyncSettingsCmd(const CommandArgs@ args) {
     ConVarRef ap_show_map_status_hud("ap_show_map_status_hud");
     if (ap_show_map_status_hud.IsValid()) ap_show_map_status_hud.SetValue(args.Arg(5));
 
-    Archipelago::UpdateHologramsVisibility();
+    Archipelago::g_Archipelago.GetHologramManager().UpdateHologramsVisibility();
 }
 
 [ServerCommand("PrintItem", "Prints collected item (ex: Portal gun and PotatOS)")]
@@ -569,12 +542,12 @@ void DisablePortalGunLegacyCmd(const CommandArgs@ args) {
     bool blue = (args.Arg(1) == "1");
     bool orange = (args.Arg(2) == "1");
     Archipelago::ArchipelagoLog("[AP RECV] DisablePortalGun: Blue=" + blue + " Orange=" + orange);
-    Archipelago::DisablePortalGun(blue, orange);
+    Archipelago::g_Archipelago.GetEntityManager().DisablePortalGun(blue, orange);
 }
 
 [ServerCommand("IncineratorDisablePortalGun", "Bridge from VScript/Client")]
 void IncineratorDisablePortalGunCmd(const CommandArgs@ args) {
-    Archipelago::IncineratorDisablePortalGun();
+    Archipelago::g_Archipelago.GetEntityManager().IncineratorDisablePortalGun();
 }
 
 // =============================================================
@@ -583,13 +556,13 @@ void IncineratorDisablePortalGunCmd(const CommandArgs@ args) {
 
 [ServerCommand("RemovePotatOS", "RemovePotatOS command")]
 void RemovePotatOSLegacyCmd(const CommandArgs@ args) {
-    Archipelago::RemovePotatOS();
+    Archipelago::g_Archipelago.GetEntityManager().RemovePotatOS();
 }
 
 [ServerCommand("RemovePotatosFromGun", "Removes PotatOS from the portal gun and world")]
 void RemovePotatosFromGunLegacyCmd(const CommandArgs@ args) {
     Archipelago::ArchipelagoLog("[AP RECV] RemovePotatosFromGun");
-    Archipelago::RemovePotatosFromGun();
+    Archipelago::g_Archipelago.GetEntityManager().RemovePotatosFromGun();
 }
 
 // =============================================================
@@ -598,35 +571,30 @@ void RemovePotatosFromGunLegacyCmd(const CommandArgs@ args) {
 
 [ServerCommand("CubeConfettiTrap", "Triggers cube confetti trap")]
 void CubeConfettiTrapCmd(const CommandArgs@ args) {
-    Archipelago::TriggerCubeConfettiTrap();
+    Archipelago::g_Archipelago.GetTrapManager().TriggerTrap("CubeConfetti", args);
 }
 
 [ServerCommand("MotionBlurTrap", "Triggers motion blur trap")]
 void MotionBlurTrapCmd(const CommandArgs@ args) {
-    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 20.0f;
-    Archipelago::TriggerMotionBlurTrap(duration);
+    Archipelago::g_Archipelago.GetTrapManager().TriggerTrap("MotionBlur", args);
 }
 
 [ServerCommand("SlipperyFloorTrap", "Triggers slippery floor trap")]
 void SlipperyFloorTrapCmd(const CommandArgs@ args) {
-    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 60.0f;
-    Archipelago::TriggerSlipperyFloorTrap(duration);
+    Archipelago::g_Archipelago.GetTrapManager().TriggerTrap("SlipperyFloor", args);
 }
 
 [ServerCommand("FizzlePortalTrap", "Triggers fizzle portal trap")]
 void FizzlePortalTrapCmd(const CommandArgs@ args) {
-    Archipelago::TriggerFizzlePortalTrap();
+    Archipelago::g_Archipelago.GetTrapManager().TriggerTrap("FizzlePortal", args);
 }
 
 [ServerCommand("DialogTrap", "Triggers dialog trap")]
 void DialogTrapCmd(const CommandArgs@ args) {
-    string scene = (args !is null && args.ArgC() >= 2) ? args.Arg(1) : "";
-    float duration = (args !is null && args.ArgC() >= 3) ? args.Arg(2).toFloat() : 15.0f;
-    Archipelago::TriggerDialogTrap(scene, duration);
+    Archipelago::g_Archipelago.GetTrapManager().TriggerTrap("Dialog", args);
 }
 
 [ServerCommand("ButterFingersTrap", "Triggers butter fingers trap")]
 void ButterFingersTrapCmd(const CommandArgs@ args) {
-    float duration = (args !is null && args.ArgC() >= 2) ? args.Arg(1).toFloat() : 30.0f;
-    Archipelago::ButterFingersTrap(duration);
+    Archipelago::g_Archipelago.GetTrapManager().TriggerTrap("ButterFingers", args);
 }

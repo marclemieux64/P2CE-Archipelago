@@ -63,7 +63,7 @@ class TrapHandler:
                 if self.trap_queue and self.ctx.check_game_connection() and not self.ping_in_progress and not self.is_map_transition_active:
                     current_time = time.time()
                     if current_time - self.last_trap_executed >= 4.0:
-                        self.ctx.command_queue.append("AP_PingReady\n")
+                        self.ctx.command_queue.append("PingGameServer\n")
             except Exception as e:
                 logger.error(f"Error in TrapHandler background loop: {e}")
             await asyncio.sleep(1.0)

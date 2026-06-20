@@ -30,12 +30,6 @@ class WorkflowManager {
         g_Archipelago.CallVScript("SendToPanorama(\"Archipelago_WarpToMenu\", \"" + g_Archipelago.GetCurrentMap() + "\")");
     }
 
-    void SafeRemoveEntity(CBaseEntity@ ent) {
-        if (ent is null) return;
-        Variant v;
-        ent.FireInput("Kill", v, 0.0f, null, null, 0);
-    }
-
     void SpawnPaintBomb(Vector position) {
         CBaseEntity@ gel = util::CreateEntityByName("prop_paint_bomb");
         if (gel !is null) {

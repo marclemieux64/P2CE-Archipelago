@@ -96,7 +96,7 @@ To use this mod you must first have a copy of Portal 2 and Portal 2 Community Ed
    (Optional). You can uninstall Portal 2 after step 3 to reduce the the foot print of portal on your hard drive. But refer to the Change language section before doing so if you want to play with another language then english.
 4. Download the [latest Zip archive release of the p2ce-archipelago](https://github.com/marclemieux64/P2CE-Archipelago/releases).
 5. Extract the top-level folder from the Zip file.
-6. Place the `p2ce-archipelago` folder in the `sourcemods` Steam folder.
+6. Place the `p2ce-archipelago` folder in the `sourcemods` Steam folder(It should be on the same disk has your steam installation).
    - On Windows, this may be found at:
      - `C:\Program Files (x86)\Steam\steamapps\sourcemods`
    - On Linux, this may be found at: - `~/home/username/.steam/steam/steamapps/sourcemods/`

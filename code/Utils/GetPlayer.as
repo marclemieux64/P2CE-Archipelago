@@ -1,7 +1,11 @@
+// =============================================================
+// PLAYER GETTER UTILITIES
+// =============================================================
+
 namespace Archipelago {
 
 /**
- * GetPlayer - Helper to find the local player.
+ * Returns the local host player instance, casted as CBasePlayer.
  */
 CBasePlayer@ GetPlayer() {
     return cast<CBasePlayer>(EntityList().FindByClassname(null, "player"));

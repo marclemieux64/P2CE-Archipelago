@@ -1,10 +1,12 @@
 // =============================================================
-// SafeAddOutput 
+// SAFE ADD OUTPUT HELPER
 // =============================================================
-// This Module is used to add outputs to entities.
-// The Output is often a command that is pushed when the entity is triggered.
+
 namespace Archipelago {
 
+/**
+ * Safely adds an output connection/trigger to an entity in the Source engine.
+ */
 void SafeAddOutput(CBaseEntity@ ent, string output, string target, string input, string param = "", float delay = 0.0f, int maxTimes = -1) {
     if (ent is null) return;
     

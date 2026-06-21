@@ -65,6 +65,17 @@ class CheckManager {
         m_lastCameraMap = "";
     }
 
+    // --- Private Map Guard to prevent stale memory leaks across level transitions ---
+    private void VerifyMapChange() {
+        string currentMap = g_Archipelago.GetCurrentMap();
+        if (currentMap != m_lastCameraMap) {
+            m_lastCameraMap = currentMap;
+            m_trackedCameras.resize(0); 
+            m_locallyKnockedCameras.resize(0); 
+            m_activeLocations.resize(0); // Clear all stale polymorphic locations across map transitions
+        }
+    }
+
     // --- GETTERS & STATE CHECKS ---
     array<string>& GetCheckedMaps() { return m_checkedMaps; }
     array<string>& GetCheckedButtons() { return m_checkedButtons; }
@@ -80,6 +91,8 @@ class CheckManager {
     // =============================================================
 
     void AddMapCheck() {
+        VerifyMapChange();
+
         for (int i = int(m_activeLocations.length()) - 1; i >= 0; i--) {
             MapLocation@ mapLoc = cast<MapLocation>(m_activeLocations[i]);
             if (mapLoc !is null) {
@@ -332,8 +345,7 @@ class CheckManager {
     }
 
     void AddCameraCheck() {
-        string currentMap = g_Archipelago.GetCurrentMap();
-        if (currentMap == "unknown") return;
+        VerifyMapChange();
 
         for (int i = int(m_activeLocations.length()) - 1; i >= 0; i--) {
             CameraLocation@ camLoc = cast<CameraLocation>(m_activeLocations[i]);
@@ -342,14 +354,8 @@ class CheckManager {
             }
         }
 
-        // Map change configuration refresh
-        if (currentMap != m_lastCameraMap) {
-            m_lastCameraMap = currentMap;
-            m_trackedCameras.resize(0); 
-            m_locallyKnockedCameras.resize(0); // Vider le cache de session locale
-        }
-
         CBaseEntity@ camera = null;
+        string currentMap = g_Archipelago.GetCurrentMap();
         while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) != null) {
             Vector camPos = camera.GetAbsOrigin();
             string camID = GetCameraUniqueID(currentMap, camPos);
@@ -471,6 +477,8 @@ class CheckManager {
     // =============================================================
 
     void SetCheckedButtons(const array<string>&in parsedButtons) {
+        VerifyMapChange();
+
         m_checkedButtons.resize(0);
         for (uint i = 0; i < parsedButtons.length(); i++) {
             m_checkedButtons.insertLast(parsedButtons[i]);
@@ -525,6 +533,8 @@ class CheckManager {
     }
 
     void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale, int skin = 0) {
+        VerifyMapChange();
+
         string scenarioName = TranslateButtonName(name);
         if (scenarioName.locate("rd") == 0) skin = 0;
 
@@ -535,7 +545,7 @@ class CheckManager {
         array<CBaseEntity@> entsToRemove;
         CBaseEntity@ entCheck = null;
         
-        while ((@entCheck = EntityList().FindInSphere(entCheck, position, 24.0f)) !is null) {
+        while ((@entCheck = EntityList().FindInSphere(entCheck, position, 24.0f)) != null) {
             string cls = entCheck.GetClassname();
             string entName = entCheck.GetEntityName();
         
@@ -684,6 +694,8 @@ class CheckManager {
     }
 
     void AddVitrifiedDoorChecks(string mapName) {
+        VerifyMapChange();
+
         for (int i = int(m_activeLocations.length()) - 1; i >= 0; i--) {
             VitrifiedDoorLocation@ doorLoc = cast<VitrifiedDoorLocation>(m_activeLocations[i]);
             if (doorLoc !is null) {
@@ -823,6 +835,8 @@ class CheckManager {
     }
 
     void AddWheatleyMonitorBreakCheck() {
+        VerifyMapChange();
+
         for (int i = int(m_activeLocations.length()) - 1; i >= 0; i--) {
             MonitorLocation@ monLoc = cast<MonitorLocation>(m_activeLocations[i]);
             if (monLoc !is null) {

@@ -32,6 +32,7 @@ class EntityManager {
         v.SetString(output + " InitCmd:Command:DeleteEntity " + core_name + " 1 0.7:5.0:-1");
 
         for (uint i = 0; i < targets.length(); i++) {
+            if (targets[i] is null) continue;
             targets[i].FireInput("AddOutput", v, 0.0f, null, null, 0);
         }
         ArchipelagoLog("Hooked output '" + output + "' on '" + targets.length() + "' entities matched by '" + target_name + "' to delete '" + core_name + "' in 5s");
@@ -299,6 +300,7 @@ class EntityManager {
     void DisableEntityPhysics(string entity_name) {
         array<CBaseEntity@> targets = FindEntities(entity_name);
         for (uint i = 0; i < targets.length(); i++) {
+            if (targets[i] is null) continue; // Safety check
             targets[i].KeyValue("movetype", "4"); // Set move type to static physics
         }
     }
@@ -480,6 +482,8 @@ class EntityManager {
         array<CBaseEntity@> targets = FindEntities(entity_name);
         for (uint i = 0; i < targets.length(); i++) {
             CBaseEntity@ ent = targets[i];
+            if (ent is null) continue; // Safety check
+
             Vector position = ent.GetAbsOrigin();
             QAngle angles = ent.GetAbsAngles();
             string originalModel = ent.GetModelName(); 
@@ -674,6 +678,8 @@ class EntityManager {
         array<CBaseEntity@> targets = FindEntities(entity_name);
         for (uint i = 0; i < targets.length(); i++) {
             CBaseEntity@ ent = targets[i];
+            if (ent is null) continue; // Safety check
+
             Vector position = ent.GetAbsOrigin();
             QAngle angles = ent.GetAbsAngles();
             string originalModel = ent.GetModelName();

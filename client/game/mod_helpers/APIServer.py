@@ -6,11 +6,6 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
-archipelago_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-if archipelago_root not in sys.path:
-    sys.path.insert(0, archipelago_root)
-
-os.environ['SKIP_REQUIREMENTS_UPDATE'] = '1'
 
 class APIServer:
     def __init__(self, ctx):
@@ -31,6 +26,7 @@ class APIServer:
         # Separate cache for missing_str (only changes when item counts change)
         self._missing_items_key = None
         self._cached_missing_str = ""
+        self._missing_version = 0
 
     def start(self):
         client_self = self.ctx
@@ -55,6 +51,7 @@ class APIServer:
                 
                 if missing_key != server_self._missing_items_key:
                     server_self._missing_items_key = missing_key
+                    server_self._missing_version += 1
                     if hasattr(client_self, "items_received") and hasattr(client_self, "item_names"):
                         received_names = {client_self.item_names.lookup_in_game(i.item, client_self.game) for i in client_self.items_received}
                         server_self._cached_missing_str = ",".join([items_shortened[item] for item in items_shortened if item not in received_names])
@@ -74,11 +71,24 @@ class APIServer:
                     except (ValueError, IndexError):
                         client_menu_version = -1
 
+                    try:
+                        client_checked_count = int(query.get('checked_count', [-1])[0])
+                    except (ValueError, IndexError):
+                        client_checked_count = -1
+
+                    # Trigger computing and caching of the missing items string
+                    self._get_missing_str()
+                    try:
+                        client_missing_version = int(query.get('missing_version', [-1])[0])
+                    except (ValueError, IndexError):
+                        client_missing_version = -1
+
                     items_received_len = len(client_self.items_received) if hasattr(client_self, "items_received") else 0
                     item_list_len = len(client_self.item_list) if hasattr(client_self, "item_list") else 0
+                    current_checked_locations_len = len(client_self.checked_locations)
 
                     current_menu_key = (
-                        len(client_self.checked_locations),
+                        current_checked_locations_len,
                         items_received_len,
                         item_list_len,
                         client_self.slot
@@ -93,7 +103,7 @@ class APIServer:
                         is_conn,
                         game_conn,
                         client_self.slot,
-                        len(client_self.checked_locations),
+                        current_checked_locations_len,
                         items_received_len,
                         item_list_len,
                         getattr(client_self, "hint_points", 0),
@@ -101,6 +111,9 @@ class APIServer:
                         getattr(client_self, "logic_difficulty", 0),
                         client_menu_version,
                         server_self._menu_version,
+                        client_checked_count,
+                        client_missing_version,
+                        server_self._missing_version,
                         getattr(client_self.deathlink_handler, 'last_death_link_executed', 0.0)
                     )
 
@@ -114,13 +127,17 @@ class APIServer:
                     else:
                         server_self._cache["status_key"] = current_key
                         should_send_menu = (client_menu_version != server_self._menu_version)
+                        should_send_checked_locations = (client_checked_count != current_checked_locations_len)
+                        should_send_missing_items = (client_missing_version != server_self._missing_version)
                         
                         payload = {
                             "connected": is_conn,
                             "game_connected": game_conn,
                             "slot": client_self.slot,
-                            "checked_locations": list(client_self.checked_locations),
-                            "missing_items": self._get_missing_str(),
+                            "checked_locations_count": current_checked_locations_len,
+                            "checked_locations": list(client_self.checked_locations) if should_send_checked_locations else None,
+                            "missing_version": server_self._missing_version,
+                            "missing_items": server_self._cached_missing_str if should_send_missing_items else None,
                             "hint_points": getattr(client_self, "hint_points", 0),
                             "hint_cost": getattr(client_self, "hint_cost", 0),
                             "logic_difficulty": getattr(client_self, "logic_difficulty", 0),

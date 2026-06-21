@@ -5,6 +5,18 @@ let isTimerRunning = false;
 let isWarpPending = false;
 let pendingWarpMapName = "";
 
+function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
+    const contextPanel = $.GetContextPanel();
+    const wrapper = (...args: any[]) => {
+        if (!contextPanel || !contextPanel.IsValid()) {
+            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            return;
+        }
+        callback(...args);
+    };
+    $.RegisterForUnhandledEvent(eventName, wrapper);
+}
+
 function GetHudRoot(): Panel | null {
     let p = $.GetContextPanel();
     while (p) {
@@ -33,31 +45,31 @@ function checkPersistentQueue() {
     }
 }
 
-$.RegisterForUnhandledEvent("ArchipelagoQueueUpdated", () => {
+registerSelfCleaningEvent("ArchipelagoQueueUpdated", () => {
     checkPersistentQueue();
 });
 
-$.RegisterForUnhandledEvent('ShowMainMenu', () => {
+registerSelfCleaningEvent('ShowMainMenu', () => {
     checkPersistentQueue();
 });
 
-$.RegisterForUnhandledEvent('ShowPauseMenu', () => {
+registerSelfCleaningEvent('ShowPauseMenu', () => {
     checkPersistentQueue();
 });
 
-$.RegisterForUnhandledEvent('HideMainMenu', () => {
+registerSelfCleaningEvent('HideMainMenu', () => {
     $.Schedule(0.1, () => {
         $.DispatchEvent('ArchipelagoQueueUpdated', "");
     });
 });
 
-$.RegisterForUnhandledEvent('HidePauseMenu', () => {
+registerSelfCleaningEvent('HidePauseMenu', () => {
     $.Schedule(0.1, () => {
         $.DispatchEvent('ArchipelagoQueueUpdated', "");
     });
 });
 
-$.RegisterForUnhandledEvent('ArchipelagoNotify', (payload: string) => {
+registerSelfCleaningEvent('ArchipelagoNotify', (payload: string) => {
     const globalObj: any = UiToolkitAPI.GetGlobalObject();
     if (!globalObj.ArchipelagoMessageQueue) {
         globalObj.ArchipelagoMessageQueue = [];
@@ -101,7 +113,7 @@ try {
 
 // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
 
-$.RegisterForUnhandledEvent("ArchipelagoDeath", (msg: string) => {
+registerSelfCleaningEvent("ArchipelagoDeath", (msg: string) => {
     let locTitle = $.Localize("#Archipelago_HUD_Deathlink");
     if (locTitle === "#Archipelago_HUD_Deathlink") locTitle = "DEATHLINK";
 
@@ -113,7 +125,7 @@ $.RegisterForUnhandledEvent("ArchipelagoDeath", (msg: string) => {
     }));
 });
 
-$.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
+registerSelfCleaningEvent("Archipelago_WarpToMenu", (content: string) => {
     if (isWarpPending) return; 
     
     isWarpPending = true;
@@ -142,6 +154,10 @@ $.RegisterForUnhandledEvent("Archipelago_WarpToMenu", (content: string) => {
 });
 
 function ProcessQueue() {
+    const contextPanel = $.GetContextPanel();
+    if (!contextPanel || !contextPanel.IsValid()) {
+        return;
+    }
     if (notificationQueue.length === 0) {
         isTimerRunning = false;
         if (isWarpPending) {
@@ -185,7 +201,7 @@ function ProcessQueue() {
 }
 
 // --- ÉCOUTE DU CHAT ---
-$.RegisterForUnhandledEvent("ArchipelagoAPI_ChatUpdated", (payload: any) => {
+registerSelfCleaningEvent("ArchipelagoAPI_ChatUpdated", (payload: any) => {
     const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
     if (!api) return;
 

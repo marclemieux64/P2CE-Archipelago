@@ -1,7 +1,7 @@
 from ..Locations import all_locations_table, speedrun_logic_table, sub_locations_in_maps
 from ..ItemNames import *
 
-# Correspondance exacte avec les noms de vos fichiers SVG physiques
+# Exact mapping matching physical SVG filenames
 items_shortened = {
     portal_gun_1: "portalgun1",
     portal_gun_2: "portalgun2",
@@ -55,7 +55,7 @@ indicator_characters = {
 def items_to_shortened(items_list):
     return [items_shortened[x] for x in items_list if x in items_shortened]
 
-# CORRECTIF: Filtrage dynamique basé sur l'état de l'option de génération
+# BUGFIX: Dynamic filtering based on generation option state
 def get_sub_locations(location_name, has_wheatley, has_ratman, has_vitrified, has_cameras):
     subs = sub_locations_in_maps.get(location_name, [])
     if not has_wheatley: subs = [s for s in subs if "Wheatley Monitor" not in s]
@@ -93,7 +93,7 @@ class MapMenuElement(MenuElement):
     def __init__(self, parent, chapter_number, map_number, title, map_code, location_id, required_items, pic):
         self.location_id = location_id
         self.required_items = required_items
-        # CORRECTIF: Envoi du flag de l'option des caméras de sécurité
+        # BUGFIX: Sending the security camera option flag
         self.sub_location_completion = get_sub_locations(
             title, 
             parent.parent.has_wheatley_monitors, 
@@ -137,7 +137,7 @@ class MapMenuElement(MenuElement):
                         self.info_text.append(indicator_characters["ratman"])
                     elif "Vitrified Door" in sub_location:
                         self.info_text.append(indicator_characters["vitrified_door"])
-                    # CORRECTIF: Repassé au singulier "Security Camera" pour intercepter la table
+                    # BUGFIX: Reverted back to singular "Security Camera" to match the table
                     elif "Security Camera" in sub_location:
                         self.info_text.append(indicator_characters["security_camera"])
                     elif len(reqs) == 1:
@@ -177,7 +177,7 @@ class MapMenuElement(MenuElement):
         for k in self.sub_location_completion.keys():
             k_lower = k.lower()
             if "wheatley monitor" in k_lower: active_sub_keys.append("monitor")
-            # CORRECTIF: Repassé au singulier "security camera" pour injecter la bonne clé attendue par Panorama
+            # BUGFIX: Reverted back to singular "security camera" to inject the correct key expected by Panorama
             elif "security camera" in k_lower: active_sub_keys.append("camera")
             elif "ratman den" in k_lower: active_sub_keys.append("ratmansdent")
             elif "vitrified door" in k_lower: active_sub_keys.append("door")

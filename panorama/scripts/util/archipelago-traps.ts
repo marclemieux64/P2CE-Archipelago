@@ -1,5 +1,17 @@
 'use strict';
 
+function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
+    const contextPanel = $.GetContextPanel();
+    const wrapper = (...args: any[]) => {
+        if (!contextPanel || !contextPanel.IsValid()) {
+            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            return;
+        }
+        callback(...args);
+    };
+    $.RegisterForUnhandledEvent(eventName, wrapper);
+}
+
 /**
  * Archipelago Trap Manager
  * Handles persistence of active traps across map transitions.
@@ -12,7 +24,7 @@ class ArchipelagoTrapManager {
         if (this.m_Debug) $.Msg("[AP] TrapManager: Initializing...");
 
         // Register for trap trigger events from AngelScript
-        $.RegisterForUnhandledEvent("ArchipelagoTrapTriggered", (trapName: string, duration: number) => {
+        registerSelfCleaningEvent("ArchipelagoTrapTriggered", (trapName: string, duration: number) => {
             if (typeof trapName === 'string' && trapName.indexOf('|') !== -1) {
                 const parts = trapName.split('|');
                 trapName = parts[0];

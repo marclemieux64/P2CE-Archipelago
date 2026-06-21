@@ -29,10 +29,10 @@ array<CBaseEntity@> FindEntities(string search) {
 
     if (search == "") return targets;
 
-    // Conveyor turrets exception for sp_a2_bts4
+    // Conveyor turrets exception for sp_a2_bts4 (optimised classname lookup)
     if (currentMap == "sp_a2_bts4" && (search == "initial_template_turret" || search == "turret_conveyor_1_template")) {
-        CBaseEntity@ checkEnt = EntityList().First();
-        while (@checkEnt !is null) {
+        CBaseEntity@ checkEnt = null;
+        while ((@checkEnt = EntityList().FindByClassname(checkEnt, "npc_portal_turret_floor")) !is null) {
             if (IsConveyorTurret(checkEnt)) {
                 string name = checkEnt.GetEntityName();
                 bool isConveyor1 = false;
@@ -51,7 +51,6 @@ array<CBaseEntity@> FindEntities(string search) {
                     }
                 }
             }
-            @checkEnt = EntityList().Next(checkEnt);
         }
         return targets;
     }
@@ -82,8 +81,15 @@ array<CBaseEntity@> FindEntities(string search) {
 
     if (targets.length() > 0) return targets;
 
-    // Model name search pass
+    // Model name search pass (optimised with native FindByModel)
     if (search.locate("/") != uint(-1) || search.locate("\\") != uint(-1) || search.locate(".mdl") != uint(-1)) {
+        @ent = null;
+        while ((@ent = EntityList().FindByModel(ent, search)) !is null) {
+            targets.insertLast(ent);
+        }
+        if (targets.length() > 0) return targets;
+
+        // Fallback for case differences
         @ent = EntityList().First();
         while (@ent !is null) {
             if (ent.GetModelName().tolower() == lowerSearch) {
@@ -106,45 +112,71 @@ array<CBaseEntity@> FindEntities(string search) {
 
     if (targets.length() > 0) return targets;
 
-    // Keywords fallback search
+    // Keywords fallback search (optimised target scans)
     bool isCoreRequest = (lowerSearch.locate("core") != uint(-1) || lowerSearch.locate("fact") != uint(-1) || lowerSearch.locate("faulty") != uint(-1));
     bool isHologramRequest = (lowerSearch.locate("archipelago_hologram") != uint(-1));
 
-    @ent = EntityList().First();
-    while (@ent !is null) {
-        string name = ent.GetEntityName();
-        string cls = ent.GetClassname();
-        string model = ent.GetModelName().tolower();
-
-        if (isCoreRequest) {
-            if (cls == "npc_personality_sphere") {
-                string cSub = "";
-                if (lowerSearch.locate("1") != uint(-1)) cSub = "core1"; 
-                else if (lowerSearch.locate("2") != uint(-1)) cSub = "core2"; 
-                else if (lowerSearch.locate("3") != uint(-1)) cSub = "core3";
-                
-                if (cSub != "" && name.locate(cSub) != uint(-1)) targets.insertLast(ent); 
-                else if (cSub == "") targets.insertLast(ent);
+    if (isCoreRequest) {
+        @ent = null;
+        while ((@ent = EntityList().FindByClassname(ent, "npc_personality_sphere")) !is null) {
+            string name = ent.GetEntityName();
+            string cSub = "";
+            if (lowerSearch.locate("1") != uint(-1)) cSub = "core1"; 
+            else if (lowerSearch.locate("2") != uint(-1)) cSub = "core2"; 
+            else if (lowerSearch.locate("3") != uint(-1)) cSub = "core3";
+            
+            if (cSub != "" && name.locate(cSub) != uint(-1)) targets.insertLast(ent); 
+            else if (cSub == "") targets.insertLast(ent);
+        }
+    } else if (isHologramRequest) {
+        @ent = null;
+        while ((@ent = EntityList().FindByModel(ent, "models/effects/ap/archipelago_hologram.mdl")) !is null) {
+            targets.insertLast(ent);
+        }
+    } else {
+        if (lowerSearch == "cube") {
+            @ent = null;
+            while ((@ent = EntityList().FindByClassname(ent, "prop_weighted_cube")) !is null) {
+                string name = ent.GetEntityName();
+                if (name.tolower().locate("_holo") == uint(-1)) {
+                    targets.insertLast(ent);
+                }
             }
-        } else if (isHologramRequest) {
-            if (model.locate("archipelago_hologram") != uint(-1)) {
-                targets.insertLast(ent);
+            const array<string> cubeClasses = {"prop_physics", "prop_dynamic"};
+            for (uint c = 0; c < cubeClasses.length(); c++) {
+                @ent = null;
+                while ((@ent = EntityList().FindByClassname(ent, cubeClasses[c])) !is null) {
+                    string name = ent.GetEntityName();
+                    if (name.tolower().locate("_holo") == uint(-1)) {
+                        string model = ent.GetModelName().tolower();
+                        if (model.locate("metal_box") != uint(-1) || model.locate("box") != uint(-1)) {
+                            if (targets.find(ent) == -1) {
+                                targets.insertLast(ent);
+                            }
+                        }
+                    }
+                }
             }
-        } else {
-            bool match = false;
-            string lCls = cls.tolower();
-            if (lowerSearch == "cube" && (lCls.locate("cube") != uint(-1) || model.locate("metal_box") != uint(-1) || model.locate("box") != uint(-1))) match = true; 
-            else if (lowerSearch == "button" && (lCls.locate("button") != uint(-1))) match = true; 
-            else if (lowerSearch == "monster" && (lCls.locate("monster_box") != uint(-1))) match = true;
-        
-            if (match) {
-                if (lowerSearch.locate("archipelago_hologram") != uint(-1) || name.tolower().locate("_holo") == uint(-1)) {
+        } else if (lowerSearch == "button") {
+            const array<string> btnClasses = {"prop_button", "func_button", "func_rot_button"};
+            for (uint c = 0; c < btnClasses.length(); c++) {
+                @ent = null;
+                while ((@ent = EntityList().FindByClassname(ent, btnClasses[c])) !is null) {
+                    string name = ent.GetEntityName();
+                    if (name.tolower().locate("_holo") == uint(-1)) {
+                        targets.insertLast(ent);
+                    }
+                }
+            }
+        } else if (lowerSearch == "monster") {
+            @ent = null;
+            while ((@ent = EntityList().FindByClassname(ent, "prop_monster_box")) !is null) {
+                string name = ent.GetEntityName();
+                if (name.tolower().locate("_holo") == uint(-1)) {
                     targets.insertLast(ent);
                 }
             }
         }
-
-        @ent = EntityList().Next(ent);
     }
 
     return targets;

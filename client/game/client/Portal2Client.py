@@ -30,7 +30,7 @@ from game.client.DeathMessages import get_death_message
 from game.Locations import location_names_to_map_codes, map_codes_to_location_names, all_locations_table, ratman_den_locations_table
 from game.Options import GameModeOption
 
-# Importation du gestionnaire unifié de checks
+# Import the unified check manager
 from game.mod_helpers.CheckHandling import parse_incoming_check, get_map_sync_commands
 
 def get_p2ce_data_package():
@@ -546,7 +546,7 @@ class P2CEContext(CommonContext):
         await self.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
 
     def on_deathlink(self, data: typing.Dict[str, typing.Any]):
-        cause = data.get("cause", "Un joueur est mort.")
+        cause = data.get("cause", "A player has died.")
         death_time = data.get("time", time.time())
         if death_time > self.deathlink_handler.last_processed_time:
             self.deathlink_handler.save_last_death_link_time(death_time)
@@ -730,7 +730,7 @@ class P2CEContext(CommonContext):
             super().on_package(cmd, args)
             update_item_list()
             self.update_item_remove_commands()
-            # FIX: Supprimé le court-circuit (return) pour laisser s'exécuter la fin du bloc on_package
+            # FIX: Removed the short-circuit (return) to allow the rest of the on_package block to run
             
         if cmd == "PrintJSON":
             if args.get("type") == "Collect":

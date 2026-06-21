@@ -280,7 +280,14 @@ class HologramManager {
                 Vector worldPos = ent.GetAbsOrigin() + (AnglesToForward(ent.GetAbsAngles()) * finalOffset.x) + (AnglesToRight(ent.GetAbsAngles()) * -finalOffset.y) + (AnglesToUp(ent.GetAbsAngles()) * finalOffset.z);
                 CreateAPHologram(worldPos, hAng, hScale, null, "", hSkin, holoName);
             } else {
-                CreateAPHologram(finalOffset, hAng, hScale, ent, attachment_point, hSkin, holoName);
+                if (hParent) {
+                    CreateAPHologram(finalOffset, hAng, hScale, ent, attachment_point, hSkin, holoName);
+                } else {
+                    // Calcul de la position absolue dans le monde avec les offsets locaux pour éviter le parenting direct
+                    Vector worldPos = ent.GetAbsOrigin() + (AnglesToForward(ent.GetAbsAngles()) * finalOffset.x) + (AnglesToRight(ent.GetAbsAngles()) * -finalOffset.y) + (AnglesToUp(ent.GetAbsAngles()) * finalOffset.z);
+                    QAngle worldAng = ent.GetAbsAngles() + hAng;
+                    CreateAPHologram(worldPos, worldAng, hScale, null, "", hSkin, holoName);
+                }
             }
         }
     }
@@ -312,31 +319,25 @@ class HologramManager {
     // =============================================================
 
     void CleanOrphanRedHolograms() {
-        CBaseEntity@ ent = EntityList().First();
-        while (@ent !is null) {
-            if (ent.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
-                string name = ent.GetEntityName();
-                if (name != "sp_a2_bts4_map_check_holo" && name.locate("_holo") != uint(-1)) {
-                    if (ent.GetMoveParent() is null) {
-                        ArchipelagoLog("Cleaning up orphaned conveyor hologram: " + name);
-                        ent.Remove();
-                    }
+        CBaseEntity@ ent = null;
+        while ((@ent = EntityList().FindByModel(ent, "models/effects/ap/archipelago_hologram.mdl")) !is null) {
+            string name = ent.GetEntityName();
+            if (name != "sp_a2_bts4_map_check_holo" && name.locate("_holo") != uint(-1)) {
+                if (ent.GetMoveParent() is null) {
+                    ArchipelagoLog("Cleaning up orphaned conveyor hologram: " + name);
+                    ent.Remove();
                 }
             }
-            @ent = EntityList().Next(ent);
         }
     }
 
     bool DoesHologramExistFor(string substring) {
-        CBaseEntity@ ent = EntityList().First();
-        while (@ent !is null) {
-            if (ent.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
-                string name = ent.GetEntityName();
-                if (name.locate(substring) != uint(-1) && name.locate("_holo") != uint(-1)) {
-                    return true;
-                }
+        CBaseEntity@ ent = null;
+        while ((@ent = EntityList().FindByModel(ent, "models/effects/ap/archipelago_hologram.mdl")) !is null) {
+            string name = ent.GetEntityName();
+            if (name.locate(substring) != uint(-1) && name.locate("_holo") != uint(-1)) {
+                return true;
             }
-            @ent = EntityList().Next(ent);
         }
         return false;
     }
@@ -362,25 +363,24 @@ class HologramManager {
             cv_BTS4_InitialTemplateHoloActive.SetValue(0);
             cv_BTS4_Conveyor1TemplateHoloActive.SetValue(0);
 
-            CBaseEntity@ ent = EntityList().First();
-            while (@ent !is null) {
+            CBaseEntity@ ent = null;
+            while ((@ent = EntityList().FindByClassname(ent, "npc_portal_turret_floor")) !is null) {
                 if (IsConveyorTurret(ent)) {
                     ent.KeyValue("PickupEnabled", "1");
                 }
-                
-                if (ent.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
-                    string name = ent.GetEntityName();
-                    if (name != "sp_a2_bts4_map_check_holo" && name.locate("_holo") != uint(-1)) {
-                        ent.Remove();
-                    }
+            }
+            @ent = null;
+            while ((@ent = EntityList().FindByModel(ent, "models/effects/ap/archipelago_hologram.mdl")) !is null) {
+                string name = ent.GetEntityName();
+                if (name != "sp_a2_bts4_map_check_holo" && name.locate("_holo") != uint(-1)) {
+                    ent.Remove();
                 }
-                @ent = EntityList().Next(ent);
             }
             return;
         }
 
-        CBaseEntity@ ent = EntityList().First();
-        while (@ent !is null) {
+        CBaseEntity@ ent = null;
+        while ((@ent = EntityList().FindByClassname(ent, "npc_portal_turret_floor")) !is null) {
             if (IsConveyorTurret(ent)) {
                 string name = ent.GetEntityName();
                 bool isConveyor1 = false;
@@ -416,7 +416,6 @@ class HologramManager {
                     }
                 }
             }
-            @ent = EntityList().Next(ent);
         }
     }
 
@@ -468,6 +467,17 @@ class HologramManager {
         string name_lower = name.tolower();
 
         string mapName = g_Archipelago.GetCurrentMap();
+
+        // Règle explicite pour les caméras de sécurité afin d'empêcher tout rattachement physique accidentel
+        if (classname == "npc_security_camera") {
+            targetPos = Vector(0.0f, 0.0f, 0.0f);
+            targetAng = QAngle(0.0f, 0.0f, 0.0f);
+            targetSkin = 0;
+            targetScale = 0.6f;
+            shouldParent = false;
+            absoluteAngles = false; // Sera géré proprement sans liaison dynamique par le correctif de l'émetteur
+            return;
+        }
 
         if (mapName == "sp_a3_crazy_box") {
             if (name_lower == "erase_blocker_button" || model.locate("underground_testchamber_button") != uint(-1)) {

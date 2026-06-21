@@ -8,30 +8,26 @@ namespace Archipelago {
 void ListHologramsCmd(const CommandArgs@ args) {
     Msgl("--- ACTIVE ARCHIPELAGO HOLOGRAMS ---");
     
-    CBaseEntity@ ent = EntityList().First();
+    CBaseEntity@ ent = null;
     int count = 0;
     
-    while (@ent !is null) {
-        // Check if the entity model matches the Archipelago hologram model
-        if (ent.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
-            string name = ent.GetEntityName();
-            string cls = ent.GetClassname();
-            if (name == "") name = "[UNNAMED]";
-            
-            Vector pos = ent.GetAbsOrigin();
-            QAngle ang = ent.GetAbsAngles();
-            
-            // Cast the entity to CBaseAnimating to access GetSkin()
-            CBaseAnimating@ animEnt = cast<CBaseAnimating>(ent);
-            int skin = 0;
-            if (animEnt !is null) {
-                skin = animEnt.GetSkin();
-            }
-            
-            Msgl(" -> [" + ent.GetEntityIndex() + "] Name: " + name + " | Class: " + cls + " | Pos: " + pos.x + " " + pos.y + " " + pos.z + " | Ang: " + ang.x + " " + ang.y + " " + ang.z + " | Skin: " + skin);
-            count++;
+    while ((@ent = EntityList().FindByModel(ent, "models/effects/ap/archipelago_hologram.mdl")) !is null) {
+        string name = ent.GetEntityName();
+        string cls = ent.GetClassname();
+        if (name == "") name = "[UNNAMED]";
+        
+        Vector pos = ent.GetAbsOrigin();
+        QAngle ang = ent.GetAbsAngles();
+        
+        // Cast the entity to CBaseAnimating to access GetSkin()
+        CBaseAnimating@ animEnt = cast<CBaseAnimating>(ent);
+        int skin = 0;
+        if (animEnt !is null) {
+            skin = animEnt.GetSkin();
         }
-        @ent = EntityList().Next(ent);
+        
+        Msgl(" -> [" + ent.GetEntityIndex() + "] Name: " + name + " | Class: " + cls + " | Pos: " + pos.x + " " + pos.y + " " + pos.z + " | Ang: " + ang.x + " " + ang.y + " " + ang.z + " | Skin: " + skin);
+        count++;
     }
     
     Msgl("------------------------------------");
@@ -70,19 +66,16 @@ void ListEntitiesAtOriginCmd(const CommandArgs@ args) {
     float radius = (args.ArgC() > 1) ? args.Arg(1).toFloat() : 64.0f;
     ArchipelagoLog("--- SCANNING FOR ENTITIES NEAR (0,0,0) [Radius: " + radius + "] ---");
     
-    CBaseEntity@ ent = EntityList().First();
+    CBaseEntity@ ent = null;
     int count = 0;
-    while (@ent !is null) {
+    while ((@ent = EntityList().FindInSphere(ent, Vector(0,0,0), radius)) !is null) {
+        string name = ent.GetEntityName();
+        string cls = ent.GetClassname();
+        string model = ent.GetModelName();
         Vector pos = ent.GetAbsOrigin();
-        if (pos.Length() <= radius) {
-            string name = ent.GetEntityName();
-            string cls = ent.GetClassname();
-            string model = ent.GetModelName();
-            
-            ArchipelagoLog(" -> [" + ent.GetEntityIndex() + "] Name: " + (name == "" ? "[UNNAMED]" : name) + " | Class: " + cls + " | Model: " + model + " | Pos: " + pos.x + " " + pos.y + " " + pos.z);
-            count++;
-        }
-        @ent = EntityList().Next(ent);
+        
+        ArchipelagoLog(" -> [" + ent.GetEntityIndex() + "] Name: " + (name == "" ? "[UNNAMED]" : name) + " | Class: " + cls + " | Model: " + model + " | Pos: " + pos.x + " " + pos.y + " " + pos.z);
+        count++;
     }
     ArchipelagoLog("---------------------------------------------------------");
     ArchipelagoLog("Total Entities at Origin: " + count);

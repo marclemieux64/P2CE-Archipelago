@@ -3,6 +3,18 @@
 declare var $: any;
 declare var UiToolkitAPI: any;
 
+function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
+    const contextPanel = $.GetContextPanel();
+    const wrapper = (...args: any[]) => {
+        if (!contextPanel || !contextPanel.IsValid()) {
+            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            return;
+        }
+        callback(...args);
+    };
+    $.RegisterForUnhandledEvent(eventName, wrapper);
+}
+
 var ArchipelagoMapStatusHUD = class {
     static m_HideSchedule: any = null;
     static m_CurrentMapName: string = "";
@@ -32,7 +44,7 @@ var ArchipelagoMapStatusHUD = class {
     };
 
     static init() {
-        $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
+        registerSelfCleaningEvent("ArchipelagoMapNameUpdated", (payload: string) => {
             if (!payload) return;
             const parts = payload.split('|');
             ArchipelagoMapStatusHUD.m_CurrentMapName = parts[0] || "";

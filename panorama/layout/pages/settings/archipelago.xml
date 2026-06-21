@@ -91,12 +91,12 @@
                 <SettingsEnum
                     id="SkipElevatorRideSetting"
                     text="#Archipelago_Settings_SkipElevatorRide"
-                    psvar="cv_SkipElevatorRide"
+                    psvar="cv_SkipElavatorRide"
                     infomessage="#Archipelago_Settings_SkipElevatorRide_info"
                     hasdocspage="false"
                 >
-                    <RadioButton group="cv_SkipElevatorRide" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipElevatorRideSetting()" />
-                    <RadioButton group="cv_SkipElevatorRide" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipElevatorRideSetting()" />
+                    <RadioButton group="cv_SkipElavatorRide" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipElavatorRideSetting()" />
+                    <RadioButton group="cv_SkipElavatorRide" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipElavatorRideSetting()" />
                 </SettingsEnum>
 
                 <SettingsEnum

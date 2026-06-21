@@ -12,17 +12,17 @@ class LocationType(Flag):
     STORY_ACHIEVEMENT = auto()
     ITEM = auto()
     ACHIEVEMENT = auto()
-    WHEATLY_MONITOR = auto()
+    WHEATLEY_MONITOR = auto()
     RATMAN_DEN = auto()
     SECURITY_CAMERA = auto()
     OTHER = auto()
 
 class P2CELocationData:
-    def __init__(self, map_name: str = None, location_type: LocationType = None, required_items: list[str] = [], chapter: int = None):
+    def __init__(self, map_name: str = None, location_type: LocationType = None, required_items: list[str] = None, chapter: int = None):
         self.map_name = map_name
         self.location_type = location_type
 
-        self.required_items = required_items
+        self.required_items = required_items or []
         self.chapter = chapter
 
         global p2ce_base_id, offset_index
@@ -140,18 +140,18 @@ story_achievements_table: dict[str, P2CELocationData] = {
 achievements_table: dict[str, P2CELocationData] = {}
 
 wheatley_monitor_table: dict[str, P2CELocationData] = {
-    "Wheatley Monitor 1": P2CELocationData("sp_a4_tb_intro", LocationType.WHEATLY_MONITOR, [portal_gun_2, funnel, frankenturret]),
-    "Wheatley Monitor 2": P2CELocationData("sp_a4_tb_trust_drop", LocationType.WHEATLY_MONITOR, [portal_gun_2, button, funnel, frankenturret]),
-    "Wheatley Monitor 3": P2CELocationData("sp_a4_tb_wall_button", LocationType.WHEATLY_MONITOR, [portal_gun_2]),
-    "Wheatley Monitor 4": P2CELocationData("sp_a4_tb_polarity", LocationType.WHEATLY_MONITOR, [turrets]),
-    "Wheatley Monitor 5": P2CELocationData("sp_a4_tb_catch 1", LocationType.WHEATLY_MONITOR, [portal_gun_2, frankenturret, funnel, faith_plate, button]),
-    "Wheatley Monitor 6": P2CELocationData("sp_a4_tb_catch 2", LocationType.WHEATLY_MONITOR, [portal_gun_2, frankenturret, funnel, faith_plate, button]),
-    "Wheatley Monitor 7": P2CELocationData("sp_a4_stop_the_box", LocationType.WHEATLY_MONITOR, [faith_plate]),
-    "Wheatley Monitor 8": P2CELocationData("sp_a4_laser_catapult", LocationType.WHEATLY_MONITOR, [portal_gun_2, frankenturret, faith_plate, funnel, reflection_cube, laser, laser_catcher]),
-    "Wheatley Monitor 9": P2CELocationData("sp_a4_laser_platform", LocationType.WHEATLY_MONITOR, [portal_gun_2, laser, laser_catcher, reflection_cube, button]),
-    "Wheatley Monitor 10": P2CELocationData("sp_a4_speed_tb_catch", LocationType.WHEATLY_MONITOR, [portal_gun_2]),
-    "Wheatley Monitor 11": P2CELocationData("sp_a4_jump_polarity", LocationType.WHEATLY_MONITOR, [portal_gun_2, blue_gel, white_gel, funnel, turrets, floor_button, button]),
-    "Wheatley Monitor 12": P2CELocationData("sp_a4_finale3", LocationType.WHEATLY_MONITOR, [portal_gun_2, orange_gel, white_gel]),
+    "Wheatley Monitor 1": P2CELocationData("sp_a4_tb_intro", LocationType.WHEATLEY_MONITOR, [portal_gun_2, funnel, frankenturret]),
+    "Wheatley Monitor 2": P2CELocationData("sp_a4_tb_trust_drop", LocationType.WHEATLEY_MONITOR, [portal_gun_2, button, funnel, frankenturret]),
+    "Wheatley Monitor 3": P2CELocationData("sp_a4_tb_wall_button", LocationType.WHEATLEY_MONITOR, [portal_gun_2]),
+    "Wheatley Monitor 4": P2CELocationData("sp_a4_tb_polarity", LocationType.WHEATLEY_MONITOR, [turrets]),
+    "Wheatley Monitor 5": P2CELocationData("sp_a4_tb_catch 1", LocationType.WHEATLEY_MONITOR, [portal_gun_2, frankenturret, funnel, faith_plate, button]),
+    "Wheatley Monitor 6": P2CELocationData("sp_a4_tb_catch 2", LocationType.WHEATLEY_MONITOR, [portal_gun_2, frankenturret, funnel, faith_plate, button]),
+    "Wheatley Monitor 7": P2CELocationData("sp_a4_stop_the_box", LocationType.WHEATLEY_MONITOR, [faith_plate]),
+    "Wheatley Monitor 8": P2CELocationData("sp_a4_laser_catapult", LocationType.WHEATLEY_MONITOR, [portal_gun_2, frankenturret, faith_plate, funnel, reflection_cube, laser, laser_catcher]),
+    "Wheatley Monitor 9": P2CELocationData("sp_a4_laser_platform", LocationType.WHEATLEY_MONITOR, [portal_gun_2, laser, laser_catcher, reflection_cube, button]),
+    "Wheatley Monitor 10": P2CELocationData("sp_a4_speed_tb_catch", LocationType.WHEATLEY_MONITOR, [portal_gun_2]),
+    "Wheatley Monitor 11": P2CELocationData("sp_a4_jump_polarity", LocationType.WHEATLEY_MONITOR, [portal_gun_2, blue_gel, white_gel, funnel, turrets, floor_button, button]),
+    "Wheatley Monitor 12": P2CELocationData("sp_a4_finale3", LocationType.WHEATLEY_MONITOR, [portal_gun_2, orange_gel, white_gel]),
 }
 
 wheatley_maps_to_monitor_names: dict[str, str] = {value.map_name: key for key, value in wheatley_monitor_table.items()}
@@ -162,7 +162,7 @@ item_location_table: dict[str, P2CELocationData] = {
     potatos: P2CELocationData("sp_a3_transition01", LocationType.ITEM, [portal_gun_2, blue_gel, orange_gel]),
 }
 
-item_maps_to_item_location : dict[str, str] = {value.map_name:key for key, value in item_location_table.items()}
+item_maps_to_item_location: dict[str, str] = {value.map_name: key for key, value in item_location_table.items()}
 
 ratman_den_locations_table: dict[str, P2CELocationData] = {
     "Ratman Den 1": P2CELocationData("sp_a1_intro4", LocationType.RATMAN_DEN, [weighted_cube, floor_button]),

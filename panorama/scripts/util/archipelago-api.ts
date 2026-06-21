@@ -23,6 +23,8 @@ if (!globalObj.ArchipelagoAPI) {
         static m_HintsETag: string = "";
         static m_LastChatId: number = -1;
         static m_MenuVersion: number = 0;
+        static m_CheckedCount: number = 0;
+        static m_MissingVersion: number = 0;
 
         // Adaptive polling: faster after changes, slower when idle
         static m_PollInterval: number = 1.0;        // current interval in seconds
@@ -66,7 +68,7 @@ if (!globalObj.ArchipelagoAPI) {
                 headers["If-None-Match"] = this.m_StatusETag;
             }
 
-            const url = `${this.API_BASE}/api/status?menu_version=${this.m_MenuVersion}`;
+            const url = `${this.API_BASE}/api/status?menu_version=${this.m_MenuVersion}&checked_count=${this.m_CheckedCount}&missing_version=${this.m_MissingVersion}`;
 
             $.AsyncWebRequest(url, {
                 type: 'GET',
@@ -142,19 +144,31 @@ if (!globalObj.ArchipelagoAPI) {
                     if (type === 'status') {
                         if (eTagHeader) this.m_StatusETag = eTagHeader;
                         
-                        if (data.menu_version !== undefined) {
-                            if (data.menu) {
-                                this.m_Status = data;
-                                this.m_MenuVersion = data.menu_version;
-                            } else {
-                                if (this.m_Status && this.m_Status.menu) {
-                                    data.menu = this.m_Status.menu;
-                                }
-                                this.m_Status = data;
-                                this.m_MenuVersion = data.menu_version;
-                            }
-                        } else {
+                        if (!this.m_Status) {
                             this.m_Status = data;
+                        } else {
+                            for (const key in data) {
+                                if (data[key] !== null && data[key] !== undefined) {
+                                    this.m_Status[key] = data[key];
+                                }
+                            }
+                        }
+
+                        if (data.checked_locations) {
+                            this.m_Status.checked_locations = data.checked_locations;
+                            this.m_CheckedCount = data.checked_locations.length;
+                        } else if (data.checked_locations_count !== undefined) {
+                            this.m_CheckedCount = data.checked_locations_count;
+                            if (!this.m_Status.checked_locations || this.m_Status.checked_locations.length !== data.checked_locations_count) {
+                                this.m_Status.checked_locations = new Array(data.checked_locations_count);
+                            }
+                        }
+
+                        if (data.menu_version !== undefined) {
+                            this.m_MenuVersion = data.menu_version;
+                        }
+                        if (data.missing_version !== undefined) {
+                            this.m_MissingVersion = data.missing_version;
                         }
                         this.dispatchStatusUpdate(this.m_Status);
                     }
@@ -263,22 +277,25 @@ if (!globalObj.ArchipelagoAPI) {
         }
 
         static dispatchStatusUpdate(data: any) {
+            this.m_StatusListeners = this.m_StatusListeners.filter(l => l.panel && l.panel.IsValid());
             this.m_StatusListeners.forEach(l => {
-                if (l.panel && l.panel.IsValid()) l.callback(data);
+                try { l.callback(data); } catch(e) {}
             });
             try { $.DispatchEvent("ArchipelagoAPI_StatusUpdated", data); } catch(e) {}
         }
 
         static dispatchChatUpdate(chatList: any[]) {
+            this.m_ChatListeners = this.m_ChatListeners.filter(l => l.panel && l.panel.IsValid());
             this.m_ChatListeners.forEach(l => {
-                if (l.panel && l.panel.IsValid()) l.callback(chatList);
+                try { l.callback(chatList); } catch(e) {}
             });
             try { $.DispatchEvent("ArchipelagoAPI_ChatUpdated", chatList); } catch(e) {}
         }
 
         static dispatchHintsUpdate(hintsList: any[]) {
+            this.m_HintsListeners = this.m_HintsListeners.filter(l => l.panel && l.panel.IsValid());
             this.m_HintsListeners.forEach(l => {
-                if (l.panel && l.panel.IsValid()) l.callback(hintsList);
+                try { l.callback(hintsList); } catch(e) {}
             });
             try { $.DispatchEvent("ArchipelagoAPI_HintsUpdated", hintsList); } catch(e) {}
         }

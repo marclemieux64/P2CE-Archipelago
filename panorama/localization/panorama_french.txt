@@ -413,6 +413,8 @@
 
 		"Archipelago_HUD_Trap"         "PIÈGE"
 
+		"Archipelago_HUD_Goal"            "OBJECTIF ATTEINT"
+
 
 		"Archipelago_HUD_Warp_Menu"    "RETOUR AU MENU"
 

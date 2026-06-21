@@ -22,11 +22,11 @@ class HintManager:
                 item_id = h.get("item")
                 loc_id = h.get("location")
                 
-                # Coercition de type sécurisée et double vérification d'index (int vs string)
+                # Safe type coercion and index double-check (int vs string)
                 rec = self.ctx.player_names.get(int(rec_id)) or self.ctx.player_names.get(str(rec_id)) or f"Player {rec_id}"
                 find = self.ctx.player_names.get(int(find_id)) or self.ctx.player_names.get(str(find_id)) or f"Player {find_id}"
                 
-                # Résilience multi-jeux complète pour parer aux ID inconnus des autres mondes
+                # Full multi-game resilience to handle unknown IDs from other worlds
                 try:
                     item_name = self.ctx.item_names.lookup_in_slot(int(item_id), int(rec_id))
                 except Exception:

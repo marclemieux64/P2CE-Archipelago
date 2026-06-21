@@ -40,6 +40,7 @@ class CheckManager {
 
     // --- OPTIMIZED CAMERA TRACKING CACHE ---
     private array<TrackedCamera@> m_trackedCameras;
+    private array<string> m_locallyKnockedCameras; // Anti-doublon local temporaire
     private string m_lastCameraMap;
 
     CheckManager() {
@@ -60,6 +61,7 @@ class CheckManager {
         m_checkedVitrifiedDoors.resize(0);
         m_activeLocations.resize(0);
         m_trackedCameras.resize(0);
+        m_locallyKnockedCameras.resize(0);
         m_lastCameraMap = "";
     }
 
@@ -113,7 +115,7 @@ class CheckManager {
             string[] transTargets = { "transition_logic_relay", "relay_exit_opened", "elevator_entry_relay", "end_relay" };
             for (uint s = 0; s < transTargets.length(); s++) {
                 CBaseEntity@ t = null;
-                while ((@t = EntityList().FindByName(t, transTargets[s])) !is null) {
+                while ((@t = EntityList().FindByName(t, transTargets[s])) != null) {
                     CreateAPHologram(t.WorldSpaceCenter(), QAngle(0, 0, 0), 1.0f, null, "", skin, t.GetEntityName() + "map_check_trigger_holo", true);
                 }
             }
@@ -122,7 +124,7 @@ class CheckManager {
         if (!isNonElevatorMap || currentMap == "sp_a2_core" || currentMap == "sp_a1_intro1") {
             int skin = mapLoc.IsChecked() ? 4 : 0;
             CBaseEntity@ tEnt = null;
-            while ((@tEnt = EntityList().FindByClassname(tEnt, "func_tracktrain")) !is null) {
+            while ((@tEnt = EntityList().FindByClassname(tEnt, "func_tracktrain")) != null) {
                 string tName = tEnt.GetEntityName();
                 if (tName.locate("exit_lift_train") != uint(-1) || tName.locate("departure_elevator-elevator") != uint(-1) || tName.locate("exit_elevator_train") != uint(-1)) {
                     CreateAPHologram(Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, tEnt, "", skin, "map_check_trigger_elevator_holo", true);
@@ -150,7 +152,7 @@ class CheckManager {
         array<string> triggerClasses = { "trigger_once", "trigger_multiple" };
         for (uint i = 0; i < triggerClasses.length(); i++) {
             CBaseEntity@ tr = null;
-            while ((@tr = EntityList().FindByClassname(tr, triggerClasses[i])) !is null) {
+            while ((@tr = EntityList().FindByClassname(tr, triggerClasses[i])) != null) {
                 if (tr.GetEntityName() == "") { 
                     Vector pos = tr.GetAbsOrigin();
                     bool is_target = false;
@@ -172,7 +174,8 @@ class CheckManager {
         } else if (non_elevator_maps.find(map) >= 0) {
             array<CBaseEntity@> logicScripts = FindEntities("@transition_script");
             for (uint i = 0; i < logicScripts.length(); i++) {
-                logicScripts[i].Remove();
+                Variant killValue;
+                logicScripts[i].FireInput("Kill", killValue, 0.0f, null, null, 0);
             }
             array<string> targets = { "transition_trigger", "relay_transition", "ending_relay", "potatos_end_relay" };
             for (uint s = 0; s < targets.length(); s++) {
@@ -342,11 +345,12 @@ class CheckManager {
         // Map change configuration refresh
         if (currentMap != m_lastCameraMap) {
             m_lastCameraMap = currentMap;
-            m_trackedCameras.resize(0); // Wipe the old level tracking cache entirely
+            m_trackedCameras.resize(0); 
+            m_locallyKnockedCameras.resize(0); // Vider le cache de session locale
         }
 
         CBaseEntity@ camera = null;
-        while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) !is null) {
+        while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) != null) {
             Vector camPos = camera.GetAbsOrigin();
             string camID = GetCameraUniqueID(currentMap, camPos);
             if (camID == "unk") continue;
@@ -364,9 +368,18 @@ class CheckManager {
             camLoc.SetChecked(isChecked);
             m_activeLocations.insertLast(@camLoc);
 
-            // ONLY track the live handles of uncompleted checks
-            if (!isChecked) {
-                m_trackedCameras.insertLast(TrackedCamera(camera, camIdentifier));
+            // Filtre renforcé : Pas validé sur le serveur ET pas encore tombé localement dans cette session
+            if (!isChecked && m_locallyKnockedCameras.find(camIdentifier.tolower()) == -1) {
+                bool alreadyTracked = false;
+                for (uint j = 0; j < m_trackedCameras.length(); j++) {
+                    if (m_trackedCameras[j].identifier == camIdentifier) {
+                        alreadyTracked = true;
+                        break;
+                    }
+                }
+                if (!alreadyTracked) {
+                    m_trackedCameras.insertLast(TrackedCamera(camera, camIdentifier));
+                }
             }
         }
 
@@ -390,9 +403,12 @@ class CheckManager {
     void CheckCameraPhysicsTick() {
         uint trackingCount = m_trackedCameras.length();
         if (trackingCount == 0) {
-            // No more cameras to monitor on this level. Tear down tracking timer gracefully.
+            // No more cameras to monitor on this level. Tear down tracking timer gracefully via Kill input.
             CBaseEntity@ existingTimer = EntityList().FindByName(null, "archipelago_camera_timer");
-            if (existingTimer !is null) existingTimer.Remove();
+            if (existingTimer !is null) {
+                Variant killValue;
+                existingTimer.FireInput("Kill", killValue, 0.0f, null, null, 0);
+            }
             return;
         }
 
@@ -429,6 +445,7 @@ class CheckManager {
             // Evaluation threshold parameters
             if ((isPhysicsMove && vel.z < -5.0f) || vel.z < -20.0f) {
                 Msgl("camera_knocked:" + identifier);
+                m_locallyKnockedCameras.insertLast(identifier.tolower()); // Bloquer définitivement toute ré-insertion locale
                 m_trackedCameras.removeAt(i); // Stop listening to this specific handle instantly
             }
         }
@@ -462,8 +479,30 @@ class CheckManager {
         for (uint i = 0; i < m_activeLocations.length(); i++) {
             ButtonLocation@ btnLoc = cast<ButtonLocation>(m_activeLocations[i]);
             if (btnLoc !is null) {
-                bool isChecked = (m_checkedButtons.find(btnLoc.GetName()) != -1);
+                string scenarioName = btnLoc.GetName();
+                bool isChecked = (m_checkedButtons.find(scenarioName) != -1);
                 btnLoc.SetChecked(isChecked);
+
+                // Forcer l'application visuelle immédiate des paquets réseau reçus à distance
+                if (isChecked) {
+                    CBaseEntity@ body = EntityList().FindByName(null, scenarioName + "_model");
+                    if (body !is null) {
+                        CBaseAnimating@ animBody = cast<CBaseAnimating>(body);
+                        if (animBody !is null) {
+                            animBody.SetSequence(animBody.LookupSequence("down"));
+                        }
+                    }
+                    CBaseEntity@ brain = EntityList().FindByName(null, scenarioName);
+                    if (brain !is null) {
+                        brain.KeyValue("m_bLocked", 1);
+                        brain.KeyValue("spawnflags", "3073"); // Verrouillé de force en position basse
+                    }
+                    CBaseEntity@ holo = EntityList().FindByName(null, scenarioName + "_holo");
+                    if (holo !is null) {
+                        CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
+                        if (animHolo !is null) animHolo.SetSkin(4);
+                    }
+                }
             }
         }
     }
@@ -501,24 +540,34 @@ class CheckManager {
             string entName = entCheck.GetEntityName();
         
             if (entName == scenarioName + "_model") {
+                CBaseAnimating@ animBody = cast<CBaseAnimating>(entCheck);
+                CBaseEntity@ brainEnt = EntityList().FindByName(null, scenarioName);
+                CBaseEntity@ holo = EntityList().FindByName(null, holoName);
+
+                // Ré-évaluation complète lors des appels de rafraîchissement d'état de map
                 if (is_pressed == 1) {
-                    CBaseAnimating@ animBody = cast<CBaseAnimating>(entCheck);
                     if (animBody !is null) {
                         animBody.SetSequence(animBody.LookupSequence("down"));
                     }
-                    CBaseEntity@ brainEnt = EntityList().FindByName(null, scenarioName);
                     if (brainEnt !is null) {
                         brainEnt.KeyValue("m_bLocked", 1);
                         brainEnt.KeyValue("spawnflags", "3073");
                     }
-                
-                    CBaseEntity@ holo = null;
-                    while ((@holo = EntityList().FindByClassname(holo, "prop_dynamic")) !is null) {
-                        if (holo.GetMoveParent() is entCheck && holo.GetEntityName() == holoName) {
-                            CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-                            if (animHolo !is null) animHolo.SetSkin(finalSkin);
-                            break;
-                        }
+                    if (holo !is null) {
+                        CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
+                        if (animHolo !is null) animHolo.SetSkin(4);
+                    }
+                } else {
+                    if (animBody !is null) {
+                        animBody.SetSequence(animBody.LookupSequence("up"));
+                    }
+                    if (brainEnt !is null) {
+                        brainEnt.KeyValue("m_bLocked", 0);
+                        brainEnt.KeyValue("spawnflags", "1025");
+                    }
+                    if (holo !is null) {
+                        CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
+                        if (animHolo !is null) animHolo.SetSkin(skin);
                     }
                 }
                 return;
@@ -530,7 +579,8 @@ class CheckManager {
         }
 
         for (uint i = 0; i < entsToRemove.length(); i++) {
-            util::Remove(entsToRemove[i]);
+            Variant killValue;
+            entsToRemove[i].FireInput("Kill", killValue, 0.0f, null, null, 0);
         }
 
         string uid = "ap_" + RandomInt(1000, 9999);
@@ -584,10 +634,19 @@ class CheckManager {
             brain.KeyValue("rendermode", "10");
         
             g_Archipelago.SafeAddOutput(brain, "OnPressed", "InitCmd", "Command", "ReportAPButton " + scenarioName, 0.1f, -1);
-            g_Archipelago.SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "down", 0.0f, -1);
-            g_Archipelago.SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "up", 0.5f, -1);
             g_Archipelago.SafeAddOutput(brain, "OnPressed", uid + "_dn", "PlaySound", "", 0.0f, -1);
-            g_Archipelago.SafeAddOutput(brain, "OnPressed", uid + "_up", "PlaySound", "", 0.5f, -1);
+            
+            // Changement visuel immédiat et permanent en local lors de l'activation par le joueur
+            g_Archipelago.SafeAddOutput(brain, "OnPressed", holoName, "Skin", "4", 0.0f, -1);
+
+            if (is_pressed == 1) {
+                g_Archipelago.SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "down", 0.0f, -1);
+                brain.KeyValue("m_bLocked", 1);
+            } else {
+                g_Archipelago.SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "down", 0.0f, -1);
+                g_Archipelago.SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "up", 0.5f, -1);
+                g_Archipelago.SafeAddOutput(brain, "OnPressed", uid + "_up", "PlaySound", "", 0.5f, -1);
+            }
         
             brain.SetSolid(SOLID_BBOX);
             brain.SetCollisionBounds(Vector(-30.0f, -30.0f, -30.0f), Vector(30.0f, 30.0f, 30.0f));
@@ -645,13 +704,18 @@ class CheckManager {
                 CBaseEntity@ ent = null;
                 CBaseEntity@ searchEnt = null;
                 string lowerEntName = entName.tolower();
-                while ((@searchEnt = EntityList().FindByClassname(searchEnt, "*")) !is null) {
-                    string nameLower = searchEnt.GetEntityName().tolower();
-                    uint idx = nameLower.locate(lowerEntName);
-                    if (idx != uint(-1) && (idx + lowerEntName.length() == nameLower.length())) {
-                        @ent = searchEnt;
-                        break;
+                const array<string> searchClasses = {"func_button", "func_rot_button", "prop_button", "prop_dynamic"};
+                for (uint c = 0; c < searchClasses.length(); c++) {
+                    @searchEnt = null;
+                    while ((@searchEnt = EntityList().FindByClassname(searchEnt, searchClasses[c])) != null) {
+                        string nameLower = searchEnt.GetEntityName().tolower();
+                        uint idx = nameLower.locate(lowerEntName);
+                        if (idx != uint(-1) && (idx + lowerEntName.length() == nameLower.length())) {
+                            @ent = searchEnt;
+                            break;
+                        }
                     }
+                    if (ent !is null) break;
                 }
                 if (ent !is null) {
                     int doorIndex = 0;
@@ -780,13 +844,13 @@ class CheckManager {
         m_screenNames.get(mapName, @mapScreens);
         if (mapScreens is null) return;
 
-        CBaseEntity@ relay = null;
-        while ((@relay = EntityList().FindByClassname(relay, "logic_relay")) !is null) {
-            string name = relay.GetEntityName();
-
-            if (mapScreens.exists(name)) {
+        array<string>@ relayNames = mapScreens.getKeys();
+        for (uint r = 0; r < relayNames.length(); r++) {
+            string relayName = relayNames[r];
+            CBaseEntity@ relay = null;
+            while ((@relay = EntityList().FindByName(relay, relayName)) != null) {
                 string checkName;
-                mapScreens.get(name, checkName);
+                mapScreens.get(relayName, checkName);
 
                 string scriptCode = "printl(\"monitor_break:" + checkName + "\")";
                 string payloadPrint = "worldspawn\x1BRunScriptCode\x1B" + scriptCode + "\x1B0\x1B-1";
@@ -795,27 +859,21 @@ class CheckManager {
                 string payloadWarp = "InitCmd\x1BCommand\x1BWarpMonitor " + checkName + "\x1B0.1\x1B-1";
                 relay.KeyValue("OnTrigger", payloadWarp);
 
-                string payloadSkin = name + "_holo\x1BSkin\x1B4\x1B0.1\x1B-1";
+                string payloadSkin = relayName + "_holo\x1BSkin\x1B4\x1B0.1\x1B-1";
                 relay.KeyValue("OnTrigger", payloadSkin);
 
-                int skin = 0;
-                for (uint i = 0; i < m_checkedScreens.length(); i++) {
-                    if (m_checkedScreens[i] == checkName) {
-                        skin = 4;
-                        break;
-                    }
-                }
+                int skin = (m_checkedScreens.find(checkName) != -1) ? 4 : 0;
 
                 QAngle angles = relay.GetAbsAngles();
                 Vector finalPos = relay.GetAbsOrigin() + (AnglesToRight(angles) * -20.0f) + (AnglesToUp(angles) * 50.0f);
-                CreateAPHologram(finalPos, angles, 1.0f, null, "", skin, name + "_holo");
+                CreateAPHologram(finalPos, angles, 1.0f, null, "", skin, relayName + "_holo");
 
-                MonitorLocation@ monLoc = MonitorLocation(checkName, name);
+                MonitorLocation@ monLoc = MonitorLocation(checkName, relayName);
                 bool isChecked = (m_checkedScreens.find(checkName) != -1);
                 monLoc.SetChecked(isChecked);
                 m_activeLocations.insertLast(@monLoc);
             
-                ArchipelagoLog("Attached monitor check '" + checkName + "' to relay '" + name + "'");
+                ArchipelagoLog("Attached monitor check '" + checkName + "' to relay '" + relayName + "'");
             }
         }
     }

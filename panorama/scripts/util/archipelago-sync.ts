@@ -7,6 +7,18 @@ interface Panel { [key: string]: any; }
 interface ImagePanel extends Panel { }
 interface LabelPanel extends Panel { }
 
+function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
+    const contextPanel = $.GetContextPanel();
+    const wrapper = (...args: any[]) => {
+        if (!contextPanel || !contextPanel.IsValid()) {
+            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            return;
+        }
+        callback(...args);
+    };
+    $.RegisterForUnhandledEvent(eventName, wrapper);
+}
+
 class ArchipelagoSync {
     static VERSION: string = "1.1.4"; 
     static ENABLE_DEBUG: boolean = false;
@@ -117,7 +129,7 @@ class ArchipelagoSync {
     static initSync() {
         if (this.ENABLE_DEBUG) $.Msg("[AP] Exposed ArchipelagoSync v" + this.VERSION);
         
-        $.RegisterForUnhandledEvent("ArchipelagoDebug", (state: string) => {
+        registerSelfCleaningEvent("ArchipelagoDebug", (state: string) => {
             this.m_Debug = (state === "1");
             $.Msg("[AP] Panorama Sync Debug logging is now " + (this.m_Debug ? "ENABLED" : "DISABLED"));
         });
@@ -128,7 +140,7 @@ class ArchipelagoSync {
         if (this.m_Initialized) return;
         this.m_Initialized = true;
 
-        $.RegisterForUnhandledEvent("ArchipelagoMapNameUpdated", (payload: string) => {
+        registerSelfCleaningEvent("ArchipelagoMapNameUpdated", (payload: string) => {
             if (global.ArchipelagoSyncInstance !== ArchipelagoSync) return;
             const parts = payload.split('|');
             
@@ -140,7 +152,7 @@ class ArchipelagoSync {
             this.runSync(mapName);
         });
 
-        $.RegisterForUnhandledEvent("MapLoaded", (map: string, bg: boolean) => {
+        registerSelfCleaningEvent("MapLoaded", (map: string, bg: boolean) => {
             if (bg) return;
             
             let cleanMap = map;
@@ -172,6 +184,14 @@ class ArchipelagoSync {
         if (this.m_PollSchedule) {
             try { $.CancelScheduled(this.m_PollSchedule); } catch(e) {}
         }
+        
+        // Stop polling if context panel is destroyed
+        const contextPanel = $.GetContextPanel();
+        if (!contextPanel || !contextPanel.IsValid()) {
+            this.m_PollSchedule = null;
+            return;
+        }
+
         this.m_PollSchedule = $.Schedule(1.0, () => {
             const global: any = UiToolkitAPI.GetGlobalObject();
             if (global.ArchipelagoSyncInstance && global.ArchipelagoSyncInstance !== ArchipelagoSync) {

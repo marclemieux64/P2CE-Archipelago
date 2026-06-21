@@ -10,9 +10,9 @@ class GameModeOption:
 class GameMode(Choice):
     """
     What map generation and logic options are set:
-    normal -> Each chapter is randomised with it's own maps
+    normal -> Each chapter is randomized with its own maps
     chaotic -> Any map can be in any chapter
-    open_world -> maps appear in the correct order in the game and are all playable from the start
+    open_world -> Maps appear in the correct order in the game and are all playable from the start
     """
     display_name = "Game Mode"
     option_normal = GameModeOption.NORMAL
@@ -33,7 +33,7 @@ class EarlyPlayabilityPercentage(Range):
     
 class RemoveLocations(LocationSet):
     """
-    Which maps will be removed entirly from the map pool.
+    Which maps will be removed entirely from the map pool.
     Different from Excluded Locations as Removed Locations will not be playable
     during the game. Excluded Locations are still in the map pool.
     """
@@ -118,7 +118,7 @@ class DialogTrapWeight(BaseTrapWeight):
 
 class WheatleyMonitors(Toggle):
     """
-    Determines whether breaking Wheatly monitors will send location checks
+    Determines whether breaking Wheatley monitors will send location checks
     """
     display_name = "Wheatley Monitors"
     
@@ -167,7 +167,7 @@ p2ce_option_presets = {
     "default": {
         "death_link": False,
         "map_layout": "normal",
-        "cutscenelevels": True,
+        "cutscene_levels": True,
     }
 }
 

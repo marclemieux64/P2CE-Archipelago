@@ -10,7 +10,7 @@ DELETE_CUBE = ItemTag.CUBE | ItemTag.DELETE
 DELETE_ENTITY = ItemTag.ENTITY | ItemTag.DELETE
 DISABLE_PICKUP = ItemTag.ENTITY | ItemTag.DISABLE
 
-# Liste réelle et exhaustive des cartes contenant PotatOS sur le Portal Gun
+# Real and exhaustive list of maps containing PotatOS on the Portal Gun
 maps_with_potatos = [
     "sp_a3_00", "sp_a3_01", 
     "sp_a3_speed_ramp", 
@@ -84,7 +84,7 @@ def handle_item(item_name: str) -> list[str]:
 
 def handle_map_start(map_code: str, items_missing: list) -> list[str]:
     """
-    Gère les actions d'infrastructure d'items au chargement d'un niveau (comme c'était le cas auparavant).
+    Handles item infrastructure actions when loading a level (as done previously).
     """
     from game.ItemNames import potatos
     commands = []

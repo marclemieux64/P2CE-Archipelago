@@ -182,7 +182,8 @@ class EntityManager {
 
                 if (alreadyProcessed) {
                     ArchipelagoLog("Deletion skipped: Hologram already created for " + holoName);
-                    util::Remove(ent);
+                    Variant killValue;
+                    ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
                     continue;
                 }
 
@@ -247,22 +248,32 @@ class EntityManager {
                 }
 
                 if (targetInstanceKeyword != "") {
-                    CBaseEntity@ loopEnt = EntityList().First();
-                    CBaseEntity@ backupParent = null;
-                    
-                    while (loopEnt !is null) {
+                    CBaseEntity@ loopEnt = null;
+                    while ((@loopEnt = EntityList().FindByClassname(loopEnt, "prop_dynamic")) !is null) {
                         string entName = loopEnt.GetEntityName().tolower();
                         if (entName.locate(targetInstanceKeyword) != uint(-1)) {
-                            if (loopEnt.GetClassname() == "prop_dynamic") {
-                                @targetParent = loopEnt;
-                                break;
-                            }
-                            @backupParent = loopEnt;
+                            @targetParent = loopEnt;
+                            break;
                         }
-                        @loopEnt = EntityList().Next(loopEnt);
                     }
                     if (targetParent is null) {
-                        @targetParent = backupParent;
+                        // Fallback to full iteration
+                        @loopEnt = EntityList().First();
+                        CBaseEntity@ backupParent = null;
+                        while (loopEnt !is null) {
+                            string entName = loopEnt.GetEntityName().tolower();
+                            if (entName.locate(targetInstanceKeyword) != uint(-1)) {
+                                if (loopEnt.GetClassname() == "prop_dynamic") {
+                                    @targetParent = loopEnt;
+                                    break;
+                                }
+                                @backupParent = loopEnt;
+                            }
+                            @loopEnt = EntityList().Next(loopEnt);
+                        }
+                        if (targetParent is null) {
+                            @targetParent = backupParent;
+                        }
                     }
                 }
 
@@ -280,7 +291,8 @@ class EntityManager {
                 }
             }
             
-            util::Remove(ent);
+            Variant killValue;
+            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
         }
     }
 
@@ -439,7 +451,8 @@ class EntityManager {
             }
         }
 
-        trigger.Remove();
+        Variant killValue;
+        trigger.FireInput("Kill", killValue, 0.0f, null, null, 0);
         ArchipelagoLog("Faith Plate sabotaged: " + holoName);
     }
 
@@ -529,7 +542,8 @@ class EntityManager {
                 dummy.Spawn();
             }
 
-            ent.Remove();
+            Variant killValue;
+            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
         }
     }
 
@@ -548,16 +562,27 @@ class EntityManager {
                 @targetParent = ent.GetMoveParent();
             }
             else if (mapName == "sp_a4_tb_wall_button") {
-                CBaseEntity@ loopEnt = EntityList().First();
-                while (loopEnt !is null) {
+                CBaseEntity@ loopEnt = null;
+                while ((@loopEnt = EntityList().FindByClassname(loopEnt, "prop_dynamic")) !is null) {
                     string entName = loopEnt.GetEntityName().tolower();
                     if (entName.locate("dropper_prop") != uint(-1)) {
-                        if (loopEnt.GetClassname() == "prop_dynamic") {
-                            @targetParent = loopEnt;
-                            break;
-                        }
+                        @targetParent = loopEnt;
+                        break;
                     }
-                    @loopEnt = EntityList().Next(loopEnt);
+                }
+                if (targetParent is null) {
+                    // Fallback to full iteration
+                    @loopEnt = EntityList().First();
+                    while (loopEnt !is null) {
+                        string entName = loopEnt.GetEntityName().tolower();
+                        if (entName.locate("dropper_prop") != uint(-1)) {
+                            if (loopEnt.GetClassname() == "prop_dynamic") {
+                                @targetParent = loopEnt;
+                                break;
+                            }
+                        }
+                        @loopEnt = EntityList().Next(loopEnt);
+                    }
                 }
             }
 
@@ -640,7 +665,8 @@ class EntityManager {
                 CreateAPHologram(finalPos, finalAng, hScale, finalParent, "", hSkin, holoName);
             }
 
-            ent.Remove();
+            Variant killValue;
+            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
         }
     }
 
@@ -696,7 +722,8 @@ class EntityManager {
                 CreateAPHologram(finalPos, finalAng, hScale, finalParent, "", hSkin, holoName);
             }
 
-            ent.Remove();
+            Variant killValue;
+            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
         }
     }
 
@@ -789,7 +816,9 @@ class EntityManager {
             }
 
             CreateAPHologram(finalPos, finalAng, hScale, null, "", hSkin, holoName);
-            ent.Remove();
+            
+            Variant killValue;
+            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
         }
     }
 

@@ -55,15 +55,9 @@ if not __name__.startswith("game"):
 
         goal_location = "Finale 4 Completion"
 
-        item_name_to_id = {}
-        location_name_to_id = {}
         location_name_groups = location_groups
-    
-        for key, value in item_table.items():
-            item_name_to_id[key] = value.id
-
-        for key, value in all_locations_table.items():
-            location_name_to_id[key] = value.id
+        item_name_to_id = {key: value.id for key, value in item_table.items()}
+        location_name_to_id = {key: value.id for key, value in all_locations_table.items()}
     
         def __init__(self, multiworld, player):
             super().__init__(multiworld, player)
@@ -83,11 +77,16 @@ if not __name__.startswith("game"):
             return self.random.choice(junk_items)
     
         def create_randomized_maps(self) -> dict[str, list[str]]:
+            # Track set of used maps and maps currently in pool for O(1) lookups
+            used_maps_set = set()
+            pool_set = set()
+
             def pick_maps(number: int) -> None:
                 self.random.shuffle(map_pool)
                 for _ in range(number):
                     map_choice = map_pool.pop(0)
-                    used_maps.append(map_choice)
+                    used_maps_set.add(map_choice)
+                    pool_set.discard(map_choice)
                 
                     if self.options.game_mode == GameModeOption.CHAOTIC:
                         random_chapter = self.random.randint(1, 8)
@@ -98,7 +97,6 @@ if not __name__.startswith("game"):
             chapter_maps: dict[str, list[str]] = {f"Chapter {i}": [] for i in range(1, 9)}
 
             map_pool: list[str] = []
-            used_maps: list[str] = []
 
             # Only consider map completion entries (exclude cutscenes and other non-map locations)
             possible_maps = [name for name in sorted(self.maps_in_use) if all_locations_table[name].chapter != 9]
@@ -106,16 +104,22 @@ if not __name__.startswith("game"):
             proportion_map_pick: float = self.options.early_playability_percentage / 100
 
             # Maps with no requirements
-            map_pool += [name for name in possible_maps if len(self.location_logic[name]) == 0]
+            no_reqs = [name for name in possible_maps if not self.location_logic[name]]
+            map_pool.extend(no_reqs)
+            pool_set.update(no_reqs)
             pick_maps(round(len(map_pool) * proportion_map_pick))
         
-            # Maps with just portal gun upgrade
-            map_pool += [name for name in possible_maps if len(self.location_logic[name]) <= 2
-                         and name not in used_maps and name not in map_pool]
+            # Maps with just portal gun upgrade (length <= 2)
+            gun_reqs = [name for name in possible_maps if len(self.location_logic[name]) <= 2
+                        and name not in used_maps_set and name not in pool_set]
+            map_pool.extend(gun_reqs)
+            pool_set.update(gun_reqs)
             pick_maps(round(len(map_pool) * proportion_map_pick))
 
             # All other maps
-            map_pool += [name for name in possible_maps if name not in used_maps and name not in map_pool]
+            other_maps = [name for name in possible_maps if name not in used_maps_set and name not in pool_set]
+            map_pool.extend(other_maps)
+            pool_set.update(other_maps)
             pick_maps(len(map_pool))
 
             return chapter_maps
@@ -153,21 +157,25 @@ if not __name__.startswith("game"):
 
                 # Additional locations
                 for sub_location in sub_locations_in_maps.get(map_name, []):
-                    if sub_location in item_location_table:
-                        item_check_reqs = item_location_table[sub_location].required_items
-                        self.create_in_level_check(sub_location, item_check_reqs, region_start)
-                    elif self.options.wheatley_monitors and sub_location in wheatley_monitor_table:
-                        wheatley_requirements = wheatley_monitor_table[sub_location].required_items
-                        self.create_in_level_check(sub_location, wheatley_requirements, region_start)
-                    elif self.options.ratman_dens and sub_location in ratman_den_locations_table:
-                        ratman_requirements = ratman_den_locations_table[sub_location].required_items
-                        self.create_in_level_check(sub_location, ratman_requirements, region_start)
-                    elif self.options.vitrified_doors and sub_location in vitrified_door_locations_table:
-                        vitrified_requirements = vitrified_door_locations_table[sub_location].required_items
-                        self.create_in_level_check(sub_location, vitrified_requirements, region_start)
-                    elif self.options.security_cameras and sub_location in security_camera_table:
-                        camera_requirements = security_camera_table[sub_location].required_items
-                        self.create_in_level_check(sub_location, camera_requirements, region_start)
+                    if sub_location not in all_locations_table:
+                        continue
+                    
+                    loc_data = all_locations_table[sub_location]
+                    is_enabled = False
+                    
+                    if loc_data.location_type == LocationType.ITEM:
+                        is_enabled = True
+                    elif loc_data.location_type == LocationType.WHEATLEY_MONITOR:
+                        is_enabled = bool(self.options.wheatley_monitors)
+                    elif loc_data.location_type == LocationType.RATMAN_DEN:
+                        is_enabled = bool(self.options.ratman_dens)
+                    elif sub_location.startswith("Vitrified Door"):
+                        is_enabled = bool(self.options.vitrified_doors)
+                    elif loc_data.location_type == LocationType.SECURITY_CAMERA:
+                        is_enabled = bool(self.options.security_cameras)
+                        
+                    if is_enabled:
+                        self.create_in_level_check(sub_location, loc_data.required_items, region_start)
             
                 # Connect to chapter region if there was no previous level or if open world
                 if self.options.game_mode == GameModeOption.OPEN_WORLD or last_region is None:

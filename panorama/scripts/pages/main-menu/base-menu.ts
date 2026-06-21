@@ -1,5 +1,18 @@
 'use strict';
 if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg || ((m: string) => $.Msg(m)); }
+
+function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
+    const contextPanel = $.GetContextPanel();
+    const wrapper = (...args: any[]) => {
+        if (!contextPanel || !contextPanel.IsValid()) {
+            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            return;
+        }
+        callback(...args);
+    };
+    $.RegisterForUnhandledEvent(eventName, wrapper);
+}
+
 class BaseMenu {
     static buttons: MenuButton[] = [
         {
@@ -10,7 +23,7 @@ class BaseMenu {
                 $.DispatchEvent('MainMenuOpenNestedPage', 'mapselect', 'archipelago/map-select', undefined);
             },
             focused: () => {
-                this.hideContinueDetails();
+                BaseMenu.hideContinueDetails();
             }
         },
         {
@@ -21,7 +34,7 @@ class BaseMenu {
 				$.DispatchEvent('MainMenuOpenNestedPage', 'Content', 'main-menu/addons', undefined);
 			},
 			focused: () => {
-				this.hideContinueDetails();
+				BaseMenu.hideContinueDetails();
 			}
 		},
         {
@@ -75,7 +88,7 @@ class BaseMenu {
             $.DispatchEvent('MainMenuAddButton', btn);
         }
 
-        $.RegisterForUnhandledEvent('MainBackgroundLoaded', () => {
+        registerSelfCleaningEvent('MainBackgroundLoaded', () => {
             this.showPrereleaseWarning();
             if (GameStateAPI.IsPlaytest()) this.showPlaytestConsentPopup();
 
@@ -89,7 +102,7 @@ class BaseMenu {
             this.music = $.PlaySoundEvent(music);
         });
 
-        $.RegisterForUnhandledEvent('MapUnloaded', () => {
+        registerSelfCleaningEvent('MapUnloaded', () => {
             this.stopMusic();
 
             // Because P2CE strips the `script_panorama` command and actively blocks native server 
@@ -101,9 +114,9 @@ class BaseMenu {
                 $.DispatchEvent('MainMenuOpenNestedPage', 'mapselect', 'archipelago/map-select', undefined);
             });
         });
-        $.RegisterForUnhandledEvent('MainMenuModeRequestCleanup', () => this.stopMusic());
+        registerSelfCleaningEvent('MainMenuModeRequestCleanup', () => this.stopMusic());
 
-        $.RegisterForUnhandledEvent('MainMenuAnimatedSwitch', (c: string) => {
+        registerSelfCleaningEvent('MainMenuAnimatedSwitch', (c: string) => {
             GameInterfaceAPI.ConsoleCommand('disconnect');
             $.Schedule(0.01, () => {
                 $.DispatchEvent('MainMenuSwitchFade', true, true);
@@ -189,7 +202,7 @@ class BaseMenu {
         $.DispatchEvent('MainMenuShowBackgroundImage', undefined, true);
         $.DispatchEvent('MainMenuSwitchReverse', false);
 
-        $.RegisterForUnhandledEvent('MapLoaded', (map: string, bg: boolean) => {
+        registerSelfCleaningEvent('MapLoaded', (map: string, bg: boolean) => {
             if (bg) {
                 $.Msg('BASE MENU: Background map load detected. Turning off background image/movie.');
                 $.DispatchEvent('MainMenuHideBackgroundImage', undefined);
@@ -218,7 +231,7 @@ class BaseMenu {
             );
         }
 
-        $.RegisterForUnhandledEvent('MapLoaded', (map: string, bg: boolean) => {
+        registerSelfCleaningEvent('MapLoaded', (map: string, bg: boolean) => {
             if (bg && map === `maps\\${this.maps[this.mapSelection]}.bsp`) {
                 $.DispatchEvent('MainMenuHideBackgroundImage', false);
                 $.DispatchEvent('MainMenuSwitchReverse', false);
@@ -263,7 +276,7 @@ if ($.persistentStorage.getItem("ap_return_to_map_select") === "true") {
     $.persistentStorage.setItem("ap_return_to_map_select", "false");
 
     const contextPanel = $.GetContextPanel();
-    if (contextPanel) {
+    if (contextPanel && contextPanel.IsValid()) {
         // On force le panneau en noir total immédiatement
         contextPanel.style.backgroundColor = "black";
         // On s'assure que le menu n'est pas visible à travers le noir
@@ -280,7 +293,7 @@ if ($.persistentStorage.getItem("ap_return_to_map_select") === "true") {
         // On attend que la transition soit finie (0.5s) pour retirer le fond noir
         // afin que le menu principal redevienne normal pour la suite.
         $.Schedule(0.5, () => {
-            if (contextPanel) {
+            if (contextPanel && contextPanel.IsValid()) {
                 // On remet la couleur par défaut (généralement transparent ou défini par le CSS)
                 contextPanel.style.backgroundColor = "none";
             }

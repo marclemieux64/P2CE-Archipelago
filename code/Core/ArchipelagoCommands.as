@@ -88,10 +88,20 @@ void SetCheckedButtonsCmd(const CommandArgs@ args) {
     array<string> checkedButtons;
 
     for (int i = 1; i < args.ArgC(); i++) {
-        string arg = CleanArg(args.Arg(i));
+        string arg = CleanArg(args.Arg(i)).tolower();
+        if (arg == "ratman" && i + 2 < args.ArgC()) {
+            string next1 = CleanArg(args.Arg(i + 1)).tolower();
+            string next2 = CleanArg(args.Arg(i + 2)).tolower();
+            if (next1 == "den") {
+                checkedButtons.insertLast("ratman den " + next2);
+                Archipelago::ArchipelagoLog("AP DEBUG: Reconstructed button -> 'ratman den " + next2 + "'");
+                i += 2;
+                continue;
+            }
+        }
         if (arg.length() > 0) {
-            checkedButtons.insertLast(arg.tolower());
-            Archipelago::ArchipelagoLog("AP DEBUG: Inserted button -> '" + arg.tolower() + "'");
+            checkedButtons.insertLast(arg);
+            Archipelago::ArchipelagoLog("AP DEBUG: Inserted button -> '" + arg + "'");
         }
     }
     

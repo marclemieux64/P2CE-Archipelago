@@ -481,7 +481,7 @@ class CheckManager {
 
         m_checkedButtons.resize(0);
         for (uint i = 0; i < parsedButtons.length(); i++) {
-            m_checkedButtons.insertLast(parsedButtons[i]);
+            m_checkedButtons.insertLast(TranslateButtonName(parsedButtons[i]));
         }
 
         for (uint i = 0; i < m_activeLocations.length(); i++) {
@@ -490,40 +490,19 @@ class CheckManager {
                 string scenarioName = btnLoc.GetName();
                 bool isChecked = (m_checkedButtons.find(scenarioName) != -1);
                 btnLoc.SetChecked(isChecked);
-
-                // Forcer l'application visuelle immédiate des paquets réseau reçus à distance
-                if (isChecked) {
-                    CBaseEntity@ body = EntityList().FindByName(null, scenarioName + "_model");
-                    if (body !is null) {
-                        CBaseAnimating@ animBody = cast<CBaseAnimating>(body);
-                        if (animBody !is null) {
-                            animBody.SetSequence(animBody.LookupSequence("down"));
-                        }
-                    }
-                    CBaseEntity@ brain = EntityList().FindByName(null, scenarioName);
-                    if (brain !is null) {
-                        brain.KeyValue("m_bLocked", 1);
-                        brain.KeyValue("spawnflags", "3073"); // Verrouillé de force en position basse
-                    }
-                    CBaseEntity@ holo = EntityList().FindByName(null, scenarioName + "_holo");
-                    if (holo !is null) {
-                        CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-                        if (animHolo !is null) animHolo.SetSkin(4);
-                    }
-                }
             }
         }
     }
 
     string TranslateButtonName(string originalName) {
-        string clean = originalName.trim();
-        if (clean == "Ratman Den 1") return "rd1";
-        if (clean == "Ratman Den 2") return "rd2";
-        if (clean == "Ratman Den 3") return "rd3";
-        if (clean == "Ratman Den 4") return "rd4";
-        if (clean == "Ratman Den 5") return "rd5";
-        if (clean == "Ratman Den 6") return "rd6";
-        if (clean == "Ratman Den 7") return "rd7";
+        string clean = originalName.trim().tolower();
+        if (clean == "ratman den 1") return "rd1";
+        if (clean == "ratman den 2") return "rd2";
+        if (clean == "ratman den 3") return "rd3";
+        if (clean == "ratman den 4") return "rd4";
+        if (clean == "ratman den 5") return "rd5";
+        if (clean == "ratman den 6") return "rd6";
+        if (clean == "ratman den 7") return "rd7";
         return (clean.length() > 0) ? clean : "ap_btn"; 
     }
 

@@ -214,7 +214,7 @@ security_camera_table: dict[str, P2CELocationData] = {
     "Security Camera 21": P2CELocationData("sp_a2_laser_vs_turret", LocationType.SECURITY_CAMERA, [portal_gun_2]),
     "Security Camera 22": P2CELocationData("sp_a2_pull_the_rug", LocationType.SECURITY_CAMERA, [portal_gun_2]),
     "Security Camera 23": P2CELocationData("sp_a2_laser_chaining", LocationType.SECURITY_CAMERA, [portal_gun_2]),
-    "Security Camera 24": P2CELocationData("sp_a2_triple_laser", LocationType.SECURITY_CAMERA, [portal_gun_2, laser, laser_catcher, reflection_cube, turrets]),
+    "Security Camera 24": P2CELocationData("sp_a2_triple_laser", LocationType.SECURITY_CAMERA, [portal_gun_2]),
 }
 
 camera_maps_to_camera_names: dict[str, str] = {}

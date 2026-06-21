@@ -132,18 +132,6 @@ class ButtonLocation : APLocation {
         
         CBaseEntity@ modelEnt = EntityList().FindByName(null, m_name + "_model");
         if (modelEnt !is null) {
-            if (m_isChecked) {
-                CBaseAnimating@ animBody = cast<CBaseAnimating>(modelEnt);
-                if (animBody !is null) {
-                    animBody.SetSequence(animBody.LookupSequence("down"));
-                }
-                CBaseEntity@ brainEnt = EntityList().FindByName(null, m_name);
-                if (brainEnt !is null) {
-                    brainEnt.KeyValue("m_bLocked", 1);
-                    brainEnt.KeyValue("spawnflags", "3073");
-                }
-            }
-            
             CBaseEntity@ holo = null;
             while ((@holo = EntityList().FindByClassname(holo, "prop_dynamic")) !is null) {
                 if (holo.GetMoveParent() is modelEnt && holo.GetEntityName() == holoName) {

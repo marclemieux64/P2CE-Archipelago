@@ -237,6 +237,17 @@
 		"Archipelago_Help_hologram_skin5" "Sphère Aventure non obtenue"
 
 		"Archipelago_Help_hologram_skin6" "Sphère Espace non obtenue"
+		"Archipelago_Help_Section_Notifications_Items" "Notifications d'Objets"
+		"Archipelago_Help_Section_Notifications_Alerts" "Alertes & Actions"
+		"Archipelago_Help_Notify_Receive_Desc" "Déclenché lorsqu'un autre joueur vous envoie un objet."
+		"Archipelago_Help_Notify_Send_Desc" "Déclenché lorsque vous trouvez et envoyez un objet à un autre joueur."
+		"Archipelago_Help_Notify_Found_Desc" "Déclenché lorsque vous trouvez un de vos propres objets."
+		"Archipelago_Help_Notify_Hint_Desc" "Déclenché lorsqu'un nouvel indice est débloqué dans le multiworld."
+		"Archipelago_Help_Notify_Goal_Desc" "Déclenché lorsqu'un joueur accomplit l'objectif de son jeu."
+		"Archipelago_Help_Notify_Deathlink_Desc" "Déclenché lorsqu'un joueur meurt dans une partie connectée par Deathlink."
+		"Archipelago_Help_Notify_Trap_Desc" "Déclenché lorsque vous recevez ou activez un objet piège."
+		"Archipelago_Help_Notify_GoMode_Desc" "Déclenché lorsque toutes les conditions de victoire de votre graine sont remplies."
+		"Archipelago_Help_Notify_Warp_Desc" "Déclenché lors de la déconnexion ou du retour à la sélection de cartes."
 
 
 

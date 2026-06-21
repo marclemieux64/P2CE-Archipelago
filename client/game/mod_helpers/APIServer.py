@@ -196,7 +196,7 @@ class APIServer:
 
                 elif self.path.startswith('/api/hints') or self.path.startswith('/hints'):
                     hint_log = client_self.notifier.hint_log
-                    current_key = len(hint_log)
+                    current_key = (len(hint_log), tuple(h.get("found", False) for h in hint_log))
 
                     if current_key == server_self._cache["hints_key"]:
                         if self.headers.get('If-None-Match') == server_self._cache["hints_etag"]:

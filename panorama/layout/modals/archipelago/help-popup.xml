@@ -1,10 +1,14 @@
 <root>
 	<styles>
 		<include src="file://{resources}/styles/main.scss" />
+		<include src="file://{resources}/styles/components/archipelago/notification.scss" />
 		<include src="file://{resources}/styles/modals/archipelago/help-popup.scss" />
 	</styles>
+	<scripts>
+		<include src="file://{scripts}/modals/archipelago/help-popup.ts" />
+	</scripts>
 
-	<Panel class="help-popup" popupbackground="blur">
+	<Panel class="help-popup" popupbackground="blur" onload="HelpPopup.init()">
 		<Panel class="help-popup__header">
 			<Label class="help-popup__title" text="#Archipelago_Help_Title" />
 			<Button id="CloseButton" class="help-popup__close-x" onactivate="UiToolkitAPI.CloseAllVisiblePopups()">
@@ -12,8 +16,8 @@
 			</Button>
 		</Panel>
 
-		<Panel class="help-popup__scroll">
-			<Panel class="help-popup__content">
+		<Panel id="HelpPopupScroll" class="help-popup__scroll">
+			<Panel id="HelpPage1" class="help-popup__page">
 				
 				<Panel class="help-popup__column">
 					
@@ -159,7 +163,7 @@
 							<Image src="file://{images}/archipelago/icons/skin5.png" class="help-popup__icon-img" />
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_hologram_skin5" />
-				</Panel>
+					</Panel>
 
 					<Panel class="help-popup__row">
 						<Panel class="hud_icon_cell">
@@ -168,8 +172,6 @@
 						<Label class="help-popup__label" text="#Archipelago_Help_hologram_skin6" />
 					</Panel>
 				</Panel>
-
-				
 
 				<Panel class="help-popup__column">
 					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Items" />
@@ -295,6 +297,128 @@
 				</Panel>
 
 			</Panel>
+
+			<Panel id="HelpPage2" class="help-popup__page page-hidden">
+				<Panel class="help-popup__column">
+					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Notifications_Items" />
+
+					<!-- Item Received -->
+					<Panel class="help-popup__notify-row">
+						<Panel class="notify-entry">
+							<Panel class="accent-bar" style="background-color: rgb(64, 160, 255);" />
+							<Panel class="content">
+								<Label class="title" style="color: rgb(64, 160, 255);" text="#Archipelago_HUD_Receive" />
+								<Label class="body" text="#Archipelago_Help_Notify_Receive_Desc" />
+							</Panel>
+						</Panel>
+					</Panel>
+
+					<!-- Item Sent -->
+					<Panel class="help-popup__notify-row">
+						<Panel class="notify-entry">
+							<Panel class="accent-bar" style="background-color: rgb(255, 160, 32);" />
+							<Panel class="content">
+								<Label class="title" style="color: rgb(255, 160, 32);" text="#Archipelago_HUD_Send" />
+								<Label class="body" text="#Archipelago_Help_Notify_Send_Desc" />
+							</Panel>
+						</Panel>
+					</Panel>
+
+					<!-- Item Found -->
+					<Panel class="help-popup__notify-row">
+						<Panel class="notify-entry">
+							<Panel class="accent-bar" style="background-color: rgb(50, 255, 50);" />
+							<Panel class="content">
+								<Label class="title" style="color: rgb(50, 255, 50);" text="#Archipelago_HUD_Found" />
+								<Label class="body" text="#Archipelago_Help_Notify_Found_Desc" />
+							</Panel>
+						</Panel>
+					</Panel>
+
+					<!-- New Hint -->
+					<Panel class="help-popup__notify-row">
+						<Panel class="notify-entry">
+							<Panel class="accent-bar" style="background-color: rgb(255, 255, 50);" />
+							<Panel class="content">
+								<Label class="title" style="color: rgb(255, 255, 50);" text="#Archipelago_HUD_Hint" />
+								<Label class="body" text="#Archipelago_Help_Notify_Hint_Desc" />
+							</Panel>
+						</Panel>
+					</Panel>
+				</Panel>
+
+				<Panel class="help-popup__column">
+					<Label class="help-popup__section-title" text="#Archipelago_Help_Section_Notifications_Alerts" />
+
+					<!-- Deathlink -->
+					<Panel class="help-popup__notify-row">
+						<Panel class="notify-entry">
+							<Panel class="accent-bar" style="background-color: rgb(255, 50, 50);" />
+							<Panel class="content">
+								<Label class="title" style="color: rgb(255, 50, 50);" text="#Archipelago_HUD_Deathlink" />
+								<Label class="body" text="#Archipelago_Help_Notify_Deathlink_Desc" />
+							</Panel>
+						</Panel>
+					</Panel>
+
+					<!-- Trap -->
+					<Panel class="help-popup__notify-row">
+						<Panel class="notify-entry">
+							<Panel class="accent-bar" style="background-color: rgb(255, 150, 0);" />
+							<Panel class="content">
+								<Label class="title" style="color: rgb(255, 150, 0);" text="#Archipelago_HUD_Trap" />
+								<Label class="body" text="#Archipelago_Help_Notify_Trap_Desc" />
+							</Panel>
+						</Panel>
+					</Panel>
+
+					<!-- Go Mode -->
+					<Panel class="help-popup__notify-row">
+						<Panel class="notify-entry">
+							<Panel class="accent-bar rainbow-bg" />
+							<Panel class="content">
+								<Label class="title rainbow-text" text="#Archipelago_HUD_GoMode" />
+								<Label class="body" text="#Archipelago_Help_Notify_GoMode_Desc" />
+							</Panel>
+						</Panel>
+					</Panel>
+
+					<!-- Warp to Menu -->
+					<Panel class="help-popup__notify-row">
+						<Panel class="notify-entry">
+							<Panel class="accent-bar" style="background-color: rgb(198, 33, 223);" />
+							<Panel class="content">
+								<Label class="title" style="color: rgb(198, 33, 223);" text="#Archipelago_HUD_Warp_Menu_Title" />
+								<Label class="body" text="#Archipelago_Help_Notify_Warp_Desc" />
+							</Panel>
+						</Panel>
+					</Panel>
+
+					<!-- Goal Achieved -->
+					<Panel class="help-popup__notify-row">
+						<Panel class="notify-entry preview-goal-border">
+							<Panel class="accent-bar" style="background-color: rgb(255, 215, 0);" />
+							<Panel class="content">
+								<Label class="title" style="color: rgb(255, 215, 0);" text="#Archipelago_HUD_Goal" />
+								<Label class="body" text="#Archipelago_Help_Notify_Goal_Desc" />
+							</Panel>
+						</Panel>
+					</Panel>
+				</Panel>
+			</Panel>
+		</Panel>
+
+		<Panel class="help-popup__footer">
+			<Button id="PrevPageButton" class="help-popup__nav-btn" onactivate="HelpPopup.prevPage()">
+				<Image src="file://{images}/chevron.svg" class="help-popup__chevron-img prev" />
+			</Button>
+			<Panel class="help-popup__dots">
+				<Panel id="HelpDot1" class="help-popup__dot active" />
+				<Panel id="HelpDot2" class="help-popup__dot" />
+			</Panel>
+			<Button id="NextPageButton" class="help-popup__nav-btn" onactivate="HelpPopup.nextPage()">
+				<Image src="file://{images}/chevron.svg" class="help-popup__chevron-img" />
+			</Button>
 		</Panel>
 	</Panel>
 </root>

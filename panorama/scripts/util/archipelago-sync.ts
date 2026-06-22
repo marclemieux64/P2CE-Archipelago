@@ -116,6 +116,23 @@ class ArchipelagoSync {
 
     static m_CurrentMap: string = "";
     static m_PollSchedule: any = null;
+
+    // Debounced storage flush for in-game sync values
+    static m_PendingSyncValues: Record<string, any> = {};
+    static m_SyncFlushSchedule: any = null;
+
+    static debouncedSyncWrite(key: string, value: any) {
+        ArchipelagoSync.m_PendingSyncValues[key] = value;
+        if (!ArchipelagoSync.m_SyncFlushSchedule) {
+            ArchipelagoSync.m_SyncFlushSchedule = $.Schedule(2.0, () => {
+                ArchipelagoSync.m_SyncFlushSchedule = null;
+                for (const k in ArchipelagoSync.m_PendingSyncValues) {
+                    $.persistentStorage.setItem(k, ArchipelagoSync.m_PendingSyncValues[k]);
+                }
+                ArchipelagoSync.m_PendingSyncValues = {};
+            });
+        }
+    }
     static m_LastServerStatus: number = -1;
     static m_LastRatmanStatus: number = -1;
     static m_LastPortalGunStatus: number = -1;
@@ -154,7 +171,7 @@ class ArchipelagoSync {
 
         registerSelfCleaningEvent("MapLoaded", (map: string, bg: boolean) => {
             if (bg) return;
-            
+
             let cleanMap = map;
             if (cleanMap.indexOf("maps/") === 0 || cleanMap.indexOf("maps\\") === 0) {
                 cleanMap = cleanMap.substring(5);
@@ -275,10 +292,10 @@ class ArchipelagoSync {
         this.m_LastSymbols = symbols;
         this.m_LastMissingItemsStr = currentMissingItemsStr;
         
-        $.persistentStorage.setItem("ArchipelagoLastSymbols", symbols);
-        $.persistentStorage.setItem("ArchipelagoLastSubKeys", subKeys);
-        $.persistentStorage.setItem("ArchipelagoLastMapStatus", serverStatus);
-        $.persistentStorage.setItem("ArchipelagoLastMapName", mapName);
+        this.debouncedSyncWrite("ArchipelagoLastSymbols", symbols);
+        this.debouncedSyncWrite("ArchipelagoLastSubKeys", subKeys);
+        this.debouncedSyncWrite("ArchipelagoLastMapStatus", serverStatus);
+        this.debouncedSyncWrite("ArchipelagoLastMapName", mapName);
 
         const mapSelectGlobal = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect;
         if (mapSelectGlobal && typeof mapSelectGlobal.restoreActiveSelectionVisuals === "function") {
@@ -291,6 +308,6 @@ class ArchipelagoSync {
     }
 }
 
-(UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync = ArchipelagoSync;
+
 ArchipelagoSync.initSync();
 ArchipelagoSync.startPolling();

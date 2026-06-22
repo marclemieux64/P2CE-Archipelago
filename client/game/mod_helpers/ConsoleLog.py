@@ -2,6 +2,7 @@ import time
 import typing
 import logging
 import re
+from collections import deque
 
 from .ItemHandling import handle_trap
 
@@ -27,7 +28,7 @@ class ConsoleLogManager:
 
     def __init__(self, ctx):
         self.ctx = ctx
-        self.chat_log: list[dict] = []
+        self.chat_log: deque = deque(maxlen=100)
         self.msg_id_counter: int = 0
         self._current_ap_msg_type: str = "default"
         self._current_ap_msg_priority: bool = False
@@ -358,8 +359,7 @@ class ConsoleLogManager:
             "muted": is_processing
         })
         
-        if len(self.chat_log) > 100:
-            self.chat_log.pop(0)
+
 
     def print_json(self, data: typing.List[typing.Dict[str, str]], mirror_to_hud: bool = False):
         """Translates multiworld data packages tracking structural components into human-readable strings."""

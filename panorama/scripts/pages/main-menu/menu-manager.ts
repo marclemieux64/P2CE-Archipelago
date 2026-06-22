@@ -49,6 +49,40 @@ class MenuManager {
 		if (!global.ArchipelagoMessageQueue) {
 			global.ArchipelagoMessageQueue = [];
 		}
+
+		// Restore archipelago convars from persistent storage so settings apply
+		// without requiring the settings menu to be opened first.
+		const convarMap: string[] = [
+			'cv_ShowMapStatusHUD',
+			'cv_HideHolograms',
+			'cv_SkipElevatorRide',
+			'cv_SkipIntroContainerScene',
+			'cv_SkipBirdScene',
+			'cv_SkipCeilingScene',
+		];
+
+		for (const convar of convarMap) {
+			const stored = $.persistentStorage.getItem(convar);
+			if (stored !== null && stored !== undefined) {
+				GameInterfaceAPI.ConsoleCommand(`${convar} ${stored}`);
+			}
+		}
+
+		// Restore addon enabled states so they apply without visiting the Addons page.
+		const addonMapRaw = $.persistentStorage.getItem('ap_addon_enabled_map');
+		if (addonMapRaw) {
+			try {
+				const persistMap = JSON.parse(String(addonMapRaw)) as Record<string, boolean>;
+				const count = WorkshopAPI.GetAddonCount();
+				const enableList: Record<number, boolean> = {};
+				for (let i = 0; i < count; i++) {
+					const meta = WorkshopAPI.GetAddonMeta(i);
+					const key = meta.local ? `local:${meta.title}` : `ws:${meta.workshopid}`;
+					if (persistMap[key] !== undefined) enableList[i] = persistMap[key];
+				}
+				if (Object.keys(enableList).length > 0) WorkshopAPI.SetAddonListEnabled(enableList);
+			} catch (e) {}
+		}
 	}
 	
 	static {

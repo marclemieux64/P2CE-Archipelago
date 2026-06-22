@@ -347,13 +347,6 @@ class CheckManager {
     void AddCameraCheck() {
         VerifyMapChange();
 
-        for (int i = int(m_activeLocations.length()) - 1; i >= 0; i--) {
-            CameraLocation@ camLoc = cast<CameraLocation>(m_activeLocations[i]);
-            if (camLoc !is null) {
-                m_activeLocations.removeAt(i);
-            }
-        }
-
         CBaseEntity@ camera = null;
         string currentMap = g_Archipelago.GetCurrentMap();
         while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) != null) {
@@ -362,9 +355,15 @@ class CheckManager {
             if (camID == "unk") continue;
 
             string camIdentifier = currentMap + "_" + camID;
+            string holoName = "camera_check_holo_" + camIdentifier.tolower();
+
+            // If the hologram already exists this camera was already initialized during
+            // this session. The CameraLocation is still in m_activeLocations and
+            // SetCheckedCameras can update it directly — no need to redo the setup.
+            if (EntityList().FindByName(null, holoName) !is null) continue;
+
             bool isChecked = (m_checkedCameras.find(camIdentifier.tolower()) != -1);
 
-            // Compute Visual transforms exactly once
             float holoScale = 0.6f;
             QAngle baseAng = camera.GetAbsAngles();
             Vector finalPos = camPos + (AnglesToForward(baseAng) * 35.0f) + (AnglesToUp(baseAng) * -15.0f);
@@ -374,7 +373,6 @@ class CheckManager {
             camLoc.SetChecked(isChecked);
             m_activeLocations.insertLast(@camLoc);
 
-            // Filtre renforcé : Pas validé sur le serveur ET pas encore tombé localement dans cette session
             if (!isChecked && m_locallyKnockedCameras.find(camIdentifier.tolower()) == -1) {
                 bool alreadyTracked = false;
                 for (uint j = 0; j < m_trackedCameras.length(); j++) {

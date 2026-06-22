@@ -48,36 +48,17 @@ var ArchipelagoMapStatusHUD = class {
             if (!payload) return;
             const parts = payload.split('|');
             ArchipelagoMapStatusHUD.m_CurrentMapName = parts[0] || "";
-            const serverHudMode = parts[1] || "0";
 
-            // Sync persistentStorage with the ConVar state received from the server
-            $.persistentStorage.setItem('ap_show_map_status_hud', serverHudMode);
-            
-            // Sync all settings from persistent storage to the server/AS convars
-            const skipBirdVal = $.persistentStorage.getItem('cv_SkipBirdScene') ?? "0";
-            const skipCeilingVal = $.persistentStorage.getItem('cv_SkipCeilingScene') ?? "0";
-            const skipIntroContainerVal = $.persistentStorage.getItem('cv_SkipIntroContainerScene') ?? "0";
-            const skipElevatorVal = $.persistentStorage.getItem('cv_SkipElavatorRide') ?? "0";
-
-            GameInterfaceAPI.ConsoleCommand(`cv_SkipBirdScene ${skipBirdVal}`);
-            GameInterfaceAPI.ConsoleCommand(`cv_SkipCeilingScene ${skipCeilingVal}`);
-            GameInterfaceAPI.ConsoleCommand(`cv_SkipIntroContainerScene ${skipIntroContainerVal}`);
-            GameInterfaceAPI.ConsoleCommand(`cv_SkipElavatorRide ${skipElevatorVal}`);
-            GameInterfaceAPI.ConsoleCommand('UpdateHologramsVisibility');
-            
-            if (ArchipelagoMapStatusHUD.m_HideSchedule) { 
-                $.CancelScheduled(ArchipelagoMapStatusHUD.m_HideSchedule); 
-                ArchipelagoMapStatusHUD.m_HideSchedule = null; 
+            if (ArchipelagoMapStatusHUD.m_HideSchedule) {
+                $.CancelScheduled(ArchipelagoMapStatusHUD.m_HideSchedule);
+                ArchipelagoMapStatusHUD.m_HideSchedule = null;
             }
-            
+
             ArchipelagoMapStatusHUD.m_LastStatusKey = "";
             ArchipelagoMapStatusHUD.m_LastMissingKey = "";
-            
-            if (serverHudMode === "0") {
-                ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, true); 
-            } else {
-                ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, false); 
-            }
+
+            const showHUD = String($.persistentStorage.getItem('cv_ShowMapStatusHUD') ?? "0") !== "1";
+            ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, showHUD);
         });
 
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
@@ -121,7 +102,7 @@ var ArchipelagoMapStatusHUD = class {
             }
         }
 
-        const hudSetting = $.persistentStorage.getItem('ap_show_map_status_hud') ?? "1";
+        const hudSetting = $.persistentStorage.getItem('cv_ShowMapStatusHUD') ?? "1";
         const isHUDDisabled = (hudSetting == 1 || hudSetting == '1' || hudSetting === true || hudSetting === "true");
 
         // Block execution (keep collapsed) if the HUD is completely disabled,
@@ -134,11 +115,16 @@ var ArchipelagoMapStatusHUD = class {
 
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         const syncHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoSync;
-        
+
+        if (!syncHelper) {
+            if (forceShow) ArchipelagoMapStatusHUD.m_PendingShow = true;
+            return;
+        }
+
         let apiStatus = api ? api.getStatus() : null;
-        if (!apiStatus || !apiStatus.menu) { 
-            if (forceShow) ArchipelagoMapStatusHUD.m_PendingShow = true; 
-            return; 
+        if (!apiStatus || !apiStatus.menu) {
+            if (forceShow) ArchipelagoMapStatusHUD.m_PendingShow = true;
+            return;
         }
 
         ArchipelagoMapStatusHUD.m_PendingShow = false;

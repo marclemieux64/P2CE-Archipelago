@@ -41,7 +41,10 @@ class AddonEntry {
 		}
 
 		if (this.addonEnableCheck) {
-			this.addonEnableCheck.SetSelected(WorkshopAPI.GetAddonEnabled(this.index));
+			const key = AddonManager.getAddonKey(this.index);
+			const stored = AddonManager.storedEnabledMap[key];
+			const enabled = stored !== undefined ? stored : WorkshopAPI.GetAddonEnabled(this.index);
+			this.addonEnableCheck.SetSelected(enabled);
 			this.addonEnableCheck.SetPanelEvent('onactivate', () => AddonManager.markDirty());
 		}
 
@@ -125,9 +128,32 @@ class AddonManager {
 	static searchDataDirty: boolean = true;
 
 	static advancedMode = false;
+	static storedEnabledMap: Record<string, boolean> = {};
+
+	static getAddonKey(index: number): string {
+		const meta = WorkshopAPI.GetAddonMeta(index);
+		return meta.local ? `local:${meta.title}` : `ws:${meta.workshopid}`;
+	}
+
+	static restoreAddonStates() {
+		const raw = $.persistentStorage.getItem('ap_addon_enabled_map');
+		if (!raw) return;
+		try {
+			this.storedEnabledMap = JSON.parse(String(raw)) as Record<string, boolean>;
+			const count = WorkshopAPI.GetAddonCount();
+			const enableList: Record<number, boolean> = {};
+			for (let i = 0; i < count; i++) {
+				const key = this.getAddonKey(i);
+				if (this.storedEnabledMap[key] !== undefined) enableList[i] = this.storedEnabledMap[key];
+			}
+			if (Object.keys(enableList).length > 0) WorkshopAPI.SetAddonListEnabled(enableList);
+		} catch (e) {}
+	}
 
 	static init() {
 		this.addonsPage.visible = false;
+
+		this.restoreAddonStates();
 
 		this.advancedMode = WorkshopAPI.IsWorkshopToolsMode() || GameInterfaceAPI.GetSettingInt('developer') > 0;
 		this.addonsAdvancedCheck.SetSelected(this.advancedMode);
@@ -336,6 +362,14 @@ class AddonManager {
 			enableList[addon.index] = addon.isEnabled();
 		}
 		WorkshopAPI.SetAddonListEnabled(enableList);
+
+		// Persist enabled state — WorkshopAPI doesn't survive restarts.
+		// Merge so a search-filtered list doesn't clobber addons not currently shown.
+		for (const addon of this.addons) {
+			this.storedEnabledMap[this.getAddonKey(addon.index)] = addon.isEnabled();
+		}
+		$.persistentStorage.setItem('ap_addon_enabled_map', JSON.stringify(this.storedEnabledMap));
+
 		this.markDirty(false);
 
 		// Update UI to reflect the new enable/disable state

@@ -19,13 +19,6 @@
 #include "Core/Globals/ArchipelagoGlobals.as"
 
 // --- TRAPS ---
-#include "Traps/ITrap.as"
-#include "Traps/ButterFingerTrap.as"
-#include "Traps/CubeConfettiTrap.as"
-#include "Traps/DialogTrap.as"
-#include "Traps/FizzlePortalTrap.as"
-#include "Traps/MotionBlurTrap.as"
-#include "Traps/SlipperyFloorTrap.as"
 #include "Traps/TrapManager.as"
 
 // --- MANAGERS & SUBSYSTEMS ---

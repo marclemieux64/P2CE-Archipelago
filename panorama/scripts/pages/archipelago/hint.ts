@@ -17,12 +17,14 @@ class ArchipelagoHint {
     static m_SelectedIndex = 0;
 
     static m_WaitingForFeedback = false;
-    static m_LastMatchedMsg = ""; 
+    static m_LastMatchedMsg = "";
     static m_FeedbackHideSchedule: any = null;
-    static m_RequestChatLength = 0;
-    
-    // Cache de comparaison pour éviter les bakes de rendu DOM inutiles
-    static m_LastRawHints: string = "";
+
+    // Lightweight hints change key — avoids JSON.stringify on every update
+    static m_LastHintsKey: string = "";
+
+    // Debounced hints storage flush
+    static m_HintsStorageFlushSchedule: any = null;
 
     static init() {
         $.DispatchEvent('MainMenuSetPageLines', 
@@ -32,14 +34,7 @@ class ArchipelagoHint {
 
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         
-        // 1. Chargement synchrone instantané depuis le stockage persistant s'il existe
-        const cachedHints = $.persistentStorage.getItem("ArchipelagoLastHintsCacheData");
-        if (cachedHints) {
-            try { this.render(JSON.parse(cachedHints)); } catch(e) {}
-        }
-
         if (api) {
-            // Force l'actualisation des indices côté serveur AP dès l'ouverture de la page
             api.forceRefreshHints();
         }
 
@@ -60,30 +55,25 @@ class ArchipelagoHint {
         }
 
         if (api) {
-            // Écouteur pour intercepter les retours d'erreurs (Points insuffisants)
-            api.registerChatListener($.GetContextPanel(), (json: any) => {
+            // Chat listener: receives delta (new messages only) — check for hint error feedback
+            api.registerChatListener($.GetContextPanel(), (delta: any[]) => {
                 if (!ArchipelagoHint.m_WaitingForFeedback) return;
+                if (!Array.isArray(delta)) return;
                 try {
-                    const chat = typeof json === 'string' ? JSON.parse(json) : json;
-                    if (chat && chat.length > ArchipelagoHint.m_RequestChatLength) {
-                        for (let i = ArchipelagoHint.m_RequestChatLength; i < chat.length; i++) {
-                            const msg = chat[i];
-                            const rawStr = JSON.stringify(msg).toLowerCase();
-                            
-                            if ((rawStr.includes("afford") || rawStr.includes("need at least")) && !rawStr.includes("!hint")) {
-                                if (rawStr !== ArchipelagoHint.m_LastMatchedMsg) {
-                                    ArchipelagoHint.m_LastMatchedMsg = rawStr;
-                                    
-                                    let displayMsg = "You don't have enough points for this hint.";
-                                    if (typeof msg === 'string') displayMsg = msg;
-                                    else if (msg.text) displayMsg = msg.text;
-                                    else if (msg.html) displayMsg = msg.html;
-                                    else if (msg.message) displayMsg = msg.message;
-                                    
-                                    ArchipelagoHint.showFeedback(displayMsg);
-                                    ArchipelagoHint.m_WaitingForFeedback = false;
-                                    return;
-                                }
+                    for (const msg of delta) {
+                        if (!msg) continue;
+                        const rawStr = JSON.stringify(msg).toLowerCase();
+                        if ((rawStr.includes("afford") || rawStr.includes("need at least")) && !rawStr.includes("!hint")) {
+                            if (rawStr !== ArchipelagoHint.m_LastMatchedMsg) {
+                                ArchipelagoHint.m_LastMatchedMsg = rawStr;
+                                let displayMsg = "You don't have enough points for this hint.";
+                                if (typeof msg === 'string') displayMsg = msg;
+                                else if (msg.text) displayMsg = msg.text;
+                                else if (msg.html) displayMsg = msg.html;
+                                else if (msg.message) displayMsg = msg.message;
+                                ArchipelagoHint.showFeedback(displayMsg);
+                                ArchipelagoHint.m_WaitingForFeedback = false;
+                                return;
                             }
                         }
                     }
@@ -117,13 +107,18 @@ class ArchipelagoHint {
             // 3. ÉCOUTEUR DÉDIÉ POUR LES INDICES
             api.registerHintsListener($.GetContextPanel(), (hintsList: any[]) => {
                 try {
-                    if (hintsList) {
-                        const rawHintsStr = JSON.stringify(hintsList);
-                        if (rawHintsStr !== ArchipelagoHint.m_LastRawHints) {
-                            ArchipelagoHint.m_LastRawHints = rawHintsStr;
-                            $.persistentStorage.setItem("ArchipelagoLastHintsCacheData", rawHintsStr);
-                            ArchipelagoHint.render(hintsList);
-                        }
+                    if (!hintsList) return;
+                    const hintsKey = hintsList.length + ":" + hintsList.map((h: any) => h.found ? "1" : "0").join("");
+                    if (hintsKey === ArchipelagoHint.m_LastHintsKey) return;
+                    ArchipelagoHint.m_LastHintsKey = hintsKey;
+                    ArchipelagoHint.render(hintsList);
+                    // Debounce storage write to once per 3s
+                    const snapshot = hintsList;
+                    if (!ArchipelagoHint.m_HintsStorageFlushSchedule) {
+                        ArchipelagoHint.m_HintsStorageFlushSchedule = $.Schedule(3.0, () => {
+                            ArchipelagoHint.m_HintsStorageFlushSchedule = null;
+                            $.persistentStorage.setItem("ArchipelagoLastHintsCacheData", JSON.stringify(snapshot));
+                        });
                     }
                 } catch (e) { }
             });
@@ -240,12 +235,9 @@ class ArchipelagoHint {
 
         if (finalValue) {
             this.m_WaitingForFeedback = true;
-            this.m_LastMatchedMsg = ""; 
-            this.m_LastRawHints = ""; 
-            
-            const currentChat = api.getChat();
-            this.m_RequestChatLength = currentChat ? currentChat.length : 0;
-            
+            this.m_LastMatchedMsg = "";
+            this.m_LastHintsKey = "";
+
             $.Schedule(5.0, () => { this.m_WaitingForFeedback = false; });
 
             api.sendCommand("!hint " + finalValue, () => {

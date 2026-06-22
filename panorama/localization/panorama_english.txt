@@ -1728,7 +1728,14 @@ This message will only be displayed once, and will not be shown again upon accep
         "Archipelago_Settings_MapStatusHUD_info" "Show current map checks status in the top-left corner when entering a level."
 
         "Archipelago_Settings_Key_ShowStatus" "Show Map Progress HUD Key"
+
 		"Archipelago_Settings_Key_ShowStatus_info" "Sets the key to show the map progress HUD manually."
+
+		"Archipelago_Settings_Skips" "Skips Settings"
+
+		"Archipelago_Settings_SkipElevatorRide" "Elevator Ride Skip"
+
+		"Archipelago_Settings_SkipIntroContainer"	 "Container Ride Skip"
 
 		"Archipelago_Settings_SkipBirdScene" "Bridge The Gap Intro Skip"
 		
@@ -1947,7 +1954,7 @@ This message will only be displayed once, and will not be shown again upon accep
 
         "Archipelago_Status_NoClient"     "ARCHIPELAGO CLIENT NOT DETECTED"
 
-        "Archipelago_Status_LaunchClient" "Please launch Portal2Client.py"
+        "Archipelago_Status_LaunchClient" "Please verify your launch arguments."
 
         "Archipelago_Status_NotConnected" "NOT CONNECTED TO SERVER"
 

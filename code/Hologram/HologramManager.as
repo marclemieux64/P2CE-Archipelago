@@ -109,7 +109,7 @@ class HologramManager {
         // Snapshot update for handling game reload state persistence
         if (h !is null) {
             if (h.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
-                if (cv_ArchipelagoDebug.GetBool()) {
+                if (cv_Debug.GetBool()) {
                     ArchipelagoLog("Updating Hologram '" + name + "' to angles " + angles.x + " " + angles.y + " " + angles.z + " | Skin: " + skin + " | PlaybackRate: " + playbackRate);
                 }
             
@@ -142,7 +142,7 @@ class HologramManager {
                 h.KeyValue("modelscale", "" + scale);
 
                 // Visibility update based on client ConVars
-                int hideOption = cv_ArchipelagoHideHolograms.GetInt();
+                int hideOption = cv_HideHolograms.GetInt();
                 bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
                 Variant emptyVal;
                 h.KeyValue("rendermode", "0");
@@ -195,7 +195,7 @@ class HologramManager {
                 animH.SetPlaybackRate(playbackRate);
             }
 
-            int hideOption = cv_ArchipelagoHideHolograms.GetInt();
+            int hideOption = cv_HideHolograms.GetInt();
             bool shouldHide = (hideOption == 2) || (hideOption == 1 && (skin == 4 || skin == 2));
             Variant emptyVal;
             h.KeyValue("rendermode", "0");
@@ -210,7 +210,7 @@ class HologramManager {
 
     void UpdateHologramsVisibility() {
         CBaseEntity@ ent = null;
-        int hideOption = cv_ArchipelagoHideHolograms.GetInt();
+        int hideOption = cv_HideHolograms.GetInt();
     
         while ((@ent = EntityList().FindByClassname(ent, "prop_dynamic")) !is null) {
             if (ent.GetModelName().tolower().locate("archipelago_hologram") != uint(-1)) {
@@ -237,11 +237,11 @@ class HologramManager {
         if (currentMap == "sp_a2_bts4") {
             if (entity_name == "npc_portal_turret_floor" || entity_name == "initial_template_turret") {
                 m_bInitialTemplateHoloActive = true;
-                cv_BTS4_InitialTemplateHoloActive.SetValue(1);
+                cv_BTS4InitialHoloActive.SetValue(1);
             }
             if (entity_name == "npc_portal_turret_floor" || entity_name == "turret_conveyor_1_template") {
                 m_bConveyor1TemplateHoloActive = true;
-                cv_BTS4_Conveyor1TemplateHoloActive.SetValue(1);
+                cv_BTS4Conveyor1HoloActive.SetValue(1);
             }
         }
 
@@ -280,14 +280,7 @@ class HologramManager {
                 Vector worldPos = ent.GetAbsOrigin() + (AnglesToForward(ent.GetAbsAngles()) * finalOffset.x) + (AnglesToRight(ent.GetAbsAngles()) * -finalOffset.y) + (AnglesToUp(ent.GetAbsAngles()) * finalOffset.z);
                 CreateAPHologram(worldPos, hAng, hScale, null, "", hSkin, holoName);
             } else {
-                if (hParent) {
-                    CreateAPHologram(finalOffset, hAng, hScale, ent, attachment_point, hSkin, holoName);
-                } else {
-                    // Calcul de la position absolue dans le monde avec les offsets locaux pour éviter le parenting direct
-                    Vector worldPos = ent.GetAbsOrigin() + (AnglesToForward(ent.GetAbsAngles()) * finalOffset.x) + (AnglesToRight(ent.GetAbsAngles()) * -finalOffset.y) + (AnglesToUp(ent.GetAbsAngles()) * finalOffset.z);
-                    QAngle worldAng = ent.GetAbsAngles() + hAng;
-                    CreateAPHologram(worldPos, worldAng, hScale, null, "", hSkin, holoName);
-                }
+                CreateAPHologram(finalOffset, hAng, hScale, ent, attachment_point, hSkin, holoName);
             }
         }
     }
@@ -346,8 +339,8 @@ class HologramManager {
         g_Archipelago.UpdateInternalMapName();
         if (g_Archipelago.GetCurrentMap() != "sp_a2_bts4") return;
 
-        bool initialActive = cv_BTS4_InitialTemplateHoloActive.GetBool() || DoesHologramExistFor("initial_template_turret");
-        bool conveyor1Active = cv_BTS4_Conveyor1TemplateHoloActive.GetBool() || DoesHologramExistFor("turret_conveyor_1");
+        bool initialActive = cv_BTS4InitialHoloActive.GetBool() || DoesHologramExistFor("initial_template_turret");
+        bool conveyor1Active = cv_BTS4Conveyor1HoloActive.GetBool() || DoesHologramExistFor("turret_conveyor_1");
 
         m_bInitialTemplateHoloActive = initialActive;
         m_bConveyor1TemplateHoloActive = conveyor1Active;
@@ -360,8 +353,8 @@ class HologramManager {
         if (m_bInitialTemplateHoloActive || m_bConveyor1TemplateHoloActive) {
             CleanOrphanRedHolograms();
         } else {
-            cv_BTS4_InitialTemplateHoloActive.SetValue(0);
-            cv_BTS4_Conveyor1TemplateHoloActive.SetValue(0);
+            cv_BTS4InitialHoloActive.SetValue(0);
+            cv_BTS4Conveyor1HoloActive.SetValue(0);
 
             CBaseEntity@ ent = null;
             while ((@ent = EntityList().FindByClassname(ent, "npc_portal_turret_floor")) !is null) {
@@ -468,17 +461,6 @@ class HologramManager {
 
         string mapName = g_Archipelago.GetCurrentMap();
 
-        // Règle explicite pour les caméras de sécurité afin d'empêcher tout rattachement physique accidentel
-        if (classname == "npc_security_camera") {
-            targetPos = Vector(0.0f, 0.0f, 0.0f);
-            targetAng = QAngle(0.0f, 0.0f, 0.0f);
-            targetSkin = 0;
-            targetScale = 0.6f;
-            shouldParent = false;
-            absoluteAngles = false; // Sera géré proprement sans liaison dynamique par le correctif de l'émetteur
-            return;
-        }
-
         if (mapName == "sp_a3_crazy_box") {
             if (name_lower == "erase_blocker_button" || model.locate("underground_testchamber_button") != uint(-1)) {
                 targetPos = Vector(45.0f, 0.0f, 25.0f);
@@ -506,9 +488,11 @@ class HologramManager {
             }
         }
 
-        if (classname == "npc_portal_turret_floor") {
+        bool isTurret = (classname == "npc_portal_turret_floor") ||
+                        (classname == "prop_dynamic" && (model.locate("npcs/turret/turret.mdl") != uint(-1) || model.locate("npcs/turret/turret_skeleton.mdl") != uint(-1)));
+        if (isTurret) {
             targetPos = Vector(0.0f, 0.0f, 60.0f);
-            targetSkin = 2; 
+            targetSkin = 2;
             shouldParent = true;
             return;
         }

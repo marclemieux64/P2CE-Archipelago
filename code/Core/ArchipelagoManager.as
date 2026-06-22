@@ -128,9 +128,9 @@ class ArchipelagoManager {
 
             // Reset BTS4 Conveyor Holo ConVars (only if we transitioned away from sp_a2_bts4)
             if (m_currentMap != "sp_a2_bts4") {
-                v.SetString("ap_bts4_initial_holo_active 0");
+                v.SetString("cv_BTS4InitialHoloActive 0");
                 cmd.FireInput("Command", v, 0.0f, null, null, 0);
-                v.SetString("ap_bts4_conveyor1_holo_active 0");
+                v.SetString("cv_BTS4Conveyor1HoloActive 0");
                 cmd.FireInput("Command", v, 0.0f, null, null, 0);
             }
             

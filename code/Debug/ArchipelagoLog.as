@@ -10,7 +10,7 @@ namespace Archipelago {
  */
 void ArchipelagoLog(string msg) {
     // 1. Retrieve the Archipelago Debug ConVar value
-    ConVarRef debugCV("ArchipelagoDebug");
+    ConVarRef debugCV("cv_Debug");
     bool isDebugEnabled = debugCV.GetBool();
 
     // 2. Check for critical prefix tags that must always be outputted (for client integrations)

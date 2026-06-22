@@ -21,7 +21,7 @@
             <Panel style="width: 100%; height: 100%; flow-children: down;">
                 <Panel id="ColumnsWrapper" class="columns_wrapper">
                     <Panel id="ConsoleOutputArea" class="console_output_area">
-                        <Label id="ConsoleOutput" class="console_output_text" multiline="true" html="true" text="#Archipelago_Console_Connecting" />
+                        <Panel id="ConsoleOutput" class="console_output_container" />
                     </Panel>
                 </Panel>
 

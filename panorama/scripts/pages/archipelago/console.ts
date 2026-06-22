@@ -3,9 +3,6 @@ declare var $: any;
 declare var UiToolkitAPI: any;
 
 class ArchipelagoConsole {
-    static m_LastChatCount = 0;
-    static g_ConsoleText: string = "";
-
     // Command History
     static g_CommandHistory: string[] = [];
     static g_HistoryIndex: number = -1;
@@ -13,12 +10,12 @@ class ArchipelagoConsole {
 
     // Autocomplete Data
     static readonly COMMANDS = [
-        "!license", "!options", "!admin", "!help", "!players", "!status", "!release", 
-        "!collect", "!countdown seconds=", "!remaning", "!missing", "!checked", 
-        "!alias", "!getitem", "!hint", "!hint_location", "!video", 
-        "/license", "/exit","/connect archipelago.gg:", "/connect", "/disconnect", "/help", "/received", "/missing", 
-        "/items", "/locations", "/item_groups", "/location_groups", "/ready", 
-        "/check_connection", "/command", "/deathlink", "/refresh_menu", 
+        "!license", "!options", "!admin", "!help", "!players", "!status", "!release",
+        "!collect", "!countdown seconds=", "!remaning", "!missing", "!checked",
+        "!alias", "!getitem", "!hint", "!hint_location", "!video",
+        "/license", "/exit","/connect archipelago.gg:", "/connect", "/disconnect", "/help", "/received", "/missing",
+        "/items", "/locations", "/item_groups", "/location_groups", "/ready",
+        "/check_connection", "/command", "/deathlink", "/refresh_menu",
         "/message_in_game", "/needed"
     ];
     static m_FilteredCommands: string[] = [];
@@ -33,9 +30,13 @@ class ArchipelagoConsole {
         "purple": "#800080", "grey": "#808080"
     };
 
+    // Debounce storage writes — flush at most once per 3s
+    static m_StoragePendingChat: any[] | null = null;
+    static m_StorageFlushSchedule: any = null;
+
     static init() {
-        $.DispatchEvent('MainMenuSetPageLines', 
-            $.Localize('#Archipelago_Console_Title'), 
+        $.DispatchEvent('MainMenuSetPageLines',
+            $.Localize('#Archipelago_Console_Title'),
             $.Localize('#Archipelago_Console_Tagline')
         );
 
@@ -57,35 +58,139 @@ class ArchipelagoConsole {
                 if (ArchipelagoConsole.m_FilteredCommands.length > 0) return ArchipelagoConsole.navigateSuggestions(1);
                 return ArchipelagoConsole.handleHistoryNavigation(false);
             });
-            
-            $.RegisterKeyBind(input, "key_tab", () => ArchipelagoConsole.autocompleteSelection());
-        }
 
-        const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
-        if (output) {
-            output.SetPanelEvent('onkeydown', () => {
-                const key = $.GetContextPanel().GetOwnerWindow()?.GetLastKey();
-                if (key === 8 || key === 46 || key > 46) return true;
-                return false;
-            });
+            $.RegisterKeyBind(input, "key_tab", () => ArchipelagoConsole.autocompleteSelection());
         }
 
         $.Schedule(0.1, () => {
             if (input) input.SetFocus();
         });
 
-        // Lecture sécurisée du cache de démarrage immédiat
-        const cachedChat = $.persistentStorage.getItem("ArchipelagoLastChatCacheData");
-        if (cachedChat) {
-            try { ArchipelagoConsole.refreshConsoleUI(JSON.parse(cachedChat)); } catch (e) { }
-        }
-
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
-            api.registerChatListener($.GetContextPanel(), (chatList: any[]) => {
-                ArchipelagoConsole.refreshConsoleUI(chatList);
+            // On initial registration: receives full accumulated array (history).
+            // On subsequent dispatches: receives delta only.
+            api.registerChatListener($.GetContextPanel(), (data: any[]) => {
+                if (!Array.isArray(data) || data.length === 0) return;
+                const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
+                if (!output) return;
+                const isHistory = output.GetChildCount() === 0;
+                if (isHistory) {
+                    ArchipelagoConsole.buildAllPanels(data);
+                } else {
+                    ArchipelagoConsole.appendPanels(data);
+                }
             });
         }
+    }
+
+    static formatMessage(msg: any): string {
+        let timeStr = "";
+        if (msg.time_str) {
+            timeStr = "[" + msg.time_str + "]";
+        } else {
+            const d = new Date(msg.time * 1000);
+            timeStr = "[" + d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0') + "]";
+        }
+
+        let lineText = "";
+        if (msg.html) {
+            lineText = msg.html;
+        } else if (msg.type === "json" && Array.isArray(msg.data)) {
+            lineText = ArchipelagoConsole.formatRichMessage(msg.data);
+        } else {
+            lineText = (msg.text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        return `<font color='#888888'>${timeStr}</font> ${lineText}`;
+    }
+
+    // Full rebuild from an array — used on init and cache load.
+    static buildAllPanels(chat: any[]) {
+        const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
+        if (!output) return;
+        output.RemoveAndDeleteChildren();
+        for (const msg of chat) {
+            if (!msg) continue;
+            ArchipelagoConsole.createLinePanel(output, msg);
+        }
+        ArchipelagoConsole.scheduleStorageFlush(chat);
+        ArchipelagoConsole.scrollToBottom();
+    }
+
+    // Incremental append — used on each delta from the API.
+    static appendPanels(delta: any[]) {
+        const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
+        if (!output) return;
+        for (const msg of delta) {
+            if (!msg) continue;
+            ArchipelagoConsole.createLinePanel(output, msg);
+        }
+        // Trim to max 100 panels (evict oldest)
+        while (output.GetChildCount() > 100) {
+            const oldest = output.GetChild(0);
+            if (oldest) oldest.DeleteAsync(0);
+        }
+        // Accumulate for deferred storage write
+        const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        if (api) ArchipelagoConsole.scheduleStorageFlush(api.getChat());
+        ArchipelagoConsole.scrollToBottom();
+    }
+
+    static createLinePanel(output: any, msg: any) {
+        const line = $.CreatePanel('Label', output, '') as any;
+        line.AddClass('console-line');
+        line.html = true;
+        line.text = ArchipelagoConsole.formatMessage(msg);
+    }
+
+    static scrollToBottom() {
+        $.Schedule(0.05, () => {
+            const outputArea = $.GetContextPanel().FindChildTraverse('ConsoleOutputArea');
+            if (outputArea && typeof (outputArea as any).ScrollToBottom === 'function') {
+                (outputArea as any).ScrollToBottom();
+            }
+        });
+    }
+
+    static scheduleStorageFlush(chat: any[]) {
+        ArchipelagoConsole.m_StoragePendingChat = chat;
+        if (!ArchipelagoConsole.m_StorageFlushSchedule) {
+            ArchipelagoConsole.m_StorageFlushSchedule = $.Schedule(3.0, () => {
+                ArchipelagoConsole.m_StorageFlushSchedule = null;
+                if (ArchipelagoConsole.m_StoragePendingChat) {
+                    $.persistentStorage.setItem("ArchipelagoLastChatCacheData", JSON.stringify(ArchipelagoConsole.m_StoragePendingChat));
+                    ArchipelagoConsole.m_StoragePendingChat = null;
+                }
+            });
+        }
+    }
+
+    static formatRichMessage(data: any[]): string {
+        let result = "";
+        for (const part of data) {
+            if (!part) continue;
+            let text = part.text || "";
+            text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            let color = "#ffffff";
+            if (part.color && ArchipelagoConsole.COLOR_MAP[part.color]) {
+                color = ArchipelagoConsole.COLOR_MAP[part.color];
+            } else if (part.type === "player_id" || part.type === "player_name") {
+                color = "#ff7f50";
+            } else if (part.type === "item_id" || part.type === "item_name") {
+                color = "#00ffff";
+            } else if (part.type === "location_id" || part.type === "location_name") {
+                color = "#00ff00";
+            } else if (part.type === "entrance_id") {
+                color = "#da70d6";
+            } else {
+                result += text;
+                continue;
+            }
+            result += `<font color='${color}'>${text}</font>`;
+        }
+        return result;
     }
 
     static onTextChanged() {
@@ -120,15 +225,15 @@ class ArchipelagoConsole {
 
     static autocompleteSelection(): boolean {
         if (ArchipelagoConsole.m_FilteredCommands.length === 0) return false;
-        
+
         const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
         const box = $.GetContextPanel().FindChildTraverse('SuggestionBox');
-        
+
         if (input && box) {
             input.text = ArchipelagoConsole.m_FilteredCommands[ArchipelagoConsole.m_SelectedCmdIndex];
             ArchipelagoConsole.m_FilteredCommands = [];
             box.AddClass('hide');
-            input.SetFocus(); 
+            input.SetFocus();
         }
         return true;
     }
@@ -152,7 +257,7 @@ class ArchipelagoConsole {
             });
 
             const lbl = $.CreatePanel('Label', btn, '');
-            lbl.html = true; 
+            lbl.html = true;
 
             const startIdx = cmd.toLowerCase().indexOf(val);
             if (startIdx !== -1) {
@@ -183,8 +288,7 @@ class ArchipelagoConsole {
                 $.Schedule(0.0, () => input.SetCursorOffset(input.text.length));
             }
             return true;
-        }
-        else {
+        } else {
             if (ArchipelagoConsole.g_HistoryIndex === -1) return true;
 
             if (ArchipelagoConsole.g_HistoryIndex > 0) {
@@ -198,79 +302,6 @@ class ArchipelagoConsole {
             }
             return true;
         }
-    }
-
-    static formatRichMessage(data: any[]): string {
-        let result = "";
-        for (const part of data) {
-            if (!part) continue;
-            let text = part.text || "";
-            text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            
-            let color = "#ffffff";
-            if (part.color && ArchipelagoConsole.COLOR_MAP[part.color]) {
-                color = ArchipelagoConsole.COLOR_MAP[part.color];
-            } else if (part.type === "player_id" || part.type === "player_name") {
-                color = "#ff7f50"; 
-            } else if (part.type === "item_id" || part.type === "item_name") {
-                color = "#00ffff"; 
-            } else if (part.type === "location_id" || part.type === "location_name") {
-                color = "#00ff00"; 
-            } else if (part.type === "entrance_id") {
-                color = "#da70d6"; 
-            } else {
-                result += text;
-                continue;
-            }
-            result += `<font color='${color}'>${text}</font>`;
-        }
-        return result;
-    }
-
-    static refreshConsoleUI(chat: any[]) {
-        if (!Array.isArray(chat)) return;
-        
-        const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
-        if (!output) return;
-
-        let fullText = "";
-        for (const msg of chat) {
-            if (!msg) continue;
-            let timeStr = "";
-            if (msg.time_str) {
-                timeStr = "[" + msg.time_str + "]";
-            } else {
-                const d = new Date(msg.time * 1000);
-                timeStr = "[" + d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0') + "]";
-            }
-            
-            let lineText = "";
-            if (msg.html) {
-                lineText = msg.html;
-            } else if (msg.type === "json" && Array.isArray(msg.data)) {
-                lineText = ArchipelagoConsole.formatRichMessage(msg.data);
-            } else {
-                lineText = msg.text || "";
-                lineText = lineText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            }
-            
-            fullText += `<font color='#888888'>${timeStr}</font> ${lineText}<br/>`;
-        }
-
-        // Évite d'invalider le layout HTML si le contenu textuel est identique
-        if (ArchipelagoConsole.g_ConsoleText === fullText) return;
-
-        ArchipelagoConsole.g_ConsoleText = fullText;
-        output.text = fullText; 
-        
-        $.persistentStorage.setItem("ArchipelagoLastChatCacheData", JSON.stringify(chat));
-
-        $.Schedule(0.05, () => {
-            const outputArea = $.GetContextPanel().FindChildTraverse('ConsoleOutputArea');
-            if (outputArea && typeof (outputArea as any).ScrollToBottom === 'function') {
-                (outputArea as any).ScrollToBottom();
-            }
-        });
     }
 
     static onArchipelagoInput() {

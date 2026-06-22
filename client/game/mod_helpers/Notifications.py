@@ -10,7 +10,7 @@ class NotificationManager:
         self.hint_manager = HintManager(ctx)
 
     @property
-    def chat_log(self) -> list[dict]:
+    def chat_log(self):
         return self.console_manager.chat_log
 
     @property

@@ -27,9 +27,9 @@ class EntityManager {
         }
 
         Variant v;
-        // Command format: DeleteEntity <name> <holo> <scale>
-        // Changed holo flag to 1 to ensure cores hitting Wheatley get holograms
-        v.SetString(output + " InitCmd:Command:DeleteEntity " + core_name + " 1 0.7:5.0:-1");
+        // FIX DEFINTIF : Utilisation de guillemets simples (') pour emballer l'argument du modèle.
+        // Cela empêche le parseur AddOutput (C++) de Valve de tronquer prématurément la chaîne globale.
+        v.SetString(output + " InitCmd:Command:DeleteEntity '" + core_name + "' 1 0.7:5.0:-1");
 
         for (uint i = 0; i < targets.length(); i++) {
             if (targets[i] is null) continue;
@@ -41,29 +41,53 @@ class EntityManager {
     void DeleteEntity(const string&in entity_name, bool create_holo = true) {
         string mapName = g_Archipelago.GetCurrentMap();
         
-        // 1. Cleaning and Exceptions
-        string cleanName = entity_name;
-        if (cleanName.length() > 0 && cleanName[0] == 64) { // ASCII '@' is 64
+        // 1. Blindage et Nettoyage de la chaîne corrompue
+        string cleanName = entity_name.trim();
+        
+        // Extraction propre si la chaîne a été polluée par des résidus d'outputs
+        uint mdlLoc = cleanName.tolower().locate(".mdl");
+        if (mdlLoc != uint(-1)) {
+            cleanName = cleanName.substr(0, mdlLoc + 4);
+        } else {
+            uint spaceLoc = cleanName.locate(" ");
+            if (spaceLoc != uint(-1)) {
+                cleanName = cleanName.substr(0, spaceLoc);
+            }
+        }
+
+        // Nettoyage agressif de tous les types de guillemets résiduels (ASCII 34 = " et ASCII 39 = ')
+        while (cleanName.length() > 0 && (cleanName[0] == 34 || cleanName[0] == 39)) {
             cleanName = cleanName.substr(1);
+        }
+        while (cleanName.length() > 0 && (cleanName[cleanName.length() - 1] == 34 || cleanName[cleanName.length() - 1] == 39)) {
+            cleanName = cleanName.substr(0, cleanName.length() - 1);
+        }
+        if (cleanName.length() > 0 && cleanName[0] == 64) { // ASCII 64 = '@'
+            cleanName = cleanName.substr(1);
+        }
+        
+        if (cleanName.length() == 0) {
+            ArchipelagoLog("DeleteEntity: Cleaned name is empty, ignoring deletion.");
+            return;
         }
 
         // Conveyor turret active states
         if (mapName == "sp_a2_bts4") {
-            if (entity_name == "npc_portal_turret_floor" || entity_name == "initial_template_turret" || cleanName == "initial_template_turret") {
+            if (cleanName == "npc_portal_turret_floor" || cleanName == "initial_template_turret") {
                 g_Archipelago.GetHologramManager().SetInitialTemplateHoloActive(false);
-                cv_BTS4_InitialTemplateHoloActive.SetValue(0);
+                cv_BTS4InitialHoloActive.SetValue(0);
             }
-            if (entity_name == "npc_portal_turret_floor" || entity_name == "turret_conveyor_1_template" || cleanName == "turret_conveyor_1_template") {
+            if (cleanName == "npc_portal_turret_floor" || cleanName == "turret_conveyor_1_template") {
                 g_Archipelago.GetHologramManager().SetConveyor1TemplateHoloActive(false);
-                cv_BTS4_Conveyor1TemplateHoloActive.SetValue(0);
+                cv_BTS4Conveyor1HoloActive.SetValue(0);
             }
         }
 
-        if (entity_name == "potatos_prop" || entity_name == "potatos" || entity_name == "models/props/potatos.mdl") {
+        if (cleanName == "potatos_prop" || cleanName == "potatos" || cleanName == "models/props/potatos.mdl") {
             create_holo = false;
         }
 
-        if (entity_name == "trigger_catapult" && scripted_fling_levels.find(mapName) != -1) {
+        if (cleanName == "trigger_catapult" && scripted_fling_levels.find(mapName) != -1) {
             ArchipelagoLog("Not removing trigger_catapult because this is a fling map.");
             return;
         }
@@ -72,23 +96,21 @@ class EntityManager {
         array<CBaseEntity@> entsToDelete;
         CBaseEntity@ searchEnt = null;
         
-        if (entity_name.locate(".mdl") != uint(-1)) {
-            while ((@searchEnt = EntityList().FindByModel(searchEnt, entity_name)) !is null) {
+        if (cleanName.locate(".mdl") != uint(-1)) {
+            while ((@searchEnt = EntityList().FindByModel(searchEnt, cleanName)) !is null) {
                 entsToDelete.insertLast(searchEnt);
             }
             
             if (entsToDelete.length() == 0) {
                 @searchEnt = null;
-                while ((@searchEnt = EntityList().FindByModel(searchEnt, entity_name.tolower())) !is null) {
+                while ((@searchEnt = EntityList().FindByModel(searchEnt, cleanName.tolower())) !is null) {
                     entsToDelete.insertLast(searchEnt);
                 }
             }
         } 
         else {
             array<string> searchNames = { 
-                entity_name, 
                 cleanName, 
-                "*" + entity_name + "*", 
                 "*" + cleanName + "*"
             };
             for (uint s = 0; s < searchNames.length(); s++) {
@@ -101,18 +123,19 @@ class EntityManager {
                             break;
                         }
                     }
-                    if (!alreadyIn) entsToDelete.insertLast(searchEnt);
+                    if (!alreadyIn && searchEnt.GetModelName().tolower().locate("archipelago_hologram") == uint(-1))
+                        entsToDelete.insertLast(searchEnt);
                 }
             }
 
             if (entsToDelete.length() == 0) {
                 @searchEnt = null;
-                while ((@searchEnt = EntityList().FindByClassname(searchEnt, entity_name)) !is null) {
+                while ((@searchEnt = EntityList().FindByClassname(searchEnt, cleanName)) !is null) {
                     entsToDelete.insertLast(searchEnt);
                 }
             }
             
-            if (entsToDelete.length() == 0 && (entity_name.locate("cube") != uint(-1) || entity_name.locate("box") != uint(-1))) {
+            if (entsToDelete.length() == 0 && (cleanName.locate("cube") != uint(-1) || cleanName.locate("box") != uint(-1))) {
                 @searchEnt = null;
                 while ((@searchEnt = EntityList().FindByClassname(searchEnt, "prop_weighted_cube")) !is null) {
                     bool alreadyIn = false;
@@ -124,10 +147,10 @@ class EntityManager {
                     }
                     if (!alreadyIn) {
                         string currentModel = searchEnt.GetModelName().tolower();
-                        if (entity_name.locate("metal_box") != uint(-1) && currentModel.locate("metal_box") != uint(-1)) entsToDelete.insertLast(searchEnt);
-                        else if (entity_name.locate("reflection_cube") != uint(-1) && currentModel.locate("reflection_cube") != uint(-1)) entsToDelete.insertLast(searchEnt);
-                        else if (entity_name.locate("mp_ball") != uint(-1) && currentModel.locate("mp_ball") != uint(-1)) entsToDelete.insertLast(searchEnt);
-                        else if (entity_name.locate("underground_weighted_cube") != uint(-1) && currentModel.locate("underground_weighted_cube") != uint(-1)) entsToDelete.insertLast(searchEnt);
+                        if (cleanName.locate("metal_box") != uint(-1) && currentModel.locate("metal_box") != uint(-1)) entsToDelete.insertLast(searchEnt);
+                        else if (cleanName.locate("reflection_cube") != uint(-1) && currentModel.locate("reflection_cube") != uint(-1)) entsToDelete.insertLast(searchEnt);
+                        else if (cleanName.locate("mp_ball") != uint(-1) && currentModel.locate("mp_ball") != uint(-1)) entsToDelete.insertLast(searchEnt);
+                        else if (cleanName.locate("underground_weighted_cube") != uint(-1) && currentModel.locate("underground_weighted_cube") != uint(-1)) entsToDelete.insertLast(searchEnt);
                     }
                 }
             }
@@ -135,7 +158,7 @@ class EntityManager {
 
         // 3. Deleting and Spawning Holograms
         if (entsToDelete.length() == 0) {
-            ArchipelagoLog("DeleteEntity: No targets found for " + entity_name);
+            ArchipelagoLog("DeleteEntity: No targets found for " + cleanName);
             return;
         }
 
@@ -143,7 +166,7 @@ class EntityManager {
             CBaseEntity@ ent = entsToDelete[i];
             if (ent is null) continue;
 
-            if (entity_name == "trigger_catapult") {
+            if (cleanName == "trigger_catapult") {
                 MakeFaithPlateFaulty(ent);
                 continue;
             }
@@ -183,8 +206,9 @@ class EntityManager {
 
                 if (alreadyProcessed) {
                     ArchipelagoLog("Deletion skipped: Hologram already created for " + holoName);
+                    ent.KeyValue("rendermode", "10");
                     Variant killValue;
-                    ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
+                    ent.FireInput("Kill", killValue, 0.05f, null, null, 0);
                     continue;
                 }
 
@@ -258,7 +282,6 @@ class EntityManager {
                         }
                     }
                     if (targetParent is null) {
-                        // Fallback to full iteration
                         @loopEnt = EntityList().First();
                         CBaseEntity@ backupParent = null;
                         while (loopEnt !is null) {
@@ -292,8 +315,10 @@ class EntityManager {
                 }
             }
             
+            // PROTECTION RENDU DXVK
+            ent.KeyValue("rendermode", "10");
             Variant killValue;
-            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
+            ent.FireInput("Kill", killValue, 0.05f, null, null, 0);
         }
     }
 
@@ -310,11 +335,11 @@ class EntityManager {
         if (mapName == "sp_a2_bts4") {
             if (target == "npc_portal_turret_floor" || target == "initial_template_turret") {
                 g_Archipelago.GetHologramManager().SetInitialTemplateHoloActive(true);
-                cv_BTS4_InitialTemplateHoloActive.SetValue(1);
+                cv_BTS4InitialHoloActive.SetValue(1);
             }
             if (target == "npc_portal_turret_floor" || target == "turret_conveyor_1_template") {
                 g_Archipelago.GetHologramManager().SetConveyor1TemplateHoloActive(true);
-                cv_BTS4_Conveyor1TemplateHoloActive.SetValue(1);
+                cv_BTS4Conveyor1HoloActive.SetValue(1);
             }
         }
 
@@ -453,8 +478,9 @@ class EntityManager {
             }
         }
 
+        trigger.KeyValue("rendermode", "10");
         Variant killValue;
-        trigger.FireInput("Kill", killValue, 0.0f, null, null, 0);
+        trigger.FireInput("Kill", killValue, 0.05f, null, null, 0);
         ArchipelagoLog("Faith Plate sabotaged: " + holoName);
     }
 
@@ -482,7 +508,7 @@ class EntityManager {
         array<CBaseEntity@> targets = FindEntities(entity_name);
         for (uint i = 0; i < targets.length(); i++) {
             CBaseEntity@ ent = targets[i];
-            if (ent is null) continue; // Safety check
+            if (ent is null) continue;
 
             Vector position = ent.GetAbsOrigin();
             QAngle angles = ent.GetAbsAngles();
@@ -546,8 +572,9 @@ class EntityManager {
                 dummy.Spawn();
             }
 
+            ent.KeyValue("rendermode", "10");
             Variant killValue;
-            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
+            ent.FireInput("Kill", killValue, 0.05f, null, null, 0);
         }
     }
 
@@ -575,7 +602,6 @@ class EntityManager {
                     }
                 }
                 if (targetParent is null) {
-                    // Fallback to full iteration
                     @loopEnt = EntityList().First();
                     while (loopEnt !is null) {
                         string entName = loopEnt.GetEntityName().tolower();
@@ -669,8 +695,9 @@ class EntityManager {
                 CreateAPHologram(finalPos, finalAng, hScale, finalParent, "", hSkin, holoName);
             }
 
+            ent.KeyValue("rendermode", "10");
             Variant killValue;
-            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
+            ent.FireInput("Kill", killValue, 0.05f, null, null, 0);
         }
     }
 
@@ -678,7 +705,7 @@ class EntityManager {
         array<CBaseEntity@> targets = FindEntities(entity_name);
         for (uint i = 0; i < targets.length(); i++) {
             CBaseEntity@ ent = targets[i];
-            if (ent is null) continue; // Safety check
+            if (ent is null) continue;
 
             Vector position = ent.GetAbsOrigin();
             QAngle angles = ent.GetAbsAngles();
@@ -728,8 +755,9 @@ class EntityManager {
                 CreateAPHologram(finalPos, finalAng, hScale, finalParent, "", hSkin, holoName);
             }
 
+            ent.KeyValue("rendermode", "10");
             Variant killValue;
-            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
+            ent.FireInput("Kill", killValue, 0.05f, null, null, 0);
         }
     }
 
@@ -742,7 +770,7 @@ class EntityManager {
         if (gel !is null) {
             position.z += offset;
             gel.SetAbsOrigin(position);
-            gel.KeyValue("paint_type", 3); // Type 3 is clear/water gel
+            gel.KeyValue("paint_type", 3); 
             gel.Spawn();
         }
     }
@@ -751,7 +779,6 @@ class EntityManager {
         CBaseEntity@ ent = null;
         float bestScore = 999999.0f;
 
-        // Search for nearest gel bombs or paint spheres
         CBaseEntity@ searchEnt = EntityList().First();
         while (searchEnt !is null) {
             string name = searchEnt.GetEntityName();
@@ -823,8 +850,9 @@ class EntityManager {
 
             CreateAPHologram(finalPos, finalAng, hScale, null, "", hSkin, holoName);
             
+            ent.KeyValue("rendermode", "10");
             Variant killValue;
-            ent.FireInput("Kill", killValue, 0.0f, null, null, 0);
+            ent.FireInput("Kill", killValue, 0.05f, null, null, 0);
         }
     }
 
@@ -913,7 +941,6 @@ class EntityManager {
             Variant v;
             string orangeVal = g_Archipelago.IsPortalGun2Disabled() ? "1" : "0";
             
-            // Format output connection to call console command: DisablePortalGun 0 [0/1]
             string outputStr = "OnStartTouch InitCmd:Command:DisablePortalGun 0 " + orangeVal + ":0.25:-1";
             v.SetString(outputStr);
             trigger.FireInput("AddOutput", v, 0.0f, null, null, 0);
@@ -987,7 +1014,6 @@ class EntityManager {
         if (cmd !is null) {
             Variant vMix1, vMix2;
             
-            // Force muting both channels to cover Old Aperture and standard chamber audio routing safely
             vMix1.SetString("snd_setmixer potatosVO vol 0.0");
             cmd.FireInput("Command", vMix1, 0.0f, null, null, 0);
             

@@ -46,7 +46,7 @@ class ArchipelagoStatusIndicator {
         }
 
         // Gestion de la visibilité en fonction du mode de réglage
-        const mode = $.persistentStorage.getItem('ap_status_indicator_mode') ?? 0;
+        const mode = $.persistentStorage.getItem('cv_StatusIndicatorMode') ?? 0;
         const panel = $.GetContextPanel();
         if (panel) {
             if (mode == 2) {

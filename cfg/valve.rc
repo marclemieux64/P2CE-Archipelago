@@ -1,2 +1,11 @@
 // run a user script file if present
+
+setinfo ap_hide_holograms "0"
+setinfo ap_show_map_status_hud "0"
+setinfo cv_SkipBirdScene "0"
+setinfo cv_SkipCeilingScene "0"
+setinfo cv_SkipIntroContainerScene "0"
+setinfo cv_SkipElavatorRide "0"
+
+
 exec autoexec.cfg

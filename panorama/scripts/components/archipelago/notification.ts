@@ -5,6 +5,85 @@ let isTimerRunning = false;
 let isWarpPending = false;
 let pendingWarpMapName = "";
 
+// Rate limiter: max 3 notifications per 2-second window.
+let rateLimitWindowStart = 0;
+let rateLimitCount = 0;
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 2000;
+const QUEUE_HARD_CAP = 5;
+let rateLimitSuppressedCount = 0;
+let rateLimitFlushSchedule: any = null;
+
+// Debounced storage write for AP_LastProcessedNotificationId
+let pendingNotifIdWrite: number | null = null;
+let notifIdFlushSchedule: any = null;
+
+function debouncedWriteNotifId(id: number) {
+    pendingNotifIdWrite = id;
+    if (!notifIdFlushSchedule) {
+        notifIdFlushSchedule = $.Schedule(1.0, () => {
+            notifIdFlushSchedule = null;
+            if (pendingNotifIdWrite !== null) {
+                $.persistentStorage.setItem("AP_LastProcessedNotificationId", pendingNotifIdWrite);
+                pendingNotifIdWrite = null;
+            }
+        });
+    }
+}
+
+function isRateLimitBypassed(type: string, apMsgType: string): boolean {
+    return type === "255 50 50"      // deathlink
+        || type === "rainbow"        // go mode
+        || apMsgType === "receive";  // item received by own slot
+}
+
+function tryEnqueueNotification(type: string, apMsgType: string, buildFn: () => void) {
+    if (isRateLimitBypassed(type, apMsgType)) {
+        buildFn();
+        return;
+    }
+
+    const now = Date.now();
+    if (now - rateLimitWindowStart > RATE_LIMIT_WINDOW_MS) {
+        rateLimitWindowStart = now;
+        rateLimitCount = 0;
+
+        if (rateLimitSuppressedCount > 0) {
+            const suppressed = rateLimitSuppressedCount;
+            rateLimitSuppressedCount = 0;
+            OnArchipelagoNotify(JSON.stringify({
+                title: "ARCHIPELAGO",
+                html: `<font color='#aaaaaa'>+${suppressed} more</font>`,
+                type: "success",
+                play_sound: false
+            }));
+        }
+    }
+
+    if (rateLimitCount >= RATE_LIMIT_MAX || notificationQueue.length >= QUEUE_HARD_CAP) {
+        rateLimitSuppressedCount++;
+        if (!rateLimitFlushSchedule) {
+            rateLimitFlushSchedule = $.Schedule(RATE_LIMIT_WINDOW_MS / 1000, () => {
+                rateLimitFlushSchedule = null;
+                if (rateLimitSuppressedCount > 0) {
+                    const suppressed = rateLimitSuppressedCount;
+                    rateLimitSuppressedCount = 0;
+                    OnArchipelagoNotify(JSON.stringify({
+                        title: "ARCHIPELAGO",
+                        html: `<font color='#aaaaaa'>+${suppressed} more</font>`,
+                        type: "success",
+                        play_sound: false
+                    }));
+                }
+            });
+        }
+        return;
+    }
+
+    rateLimitCount++;
+    buildFn();
+}
+
 function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
     const contextPanel = $.GetContextPanel();
     const wrapper = (...args: any[]) => {
@@ -30,7 +109,7 @@ function checkPersistentQueue() {
     const isHud = GetHudRoot() !== null;
     const uiState = GameInterfaceAPI.GetGameUIState();
     const isMenuState = (uiState === GameUIState.MAINMENU || uiState === GameUIState.PAUSEMENU);
-    
+
     const shouldProcess = isHud ? !isMenuState : isMenuState;
     if (!shouldProcess) return;
 
@@ -74,7 +153,7 @@ registerSelfCleaningEvent('ArchipelagoNotify', (payload: string) => {
     if (!globalObj.ArchipelagoMessageQueue) {
         globalObj.ArchipelagoMessageQueue = [];
     }
-    
+
     const exists = globalObj.ArchipelagoMessageQueue.some((msg: any) => msg.payload === payload && Date.now() - msg.timestamp < 1000);
     if (!exists) {
         globalObj.ArchipelagoMessageQueue.push({
@@ -92,18 +171,15 @@ registerSelfCleaningEvent('ArchipelagoNotify', (payload: string) => {
     checkPersistentQueue();
 })();
 
-// --- DÉCLARATIONS DES ÉVÉNEMENTS PANORAMA ---
+// --- EVENT DEFINITIONS ---
 try {
     $.DefineEvent("ArchipelagoQueueUpdated", 0);
     $.DefineEvent("ArchipelagoHideNotifications", 1, "time");
     $.DefineEvent("ArchipelagoDeath", 1, "message");
     $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch with fade buffer");
-    
-    // CORRECTIF : Déclaration obligatoire de l'événement personnalisé pour le Heartbeat silencieux
     $.DefineEvent("ArchipelagoDeathLinkHeartbeat", 0);
 } catch (e) { }
 
-// Sécurisation adaptative de la définition pour éviter le message "already registered"
 try {
     if (!(UiToolkitAPI.GetGlobalObject() as any).ArchipelagoNotifyRegistered) {
         $.DefineEvent("ArchipelagoNotify", 1, "payload");
@@ -111,7 +187,7 @@ try {
     }
 } catch (e) { }
 
-// --- ÉCOUTEURS D'ÉVÉNEMENTS ---
+// --- EVENT LISTENERS ---
 
 registerSelfCleaningEvent("ArchipelagoDeath", (msg: string) => {
     let locTitle = $.Localize("#Archipelago_HUD_Deathlink");
@@ -126,19 +202,19 @@ registerSelfCleaningEvent("ArchipelagoDeath", (msg: string) => {
 });
 
 registerSelfCleaningEvent("Archipelago_WarpToMenu", (content: string) => {
-    if (isWarpPending) return; 
-    
+    if (isWarpPending) return;
+
     isWarpPending = true;
     pendingWarpMapName = content;
     const hud = GetHudRoot();
     if (hud) hud.AddClass("fade-active");
 
-    const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
-    
+    const useSmartWarp = $.persistentStorage.getItem('cv_SmartWarp');
+
     if (useSmartWarp !== "1" && useSmartWarp !== 1) {
         let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu_Title");
         if (locTitle === "#Archipelago_HUD_Warp_Menu_Title") locTitle = "WARP TO MENU";
-        
+
         let locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
         if (locLoading === "#Archipelago_HUD_Warp_Loading") locLoading = "Returning to map select... Loading...";
 
@@ -163,9 +239,9 @@ function ProcessQueue() {
         if (isWarpPending) {
             $.persistentStorage.setItem("ap_return_to_map_select", "true");
             $.Schedule(0.5, () => {
-                isWarpPending = false; 
-                
-                const useSmartWarp = $.persistentStorage.getItem('ap_smart_warp');
+                isWarpPending = false;
+
+                const useSmartWarp = $.persistentStorage.getItem('cv_SmartWarp');
                 if (useSmartWarp === "1" || useSmartWarp === 1) {
                     (UiToolkitAPI.GetGlobalObject() as any).SmartWarpNextMap(pendingWarpMapName);
                 } else {
@@ -200,18 +276,18 @@ function ProcessQueue() {
     });
 }
 
-// --- ÉCOUTE DU CHAT ---
-registerSelfCleaningEvent("ArchipelagoAPI_ChatUpdated", (payload: any) => {
+// --- CHAT LISTENER (delta-based) ---
+registerSelfCleaningEvent("ArchipelagoAPI_ChatUpdated", (delta: any) => {
     const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
     if (!api) return;
 
     const isHud = GetHudRoot() !== null;
 
     if (isHud) {
-        ProcessChat(payload);
+        ProcessChat(delta);
     } else {
         $.Schedule(0.1, () => {
-            ProcessChat(payload);
+            ProcessChat(delta);
         });
     }
 });
@@ -244,168 +320,126 @@ function removeSkippedTrapId(id: number) {
     }
 }
 
-function ProcessChat(payload: any) {
+function ProcessChat(delta: any) {
     const isHud = GetHudRoot() !== null;
     const uiState = GameInterfaceAPI.GetGameUIState();
     const isMenuState = (uiState === GameUIState.MAINMENU || uiState === GameUIState.PAUSEMENU);
-    
+
     const shouldProcess = isHud ? !isMenuState : isMenuState;
     if (!shouldProcess) return;
 
     try {
-        // CORRECTIF INTERCEPTEUR V8 : Détection adaptative du type de données (Objet vs String)
-        let chat = payload;
-        if (typeof payload === 'string') {
-            chat = JSON.parse(payload);
-        }
-        
-        if (!Array.isArray(chat) || chat.length === 0) return;
+        let msgs = delta;
+        if (typeof delta === 'string') msgs = JSON.parse(delta);
+        if (!Array.isArray(msgs) || msgs.length === 0) return;
 
-        let lastIdVal = $.persistentStorage.getItem("AP_LastProcessedNotificationId");
-        let lastId = (lastIdVal !== null && lastIdVal !== undefined) ? parseInt(lastIdVal.toString()) : -1;
-        if (isNaN(lastId)) lastId = -1;
-
-        const latestMsgId = chat[chat.length - 1].id;
-
-        if (lastId !== -1 && latestMsgId < lastId) {
-            lastId = -1;
-        }
-
-        if (lastId === -1) {
-            $.persistentStorage.setItem("AP_LastProcessedNotificationId", latestMsgId);
-            return;
-        }
-
-        let playerPrimaryColor = "64 160 255";   
-        let playerSecondaryColor = "255 160 32"; 
+        let playerPrimaryColor = "64 160 255";
+        let playerSecondaryColor = "255 160 32";
         try {
             if (typeof GameInterfaceAPI.GetSettingString === "function") {
                 const pColor = GameInterfaceAPI.GetSettingString("cl_portal_sp_primary_color");
                 if (pColor && pColor.trim() !== "") playerPrimaryColor = pColor;
-                
                 const sColor = GameInterfaceAPI.GetSettingString("cl_portal_sp_secondary_color");
                 if (sColor && sColor.trim() !== "") playerSecondaryColor = sColor;
             }
         } catch (e) { }
 
-        for (const msg of chat) {
+        for (const msg of msgs) {
+            if (!msg) continue;
+
             const apType = msg.ap_msg_type || "default";
             const isTrap = (apType === "trap") || (msg.html && msg.html.toLowerCase().includes("trap")) || (msg.text && msg.text.toLowerCase().includes("trap"));
-            const isSkippedTrap = isHud && isTrap && getSkippedTrapIds().indexOf(msg.id) !== -1;
 
-            if (msg.id > lastId || isSkippedTrap) {
-                if (isTrap && !isHud) {
-                    addSkippedTrapId(msg.id);
-                    lastId = Math.max(lastId, msg.id);
-                    $.persistentStorage.setItem("AP_LastProcessedNotificationId", lastId);
-                    continue;
-                }
-
-                if (isSkippedTrap) {
-                    removeSkippedTrapId(msg.id);
-                }
-
-                lastId = Math.max(lastId, msg.id);
-                $.persistentStorage.setItem("AP_LastProcessedNotificationId", lastId);
-
-                if (msg.muted === true) {
-                    continue; 
-                }
-
-                let finalHtml = "";
-                if (msg.html) {
-                    finalHtml = msg.html;
-                } else if (msg.type === "json" && Array.isArray(msg.data)) {
-                    finalHtml = msg.data.map((p: any) => {
-                        let t = p.text || "";
-                        t = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                        
-                        if (p.color) {
-                            const cMap: Record<string, string> = {
-                                "red": "#ff5555", "green": "#55ff55", "yellow": "#ffff55",
-                                "blue": "#77aaff", "magenta": "#ee82ee", "cyan": "#55ffff",
-                                "plum": "#dda0dd", "salmon": "#fa8072"
-                            };
-                            const c = cMap[p.color] || "#ffffff";
-                            return `<font color='${c}'>${t}</font>`;
-                        } else if (p.type === "player_id" || p.type === "player_name") {
-                            return `<font color='#ff7f50'>${t}</font>`; 
-                        } else if (p.type === "item_id" || p.type === "item_name") {
-                            return `<font color='#55ffff'>${t}</font>`; 
-                        } else if (p.type === "location_id" || p.type === "location_name") {
-                            return `<font color='#55ff55'>${t}</font>`; 
-                        }
-                        return t;
-                    }).join("");
-                } else {
-                    finalHtml = msg.text || "";
-                }
-                
-                const apType = msg.ap_msg_type || "default";
-                const isGoModeText = finalHtml.toLowerCase().includes("go mode") || finalHtml.toLowerCase().includes("feu vert");
-
-                const isImportant = (msg.priority === true) || isGoModeText || (apType === "go_mode");
-
-                if (isImportant && !msg.no_notification) { 
-                    
-                    let notifyTitle = $.Localize("#Archipelago_HUD_Default");
-                    if (notifyTitle === "#Archipelago_HUD_Default") notifyTitle = "ARCHIPELAGO"; 
-                    let notifyType = "success"; 
-
-                    if (apType === "deathlink" || finalHtml.includes("DeathLink") || finalHtml.includes("mort")) {
-                        notifyTitle = $.Localize("#Archipelago_HUD_Deathlink");
-                        if (notifyTitle === "#Archipelago_HUD_Deathlink") notifyTitle = "DEATHLINK";
-                        notifyType = "255 50 50"; 
-                        
-                    } else if (apType === "trap" || finalHtml.includes("Trap")) {
-                        notifyTitle = $.Localize("#Archipelago_HUD_Trap");
-                        if (notifyTitle === "#Archipelago_HUD_Trap") notifyTitle = "TRAP";
-                        notifyType = "255 150 0"; 
-                        
-                    } else if (isGoModeText || apType === "go_mode") {
-                        notifyTitle = $.Localize("#Archipelago_HUD_GoMode");
-                        if (notifyTitle === "#Archipelago_HUD_GoMode") notifyTitle = "GO MODE";
-                        
-                        let goModeMsg = $.Localize("#Archipelago_HUD_GoMode_Msg");
-                        if (goModeMsg === "#Archipelago_HUD_GoMode_Msg") goModeMsg = "All victory conditions have been met!";
-                        
-                        finalHtml = goModeMsg; 
-                        notifyType = "rainbow"; 
-                        
-                    } else if (apType === "found") {
-                        notifyTitle = $.Localize("#Archipelago_HUD_Found");
-                        if (notifyTitle === "#Archipelago_HUD_Found") notifyTitle = "ITEM FOUND";
-                        notifyType = "50 255 50"; 
-                        
-                    } else if (apType === "receive") {
-                        notifyTitle = $.Localize("#Archipelago_HUD_Receive");
-                        if (notifyTitle === "#Archipelago_HUD_Receive") notifyTitle = "ITEM RECEIVED";
-                        notifyType = playerPrimaryColor; 
-                        
-                    } else if (apType === "send") {
-                        notifyTitle = $.Localize("#Archipelago_HUD_Send");
-                        if (notifyTitle === "#Archipelago_HUD_Send") notifyTitle = "ITEM SENT";
-                        notifyType = playerSecondaryColor; 
-                        
-                    } else if (apType === "hint") {
-                        notifyTitle = $.Localize("#Archipelago_HUD_Hint");
-                        if (notifyTitle === "#Archipelago_HUD_Hint") notifyTitle = "NEW HINT";
-                        notifyType = "255 255 50"; 
-                    }
-                    else if (apType === "goal") {
-                        notifyTitle = $.Localize("#Archipelago_HUD_Goal");
-                        if (notifyTitle === "#Archipelago_HUD_Goal") notifyTitle = "GOAL ACHIEVED";
-                        notifyType = "255 215 0"; 
-                    }
-
-                    OnArchipelagoNotify(JSON.stringify({
-                        title: notifyTitle,
-                        html: finalHtml,
-                        type: notifyType,
-                        play_sound: true 
-                    }));
-                }
+            // Trap arrived in menu context — defer to gameplay.
+            if (isTrap && !isHud) {
+                addSkippedTrapId(msg.id);
+                debouncedWriteNotifId(msg.id);
+                continue;
             }
+
+            // Trap surfacing from deferral — clean up.
+            const isSkippedTrap = isHud && isTrap && getSkippedTrapIds().indexOf(msg.id) !== -1;
+            if (isSkippedTrap) removeSkippedTrapId(msg.id);
+
+            if (msg.muted === true) continue;
+
+            let finalHtml = "";
+            if (msg.html) {
+                finalHtml = msg.html;
+            } else if (msg.type === "json" && Array.isArray(msg.data)) {
+                finalHtml = msg.data.map((p: any) => {
+                    let t = p.text || "";
+                    t = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    if (p.color) {
+                        const cMap: Record<string, string> = {
+                            "red": "#ff5555", "green": "#55ff55", "yellow": "#ffff55",
+                            "blue": "#77aaff", "magenta": "#ee82ee", "cyan": "#55ffff",
+                            "plum": "#dda0dd", "salmon": "#fa8072"
+                        };
+                        return `<font color='${cMap[p.color] || "#ffffff"}'>${t}</font>`;
+                    } else if (p.type === "player_id" || p.type === "player_name") {
+                        return `<font color='#ff7f50'>${t}</font>`;
+                    } else if (p.type === "item_id" || p.type === "item_name") {
+                        return `<font color='#55ffff'>${t}</font>`;
+                    } else if (p.type === "location_id" || p.type === "location_name") {
+                        return `<font color='#55ff55'>${t}</font>`;
+                    }
+                    return t;
+                }).join("");
+            } else {
+                finalHtml = msg.text || "";
+            }
+
+            const isGoModeText = finalHtml.toLowerCase().includes("go mode") || finalHtml.toLowerCase().includes("feu vert");
+            const isImportant = (msg.priority === true) || isGoModeText || (apType === "go_mode");
+
+            if (isImportant && !msg.no_notification) {
+                let notifyTitle = $.Localize("#Archipelago_HUD_Default");
+                if (notifyTitle === "#Archipelago_HUD_Default") notifyTitle = "ARCHIPELAGO";
+                let notifyType = "success";
+
+                if (apType === "deathlink" || finalHtml.includes("DeathLink") || finalHtml.includes("mort")) {
+                    notifyTitle = $.Localize("#Archipelago_HUD_Deathlink");
+                    if (notifyTitle === "#Archipelago_HUD_Deathlink") notifyTitle = "DEATHLINK";
+                    notifyType = "255 50 50";
+                } else if (apType === "trap" || finalHtml.includes("Trap")) {
+                    notifyTitle = $.Localize("#Archipelago_HUD_Trap");
+                    if (notifyTitle === "#Archipelago_HUD_Trap") notifyTitle = "TRAP";
+                    notifyType = "255 150 0";
+                } else if (isGoModeText || apType === "go_mode") {
+                    notifyTitle = $.Localize("#Archipelago_HUD_GoMode");
+                    if (notifyTitle === "#Archipelago_HUD_GoMode") notifyTitle = "GO MODE";
+                    let goModeMsg = $.Localize("#Archipelago_HUD_GoMode_Msg");
+                    if (goModeMsg === "#Archipelago_HUD_GoMode_Msg") goModeMsg = "All victory conditions have been met!";
+                    finalHtml = goModeMsg;
+                    notifyType = "rainbow";
+                } else if (apType === "found") {
+                    notifyTitle = $.Localize("#Archipelago_HUD_Found");
+                    if (notifyTitle === "#Archipelago_HUD_Found") notifyTitle = "ITEM FOUND";
+                    notifyType = "50 255 50";
+                } else if (apType === "receive") {
+                    notifyTitle = $.Localize("#Archipelago_HUD_Receive");
+                    if (notifyTitle === "#Archipelago_HUD_Receive") notifyTitle = "ITEM RECEIVED";
+                    notifyType = playerPrimaryColor;
+                } else if (apType === "send") {
+                    notifyTitle = $.Localize("#Archipelago_HUD_Send");
+                    if (notifyTitle === "#Archipelago_HUD_Send") notifyTitle = "ITEM SENT";
+                    notifyType = playerSecondaryColor;
+                } else if (apType === "hint") {
+                    notifyTitle = $.Localize("#Archipelago_HUD_Hint");
+                    if (notifyTitle === "#Archipelago_HUD_Hint") notifyTitle = "NEW HINT";
+                    notifyType = "255 255 50";
+                } else if (apType === "goal") {
+                    notifyTitle = $.Localize("#Archipelago_HUD_Goal");
+                    if (notifyTitle === "#Archipelago_HUD_Goal") notifyTitle = "GOAL ACHIEVED";
+                    notifyType = "255 215 0";
+                }
+
+                const payload = JSON.stringify({ title: notifyTitle, html: finalHtml, type: notifyType, play_sound: true });
+                tryEnqueueNotification(notifyType, apType, () => OnArchipelagoNotify(payload));
+            }
+
+            debouncedWriteNotifId(msg.id);
         }
     } catch (e) {
         $.Warning("[AP] Error parsing chat for notifications: " + e);
@@ -440,7 +474,7 @@ function OnArchipelagoNotify(payload: string) {
 
         const titleLabel = $.CreatePanel('Label', content, 'Title') as LabelPanel;
         titleLabel.AddClass('title');
-        
+
         let defaultTitle = $.Localize("#Archipelago_HUD_Default");
         if (defaultTitle === "#Archipelago_HUD_Default") defaultTitle = "ARCHIPELAGO";
         titleLabel.text = data.title || defaultTitle;

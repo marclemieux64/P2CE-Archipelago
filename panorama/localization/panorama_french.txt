@@ -331,6 +331,10 @@
 
 		"Archipelago_Settings_Key_ShowStatus" "Touche HUD de l'état de niveau"
 
+		"Archipelago_Settings_Skips" "Skips Settings"
+
+		"Archipelago_Settings_SkipElevatorRide" "Passer le trajet en ascenseur"
+
 		"Archipelago_Settings_SkipBirdScene" "Passer l'intro de Combler l'écart"
 		
 		"Archipelago_Settings_SkipBirdScene_info" "Passe la scène d'oiseaux sur le niveau Combler l'écart"
@@ -338,7 +342,9 @@
 		"Archipelago_Settings_SkipCeilingScene" "Passer l'intro de Surplomb de la sphère"
 		
 		"Archipelago_Settings_SkipCeilingScene_info" "Passe la scène du plafond sur le niveau Surplomb de la sphère"
+
 		"Archipelago_Settings_SkipIntroContainer" "Passer la traversée en conteneur"
+
 		"Archipelago_Settings_SkipIntroContainer_info" "Passe la scène du conteneur au début du jeu (sp_a1_intro1)"
 
 
@@ -466,7 +472,7 @@
 		"Archipelago_Status_NoClient"     "CLIENT ARCHIPELAGO NON DÉTECTÉ"
 
 
-		"Archipelago_Status_LaunchClient" "Veuillez lancer Portal2Client.py"
+		"Archipelago_Status_LaunchClient" "Veuillez vérifier vos option de lancement"
 
 
 		"Archipelago_Status_NotConnected" "PAS CONNECTÉ AU SERVEUR"

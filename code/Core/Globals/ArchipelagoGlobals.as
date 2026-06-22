@@ -6,19 +6,17 @@ namespace Archipelago {
 
 // --- CONVARS & ENGINE REFERENCES ---
 // These must remain as global objects so they correctly register with the engine's CVAR system.
-ConVar cv_ArchipelagoDebug("ArchipelagoDebug", "0");
-ConVar cv_ArchipelagoHideHolograms("ap_hide_holograms", "0", FCVAR_ARCHIVE);
+ConVar cv_Debug("cv_Debug", "0");
 ConVarRef host_map("host_map");
-ConVar cv_BTS4_InitialTemplateHoloActive("ap_bts4_initial_holo_active", "0");
-ConVar cv_BTS4_Conveyor1TemplateHoloActive("ap_bts4_conveyor1_holo_active", "0");
-ConVar cv_ArchipelagoShowMapStatusHUD("ap_show_map_status_hud", "1", FCVAR_ARCHIVE);
-ConVar cv_SkipBirdScene("cv_SkipBirdScene", "0", FCVAR_ARCHIVE);
-ConVar cv_SkipCeilingScene("cv_SkipCeilingScene", "0", FCVAR_ARCHIVE);
-ConVar cv_SkipIntroContainerScene("cv_SkipIntroContainerScene", "0", FCVAR_ARCHIVE);
-ConVar cv_SkipElavatorRide("cv_SkipElavatorRide", "0", FCVAR_ARCHIVE);
-ConVar cv_ArchipelagoVitrifiedStatus("ArchipelagoVitrifiedStatus", "000000");
-ConVar cv_RainbowCubes("cv_RainbowCubes", "0", FCVAR_ARCHIVE);
-ConVar cv_RainbowLasers("cv_RainbowLasers", "0", FCVAR_ARCHIVE);
+ConVar cv_BTS4InitialHoloActive("cv_BTS4InitialHoloActive", "0");
+ConVar cv_BTS4Conveyor1HoloActive("cv_BTS4Conveyor1HoloActive", "0");
+ConVar cv_HideHolograms("cv_HideHolograms", "0");
+ConVar cv_ShowMapStatusHUD("cv_ShowMapStatusHUD", "0");
+ConVar cv_SkipBirdScene("cv_SkipBirdScene", "0");
+ConVar cv_SkipCeilingScene("cv_SkipCeilingScene", "0");
+ConVar cv_SkipIntroContainerScene("cv_SkipIntroContainerScene", "0");
+ConVar cv_SkipElevatorRide("cv_SkipElevatorRide", "0");
+ConVar cv_VitrifiedStatus("cv_VitrifiedStatus", "000000");
 
 // --- STATIC READ-ONLY CONFIGURATION ARRAYS ---
 const array<string> two_trigger_levels = { "sp_a1_intro1", "sp_a4_finale3" };

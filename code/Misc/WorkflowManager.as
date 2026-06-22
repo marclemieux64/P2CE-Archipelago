@@ -318,8 +318,8 @@ class WorkflowManager {
     }
 
     void SkipElevatorRide() {
-        ConVarRef cv_SkipElavatorRide("cv_SkipElavatorRide");
-        if (cv_SkipElavatorRide.IsValid() && cv_SkipElavatorRide.GetInt() == 0) {
+        ConVarRef cv_SkipElevatorRide("cv_SkipElevatorRide");
+        if (cv_SkipElevatorRide.IsValid() && cv_SkipElevatorRide.GetInt() == 0) {
             return;
         }
 

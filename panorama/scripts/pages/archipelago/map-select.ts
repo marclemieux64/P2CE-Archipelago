@@ -18,6 +18,7 @@ class ArchipelagoMapSelect {
     static g_ResetSchedule: any = null;
     static g_IsTransitioning: boolean = false; 
     static g_LastSelectedEntryData: any = null;
+    static g_LastPreviewKey: string = "";
 
     static ITEM_SORT_ORDER: { [key: string]: number } = {
         "portalgun1": 1, "portalgun2": 2, "weightedcube": 3, "lasercube": 4,
@@ -499,6 +500,13 @@ class ArchipelagoMapSelect {
     }
 
     static selectMap(mapData: any, bShowPlayButton: boolean = true) {
+        // Skip icon rebuild if neither the command nor the status icons changed
+        if (mapData) {
+            const previewKey = (mapData.command || mapData.chapter_number || "") + "|" + (mapData.status_text_list || []).join(",") + "|" + bShowPlayButton;
+            if (previewKey === ArchipelagoMapSelect.g_LastPreviewKey) return;
+            ArchipelagoMapSelect.g_LastPreviewKey = previewKey;
+        }
+
         if (mapData && !mapData.is_chapter) {
             const isDeactivated = mapData.command_deactivated !== null && mapData.command_deactivated !== false && mapData.command_deactivated !== undefined;
             this.g_SelectedMapCommand = (!isDeactivated && mapData.command) ? mapData.command : (typeof mapData.command_deactivated === 'string' ? mapData.command_deactivated : "");
@@ -645,7 +653,7 @@ class ArchipelagoMapSelect {
         const errEntry = container.FindChild('ErrorEntry');
         if (errEntry && errEntry.IsValid()) errEntry.DeleteAsync(0);
 
-        const isHidingCounts = ($.persistentStorage.getItem('ap_hide_location_counts') ?? "0").toString() === "1";
+        const isHidingCounts = ($.persistentStorage.getItem('cv_HideLocationCounts') ?? "0").toString() === "1";
         const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));
 
         for (const chId of sortedKeys) {

@@ -37,7 +37,7 @@ void RunDelayedInitLegacyCmd(const CommandArgs@ args) {
     Archipelago::g_Archipelago.GetWorkflowManager().AttachDeathTrigger();
     Msgl("AttachDeathTrigger() completed");
     // Check if we show the Map status HUD
-    ConVarRef showHUDConVar("ap_show_map_status_hud");
+    ConVarRef showHUDConVar("cv_ShowMapStatusHUD");
     int hudMode = (showHUDConVar.IsValid()) ? showHUDConVar.GetInt() : 0;
     // Tell panorama the current map
     Archipelago::g_Archipelago.CallVScript("SendToPanorama(\"ArchipelagoMapNameUpdated\", \"" + currentMap + "|" + hudMode + "\")");
@@ -133,7 +133,7 @@ void ArchipelagoVitrifiedFoundLegacyCmd(const CommandArgs@ args) {
     int index = args.Arg(1).toInt();
     if (index < 1 || index > 6) return;
 
-    string bitmask = Archipelago::cv_ArchipelagoVitrifiedStatus.GetString();
+    string bitmask = Archipelago::cv_VitrifiedStatus.GetString();
     if (bitmask.length() < 6) bitmask = "000000";
 
     string newBitmask = "";
@@ -141,7 +141,7 @@ void ArchipelagoVitrifiedFoundLegacyCmd(const CommandArgs@ args) {
         if (i == index) newBitmask += "1"; else newBitmask += bitmask.substr(i - 1, 1);
     }
 
-    Archipelago::cv_ArchipelagoVitrifiedStatus.SetValue(newBitmask);
+    Archipelago::cv_VitrifiedStatus.SetValue(newBitmask);
     Archipelago::ArchipelagoLog("[AP] Vitrified Door Found: " + index + " | New Bitmask: " + newBitmask);
 
     string checkName = "Vitrified Door " + index;
@@ -419,7 +419,7 @@ void CheckElevatorRideCmd(const CommandArgs@ args) {
 
 [ServerCommand("ShowStatus", "Manually show the map status HUD")]
 void ShowStatusLegacyCmd(const CommandArgs@ args) {
-    ConVarRef showHUDConVar("ap_show_map_status_hud");
+    ConVarRef showHUDConVar("cv_ShowMapStatusHUD");
     if (!showHUDConVar.IsValid() || showHUDConVar.GetInt() == 1) {
         return; 
     }
@@ -507,29 +507,6 @@ void SetMutedDeathCmd(const CommandArgs@ args) {
     Archipelago::ArchipelagoLog("[AP] is_processing_remote_death set to: " + (isMuted ? "TRUE" : "FALSE"));
 }
 
-[ServerCommand("ap_sync_settings", "Syncs Archipelago settings from Panorama to Server")]
-void SyncSettingsCmd(const CommandArgs@ args) {
-    if (args.ArgC() < 6) return;
-    ConVarRef cv_SkipBirdScene("cv_SkipBirdScene");
-    if (cv_SkipBirdScene.IsValid()) cv_SkipBirdScene.SetValue(args.Arg(0));
-
-    ConVarRef cv_SkipCeilingScene("cv_SkipCeilingScene");
-    if (cv_SkipCeilingScene.IsValid()) cv_SkipCeilingScene.SetValue(args.Arg(1));
-
-    ConVarRef cv_SkipIntroContainerScene("cv_SkipIntroContainerScene");
-    if (cv_SkipIntroContainerScene.IsValid()) cv_SkipIntroContainerScene.SetValue(args.Arg(2));
-
-    ConVarRef cv_SkipElavatorRide("cv_SkipElavatorRide");
-    if (cv_SkipElavatorRide.IsValid()) cv_SkipElavatorRide.SetValue(args.Arg(3));
-
-    ConVarRef ap_hide_holograms("ap_hide_holograms");
-    if (ap_hide_holograms.IsValid()) ap_hide_holograms.SetValue(args.Arg(4));
-
-    ConVarRef ap_show_map_status_hud("ap_show_map_status_hud");
-    if (ap_show_map_status_hud.IsValid()) ap_show_map_status_hud.SetValue(args.Arg(5));
-
-    Archipelago::g_Archipelago.GetHologramManager().UpdateHologramsVisibility();
-}
 
 [ServerCommand("PrintItem", "Prints collected item (ex: Portal gun and PotatOS)")]
 void PrintItemLegacyCmd(const CommandArgs@ args) {

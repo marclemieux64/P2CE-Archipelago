@@ -5,7 +5,6 @@
     <scripts>
         <include src="file://{scripts}/pages/settings/page.js" />
 		<include src="file://{scripts}/components/color-display.js" />
-        <include src="file://{scripts}/pages/settings/archipelago.ts" />
     </scripts>
 
     <Panel class="settings-page" searchtitle="#Archipelago_Settings_Title">
@@ -19,20 +18,20 @@
                 <SettingsEnum
                     id="HideCountsSetting"
                     text="#Archipelago_Settings_HideLocationCounts"
-                    psvar="ap_hide_location_counts"
+                    psvar="cv_HideLocationCounts"
                     infomessage="#Archipelago_Settings_HideLocationCounts_info"
                     hasdocspage="false"
                 >
-                    <RadioButton group="ap_hide_location_counts" text="#Common_Show" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveHideCountsSetting()" />
-                    <RadioButton group="ap_hide_location_counts" text="#Common_Hide" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveHideCountsSetting()" />
+                    <RadioButton group="cv_HideLocationCounts" text="#Common_Show" value="0" />
+                    <RadioButton group="cv_HideLocationCounts" text="#Common_Hide" value="1" />
                 </SettingsEnum>
 
                 <SettingsEnumDropDown
                     text="#Archipelago_Settings_TransitionType"
                     infomessage="#Archipelago_Settings_TransitionType_info"
-                    onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveSmartWarpSetting()"
+                    submitoverride="UiToolkitAPI.GetGlobalObject().SaveSmartWarpSetting()"
                     id="TransitionTypeSetting"
-                    psvar="ap_smart_warp"
+                    psvar="cv_SmartWarp"
                 >
                     <Label text="#Archipelago_Settings_Transition_Menu" value="0" id="ap_transition_menu" />
                     <Label text="#Archipelago_Settings_Transition_Smart" value="1" id="ap_transition_smart" />
@@ -41,12 +40,13 @@
                 <SettingsEnum
                     id="MapStatusHUDSetting"
                     text="#Archipelago_Settings_MapStatusHUD"
-                    psvar="ap_show_map_status_hud"
+                    convar="cv_ShowMapStatusHUD"
+                    psvar="cv_ShowMapStatusHUD"
                     infomessage="#Archipelago_Settings_MapStatusHUD_info"
                     hasdocspage="false"
                 >
-                    <RadioButton group="ap_show_map_status_hud" text="#Common_Show" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveMapStatusHUDSetting()" />
-                    <RadioButton group="ap_show_map_status_hud" text="#Common_Hide" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveMapStatusHUDSetting()" />
+                    <RadioButton group="cv_ShowMapStatusHUD" text="#Common_Show" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveMapStatusHUDSetting?.()" />
+                    <RadioButton group="cv_ShowMapStatusHUD" text="#Common_Hide" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveMapStatusHUDSetting?.()" />
                 </SettingsEnum>
                 
                 <SettingsKeyBinder
@@ -60,24 +60,25 @@
                     id="HideHologramsSetting"
                     text="#Archipelago_Settings_HideHolograms"
                     infomessage="#Archipelago_Settings_HideHolograms_info"
-                    onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveHideHologramsSetting()"
-                    psvar="ap_hide_holograms"
+                    submitoverride="UiToolkitAPI.GetGlobalObject().SaveHideHologramsSetting()"
+                    convar="cv_HideHolograms"
+                    psvar="cv_HideHolograms"
                 >
-                    <Label text="#Archipelago_Settings_HideHolograms_0" value="0" id="ap_hide_holograms_0" />
-                    <Label text="#Archipelago_Settings_HideHolograms_1" value="1" id="ap_hide_holograms_1" />
-                    <Label text="#Archipelago_Settings_HideHolograms_2" value="2" id="ap_hide_holograms_2" />
+                    <Label text="#Archipelago_Settings_HideHolograms_0" value="0" id="cv_HideHolograms_0" />
+                    <Label text="#Archipelago_Settings_HideHolograms_1" value="1" id="cv_HideHolograms_1" />
+                    <Label text="#Archipelago_Settings_HideHolograms_2" value="2" id="cv_HideHolograms_2" />
                 </SettingsEnumDropDown>
 
                 <SettingsEnumDropDown
                     id="StatusIndicatorModeSetting"
                     text="#Archipelago_Settings_StatusIndicatorMode"
                     infomessage="#Archipelago_Settings_StatusIndicatorMode_info"
-                    onuserinputsubmit="UiToolkitAPI.GetGlobalObject().SaveStatusIndicatorModeSetting()"
-                    psvar="ap_status_indicator_mode"
+                    submitoverride="UiToolkitAPI.GetGlobalObject().SaveStatusIndicatorModeSetting()"
+                    psvar="cv_StatusIndicatorMode"
                 >
-                    <Label text="#Archipelago_Settings_StatusIndicatorMode_0" value="0" id="ap_status_indicator_mode_0" />
-                    <Label text="#Archipelago_Settings_StatusIndicatorMode_1" value="1" id="ap_status_indicator_mode_1" />
-                    <Label text="#Archipelago_Settings_StatusIndicatorMode_2" value="2" id="ap_status_indicator_mode_2" />
+                    <Label text="#Archipelago_Settings_StatusIndicatorMode_0" value="0" id="cv_StatusIndicatorMode_0" />
+                    <Label text="#Archipelago_Settings_StatusIndicatorMode_1" value="1" id="cv_StatusIndicatorMode_1" />
+                    <Label text="#Archipelago_Settings_StatusIndicatorMode_2" value="2" id="cv_StatusIndicatorMode_2" />
                 </SettingsEnumDropDown>
             </Panel>
 
@@ -91,107 +92,53 @@
                 <SettingsEnum
                     id="SkipElevatorRideSetting"
                     text="#Archipelago_Settings_SkipElevatorRide"
-                    psvar="cv_SkipElavatorRide"
+                    convar="cv_SkipElevatorRide"
+                    psvar="cv_SkipElevatorRide"
                     infomessage="#Archipelago_Settings_SkipElevatorRide_info"
                     hasdocspage="false"
                 >
-                    <RadioButton group="cv_SkipElavatorRide" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipElavatorRideSetting()" />
-                    <RadioButton group="cv_SkipElavatorRide" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipElavatorRideSetting()" />
+                    <RadioButton group="cv_SkipElevatorRide" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SyncSkipSettingsIfInGame?.()" />
+                    <RadioButton group="cv_SkipElevatorRide" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SyncSkipSettingsIfInGame?.()" />
                 </SettingsEnum>
 
                 <SettingsEnum
                     id="SkipIntroContainerSetting"
                     text="#Archipelago_Settings_SkipIntroContainer"
+                    convar="cv_SkipIntroContainerScene"
                     psvar="cv_SkipIntroContainerScene"
                     infomessage="#Archipelago_Settings_SkipIntroContainer_info"
                     hasdocspage="false"
                 >
-                    <RadioButton group="cv_SkipIntroContainerScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipIntroContainerSetting()" />
-                    <RadioButton group="cv_SkipIntroContainerScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipIntroContainerSetting()" />
+                    <RadioButton group="cv_SkipIntroContainerScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SyncSkipSettingsIfInGame?.()" />
+                    <RadioButton group="cv_SkipIntroContainerScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SyncSkipSettingsIfInGame?.()" />
                 </SettingsEnum>
 
                 <SettingsEnum
                     id="SkipBirdSceneSetting"
                     text="#Archipelago_Settings_SkipBirdScene"
+                    convar="cv_SkipBirdScene"
                     psvar="cv_SkipBirdScene"
                     infomessage="#Archipelago_Settings_SkipBirdScene_info"
                     hasdocspage="false"
                 >
-                    <RadioButton group="cv_SkipBirdScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipBirdSceneSetting()" />
-                    <RadioButton group="cv_SkipBirdScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipBirdSceneSetting()" />
+                    <RadioButton group="cv_SkipBirdScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SyncSkipSettingsIfInGame?.()" />
+                    <RadioButton group="cv_SkipBirdScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SyncSkipSettingsIfInGame?.()" />
                 </SettingsEnum>
 
                 <SettingsEnum
                     id="SkipCeilingSceneSetting"
                     text="#Archipelago_Settings_SkipCeilingScene"
+                    convar="cv_SkipCeilingScene"
                     psvar="cv_SkipCeilingScene"
                     infomessage="#Archipelago_Settings_SkipCeilingScene_info"
                     hasdocspage="false"
                 >
-                    <RadioButton group="cv_SkipCeilingScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipCeilingSceneSetting()" />
-                    <RadioButton group="cv_SkipCeilingScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SaveSkipCeilingSceneSetting()" />
+                    <RadioButton group="cv_SkipCeilingScene" text="#Common_Off" value="0" activateoverride="UiToolkitAPI.GetGlobalObject().SyncSkipSettingsIfInGame?.()" />
+                    <RadioButton group="cv_SkipCeilingScene" text="#Common_On" value="1" activateoverride="UiToolkitAPI.GetGlobalObject().SyncSkipSettingsIfInGame?.()" />
                 </SettingsEnum>
             </Panel>
 
             <Panel class="settings-page__spacer" />
-
-            <!-- <Panel id="ArchipelagoCosmetic" class="settings-group">
-                <Panel class="settings-group__header">
-                    <Label class="settings-group__title" text="#Archipelago_Settings_Cosmetic" />
-                </Panel>
-
-			<ApColorDisplay
-                    id="TurretColorDisplay"
-                    text="#Archipelago_Settings_Turret_Color"
-                    infomessage="#Archipelago_Settings_Turret_Color_Info"
-                    convar="Archipelago_Turret_Color"
-                    hasdocspage="false"
-                />
-			<ApColorDisplay
-                    id="WeightedCubeColorDisplay"
-                    text="#Archipelago_Settings_Weighted_Cube_Color"
-                    infomessage="#Archipelago_Settings_Weighted_Cube_Color_Info"
-                    convar="Archipelago_WeightedCube_Color"
-                    hasdocspage="false"
-                />
-			<ApColorDisplay
-                    id="CompanionCubeColorDisplay"
-                    text="#Archipelago_Settings_Companion_Cube_Color"
-                    infomessage="#Archipelago_Settings_Companion_Cube_Color_Info"
-                    convar="Archipelago_CompanionCube_Color"
-                    hasdocspage="false"
-                />
-
-			<ApColorDisplay
-                    id="ReflectorCubeColorDisplay"
-                    text="#Archipelago_Settings_Reflector_Cube_Color"
-                    infomessage="#Archipelago_Settings_Reflector_Cube_Color_Info"
-                    convar="Archipelago_ReflectorCube_Color"
-                    hasdocspage="false"
-                />
-			
-			<ApColorDisplay
-                    id="AncientCubeColorDisplay"
-                    text="#Archipelago_Settings_Ancient_Cube_Color"
-                    infomessage="#Archipelago_Settings_Ancient_Cube_Color_Info"
-                    convar="Archipelago_AncientCube_Color"
-                    hasdocspage="false"
-                />
-			<ApColorDisplay
-                    id="LaserCubeColorDisplay"
-                    text="#Archipelago_Settings_Laser_Cube_Color"
-                    infomessage="#Archipelago_Settings_Laser_Cube_Color_Info"
-                    convar="Archipelago_LaserCube_Color"
-                    hasdocspage="false"
-                />
-				
-            </Panel> -->
-
-			
-			
-
-            <!-- <Panel class="settings-page__spacer" /> -->
-
         </Panel>
     </Panel>
 </root>

@@ -15,6 +15,7 @@
     animation-name: enter-anim;
     animation-duration: 0.35s;
     animation-timing-function: ease-out;
+    
 
     // ==========================================
     // --- SONS DÉCLENCHÉS À L'APPARITION ---
@@ -54,6 +55,7 @@
     width: 100%;
     height: fit-children;
     text-shadow: 0px 0px 4px 2.0 #000000;
+    padding-left: 5px;
 }
 
 .body {
@@ -61,6 +63,7 @@
     color: #ffffff;
     width: 100%;
     height: fit-children;
+    padding-left: 5px;
 }
 
 // Type variations
@@ -91,6 +94,7 @@
     vertical-align: top;
     flow-children: down;
     overflow: squish scroll;
+    
 }
 
 
@@ -185,4 +189,6 @@
 .sound-goal {
     border: 2px solid #ffd700;
     box-shadow: 0px 0px 12px #ffd70044;
+    padding-left: 5px;
+    padding-right: 5px;
 }

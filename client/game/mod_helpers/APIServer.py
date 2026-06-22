@@ -1,5 +1,3 @@
-import os
-import sys
 import json
 import hashlib
 import threading
@@ -12,18 +10,13 @@ class APIServer:
         self.ctx = ctx
         self.server = None
         self.thread = None
-        
-        self._cache = {
-            "status_key": None, "status_json": b"", "status_etag": "",
-            "chat_key": None, "chat_json": b"", "chat_etag": "",
-            "hints_key": None, "hints_json": b"", "hints_etag": ""
-        }
-        
+
+        self._cache = {}
+
         self._menu_version = 0
         self._last_menu_key = None
         self._cached_menu_dict = None
-        
-        # Separate cache for missing_str (only changes when item counts change)
+
         self._missing_items_key = None
         self._cached_missing_str = ""
         self._missing_version = 0
@@ -34,7 +27,7 @@ class APIServer:
 
         class APIHandler(BaseHTTPRequestHandler):
             def log_message(self, format, *args):
-                pass  
+                pass
 
             def do_OPTIONS(self):
                 self.send_response(200)
@@ -48,7 +41,7 @@ class APIServer:
                 items_received_len = len(client_self.items_received) if hasattr(client_self, "items_received") else 0
                 item_list_len = len(client_self.item_list) if hasattr(client_self, "item_list") else 0
                 missing_key = (items_received_len, item_list_len)
-                
+
                 if missing_key != server_self._missing_items_key:
                     server_self._missing_items_key = missing_key
                     server_self._missing_version += 1
@@ -57,87 +50,62 @@ class APIServer:
                         server_self._cached_missing_str = ",".join([items_shortened[item] for item in items_shortened if item not in received_names])
                     else:
                         server_self._cached_missing_str = ",".join([items_shortened.get(i, "") for i in client_self.item_list]) if hasattr(client_self, "item_list") else ""
-                
+
                 return server_self._cached_missing_str
 
             def do_GET(self):
                 is_conn = bool(client_self.server and client_self.server.socket and not client_self.server.socket.closed)
-                game_conn = client_self.check_game_connection()  # call once, reuse
+                game_conn = client_self.check_game_connection()
 
-                if self.path.startswith('/api/status') or self.path.startswith('/status'):
+                if self.path.startswith('/api/all'):
                     query = parse_qs(urlparse(self.path).query)
-                    try:
-                        client_menu_version = int(query.get('menu_version', [-1])[0])
-                    except (ValueError, IndexError):
-                        client_menu_version = -1
+                    try: client_menu_version = int(query.get('menu_version', [-1])[0])
+                    except: client_menu_version = -1
+                    try: client_checked_count = int(query.get('checked_count', [-1])[0])
+                    except: client_checked_count = -1
+                    try: client_missing_version = int(query.get('missing_version', [-1])[0])
+                    except: client_missing_version = -1
+                    try: last_chat_id = int(query.get('last_chat', [-1])[0])
+                    except: last_chat_id = -1
 
-                    try:
-                        client_checked_count = int(query.get('checked_count', [-1])[0])
-                    except (ValueError, IndexError):
-                        client_checked_count = -1
-
-                    # Trigger computing and caching of the missing items string
+                    # --- Status section ---
                     self._get_missing_str()
-                    try:
-                        client_missing_version = int(query.get('missing_version', [-1])[0])
-                    except (ValueError, IndexError):
-                        client_missing_version = -1
 
                     items_received_len = len(client_self.items_received) if hasattr(client_self, "items_received") else 0
                     item_list_len = len(client_self.item_list) if hasattr(client_self, "item_list") else 0
                     current_checked_locations_len = len(client_self.checked_locations)
 
-                    current_menu_key = (
-                        current_checked_locations_len,
-                        items_received_len,
-                        item_list_len,
-                        client_self.slot
-                    )
-                    
+                    current_menu_key = (current_checked_locations_len, items_received_len, item_list_len, client_self.slot)
                     if current_menu_key != server_self._last_menu_key:
                         server_self._last_menu_key = current_menu_key
                         server_self._menu_version += 1
                         server_self._cached_menu_dict = client_self.menu.to_dict() if client_self.menu else None
 
-                    current_key = (
-                        is_conn,
-                        game_conn,
-                        client_self.slot,
-                        current_checked_locations_len,
-                        items_received_len,
-                        item_list_len,
+                    status_key = (
+                        is_conn, game_conn, client_self.slot,
+                        current_checked_locations_len, items_received_len, item_list_len,
                         getattr(client_self, "hint_points", 0),
                         getattr(client_self, "hint_cost", 0),
                         getattr(client_self, "logic_difficulty", 0),
-                        client_menu_version,
-                        server_self._menu_version,
-                        client_checked_count,
-                        client_missing_version,
-                        server_self._missing_version,
+                        client_menu_version, server_self._menu_version,
+                        client_checked_count, client_missing_version, server_self._missing_version,
                         getattr(client_self.deathlink_handler, 'last_death_link_executed', 0.0)
                     )
 
-                    if current_key == server_self._cache["status_key"]:
-                        if self.headers.get('If-None-Match') == server_self._cache["status_etag"]:
-                            self.send_response(304)
-                            self.send_header('Access-Control-Allow-Origin', '*')
-                            self.send_header('Content-Length', '0')
-                            self.end_headers()
-                            return
-                    else:
-                        server_self._cache["status_key"] = current_key
+                    status_changed = status_key != server_self._cache.get("all_status_key")
+                    if status_changed:
+                        server_self._cache["all_status_key"] = status_key
                         should_send_menu = (client_menu_version != server_self._menu_version)
-                        should_send_checked_locations = (client_checked_count != current_checked_locations_len)
-                        should_send_missing_items = (client_missing_version != server_self._missing_version)
-                        
-                        payload = {
+                        should_send_checked = (client_checked_count != current_checked_locations_len)
+                        should_send_missing = (client_missing_version != server_self._missing_version)
+                        server_self._cache["all_status_payload"] = {
                             "connected": is_conn,
                             "game_connected": game_conn,
                             "slot": client_self.slot,
                             "checked_locations_count": current_checked_locations_len,
-                            "checked_locations": list(client_self.checked_locations) if should_send_checked_locations else None,
+                            "checked_locations": list(client_self.checked_locations) if should_send_checked else None,
                             "missing_version": server_self._missing_version,
-                            "missing_items": server_self._cached_missing_str if should_send_missing_items else None,
+                            "missing_items": server_self._cached_missing_str if should_send_missing else None,
                             "hint_points": getattr(client_self, "hint_points", 0),
                             "hint_cost": getattr(client_self, "hint_cost", 0),
                             "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
@@ -145,81 +113,51 @@ class APIServer:
                             "menu": server_self._cached_menu_dict if should_send_menu else None,
                             "persistent_death_time": getattr(client_self.deathlink_handler, 'last_death_link_executed', 0.0)
                         }
-                        server_self._cache["status_json"] = json.dumps(payload).encode('utf-8')
-                        server_self._cache["status_etag"] = hashlib.md5(server_self._cache["status_json"]).hexdigest()
 
-                    self.send_response(200)
-                    self.send_header('Content-Type', 'application/json')
-                    self.send_header('Content-Length', str(len(server_self._cache["status_json"])))
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.send_header('ETag', server_self._cache["status_etag"])
-                    self.end_headers()
-                    self.wfile.write(server_self._cache["status_json"])
-                    return
-
-                elif self.path.startswith('/api/chat') or self.path.startswith('/chat'):
-                    query = parse_qs(urlparse(self.path).query)
-                    try:
-                        last_chat_id = int(query.get('last_chat', [-1])[0])
-                    except (ValueError, IndexError):
-                        last_chat_id = -1
-
+                    # --- Chat section ---
                     chat_log = client_self.notifier.chat_log
                     chat_head_id = chat_log[-1]["id"] if chat_log else -1
+                    chat_key = (chat_head_id, last_chat_id)
+                    chat_delta = list([msg for msg in chat_log if msg["id"] > last_chat_id])
 
-                    current_key = (chat_head_id, last_chat_id)
-
-                    if current_key == server_self._cache["chat_key"]:
-                        if self.headers.get('If-None-Match') == server_self._cache["chat_etag"]:
-                            self.send_response(304)
-                            self.send_header('Access-Control-Allow-Origin', '*')
-                            self.send_header('Content-Length', '0')
-                            self.end_headers()
-                            return
-                    else:
-                        server_self._cache["chat_key"] = current_key
-                        chat_delta = [msg for msg in chat_log if msg["id"] > last_chat_id]
-                        payload = {
-                            "chat_delta": chat_delta
-                        }
-                        server_self._cache["chat_json"] = json.dumps(payload).encode('utf-8')
-                        server_self._cache["chat_etag"] = hashlib.md5(server_self._cache["chat_json"]).hexdigest()
-
-                    self.send_response(200)
-                    self.send_header('Content-Type', 'application/json')
-                    self.send_header('Content-Length', str(len(server_self._cache["chat_json"])))
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.send_header('ETag', server_self._cache["chat_etag"])
-                    self.end_headers()
-                    self.wfile.write(server_self._cache["chat_json"])
-                    return
-
-                elif self.path.startswith('/api/hints') or self.path.startswith('/hints'):
+                    # --- Hints section ---
                     hint_log = client_self.notifier.hint_log
-                    current_key = (len(hint_log), tuple(h.get("found", False) for h in hint_log))
+                    hints_key = (len(hint_log), tuple(h.get("found", False) for h in hint_log))
+                    hints_changed = hints_key != server_self._cache.get("all_hints_key")
+                    if hints_changed:
+                        server_self._cache["all_hints_key"] = hints_key
+                        server_self._cache["all_hints_payload"] = list(hint_log)
 
-                    if current_key == server_self._cache["hints_key"]:
-                        if self.headers.get('If-None-Match') == server_self._cache["hints_etag"]:
+                    # --- Combined ETag ---
+                    combined_key = (status_key, chat_key, hints_key)
+
+                    if combined_key == server_self._cache.get("all_key"):
+                        if self.headers.get('If-None-Match') == server_self._cache.get("all_etag", ""):
                             self.send_response(304)
                             self.send_header('Access-Control-Allow-Origin', '*')
                             self.send_header('Content-Length', '0')
                             self.end_headers()
                             return
-                    else:
-                        server_self._cache["hints_key"] = current_key
-                        payload = {
-                            "hints": hint_log
-                        }
-                        server_self._cache["hints_json"] = json.dumps(payload).encode('utf-8')
-                        server_self._cache["hints_etag"] = hashlib.md5(server_self._cache["hints_json"]).hexdigest()
+
+                    server_self._cache["all_key"] = combined_key
+
+                    payload = {
+                        "s": server_self._cache.get("all_status_payload") if status_changed else None,
+                        "c": chat_delta,
+                        "h": server_self._cache.get("all_hints_payload") if hints_changed else None
+                    }
+
+                    body = json.dumps(payload).encode('utf-8')
+                    etag = hashlib.md5(body).hexdigest()
+                    server_self._cache["all_etag"] = etag
 
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
-                    self.send_header('Content-Length', str(len(server_self._cache["hints_json"])))
+                    self.send_header('Content-Length', str(len(body)))
                     self.send_header('Access-Control-Allow-Origin', '*')
-                    self.send_header('ETag', server_self._cache["hints_etag"])
+                    self.send_header('ETag', etag)
                     self.end_headers()
-                    self.wfile.write(server_self._cache["hints_json"])
+                    self.wfile.write(body)
                     return
 
                 else:

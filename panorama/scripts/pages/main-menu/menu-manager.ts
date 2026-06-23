@@ -95,6 +95,20 @@ class MenuManager {
 				$.DispatchEvent('MainMenuSwitchReverse', true);
 			});
 		});
+
+		// Re-apply skip convars on every map load so they're set before RunDelayedInit
+		// reads them at the 0.5s mark. Handles the case where AngelScript ConVar
+		// re-declaration resets to default on each script reload.
+		$.RegisterForUnhandledEvent('MapLoaded', (_map: string, bg: boolean) => {
+			if (bg) return;
+			const skipConvars = ['cv_SkipElevatorRide', 'cv_SkipIntroContainerScene', 'cv_SkipBirdScene', 'cv_SkipCeilingScene'];
+			for (const convar of skipConvars) {
+				const stored = $.persistentStorage.getItem(convar);
+				if (stored !== null && stored !== undefined) {
+					GameInterfaceAPI.ConsoleCommand(`${convar} ${stored}`);
+				}
+			}
+		});
 	}
 
 	static onLoaded() {

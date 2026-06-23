@@ -27,23 +27,6 @@ class ArchipelagoSync {
     static m_LastParsedMenuVersion: number = -1;
     static m_CachedChapters: any = null;
 
-    /**
-     * Legacy helper to evaluate indicator status, redirects to ArchipelagoLogic.
-     */
-    static getIndicatorStatus(char: string, mapCmdName: string, mItems: string, charIndexInStatus: number): { isCompleted: boolean, isAvailable: boolean } {
-        const logicHelper = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoLogic;
-        if (logicHelper) {
-            return logicHelper.getIndicatorStatus(char, mapCmdName, mItems, charIndexInStatus);
-        }
-        return { isCompleted: false, isAvailable: true };
-    }
-
-    /**
-     * Determines if an item is missing based on the current map's subtitle.
-     */
-    static isMissingItem(itemChar: string): boolean {
-        return (itemChar && itemChar !== " ");
-    }
 
     static parseApiStatus(status: any): any {
         if (!status || !status.menu || !status.menu.chapters) return {};
@@ -153,6 +136,7 @@ class ArchipelagoSync {
 
         const global: any = UiToolkitAPI.GetGlobalObject();
         global.ArchipelagoSyncInstance = ArchipelagoSync;
+        global.ArchipelagoSync = ArchipelagoSync;
 
         if (this.m_Initialized) return;
         this.m_Initialized = true;

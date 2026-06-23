@@ -117,6 +117,38 @@ class ArchipelagoTrapManager {
             return {};
         }
     }
+
+    static getSkippedTrapIds(): number[] {
+        const val = $.persistentStorage.getItem("AP_SkippedTrapIds");
+        if (!val) return [];
+        try {
+            const arr = JSON.parse(val as string);
+            return Array.isArray(arr) ? arr : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    static addSkippedTrapId(id: number) {
+        const arr = this.getSkippedTrapIds();
+        if (arr.indexOf(id) === -1) {
+            arr.push(id);
+            $.persistentStorage.setItem("AP_SkippedTrapIds", JSON.stringify(arr));
+        }
+    }
+
+    static removeSkippedTrapId(id: number) {
+        const arr = this.getSkippedTrapIds();
+        const idx = arr.indexOf(id);
+        if (idx !== -1) {
+            arr.splice(idx, 1);
+            $.persistentStorage.setItem("AP_SkippedTrapIds", JSON.stringify(arr));
+        }
+    }
+
+    static isSkippedTrap(id: number): boolean {
+        return this.getSkippedTrapIds().indexOf(id) !== -1;
+    }
 }
 
 // Global exposure

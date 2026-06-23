@@ -102,7 +102,7 @@ var ArchipelagoMapStatusHUD = class {
             }
         }
 
-        const hudSetting = $.persistentStorage.getItem('cv_ShowMapStatusHUD') ?? "1";
+        const hudSetting = $.persistentStorage.getItem('cv_ShowMapStatusHUD') ?? "0";
         const isHUDDisabled = (hudSetting == 1 || hudSetting == '1' || hudSetting === true || hudSetting === "true");
 
         // Block execution (keep collapsed) if the HUD is completely disabled,

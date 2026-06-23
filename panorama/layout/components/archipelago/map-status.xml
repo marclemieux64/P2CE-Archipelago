@@ -6,7 +6,6 @@
 
 	<scripts>
         <include src="file://{resources}/scripts/components/archipelago/map-status.ts" /> 
-		<include src="file://{resources}/scripts/util/archipelago-logic.ts" />
 		<include src="file://{resources}/scripts/util/archipelago-sync.ts" />
 	</scripts>
 

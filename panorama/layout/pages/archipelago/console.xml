@@ -8,7 +8,6 @@
 
 <scripts>
     <include src="file://{resources}/scripts/util/event-definition.ts" />
-    <include src="file://{resources}/scripts/util/archipelago-logic.ts" />
     <include src="file://{resources}/scripts/util/archipelago-sync.ts" />
     <include src="file://{resources}/scripts/pages/archipelago/map-select.ts" />
     <include src="file://{resources}/scripts/pages/archipelago/console.ts" />

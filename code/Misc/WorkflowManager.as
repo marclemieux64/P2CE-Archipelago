@@ -326,7 +326,10 @@ class WorkflowManager {
         CBaseEntity@ train = null;
         while ((@train = EntityList().FindByClassname(train, "func_tracktrain")) !is null) {
             string name = train.GetEntityName();
-            if (name.locate("departure") < name.length()) {
+            bool isElevator = name.locate("departure") < name.length()
+                || name.locate("exit_lift_train") < name.length()
+                || name.locate("exit_elevator_train") < name.length();
+            if (isElevator) {
                 m_hElevator.Set(train);
                 m_flInitialElevatorZ = train.GetAbsOrigin().z;
 

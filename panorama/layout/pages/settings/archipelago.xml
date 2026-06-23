@@ -5,6 +5,7 @@
     <scripts>
         <include src="file://{scripts}/pages/settings/page.js" />
 		<include src="file://{scripts}/components/color-display.js" />
+        <include src="file://{scripts}/pages/settings/archipelago.ts" />
     </scripts>
 
     <Panel class="settings-page" searchtitle="#Archipelago_Settings_Title">

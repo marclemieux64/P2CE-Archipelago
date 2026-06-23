@@ -2,8 +2,6 @@
 
 const notificationQueue: Panel[] = [];
 let isTimerRunning = false;
-let isWarpPending = false;
-let pendingWarpMapName = "";
 
 // Rate limiter: max 3 notifications per 2-second window.
 let rateLimitWindowStart = 0;
@@ -201,34 +199,6 @@ registerSelfCleaningEvent("ArchipelagoDeath", (msg: string) => {
     }));
 });
 
-registerSelfCleaningEvent("Archipelago_WarpToMenu", (content: string) => {
-    if (isWarpPending) return;
-
-    isWarpPending = true;
-    pendingWarpMapName = content;
-    const hud = GetHudRoot();
-    if (hud) hud.AddClass("fade-active");
-
-    const useSmartWarp = $.persistentStorage.getItem('cv_SmartWarp');
-
-    if (useSmartWarp !== "1" && useSmartWarp !== 1) {
-        let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu_Title");
-        if (locTitle === "#Archipelago_HUD_Warp_Menu_Title") locTitle = "WARP TO MENU";
-
-        let locLoading = $.Localize("#Archipelago_HUD_Warp_Loading");
-        if (locLoading === "#Archipelago_HUD_Warp_Loading") locLoading = "Returning to map select... Loading...";
-
-        OnArchipelagoNotify(JSON.stringify({
-            title: locTitle,
-            html: locLoading,
-            type: "198 33 223",
-            play_sound: true
-        }));
-    } else {
-        if (!isTimerRunning) ProcessQueue();
-    }
-});
-
 function ProcessQueue() {
     const contextPanel = $.GetContextPanel();
     if (!contextPanel || !contextPanel.IsValid()) {
@@ -236,18 +206,9 @@ function ProcessQueue() {
     }
     if (notificationQueue.length === 0) {
         isTimerRunning = false;
-        if (isWarpPending) {
-            $.persistentStorage.setItem("ap_return_to_map_select", "true");
-            $.Schedule(0.5, () => {
-                isWarpPending = false;
-
-                const useSmartWarp = $.persistentStorage.getItem('cv_SmartWarp');
-                if (useSmartWarp === "1" || useSmartWarp === 1) {
-                    (UiToolkitAPI.GetGlobalObject() as any).SmartWarpNextMap(pendingWarpMapName);
-                } else {
-                    GameInterfaceAPI.ConsoleCommand("disconnect");
-                }
-            });
+        const transition = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoTransition;
+        if (transition?.hasPendingWarp()) {
+            transition.onQueueDrained();
         }
         return;
     }
@@ -292,34 +253,6 @@ registerSelfCleaningEvent("ArchipelagoAPI_ChatUpdated", (delta: any) => {
     }
 });
 
-function getSkippedTrapIds(): number[] {
-    const val = $.persistentStorage.getItem("AP_SkippedTrapIds");
-    if (!val) return [];
-    try {
-        const arr = JSON.parse(val);
-        return Array.isArray(arr) ? arr : [];
-    } catch (e) {
-        return [];
-    }
-}
-
-function addSkippedTrapId(id: number) {
-    const arr = getSkippedTrapIds();
-    if (arr.indexOf(id) === -1) {
-        arr.push(id);
-        $.persistentStorage.setItem("AP_SkippedTrapIds", JSON.stringify(arr));
-    }
-}
-
-function removeSkippedTrapId(id: number) {
-    const arr = getSkippedTrapIds();
-    const idx = arr.indexOf(id);
-    if (idx !== -1) {
-        arr.splice(idx, 1);
-        $.persistentStorage.setItem("AP_SkippedTrapIds", JSON.stringify(arr));
-    }
-}
-
 function ProcessChat(delta: any) {
     const isHud = GetHudRoot() !== null;
     const uiState = GameInterfaceAPI.GetGameUIState();
@@ -349,17 +282,18 @@ function ProcessChat(delta: any) {
 
             const apType = msg.ap_msg_type || "default";
             const isTrap = (apType === "trap") || (msg.html && msg.html.toLowerCase().includes("trap")) || (msg.text && msg.text.toLowerCase().includes("trap"));
+            const trapManager = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoTrapManager;
 
             // Trap arrived in menu context — defer to gameplay.
             if (isTrap && !isHud) {
-                addSkippedTrapId(msg.id);
+                trapManager?.addSkippedTrapId(msg.id);
                 debouncedWriteNotifId(msg.id);
                 continue;
             }
 
             // Trap surfacing from deferral — clean up.
-            const isSkippedTrap = isHud && isTrap && getSkippedTrapIds().indexOf(msg.id) !== -1;
-            if (isSkippedTrap) removeSkippedTrapId(msg.id);
+            const isSkippedTrap = isHud && isTrap && trapManager?.isSkippedTrap(msg.id);
+            if (isSkippedTrap) trapManager?.removeSkippedTrapId(msg.id);
 
             if (msg.muted === true) continue;
 
@@ -514,3 +448,6 @@ function OnArchipelagoNotify(payload: string) {
 }
 
 (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify = OnArchipelagoNotify;
+(UiToolkitAPI.GetGlobalObject() as any).ArchipelagoProcessQueue = () => {
+    if (!isTimerRunning) ProcessQueue();
+};

@@ -1939,7 +1939,7 @@ This message will only be displayed once, and will not be shown again upon accep
 
         "Archipelago_HUD_Warp_Dest"       "Destination: %s1"
 
-        "Archipelago_HUD_Warp_Delay"      "Warping in 3 seconds..."
+        "Archipelago_HUD_Warp_Delay"      "Warping in 4 seconds..."
 
         "Archipelago_HUD_Warp_Menu_Title" "WARP TO MENU"
 

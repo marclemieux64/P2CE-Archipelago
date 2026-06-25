@@ -31,6 +31,8 @@ function getHudPanel(): Panel | null {
     return null;
 }
 
+const SMART_WARP_DELAY_SECONDS = 4.0;
+
 class ArchipelagoTransition {
     static m_IsWarpPending: boolean = false;
     static m_PendingMapName: string = "";
@@ -181,7 +183,7 @@ class ArchipelagoTransition {
                 : `${locDest} <font color='#00ffff'>${mapNameDisplay}</font>`;
 
             let locDelay = $.Localize("#Archipelago_HUD_Warp_Delay");
-            if (!locDelay || locDelay === "#Archipelago_HUD_Warp_Delay") locDelay = "Warping in 3 seconds...";
+            if (!locDelay || locDelay === "#Archipelago_HUD_Warp_Delay") locDelay = "Warping in 4 seconds...";
 
             if (notifyFn) notifyFn(JSON.stringify({
                 title: locTitle,
@@ -190,7 +192,7 @@ class ArchipelagoTransition {
                 play_sound: true
             }));
 
-            $.Schedule(3.0, () => {
+            $.Schedule(SMART_WARP_DELAY_SECONDS, () => {
                 if (!ctx || !ctx.IsValid()) { this.m_IsSmartWarping = false; return; }
                 GameInterfaceAPI.ConsoleCommand(targetMap.command);
                 this.m_IsSmartWarping = false;
@@ -212,7 +214,7 @@ class ArchipelagoTransition {
                 play_sound: true
             }));
 
-            $.Schedule(3.0, () => {
+            $.Schedule(SMART_WARP_DELAY_SECONDS, () => {
                 if (!ctx || !ctx.IsValid()) { this.m_IsSmartWarping = false; return; }
                 GameInterfaceAPI.ConsoleCommand("disconnect");
                 this.m_IsSmartWarping = false;

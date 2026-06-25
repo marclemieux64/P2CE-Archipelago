@@ -19,10 +19,9 @@ ConVar cv_SkipElevatorRide("cv_SkipElevatorRide", "0");
 ConVar cv_VitrifiedStatus("cv_VitrifiedStatus", "000000");
 
 // --- STATIC READ-ONLY CONFIGURATION ARRAYS ---
-const array<string> two_trigger_levels = { "sp_a1_intro1", "sp_a4_finale3" };
 
 const array<string> non_elevator_maps = {
-    "sp_a1_intro1", "sp_a1_intro7", "sp_a1_wakeup", "sp_a2_turret_intro", "sp_a2_bts1",
+    "sp_a1_intro7", "sp_a1_wakeup", "sp_a2_turret_intro", "sp_a2_bts1",
     "sp_a2_bts2", "sp_a2_bts3", "sp_a2_bts4", "sp_a2_bts5", "sp_a2_bts6", "sp_a2_core",
     "sp_a3_00", "sp_a3_01", "sp_a4_laser_platform", "sp_a3_portal_intro", "sp_a4_finale1",
     "sp_a4_finale2", "sp_a4_finale3", "sp_a4_finale4"

@@ -107,7 +107,7 @@ class ArchipelagoPrompt {
 
         if (conditionMet && this.m_HadDoableChecksThisMap && !this.m_SmartWarpSchedule) {
             const ctx = $.GetContextPanel();
-            this.m_SmartWarpSchedule = $.Schedule(3.0, () => {
+            this.m_SmartWarpSchedule = $.Schedule(4.0, () => {
                 this.m_SmartWarpSchedule = null;
                 if (!ctx || !ctx.IsValid()) return;
                 if ((UiToolkitAPI.GetGlobalObject() as any).ArchipelagoPromptInstance !== ArchipelagoPrompt) return;

@@ -158,10 +158,6 @@ class CheckManager {
     void CreateCompleteLevelAlertHook(string map) {
         g_Archipelago.SetHasPrintedMapComplete(false);
 
-        if (two_trigger_levels.find(map) >= 0) {
-            g_Archipelago.SetTransitionScriptCount(1);
-        }
-
         array<string> triggerClasses = { "trigger_once", "trigger_multiple" };
         for (uint i = 0; i < triggerClasses.length(); i++) {
             CBaseEntity@ tr = null;

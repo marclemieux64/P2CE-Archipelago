@@ -433,7 +433,7 @@
 		"Archipelago_HUD_Warp_Dest"       "Destination : %s1"
 
 
-		"Archipelago_HUD_Warp_Delay"      "Transfert dans 3 secondes..."
+		"Archipelago_HUD_Warp_Delay"      "Transfert dans 4 secondes..."
 
 
 		"Archipelago_HUD_Warp_Menu_Title" "RETOUR AU MENU"

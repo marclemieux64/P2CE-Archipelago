@@ -70,6 +70,14 @@ Hud,
 	flow-children: down;
 }
 
+#HudAPPrompt {
+	horizontal-align: center;
+	vertical-align: bottom;
+	width: fit-children;
+	height: fit-children;
+	margin-bottom: 240px;
+}
+
 #HudInWorld,
 #HudReticle {
 	width: 100%;

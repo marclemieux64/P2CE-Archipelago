@@ -8,6 +8,7 @@
 		<include src="file://{resources}/scripts/util/archipelago-api.ts" />
 		<include src="file://{resources}/scripts/util/archipelago-transition.ts" />
 		<include src="file://{resources}/scripts/util/archipelago-traps.ts" />
+		<include src="file://{resources}/scripts/hud/archipelago-prompt.ts" />
 	</scripts>
 
 	<Hud hittest="false">
@@ -35,7 +36,7 @@
 			<!--ChaosHudHintText id="HudHintText" /-->
 		</Panel>
 
-		<!-- Anchored to the bottom-left corner of the screen, laid out from top to bottom -->
+<!-- Anchored to the bottom-left corner of the screen, laid out from top to bottom -->
 		<Panel id="HudLowerLeft" hittest="false" hittestchildren="true">
 			<HudStaticMenu />
 			<HudHealth />
@@ -74,5 +75,11 @@
 		<Panel id="HudNotify" hittest="false" hittestchildren="false">
 			<Frame src="file://{resources}/layout/hud/console-notify.xml" />
 		</Panel>
+
+		<ContextMenuManager id="ContextMenuManager" />
+		<TooltipManager id="TooltipManager" hittest="false" />
+
+		<!-- Popup manager must be last so it renders above all HUD elements -->
+		<PopupManager id="PopupManager" onpopupsdismissed="" />
 	</Hud>
 </root>

@@ -9,14 +9,15 @@ interface LabelPanel extends Panel { }
 
 function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
     const contextPanel = $.GetContextPanel();
+    let _handle: number = -1;
     const wrapper = (...args: any[]) => {
         if (!contextPanel || !contextPanel.IsValid()) {
-            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            $.UnregisterForUnhandledEvent(eventName, _handle);
             return;
         }
         callback(...args);
     };
-    $.RegisterForUnhandledEvent(eventName, wrapper);
+    _handle = $.RegisterForUnhandledEvent(eventName, wrapper);
 }
 
 class ArchipelagoSync {
@@ -26,6 +27,10 @@ class ArchipelagoSync {
     // Cache local pour éviter l'évaluation répétitive de parseApiStatus()
     static m_LastParsedMenuVersion: number = -1;
     static m_CachedChapters: any = null;
+
+    // Cache per-map search result to avoid scanning all chapters on every runSync call
+    static m_LastSearchedMapName: string = "";
+    static m_LastSearchedMapData: any = null;
 
 
     static parseApiStatus(status: any): any {
@@ -107,8 +112,10 @@ class ArchipelagoSync {
     static debouncedSyncWrite(key: string, value: any) {
         ArchipelagoSync.m_PendingSyncValues[key] = value;
         if (!ArchipelagoSync.m_SyncFlushSchedule) {
+            const ctx = $.GetContextPanel();
             ArchipelagoSync.m_SyncFlushSchedule = $.Schedule(2.0, () => {
                 ArchipelagoSync.m_SyncFlushSchedule = null;
+                if (!ctx || !ctx.IsValid()) return;
                 for (const k in ArchipelagoSync.m_PendingSyncValues) {
                     $.persistentStorage.setItem(k, ArchipelagoSync.m_PendingSyncValues[k]);
                 }
@@ -156,6 +163,19 @@ class ArchipelagoSync {
         registerSelfCleaningEvent("MapLoaded", (map: string, bg: boolean) => {
             if (bg) return;
 
+            // Restore persisted settings to their convars every map load, since AngelScript
+            // convars reset to defaults on game start and are only otherwise applied when
+            // the settings page is opened.
+            const settingConvars = [
+                'cv_HideHolograms', 'cv_ShowMapStatusHUD',
+                'cv_SkipElevatorRide', 'cv_SkipIntroContainerScene',
+                'cv_SkipBirdScene', 'cv_SkipCeilingScene'
+            ];
+            for (const cv of settingConvars) {
+                const val = $.persistentStorage.getItem(cv) ?? 0;
+                GameInterfaceAPI.ConsoleCommand(`${cv} ${val}`);
+            }
+
             let cleanMap = map;
             if (cleanMap.indexOf("maps/") === 0 || cleanMap.indexOf("maps\\") === 0) {
                 cleanMap = cleanMap.substring(5);
@@ -194,6 +214,12 @@ class ArchipelagoSync {
         }
 
         this.m_PollSchedule = $.Schedule(1.0, () => {
+            const ctxPanel = $.GetContextPanel();
+            if (!ctxPanel || !ctxPanel.IsValid()) {
+                this.m_PollSchedule = null;
+                return;
+            }
+
             const global: any = UiToolkitAPI.GetGlobalObject();
             if (global.ArchipelagoSyncInstance && global.ArchipelagoSyncInstance !== ArchipelagoSync) {
                 this.m_PollSchedule = null;
@@ -220,23 +246,30 @@ class ArchipelagoSync {
         if (currentMenuVersion !== this.m_LastParsedMenuVersion || !this.m_CachedChapters) {
             this.m_CachedChapters = this.parseApiStatus(apiStatus);
             this.m_LastParsedMenuVersion = currentMenuVersion;
+            this.m_LastSearchedMapData = null; // invalidate per-map cache on menu version change
         }
-        
+
         const chapters = this.m_CachedChapters;
         let currentMapData: any = null;
 
-        for (const chId in chapters) {
-            for (const map of chapters[chId].maps) {
-                if (map.command) {
-                    const cmdLower = map.command.toLowerCase();
-                    const search = mapName.toLowerCase();
-                    if (cmdLower.indexOf(search) !== -1) {
-                        currentMapData = map;
-                        break;
+        if (mapName === this.m_LastSearchedMapName && this.m_LastSearchedMapData !== null) {
+            currentMapData = this.m_LastSearchedMapData;
+        } else {
+            for (const chId in chapters) {
+                for (const map of chapters[chId].maps) {
+                    if (map.command) {
+                        const cmdLower = map.command.toLowerCase();
+                        const search = mapName.toLowerCase();
+                        if (cmdLower.indexOf(search) !== -1) {
+                            currentMapData = map;
+                            break;
+                        }
                     }
                 }
+                if (currentMapData) break;
             }
-            if (currentMapData) break;
+            this.m_LastSearchedMapName = mapName;
+            this.m_LastSearchedMapData = currentMapData;
         }
 
         if (!currentMapData) return;

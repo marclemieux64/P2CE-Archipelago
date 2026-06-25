@@ -67,6 +67,8 @@ class APIServer:
                     except: client_missing_version = -1
                     try: last_chat_id = int(query.get('last_chat', [-1])[0])
                     except: last_chat_id = -1
+                    client_etag = query.get('etag', [''])[0]
+                    need_hints = query.get('need_hints', ['1'])[0] == '1'
 
                     # --- Status section ---
                     self._get_missing_str()
@@ -89,7 +91,8 @@ class APIServer:
                         getattr(client_self, "logic_difficulty", 0),
                         client_menu_version, server_self._menu_version,
                         client_checked_count, client_missing_version, server_self._missing_version,
-                        getattr(client_self.deathlink_handler, 'last_death_link_executed', 0.0)
+                        getattr(client_self.deathlink_handler, 'last_death_link_executed', 0.0),
+                        getattr(client_self, 'release_prompt', False)
                     )
 
                     status_changed = status_key != server_self._cache.get("all_status_key")
@@ -111,28 +114,40 @@ class APIServer:
                             "logic_difficulty": getattr(client_self, "logic_difficulty", 0),
                             "menu_version": server_self._menu_version,
                             "menu": server_self._cached_menu_dict if should_send_menu else None,
-                            "persistent_death_time": getattr(client_self.deathlink_handler, 'last_death_link_executed', 0.0)
+                            "persistent_death_time": getattr(client_self.deathlink_handler, 'last_death_link_executed', 0.0),
+                            "release_prompt": getattr(client_self, 'release_prompt', False)
                         }
 
                     # --- Chat section ---
                     chat_log = client_self.notifier.chat_log
                     chat_head_id = chat_log[-1]["id"] if chat_log else -1
                     chat_key = (chat_head_id, last_chat_id)
-                    chat_delta = list([msg for msg in chat_log if msg["id"] > last_chat_id])
+                    if last_chat_id == -1 or (chat_head_id >= 0 and last_chat_id > chat_head_id):
+                        # Fresh client OR Python restarted (IDs reset): send full history.
+                        # isInitialSync=true on the TS side suppresses notifications for this replay.
+                        chat_delta = list(chat_log)
+                        chat_anchor = None
+                    else:
+                        chat_delta = [msg for msg in chat_log if msg["id"] > last_chat_id]
+                        chat_anchor = None
 
-                    # --- Hints section ---
-                    hint_log = client_self.notifier.hint_log
-                    hints_key = (len(hint_log), tuple(h.get("found", False) for h in hint_log))
-                    hints_changed = hints_key != server_self._cache.get("all_hints_key")
-                    if hints_changed:
-                        server_self._cache["all_hints_key"] = hints_key
-                        server_self._cache["all_hints_payload"] = list(hint_log)
+                    # --- Hints section (skipped when client has no hints listener) ---
+                    hints_changed = False
+                    hints_key = None
+                    if need_hints:
+                        hint_log = client_self.notifier.hint_log
+                        hints_key = (len(hint_log), tuple(h.get("found", False) for h in hint_log))
+                        hints_changed = hints_key != server_self._cache.get("all_hints_key")
+                        if hints_changed:
+                            server_self._cache["all_hints_key"] = hints_key
+                            server_self._cache["all_hints_payload"] = list(hint_log)
 
                     # --- Combined ETag ---
-                    combined_key = (status_key, chat_key, hints_key)
+                    combined_key = (status_key, chat_key, hints_key, need_hints)
 
                     if combined_key == server_self._cache.get("all_key"):
-                        if self.headers.get('If-None-Match') == server_self._cache.get("all_etag", ""):
+                        cached_etag = server_self._cache.get("all_etag", "")
+                        if client_etag == cached_etag or self.headers.get('If-None-Match') == cached_etag:
                             self.send_response(304)
                             self.send_header('Access-Control-Allow-Origin', '*')
                             self.send_header('Content-Length', '0')
@@ -144,12 +159,14 @@ class APIServer:
                     payload = {
                         "s": server_self._cache.get("all_status_payload") if status_changed else None,
                         "c": chat_delta,
-                        "h": server_self._cache.get("all_hints_payload") if hints_changed else None
+                        "h": server_self._cache.get("all_hints_payload") if hints_changed else None,
+                        "ch": chat_anchor,
                     }
+                    etag = hashlib.md5(json.dumps(payload, sort_keys=True).encode('utf-8')).hexdigest()
+                    server_self._cache["all_etag"] = etag
+                    payload["e"] = etag
 
                     body = json.dumps(payload).encode('utf-8')
-                    etag = hashlib.md5(body).hexdigest()
-                    server_self._cache["all_etag"] = etag
 
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
@@ -159,6 +176,21 @@ class APIServer:
                     self.end_headers()
                     self.wfile.write(body)
                     return
+
+                elif self.path == '/chat_text':
+                    chat_log = client_self.notifier.chat_log
+                    lines = []
+                    for msg in chat_log:
+                        time_str = msg.get("time_str", "")
+                        text = msg.get("text", "")
+                        lines.append(f"[{time_str}] {text}" if time_str else text)
+                    body = "\n".join(lines).encode('utf-8')
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                    self.send_header('Content-Length', str(len(body)))
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(body)
 
                 else:
                     self.send_error(404)

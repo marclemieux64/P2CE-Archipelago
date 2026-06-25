@@ -34,17 +34,19 @@ class CaptionEntry {
 
         this.panel.style.width = `${CloseCaptioning.CAPTION_WIDTH}px`;
         this.height = this.panel.GetHeightForText(CloseCaptioning.CAPTION_WIDTH, this.panel.text);
-        
+
         this.panel.style.opacity = 1;
         this.panel.style.height = `${this.height > 0 ? this.height : 24}px`;
         this.dummy.style.height = `${(this.height > 0 ? this.height : 24) + 4}px`;
 
         $.RegisterEventHandler('PropertyTransitionEnd', this.panel, (s: string, prop: keyof Style) => {
-            if (prop === 'opacity' && this.panel.IsTransparent()) {
-                this.dummy.style.height = '0px';
-                $.RegisterEventHandler('PropertyTransitionEnd', this.dummy, (ds: string, dprop: keyof Style) => {
-                    if (dprop === 'height') { this.bReadyToPurge = true; }
-                });
+            if (prop === 'opacity' && this.panel && this.panel.IsValid() && this.panel.IsTransparent()) {
+                if (this.dummy && this.dummy.IsValid()) {
+                    this.dummy.style.height = '0px';
+                    $.RegisterEventHandler('PropertyTransitionEnd', this.dummy, (ds: string, dprop: keyof Style) => {
+                        if (dprop === 'height') { this.bReadyToPurge = true; }
+                    });
+                }
             }
         });
     }
@@ -62,8 +64,8 @@ class CloseCaptioning {
     static box: Panel;
     static bg: Panel;
     static CAPTION_WIDTH = 1102;
-    static MAX_VISIBLE = 1; 
-    
+    static MAX_VISIBLE = 1;
+
     static settings = { bgOpacity: 0.75, fontSize: 20, fontType: 0, textAlign: 0 };
     static m_Time: number = 0;
 
@@ -71,13 +73,17 @@ class CloseCaptioning {
         this.box = $<Panel>('#CaptionsBox')!;
         this.bg = $<Panel>('#CaptionsBg')!;
 
+        const _ctx = $.GetContextPanel();
+
         // 1. DÉFINITION DE L'ÉVÉNEMENT (Une seule fois au démarrage)
         $.DefineEvent('MutePotatos', 1, 'active', 'Mutes all PotatOS/GLaDOS related captions');
 
         // 2. RÉCEPTION DU SIGNAL DE SOURDINE
-        $.RegisterForUnhandledEvent('MutePotatos', (active: string) => {
+        let _muteHandle: number = -1;
+        _muteHandle = $.RegisterForUnhandledEvent('MutePotatos', (active: string) => {
+            if (!_ctx || !_ctx.IsValid()) { $.UnregisterForUnhandledEvent('MutePotatos', _muteHandle); return; }
             $.persistentStorage.setItem('MutePotatos', active);
-            
+
             if (active === '1') {
                 CloseCaptioning.wipeCaptions();
                 $.Msg("CC: PotatOS/GLaDOS Subtitles are now MUTED (Saved to persistent storage).");
@@ -87,23 +93,24 @@ class CloseCaptioning {
         });
 
         // 3. AFFICHAGE DES SOUS-TITRES
+        let _displayHandle: number = -1;
         const onDisplay = (token: string, caption: any, lifetime: number, time: number) => {
+            if (!_ctx || !_ctx.IsValid()) { $.UnregisterForUnhandledEvent('DisplayCaptionRequest', _displayHandle); return; }
             if (!caption || !caption.text) return;
 
-            // --- CORRECTION : LE FILTRE SOURDINE EST ICI MAINTENANT ---
+            // Filtre Sourdine
             if ($.persistentStorage.getItem('MutePotatos') === '1') {
                 if (token && token.toLowerCase().indexOf('potatos') !== -1) {
                     $.Msg("CC: Blocking muted caption: " + token);
-                    return; // On bloque et on quitte immédiatement
+                    return;
                 }
             }
-            // -----------------------------------------------------------
 
             // 4. FILTRE "BACK-TO-BACK"
             if (this.captions.length > 0) {
                 const lastEntry = this.captions[this.captions.length - 1];
                 if (lastEntry.text === caption.text) {
-                    return; 
+                    return;
                 }
             }
 
@@ -119,9 +126,9 @@ class CloseCaptioning {
             if (this.bg) this.bg.style.opacity = 1;
         };
 
-        $.RegisterForUnhandledEvent('DisplayCaptionRequest', onDisplay as any);
+        _displayHandle = $.RegisterForUnhandledEvent('DisplayCaptionRequest', onDisplay as any);
 
-        // 6. L'HORLOGE DES SOUS-TITRES (Seulement pour effacer, pas pour filtrer !)
+        // 6. L'HORLOGE DES SOUS-TITRES
         $.RegisterEventHandler('CaptionTick', $.GetContextPanel(), (time: number) => {
             this.m_Time = time;
             if (this.captions.length === 0) return;
@@ -131,7 +138,7 @@ class CloseCaptioning {
                 if (time >= c.lifetime) {
                     c.FadeOut();
                 }
-                if (c.bReadyToPurge || (time > c.lifetime + 1.5)) { 
+                if (c.bReadyToPurge || (time > c.lifetime + 1.5)) {
                     if (c.panel && c.panel.IsValid()) c.panel.DeleteAsync(0);
                     if (c.dummy && c.dummy.IsValid()) c.dummy.DeleteAsync(0);
                     this.captions.splice(i, 1);
@@ -140,13 +147,30 @@ class CloseCaptioning {
             if (this.captions.length === 0 && this.bg) this.bg.style.opacity = 0;
         });
 
-        $.RegisterForUnhandledEvent('MapUnloaded', () => this.wipeCaptions());
+        let _mapUnloadHandle: number = -1;
+        _mapUnloadHandle = $.RegisterForUnhandledEvent('MapUnloaded', () => {
+            if (!_ctx || !_ctx.IsValid()) { $.UnregisterForUnhandledEvent('MapUnloaded', _mapUnloadHandle); return; }
+            this.wipeCaptions();
+        });
     }
 
     static wipeCaptions() {
+        // CORRECTION : Supprimer d'abord explicitement les panels via l'API asynchrone sécurisée
+        for (let i = 0; i < this.captions.length; i++) {
+            const c = this.captions[i];
+            if (c.panel && c.panel.IsValid()) {
+                c.panel.DeleteAsync(0);
+            }
+            if (c.dummy && c.dummy.IsValid()) {
+                c.dummy.DeleteAsync(0);
+            }
+        }
+
         this.captions = [];
-        if (this.box) this.box.RemoveAndDeleteChildren();
-        if (this.bg) {
+
+        // Nettoyage final des conteneurs sans casser l'arborescence de rendu active
+        if (this.box && this.box.IsValid()) this.box.RemoveAndDeleteChildren();
+        if (this.bg && this.bg.IsValid()) {
             this.bg.RemoveAndDeleteChildren();
             this.bg.style.opacity = 0;
         }

@@ -405,6 +405,8 @@ class CheckManager {
     }
 
     void CheckCameraPhysicsTick() {
+        VerifyMapChange(); // Flush stale handles if the map changed since the timer was armed.
+
         uint trackingCount = m_trackedCameras.length();
         if (trackingCount == 0) {
             // No more cameras to monitor on this level. Tear down tracking timer gracefully via Kill input.
@@ -417,9 +419,14 @@ class CheckManager {
         }
 
         for (int i = int(trackingCount) - 1; i >= 0; i--) {
+            // IsValid() catches entities that are pending deletion but haven't left the table yet.
+            if (!m_trackedCameras[i].handle.IsValid()) {
+                m_trackedCameras.removeAt(i);
+                continue;
+            }
+
             CBaseEntity@ camera = m_trackedCameras[i].handle.Get();
-            
-            // Safe removal check if entity dropped out of game table bounds
+
             if (camera is null) {
                 m_trackedCameras.removeAt(i);
                 continue;
@@ -435,22 +442,28 @@ class CheckManager {
 
             bool isPhysicsMove = (camera.GetMoveType() == MOVETYPE_VPHYSICS);
             Vector vel = camera.GetAbsVelocity();
-            IPhysicsObject@ physObj = camera.GetPhysicsObject();
 
-            if (physObj !is null) {
-                // EXTREMELY IMPORTANT: We do not call Wake(). If the camera sleeps, its velocity is zero.
-                Vector physVel, physAngVel;
-                physObj.GetVelocity(physVel, physAngVel);
-                if (physVel.LengthSqr() > vel.LengthSqr()) {
-                    vel = physVel;
+            // Only query the Havok physics body when the entity is actually under vphysics
+            // simulation. Calling GetPhysicsObject() on a non-vphysics entity can return a
+            // stale IPhysicsObject* whose internal hkpRigidBody motion state is null;
+            // GetVelocity() then dereferences null+0x50 → SIGSEGV in vphysics.so.
+            if (isPhysicsMove) {
+                IPhysicsObject@ physObj = camera.GetPhysicsObject();
+                if (physObj !is null) {
+                    // EXTREMELY IMPORTANT: We do not call Wake(). If the camera sleeps, its velocity is zero.
+                    Vector physVel, physAngVel;
+                    physObj.GetVelocity(physVel, physAngVel);
+                    if (physVel.LengthSqr() > vel.LengthSqr()) {
+                        vel = physVel;
+                    }
                 }
             }
 
             // Evaluation threshold parameters
             if ((isPhysicsMove && vel.z < -5.0f) || vel.z < -20.0f) {
                 Msgl("camera_knocked:" + identifier);
-                m_locallyKnockedCameras.insertLast(identifier.tolower()); // Bloquer définitivement toute ré-insertion locale
-                m_trackedCameras.removeAt(i); // Stop listening to this specific handle instantly
+                m_locallyKnockedCameras.insertLast(identifier.tolower());
+                m_trackedCameras.removeAt(i);
             }
         }
     }
@@ -510,68 +523,49 @@ class CheckManager {
     }
 
     void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale, int skin = 0) {
-        VerifyMapChange();
-
         string scenarioName = TranslateButtonName(name);
         if (scenarioName.locate("rd") == 0) skin = 0;
 
+        // Uniform verification step
         int is_pressed = (m_checkedButtons.find(scenarioName) != -1) ? 1 : 0;
         int finalSkin = (is_pressed == 1) ? 4 : skin;
+
+        // Unique and standardized hologram name for this location
         string holoName = scenarioName + "_holo";
 
         array<CBaseEntity@> entsToRemove;
         CBaseEntity@ entCheck = null;
         
-        while ((@entCheck = EntityList().FindInSphere(entCheck, position, 24.0f)) != null) {
+        while ((@entCheck = EntityList().FindInSphere(entCheck, position, 24.0f)) !is null) {
             string cls = entCheck.GetClassname();
             string entName = entCheck.GetEntityName();
-        
+            
+            // If the model already exists, update the existing hologram skin and skip re-creation
             if (entName == scenarioName + "_model") {
-                CBaseAnimating@ animBody = cast<CBaseAnimating>(entCheck);
-                CBaseEntity@ brainEnt = EntityList().FindByName(null, scenarioName);
-                CBaseEntity@ holo = EntityList().FindByName(null, holoName);
-
-                // Ré-évaluation complète lors des appels de rafraîchissement d'état de map
-                if (is_pressed == 1) {
-                    if (animBody !is null) {
-                        animBody.SetSequence(animBody.LookupSequence("down"));
-                    }
-                    if (brainEnt !is null) {
-                        brainEnt.KeyValue("m_bLocked", 1);
-                        brainEnt.KeyValue("spawnflags", "3073");
-                    }
-                    if (holo !is null) {
+                CBaseEntity@ holo = null;
+                while ((@holo = EntityList().FindByClassname(holo, "prop_dynamic")) !is null) {
+                    if (holo.GetMoveParent() is entCheck && holo.GetEntityName() == holoName) {
                         CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-                        if (animHolo !is null) animHolo.SetSkin(4);
-                    }
-                } else {
-                    if (animBody !is null) {
-                        animBody.SetSequence(animBody.LookupSequence("up"));
-                    }
-                    if (brainEnt !is null) {
-                        brainEnt.KeyValue("m_bLocked", 0);
-                        brainEnt.KeyValue("spawnflags", "1025");
-                    }
-                    if (holo !is null) {
-                        CBaseAnimating@ animHolo = cast<CBaseAnimating>(holo);
-                        if (animHolo !is null) animHolo.SetSkin(skin);
+                        if (animHolo !is null) animHolo.SetSkin(finalSkin);
+                        break;
                     }
                 }
                 return;
             }
-        
+            
             if (cls.locate("button") != uint(-1) || cls.locate("switch") != uint(-1) || cls.locate("dynamic") != uint(-1)) {
                 entsToRemove.insertLast(entCheck); 
             }
         }
 
+        // Clean up conflicting overlapping entities
         for (uint i = 0; i < entsToRemove.length(); i++) {
-            Variant killValue;
-            entsToRemove[i].FireInput("Kill", killValue, 0.0f, null, null, 0);
+            util::Remove(entsToRemove[i]);
         }
 
         string uid = "ap_" + RandomInt(1000, 9999);
         
+        // Create base button model decoration
         CBaseEntity@ body = util::CreateEntityByName("prop_dynamic");
         if (body !is null) {
             body.KeyValue("targetname", scenarioName + "_model");
@@ -580,7 +574,7 @@ class CheckManager {
             body.SetAbsOrigin(position);
             body.SetAbsAngles(angle);
             body.Spawn();
-        
+            
             if (is_pressed == 1) {
                 CBaseAnimating@ animBody = cast<CBaseAnimating>(body);
                 if (animBody !is null) {
@@ -589,6 +583,7 @@ class CheckManager {
             }
         }
 
+        // Down Audio Sound Link
         CBaseEntity@ snd_dn = util::CreateEntityByName("ambient_generic");
         if (snd_dn !is null) {
             snd_dn.KeyValue("targetname", uid + "_dn");
@@ -599,6 +594,7 @@ class CheckManager {
             snd_dn.SetParent(body, -1);
         }
 
+        // Up Audio Sound Link
         CBaseEntity@ snd_up = util::CreateEntityByName("ambient_generic");
         if (snd_up !is null) {
             snd_up.KeyValue("targetname", uid + "_up");
@@ -609,38 +605,33 @@ class CheckManager {
             snd_up.SetParent(body, -1);
         }
 
+        // Core Trigger Button Object (Logical Entity)
         CBaseEntity@ brain = util::CreateEntityByName("func_rot_button");
         if (brain !is null) {
             brain.KeyValue("targetname", scenarioName);
-        
+            
             int spawnFlags = 1025;
-            if (is_pressed == 1) spawnFlags += 2048;
+            if (is_pressed == 1) {
+                spawnFlags += 2048; 
+            }
             brain.KeyValue("spawnflags", "" + spawnFlags);
             brain.KeyValue("wait", "0.5");
             brain.SetModel("models/props/switch001.mdl");
             brain.KeyValue("rendermode", "10");
         
-            g_Archipelago.SafeAddOutput(brain, "OnPressed", "InitCmd", "Command", "ReportAPButton " + scenarioName, 0.1f, -1);
-            g_Archipelago.SafeAddOutput(brain, "OnPressed", uid + "_dn", "PlaySound", "", 0.0f, -1);
-            
-            // Changement visuel immédiat et permanent en local lors de l'activation par le joueur
-            g_Archipelago.SafeAddOutput(brain, "OnPressed", holoName, "Skin", "4", 0.0f, -1);
-
-            if (is_pressed == 1) {
-                g_Archipelago.SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "down", 0.0f, -1);
-                brain.KeyValue("m_bLocked", 1);
-            } else {
-                g_Archipelago.SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "down", 0.0f, -1);
-                g_Archipelago.SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "up", 0.5f, -1);
-                g_Archipelago.SafeAddOutput(brain, "OnPressed", uid + "_up", "PlaySound", "", 0.5f, -1);
-            }
+            SafeAddOutput(brain, "OnPressed", "InitCmd", "Command", "ReportAPButton " + scenarioName, 0.1f, -1);
+            SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "down", 0.0f, -1);
+            SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "up", 0.5f, -1);
+            SafeAddOutput(brain, "OnPressed", uid + "_dn", "PlaySound", "", 0.0f, -1);
+            SafeAddOutput(brain, "OnPressed", uid + "_up", "PlaySound", "", 0.5f, -1);
         
             brain.SetSolid(SOLID_BBOX);
             brain.SetCollisionBounds(Vector(-30.0f, -30.0f, -30.0f), Vector(30.0f, 30.0f, 30.0f));
+            
             brain.Spawn();
             brain.SetParent(body, -1);
             brain.SetLocalOrigin(Vector(0, 0, 0)); 
-        
+            
             if (is_pressed == 1) {
                 brain.KeyValue("m_bLocked", 1);
             }
@@ -648,13 +639,10 @@ class CheckManager {
 
         Vector localPos = Vector(0, 0, 90.0f);
         QAngle localAng = QAngle(0, 90, 0);
-        CreateAPHologram(localPos, localAng, holo_scale, body, "", finalSkin, holoName, true);
 
-        ButtonLocation@ btnLoc = ButtonLocation(scenarioName, localPos, localAng, holo_scale, skin);
-        bool isChecked = (m_checkedButtons.find(scenarioName) != -1);
-        btnLoc.SetChecked(isChecked);
-        m_activeLocations.insertLast(@btnLoc);
+        CreateAPHologram(localPos, localAng, holo_scale, body, "", finalSkin, holoName, true);
     }
+
 
     // =============================================================
     // VITRIFIED DOOR CHECKS

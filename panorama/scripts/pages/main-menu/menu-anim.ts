@@ -1,5 +1,4 @@
 'use strict';
-if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 class MenuAnimation {
 	static movie = $<Movie>('#MainMenuMovie')!;

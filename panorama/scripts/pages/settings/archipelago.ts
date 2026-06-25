@@ -63,6 +63,21 @@ function SyncSkipSettingsIfInGame() {
     }
 }
 
+function loadSettingsEnum(panelId: string, psKey: string, defaultVal: number) {
+    const stored = $.persistentStorage.getItem(psKey);
+    const val = (stored !== null && stored !== undefined) ? parseInt(String(stored), 10) : defaultVal;
+    const panel = ($('#' + panelId) as Panel);
+    if (!panel) return;
+    const children = (panel.FindChildTraverse('values') as Panel)?.Children() || [];
+    for (let i = 0; i < children.length; i++) {
+        const child = children[i] as RadioButton;
+        if (child.paneltype === 'RadioButton') {
+            const btnVal = parseInt(child.GetAttributeString('value', '-1'), 10);
+            if (btnVal === val) { child.selected = true; break; }
+        }
+    }
+}
+
 // Restore dropdown visual state when the settings page is shown.
 // initPersistentStorageEnumDropdown uses SetSelectedIndex which is index-based;
 // SetSelected by ID is more reliable when stored values may not align with indices.
@@ -79,6 +94,9 @@ function LoadArchipelagoSettings() {
     const statusIndVal = parseInt(String($.persistentStorage.getItem('cv_StatusIndicatorMode') ?? '0'), 10);
     const statusIndDropdown = ($('#StatusIndicatorModeSetting') as Panel)?.FindChildTraverse('DropDown') as DropDown;
     if (statusIndDropdown) statusIndDropdown.SetSelected('cv_StatusIndicatorMode_' + statusIndVal);
+
+    loadSettingsEnum('AutoSmartWarpSetting', 'cv_AutoSmartWarp', 1);
+    loadSettingsEnum('ReleasePromptSetting', 'cv_ReleasePrompt', 1);
 
     SyncSkipSettingsIfInGame();
 }

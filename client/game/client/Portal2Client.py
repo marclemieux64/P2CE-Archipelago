@@ -232,6 +232,7 @@ class P2CEContext(CommonContext):
 
     death_link_active = False
     goal_map_code = ""
+    release_prompt: bool = False
     sender_active : bool = False
     listener_active : bool = False
     location_name_to_id: dict[str, int] = None
@@ -268,6 +269,14 @@ class P2CEContext(CommonContext):
             else:
                 self.command_queue.append(ev["command"])
 
+    def _push_update(self):
+        # Deduplicate: one pending push is enough.
+        if not self.check_game_connection():
+            return
+        cmd = 'script SendToPanorama("ArchipelagoUpdate", "")\n'
+        if cmd not in self.command_queue:
+            self.command_queue.append(cmd)
+
     def on_input(self, command: str):
         command = command.strip()
         try:
@@ -284,10 +293,15 @@ class P2CEContext(CommonContext):
                 logger.info(f"Sending server command: {command}")
                 async_start(self.send_msgs([{"cmd": "Say", "text": command}]))
             else:
-                self.command_queue.append(command + "\n")
+                self.notifier.on_print(f'Unknown command "{command}". Use / for client commands or ! for server commands.')
+                return
         except Exception as e:
             logger.error(f"Command Error ({command}): {e}")
             self.notifier.on_print(f"Error: {e}")
+
+        # Push on the next event loop iteration so logger messages queued via
+        # call_soon_threadsafe have already landed in chat_log before Panorama fetches.
+        self.loop.call_soon(self._push_update)
 
     def request_hints_sync(self):
         if self.team is not None and self.slot:
@@ -296,12 +310,16 @@ class P2CEContext(CommonContext):
 
     def alert_game_connection(self):
         if self.check_game_connection():
-            self.notifier.on_print_silently("Connection to P2CE is up and running", mirror_to_hud=False)
-            logger.info("Connection to P2CE is up and running")
+            sentinel = "Connection to P2CE is up and running"
+            now = time.time()
+            last_announced = getattr(self, "_last_game_conn_announce", 0.0)
+            if now - last_announced < 30.0:
+                return
+            self._last_game_conn_announce = now
+            self.notifier.on_print_silently(sentinel, mirror_to_hud=False)
         else:
             msg = f"Disconnected from P2CE. Make sure the mod is open and the `-netconport {self.PORT}` launch option is set"
             self.notifier.on_print_silently(msg, mirror_to_hud=False)
-            logger.info(msg)
 
     def update_menu(self, location_id: int = None):
         if self.menu and location_id is not None:
@@ -347,11 +365,12 @@ class P2CEContext(CommonContext):
                 self.sender_active = True
                 self.listener_active = True
                 self.has_ever_connected = True
-                attempt_count = 0 
+                attempt_count = 0
                 logger.info(f"Connected to P2CE netcon on {self.HOST}:{self.PORT}")
                 self.alert_game_connection()
                 self.command_queue.append('alias "/connect" "ap_connect"\n')
                 self.command_queue.append('alias "/slot" "ap_slot"\n')
+                self._push_update()
 
                 while not self.exit_event.is_set():
                     if self.ping_sent_time > 0 and (time.time() - self.ping_sent_time) > 1.5:
@@ -406,6 +425,7 @@ class P2CEContext(CommonContext):
             finally:
                 self.sender_active = False
                 self.listener_active = False
+                self.trap_handler.set_map_transition_state(False)
 
     def _cmd_check_connection(self):
         self.ctx.alert_game_connection()
@@ -421,7 +441,12 @@ class P2CEContext(CommonContext):
         cleaned_msg = message.strip()
         if cleaned_msg.startswith("connect_request:"):
             ip_port = cleaned_msg.split(":", 1)[1].strip()
-            self.on_input(f"/connect {ip_port}")
+            # connect_request: is the game signalling a fresh session. Any stale
+            # transition flag from a previous map/session would block the console forever.
+            self.trap_handler.set_map_transition_state(False)
+            already_connected = self.server and not self.server.socket.closed
+            if not already_connected:
+                self.on_input(f"/connect {ip_port}")
             return
         elif cleaned_msg.startswith("slot_request:"):
             slot_name = cleaned_msg.split(":", 1)[1].strip()
@@ -479,6 +504,7 @@ class P2CEContext(CommonContext):
                     self.process_event(ev)
                 self.pending_validation_events.clear()
                 self.ping_sent_time = 0
+            self._push_update()
 
         elif message.startswith("map_complete:"):
             done_map = message.split(':', 1)[1].strip()
@@ -495,7 +521,7 @@ class P2CEContext(CommonContext):
 
             if done_map == self.goal_map_code:
                 await self.handle_goal_completion()
-            
+
             map_id = self.map_code_to_location_id(done_map)
             if map_id:
                 logger.info(f"Processing check location ID {map_id} for map {done_map}")
@@ -503,7 +529,8 @@ class P2CEContext(CommonContext):
                 self.update_menu(map_id)
             else:
                 logger.warning(f"Could not resolve location ID for completed map string: {done_map}")
-        
+            self._push_update()
+
         elif message.startswith("button_check:") or message.startswith("item_collected:") or message.startswith("monitor_break:") or message.startswith("vitrified_check:") or message.startswith("camera_knocked:"):
             msg_type = message.split(":", 1)[0].strip()
             msg_payload = message.split(":", 1)[1].strip()
@@ -515,6 +542,7 @@ class P2CEContext(CommonContext):
                 await self.check_locations([check_id])
                 self.update_menu(check_id)
                 self.sync_map_state()
+                self._push_update()
         
         elif message.startswith("send_deathlink"):
             if self.death_link_active and time.time() - getattr(self.deathlink_handler, 'last_death_link_executed', 0) > 10:
@@ -544,6 +572,10 @@ class P2CEContext(CommonContext):
         if getattr(self, 'finished_game', False): return
         self.finished_game = True
         await self.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+        release_mode = getattr(self, 'permissions', {}).get('release', 'disabled')
+        if release_mode not in ('disabled', 'auto'):
+            self.release_prompt = True
+            self._push_update()
 
     def on_deathlink(self, data: typing.Dict[str, typing.Any]):
         cause = data.get("cause", "A player has died.")
@@ -700,14 +732,15 @@ class P2CEContext(CommonContext):
             if "keys" in args:
                 if f"_read_item_name_groups_{self.game}" in args["keys"]:
                     self.item_list = args["keys"][f"_read_item_name_groups_{self.game}"]["Everything"]
-                
+
                 hkey = f"_read_hints_{self.team}_{self.slot}"
                 if hkey in args["keys"]:
                     self.notifier.process_hints(args["keys"][hkey])
-            
+
             super().on_package(cmd, args)
             update_item_list()
             self.update_item_remove_commands()
+            self._push_update()
             return
 
         if cmd == "SetReply":
@@ -726,15 +759,19 @@ class P2CEContext(CommonContext):
                             self.trap_handler.enqueue_trap(trap_cmd + "\n")
                     self.trap_handler.save_last_processed_index(index)
                 index += 1
-            
+
             super().on_package(cmd, args)
             update_item_list()
             self.update_item_remove_commands()
+            # Notify Panorama immediately so it polls without waiting for the next poll cycle
+            self._push_update()
             # FIX: Removed the short-circuit (return) to allow the rest of the on_package block to run
-            
+
         if cmd == "PrintJSON":
             if args.get("type") == "Collect":
                 self.update_menu()
+            super().on_package(cmd, args)  # triggers on_print_json → notifier → chat_log
+            self._push_update()
             return
         
         super().on_package(cmd, args)
@@ -742,12 +779,13 @@ class P2CEContext(CommonContext):
         self.update_item_remove_commands()
         
         if cmd == "Connected":
-            self.completed_maps.clear() 
+            self.completed_maps.clear()
             self.go_mode_announced = False
             self.notifier.reset()
-            
+
             self.handle_slot_data(args["slot_data"])
             self.alert_game_connection()
+            self._push_update()
 
             if self.deathlink_handler.get_saved_time() is None:
                 self.deathlink_handler.save_last_death_link_time(time.time())
@@ -823,6 +861,13 @@ class P2CEContext(CommonContext):
             await self.ui_task
         if getattr(self, 'input_task', None):
             self.input_task.cancel()
+
+    async def console_input(self) -> str:
+        # Yield once so any logger messages queued via call_soon_threadsafe are flushed to
+        # chat_log, then push ArchipelagoUpdate so Panorama shows the prompt immediately.
+        await asyncio.sleep(0)
+        self._push_update()
+        return await super().console_input()
 
     async def get_username(self):
         if not self.auth:

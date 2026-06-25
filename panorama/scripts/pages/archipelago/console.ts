@@ -1,6 +1,7 @@
 'use strict';
 declare var $: any;
 declare var UiToolkitAPI: any;
+declare var SteamOverlayAPI: any;
 
 class ArchipelagoConsole {
     // Command History
@@ -30,18 +31,40 @@ class ArchipelagoConsole {
         "purple": "#800080", "grey": "#808080"
     };
 
-    // Debounce storage writes — flush at most once per 3s
+    static m_Ctx: any = null;
+    static m_DisplayLines: any[] = [];
+    static m_LabelPanels: any[] = [];
+
+    static readonly MAX_LABELS = 300;
+    static m_LastDisplayedId: number = -1;
     static m_StoragePendingChat: any[] | null = null;
     static m_StorageFlushSchedule: any = null;
+    static m_IsAutoScrolling = true;
 
     static init() {
+        ArchipelagoConsole.m_Ctx = $.GetContextPanel();
+
         $.DispatchEvent('MainMenuSetPageLines',
             $.Localize('#Archipelago_Console_Title'),
             $.Localize('#Archipelago_Console_Tagline')
         );
 
+        const outputArea = ArchipelagoConsole.m_Ctx.FindChildTraverse('ConsoleOutputArea');
+        const poolContainer = ArchipelagoConsole.m_Ctx.FindChildTraverse('ConsolePoolContainer');
         const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
         const wrapper = $.GetContextPanel().FindChildTraverse('ArchipelagoInputWrapper');
+
+        if (poolContainer) {
+            poolContainer.RemoveAndDeleteChildren();
+            ArchipelagoConsole.m_LabelPanels = [];
+            ArchipelagoConsole.m_DisplayLines = [];
+        }
+
+        if (outputArea) {
+            outputArea.SetPanelEvent('onscroll', () => {
+                ArchipelagoConsole.onConsoleScroll();
+            });
+        }
 
         if (input && wrapper) {
             input.SetPanelEvent('onfocus', () => { wrapper.AddClass('focused'); });
@@ -63,24 +86,22 @@ class ArchipelagoConsole {
         }
 
         $.Schedule(0.1, () => {
-            if (input) input.SetFocus();
+            if (input && input.IsValid()) input.SetFocus();
         });
+
+        ArchipelagoConsole.startPolling();
 
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
-            // On initial registration: receives full accumulated array (history).
-            // On subsequent dispatches: receives delta only.
-            api.registerChatListener($.GetContextPanel(), (data: any[]) => {
+            api.registerChatListener($.GetContextPanel(), (data: any[], isInitialSync: boolean) => {
                 if (!Array.isArray(data) || data.length === 0) return;
-                const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
-                if (!output) return;
-                const isHistory = output.GetChildCount() === 0;
+                const isHistory = ArchipelagoConsole.m_DisplayLines.length === 0 || isInitialSync;
                 if (isHistory) {
                     ArchipelagoConsole.buildAllPanels(data);
                 } else {
                     ArchipelagoConsole.appendPanels(data);
                 }
-            });
+            }, true);
         }
     }
 
@@ -88,7 +109,7 @@ class ArchipelagoConsole {
         let timeStr = "";
         if (msg.time_str) {
             timeStr = "[" + msg.time_str + "]";
-        } else {
+        } else if (msg.time) {
             const d = new Date(msg.time * 1000);
             timeStr = "[" + d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0') + "]";
         }
@@ -105,49 +126,93 @@ class ArchipelagoConsole {
         return `<font color='#888888'>${timeStr}</font> ${lineText}`;
     }
 
-    // Full rebuild from an array — used on init and cache load.
+    static onConsoleScroll() {
+        const ctx = ArchipelagoConsole.m_Ctx;
+        if (!ctx || !ctx.IsValid()) return;
+        const outputArea = ctx.FindChildTraverse('ConsoleOutputArea');
+        if (!outputArea) return;
+
+        const maxScroll = outputArea.contentheight - outputArea.actuallayoutheight;
+        if (maxScroll <= 0) return;
+
+        const deltaFromBottom = maxScroll - outputArea.scrolloffset_y;
+        ArchipelagoConsole.m_IsAutoScrolling = (deltaFromBottom < 35);
+    }
+
     static buildAllPanels(chat: any[]) {
-        const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
-        if (!output) return;
-        output.RemoveAndDeleteChildren();
-        for (const msg of chat) {
+        const poolContainer = ArchipelagoConsole.m_Ctx?.FindChildTraverse('ConsolePoolContainer');
+        if (!poolContainer || !poolContainer.IsValid()) return;
+
+        poolContainer.RemoveAndDeleteChildren();
+        ArchipelagoConsole.m_LabelPanels = [];
+        ArchipelagoConsole.m_DisplayLines = [];
+        ArchipelagoConsole.m_LastDisplayedId = -1;
+
+        const startFrom = Math.max(0, chat.length - ArchipelagoConsole.MAX_LABELS);
+        for (let i = startFrom; i < chat.length; i++) {
+            const msg = chat[i];
             if (!msg) continue;
-            ArchipelagoConsole.createLinePanel(output, msg);
+            msg.cachedMarkup = ArchipelagoConsole.formatMessage(msg);
+            ArchipelagoConsole.m_DisplayLines.push(msg);
+            if (msg.id !== undefined && msg.id > ArchipelagoConsole.m_LastDisplayedId)
+                ArchipelagoConsole.m_LastDisplayedId = msg.id;
+
+            const lbl = $.CreatePanel('Label', poolContainer, '');
+            lbl.html = true;
+            lbl.AddClass('console_line_item');
+            lbl.text = msg.cachedMarkup;
+            ArchipelagoConsole.m_LabelPanels.push(lbl);
         }
-        ArchipelagoConsole.scheduleStorageFlush(chat);
+
         ArchipelagoConsole.scrollToBottom();
     }
 
-    // Incremental append — used on each delta from the API.
     static appendPanels(delta: any[]) {
-        const output = $.GetContextPanel().FindChildTraverse('ConsoleOutput') as any;
-        if (!output) return;
+        const poolContainer = ArchipelagoConsole.m_Ctx?.FindChildTraverse('ConsolePoolContainer');
+        if (!poolContainer || !poolContainer.IsValid()) return;
+
+        let added = false;
         for (const msg of delta) {
-            if (!msg) continue;
-            ArchipelagoConsole.createLinePanel(output, msg);
+            if (!msg || (msg.id !== undefined && msg.id <= ArchipelagoConsole.m_LastDisplayedId)) continue;
+
+            msg.cachedMarkup = ArchipelagoConsole.formatMessage(msg);
+            ArchipelagoConsole.m_DisplayLines.push(msg);
+            if (msg.id !== undefined) ArchipelagoConsole.m_LastDisplayedId = msg.id;
+
+            const lbl = $.CreatePanel('Label', poolContainer, '');
+            lbl.html = true;
+            lbl.AddClass('console_line_item');
+            lbl.text = msg.cachedMarkup;
+            ArchipelagoConsole.m_LabelPanels.push(lbl);
+            added = true;
         }
-        // Trim to max 100 panels (evict oldest)
-        while (output.GetChildCount() > 100) {
-            const oldest = output.GetChild(0);
-            if (oldest) oldest.DeleteAsync(0);
+
+        if (!added) return;
+
+        while (ArchipelagoConsole.m_LabelPanels.length > ArchipelagoConsole.MAX_LABELS) {
+            const old = ArchipelagoConsole.m_LabelPanels.shift();
+            if (old && old.IsValid()) old.DeleteAsync(0);
+            ArchipelagoConsole.m_DisplayLines.shift();
         }
-        // Accumulate for deferred storage write
+
+        if (ArchipelagoConsole.m_IsAutoScrolling) {
+            ArchipelagoConsole.scrollToBottom();
+        }
+
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) ArchipelagoConsole.scheduleStorageFlush(api.getChat());
-        ArchipelagoConsole.scrollToBottom();
-    }
-
-    static createLinePanel(output: any, msg: any) {
-        const line = $.CreatePanel('Label', output, '') as any;
-        line.AddClass('console-line');
-        line.html = true;
-        line.text = ArchipelagoConsole.formatMessage(msg);
     }
 
     static scrollToBottom() {
+        const ctx = ArchipelagoConsole.m_Ctx;
+        if (!ctx || !ctx.IsValid()) return;
+        const outputArea = ctx.FindChildTraverse('ConsoleOutputArea');
+        if (!outputArea || !outputArea.IsValid()) return;
+
         $.Schedule(0.05, () => {
-            const outputArea = $.GetContextPanel().FindChildTraverse('ConsoleOutputArea');
-            if (outputArea && typeof (outputArea as any).ScrollToBottom === 'function') {
+            if (!outputArea.IsValid()) return;
+            if (typeof (outputArea as any).ScrollToBottom === 'function') {
+                ArchipelagoConsole.m_IsAutoScrolling = true;
                 (outputArea as any).ScrollToBottom();
             }
         });
@@ -156,9 +221,10 @@ class ArchipelagoConsole {
     static scheduleStorageFlush(chat: any[]) {
         ArchipelagoConsole.m_StoragePendingChat = chat;
         if (!ArchipelagoConsole.m_StorageFlushSchedule) {
+            const ctx = ArchipelagoConsole.m_Ctx;
             ArchipelagoConsole.m_StorageFlushSchedule = $.Schedule(3.0, () => {
                 ArchipelagoConsole.m_StorageFlushSchedule = null;
-                if (ArchipelagoConsole.m_StoragePendingChat) {
+                if (ArchipelagoConsole.m_StoragePendingChat && ctx && ctx.IsValid()) {
                     $.persistentStorage.setItem("ArchipelagoLastChatCacheData", JSON.stringify(ArchipelagoConsole.m_StoragePendingChat));
                     ArchipelagoConsole.m_StoragePendingChat = null;
                 }
@@ -304,6 +370,27 @@ class ArchipelagoConsole {
         }
     }
 
+    static m_PollSchedule: any = null;
+
+    static startPolling() {
+        const ctx = $.GetContextPanel();
+        if (!ctx || !ctx.IsValid()) {
+            ArchipelagoConsole.m_PollSchedule = null;
+            return;
+        }
+        ArchipelagoConsole.m_PollSchedule = $.Schedule(2.0, () => {
+            const c = $.GetContextPanel();
+            if (!c || !c.IsValid()) {
+                ArchipelagoConsole.m_PollSchedule = null;
+                return;
+            }
+            const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+            if (api && api.scheduleDebouncedPulse) api.scheduleDebouncedPulse();
+            ArchipelagoConsole.startPolling();
+        });
+    }
+
+
     static onArchipelagoInput() {
         if (ArchipelagoConsole.m_FilteredCommands.length > 0) {
             ArchipelagoConsole.autocompleteSelection();
@@ -329,11 +416,12 @@ class ArchipelagoConsole {
 
         const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
+            api.m_AllETag = "";
             $.AsyncWebRequest(api.API_BASE + "/command", {
                 type: 'POST',
                 data: { command: text },
                 complete: () => {
-                    if (api.pulse) api.pulse();
+                    if (api.scheduleDebouncedPulse) api.scheduleDebouncedPulse();
                 }
             });
         }

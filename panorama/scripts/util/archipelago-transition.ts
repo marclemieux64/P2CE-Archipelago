@@ -6,14 +6,15 @@ declare var GameInterfaceAPI: any;
 
 function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
     const contextPanel = $.GetContextPanel();
+    let _handle: number = -1;
     const wrapper = (...args: any[]) => {
         if (!contextPanel || !contextPanel.IsValid()) {
-            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            $.UnregisterForUnhandledEvent(eventName, _handle);
             return;
         }
         callback(...args);
     };
-    $.RegisterForUnhandledEvent(eventName, wrapper);
+    _handle = $.RegisterForUnhandledEvent(eventName, wrapper);
 }
 
 function getHudPanel(): Panel | null {
@@ -39,6 +40,11 @@ class ArchipelagoTransition {
         if (this.m_IsWarpPending) return;
         this.m_IsWarpPending = true;
         this.m_PendingMapName = mapName;
+
+        // Stop polling now — panels will be torn down during the upcoming map transition.
+        // Polling resumes automatically when ArchipelagoMapNameUpdated fires on the new map.
+        const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
+        if (api && api.pausePolling) api.pausePolling();
 
         const hud = getHudPanel();
         if (hud) (hud as any).AddClass("fade-active");
@@ -68,7 +74,9 @@ class ArchipelagoTransition {
 
     static onQueueDrained() {
         $.persistentStorage.setItem("ap_return_to_map_select", "true");
+        const ctx = $.GetContextPanel();
         $.Schedule(0.5, () => {
+            if (!ctx || !ctx.IsValid()) return;
             const mapName = this.m_PendingMapName;
             this.m_IsWarpPending = false;
             this.m_PendingMapName = "";
@@ -84,6 +92,7 @@ class ArchipelagoTransition {
     static smartWarpNextMap(currentMapName: string) {
         if (this.m_IsSmartWarping) return;
         this.m_IsSmartWarping = true;
+        const ctx = $.GetContextPanel();
 
         let cleanCurrentMap = currentMapName || "";
         if (cleanCurrentMap.indexOf("maps/") === 0 || cleanCurrentMap.indexOf("maps\\") === 0)
@@ -182,6 +191,7 @@ class ArchipelagoTransition {
             }));
 
             $.Schedule(3.0, () => {
+                if (!ctx || !ctx.IsValid()) { this.m_IsSmartWarping = false; return; }
                 GameInterfaceAPI.ConsoleCommand(targetMap.command);
                 this.m_IsSmartWarping = false;
             });
@@ -203,6 +213,7 @@ class ArchipelagoTransition {
             }));
 
             $.Schedule(3.0, () => {
+                if (!ctx || !ctx.IsValid()) { this.m_IsSmartWarping = false; return; }
                 GameInterfaceAPI.ConsoleCommand("disconnect");
                 this.m_IsSmartWarping = false;
             });

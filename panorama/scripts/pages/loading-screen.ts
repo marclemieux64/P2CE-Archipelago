@@ -6,6 +6,7 @@ class LoadingScreenController {
 	static logoEvent: number | undefined = undefined;
 	static bgEvent: number | undefined = undefined;
 	static bgEvent2: number | undefined = undefined;
+	static bgRepeatSchedule: any = null;
 
 	static progressBar = $('#ProgressBar') as ProgressBar;
 	static bgImage1 = $('#BackgroundMapImage1') as Image;
@@ -16,6 +17,11 @@ class LoadingScreenController {
 	static beBlankIfInvalid = false;
 
 	static init() {
+		if (this.bgRepeatSchedule) {
+			$.CancelScheduled(this.bgRepeatSchedule);
+			this.bgRepeatSchedule = null;
+		}
+
 		this.progressBar.value = 0;
 
 		this.bgImage2.RemoveClass('loadingscreen__backgroundshowanim');
@@ -30,7 +36,7 @@ class LoadingScreenController {
 					this.bgImage1.SetImage('file://{images}/archipelago/chapter1.png');
 				}
 			});
-			this.bgEvent2 = $.RegisterEventHandler('ImageFailedLoad', this.bgImage1, () => {
+			this.bgEvent2 = $.RegisterEventHandler('ImageFailedLoad', this.bgImage2, () => {
 				this.bgImage2.visible = false;
 			});
 		}
@@ -57,6 +63,8 @@ class LoadingScreenController {
 	}
 
 	static updateLoadingScreenInfoRepeater() {
+		this.bgRepeatSchedule = null;
+
 		// Progress bar will be 1.0 when loading finishes and is then reset to 0.0
 		if (this.progressBar.value >= 0.20) {
 			this.bgImage2.AddClass('loadingscreen__backgroundshowanim');
@@ -70,7 +78,7 @@ class LoadingScreenController {
 		}
 
 		// Rechecking every 8th of a second is OK, it doesn't need to be anything crazy
-		$.Schedule(0.125, this.updateLoadingScreenInfoRepeater.bind(this));
+		this.bgRepeatSchedule = $.Schedule(0.125, this.updateLoadingScreenInfoRepeater.bind(this));
 	}
 
 	static updateLoadingScreenInfo(mapName: string) {
@@ -122,7 +130,7 @@ class LoadingScreenController {
 				setImg(this.bgImage1, join + '_1.' + split[split.length - 1]);
 				setImg(this.bgImage2, join + '_2.' + split[split.length - 1]);
 
-				$.Schedule(0.125, this.updateLoadingScreenInfoRepeater.bind(this));
+				this.bgRepeatSchedule = $.Schedule(0.125, this.updateLoadingScreenInfoRepeater.bind(this));
 			} else {
 				this.bgImage1.visible = true;
 				this.bgImage2.visible = true;
@@ -134,7 +142,7 @@ class LoadingScreenController {
 				this.bgImage3.SetImage(pics.img3);
 				this.bgImage4.SetImage(pics.img4);
 
-				$.Schedule(0.125, this.updateLoadingScreenInfoRepeater.bind(this));
+				this.bgRepeatSchedule = $.Schedule(0.125, this.updateLoadingScreenInfoRepeater.bind(this));
 			}
 		} else {
 			this.bgImage1.visible = true;
@@ -147,7 +155,7 @@ class LoadingScreenController {
 			this.bgImage3.SetImage(pics.img3);
 			this.bgImage4.SetImage(pics.img4);
 
-			$.Schedule(0.125, this.updateLoadingScreenInfoRepeater.bind(this));
+			this.bgRepeatSchedule = $.Schedule(0.125, this.updateLoadingScreenInfoRepeater.bind(this));
 		}
 	}
 
@@ -204,10 +212,22 @@ class LoadingScreenController {
 	}
 
 	static {
-		$.RegisterForUnhandledEvent('UnloadLoadingScreenAndReinit', this.init.bind(this));
-		$.RegisterForUnhandledEvent('PopulateLoadingScreen', this.updateLoadingScreenInfo.bind(this));
-		$.RegisterForUnhandledEvent('LoadingScreenClearLastMap', () => {
-			this.lastLoadedMapName = '';
+		const _ctx = $.GetContextPanel();
+		let _reinitHandle: number = -1;
+		let _populateHandle: number = -1;
+		let _clearHandle: number = -1;
+
+		_reinitHandle = $.RegisterForUnhandledEvent('UnloadLoadingScreenAndReinit', () => {
+			if (!_ctx || !_ctx.IsValid()) { $.UnregisterForUnhandledEvent('UnloadLoadingScreenAndReinit', _reinitHandle); return; }
+			LoadingScreenController.init();
+		});
+		_populateHandle = $.RegisterForUnhandledEvent('PopulateLoadingScreen', (mapName: string) => {
+			if (!_ctx || !_ctx.IsValid()) { $.UnregisterForUnhandledEvent('PopulateLoadingScreen', _populateHandle); return; }
+			LoadingScreenController.updateLoadingScreenInfo(mapName);
+		});
+		_clearHandle = $.RegisterForUnhandledEvent('LoadingScreenClearLastMap', () => {
+			if (!_ctx || !_ctx.IsValid()) { $.UnregisterForUnhandledEvent('LoadingScreenClearLastMap', _clearHandle); return; }
+			LoadingScreenController.lastLoadedMapName = '';
 		});
 	}
 }

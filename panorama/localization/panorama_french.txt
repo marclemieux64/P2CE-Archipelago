@@ -305,6 +305,26 @@
 		
 		"Archipelago_Settings_StatusIndicatorMode_2"   "Toujours masquer"
 
+		"Archipelago_Settings_AutoSmartWarp"        "Téléporation automatique"
+
+		"Archipelago_Settings_AutoSmartWarp_info"   "Si activé, se téléporte automatiquement vers la prochaine carte disponible lorsqu'aucun check accessible ne reste sur la carte actuelle."
+
+		"Archipelago_Settings_ReleasePrompt"        "Invite de relâchement"
+
+		"Archipelago_Settings_ReleasePrompt_info"   "Si activé, affiche une invite pour relâcher les objets restants aux autres joueurs une fois les cartes finales complétées."
+
+		"Archipelago_Prompt_SmartWarp_Title"        "Aucun check accessible"
+
+		"Archipelago_Prompt_SmartWarp"              "Aucun check accessible ne reste sur cette carte. Téléportation vers la prochaine carte disponible..."
+
+		"Archipelago_Prompt_Release_Title"          "Objectif complété"
+
+		"Archipelago_Prompt_Release"                "Objectif complété ! Relâcher les objets restants aux autres joueurs ?"
+
+		"Archipelago_Prompt_Release_Yes"            "Relâcher"
+
+		"Archipelago_Prompt_Release_No"             "Plus tard"
+
 		"Archipelago_Settings_TransitionType"   "Type de changement de niveau"
 
 
@@ -426,6 +446,9 @@
 
 
 		"Archipelago_HUD_Deathlink"    "LIEN DE MORT"
+
+		"Archipelago_Countdown_Label"  "COMPTE À REBOURS"
+		"Archipelago_Countdown_GO"     "PARTEZ!"
 
 
 		"Archipelago_HUD_Trap"         "PIÈGE"

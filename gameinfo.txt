@@ -43,6 +43,8 @@
 			// Portal 2 content - repackaged to reduce filesize
 			// This is a bedrock dependency for P2:CE, not having this present will
 			// cause asset dependency problems!!
+           Game				portal2/portal2_french/pak01_dir.vpk
+           Game				portal2/portal2_french
 			Game				portal2/portal2/portal2.vpk
 			Game				portal2/portal2
 

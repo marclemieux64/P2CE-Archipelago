@@ -27,6 +27,28 @@
                     <RadioButton group="cv_HideLocationCounts" text="#Common_Hide" value="1" />
                 </SettingsEnum>
 
+                <SettingsEnum
+                    id="AutoSmartWarpSetting"
+                    text="#Archipelago_Settings_AutoSmartWarp"
+                    psvar="cv_AutoSmartWarp"
+                    infomessage="#Archipelago_Settings_AutoSmartWarp_info"
+                    hasdocspage="false"
+                >
+                    <RadioButton group="cv_AutoSmartWarp" text="#Common_Off" value="0" />
+                    <RadioButton group="cv_AutoSmartWarp" text="#Common_On" value="1" />
+                </SettingsEnum>
+
+                <SettingsEnum
+                    id="ReleasePromptSetting"
+                    text="#Archipelago_Settings_ReleasePrompt"
+                    psvar="cv_ReleasePrompt"
+                    infomessage="#Archipelago_Settings_ReleasePrompt_info"
+                    hasdocspage="false"
+                >
+                    <RadioButton group="cv_ReleasePrompt" text="#Common_Off" value="0" />
+                    <RadioButton group="cv_ReleasePrompt" text="#Common_On" value="1" />
+                </SettingsEnum>
+
                 <SettingsEnumDropDown
                     text="#Archipelago_Settings_TransitionType"
                     infomessage="#Archipelago_Settings_TransitionType_info"

@@ -28,7 +28,7 @@ class ConsoleLogManager:
 
     def __init__(self, ctx):
         self.ctx = ctx
-        self.chat_log: deque = deque(maxlen=100)
+        self.chat_log: deque = deque()
         self.msg_id_counter: int = 0
         self._current_ap_msg_type: str = "default"
         self._current_ap_msg_priority: bool = False
@@ -415,12 +415,13 @@ class ConsoleLogManager:
             
             finder = 0
             for part in args.get("data", []):
-                if isinstance(part, dict) and part.get("type") == "player_id":
+                if isinstance(part, dict) and part.get("type") in ("player_id", "player_name"):
                     try:
-                        finder = int(part.get("text", 0))
-                    except ValueError:
+                        # "player_name" carries slot in "player"; "player_id" carries it in "text"
+                        finder = int(part.get("player") or part.get("text", 0))
+                    except (ValueError, TypeError):
                         pass
-                    break 
+                    break
             
             if receiving == self.ctx.slot and finder == self.ctx.slot:
                 priority = True

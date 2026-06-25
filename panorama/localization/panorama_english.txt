@@ -1711,6 +1711,26 @@ This message will only be displayed once, and will not be shown again upon accep
         
 		"Archipelago_Settings_StatusIndicatorMode_2"   "Hide Always"
 
+        "Archipelago_Settings_AutoSmartWarp"        "Auto Smart Warp"
+
+        "Archipelago_Settings_AutoSmartWarp_info"   "When enabled, automatically warp to the next available map when no accessible checks remain on the current map."
+
+        "Archipelago_Settings_ReleasePrompt"        "Release Prompt"
+
+        "Archipelago_Settings_ReleasePrompt_info"   "When enabled, show a prompt to release remaining items to other players once all finale maps are complete."
+
+        "Archipelago_Prompt_SmartWarp_Title"        "No Accessible Checks"
+
+        "Archipelago_Prompt_SmartWarp"              "No accessible checks remain on this map. Warping to next available map..."
+
+        "Archipelago_Prompt_Release_Title"          "Goal Complete"
+
+        "Archipelago_Prompt_Release"                "Goal complete! Release remaining items to other players?"
+
+        "Archipelago_Prompt_Release_Yes"            "Release"
+
+        "Archipelago_Prompt_Release_No"             "Later"
+
         "Archipelago_Settings_TransitionType"   "Map Transition"
 
         "Archipelago_Settings_TransitionType_info"        "Choose what happens after finishing a level.\n<h2>Return to Menu</h2>Return to the Archipelago level selection menu after completing a level.\n<h2>Smart Transition</h2>Automatically transition to the next available level if possible, otherwise return to the menu."
@@ -1928,6 +1948,9 @@ This message will only be displayed once, and will not be shown again upon accep
         "Archipelago_HUD_Warp_Loading"    "Returning to map select"
 
         "Archipelago_HUD_Deathlink"       "DEATHLINK"
+
+        "Archipelago_Countdown_Label"     "COUNTDOWN"
+        "Archipelago_Countdown_GO"        "GO!"
 
         "Archipelago_HUD_Trap"            "TRAP"
 

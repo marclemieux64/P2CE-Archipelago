@@ -5,14 +5,15 @@ declare var UiToolkitAPI: any;
 
 function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
     const contextPanel = $.GetContextPanel();
+    let _handle: number = -1;
     const wrapper = (...args: any[]) => {
         if (!contextPanel || !contextPanel.IsValid()) {
-            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            $.UnregisterForUnhandledEvent(eventName, _handle);
             return;
         }
         callback(...args);
     };
-    $.RegisterForUnhandledEvent(eventName, wrapper);
+    _handle = $.RegisterForUnhandledEvent(eventName, wrapper);
 }
 
 var ArchipelagoMapStatusHUD = class {
@@ -21,6 +22,8 @@ var ArchipelagoMapStatusHUD = class {
     static m_PendingShow: boolean = false;
     static m_LastStatusKey: string = "";
     static m_LastMissingKey: string = "";
+    static m_LastCachedMapData: any = null;
+    static m_LastCachedMenuVersion: number = -1;
 
     static ITEM_SORT_ORDER: { [key: string]: number } = {
         "portalgun1": 1, "portalgun2": 2, "weightedcube": 3, "lasercube": 4,
@@ -47,15 +50,19 @@ var ArchipelagoMapStatusHUD = class {
         registerSelfCleaningEvent("ArchipelagoMapNameUpdated", (payload: string) => {
             if (!payload) return;
             const parts = payload.split('|');
-            ArchipelagoMapStatusHUD.m_CurrentMapName = parts[0] || "";
+            const newMapName = parts[0] || "";
+
+            if (newMapName !== ArchipelagoMapStatusHUD.m_CurrentMapName) {
+                ArchipelagoMapStatusHUD.m_CurrentMapName = newMapName;
+                ArchipelagoMapStatusHUD.m_LastStatusKey = "";
+                ArchipelagoMapStatusHUD.m_LastMissingKey = "";
+                ArchipelagoMapStatusHUD.m_LastCachedMapData = null;
+            }
 
             if (ArchipelagoMapStatusHUD.m_HideSchedule) {
                 $.CancelScheduled(ArchipelagoMapStatusHUD.m_HideSchedule);
                 ArchipelagoMapStatusHUD.m_HideSchedule = null;
             }
-
-            ArchipelagoMapStatusHUD.m_LastStatusKey = "";
-            ArchipelagoMapStatusHUD.m_LastMissingKey = "";
 
             const showHUD = String($.persistentStorage.getItem('cv_ShowMapStatusHUD') ?? "0") !== "1";
             ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, showHUD);
@@ -128,19 +135,26 @@ var ArchipelagoMapStatusHUD = class {
         }
 
         ArchipelagoMapStatusHUD.m_PendingShow = false;
-        const chapters = syncHelper.parseApiStatus(apiStatus);
-        let currentMapData: any = null;
-        
-        for (const chId in chapters) {
-            if (!chapters[chId] || !chapters[chId].maps) continue;
-            for (const map of chapters[chId].maps) {
-                const fullCmdStr = map.command || map.command_deactivated || "";
-                if (fullCmdStr && fullCmdStr.toLowerCase().indexOf(currentMapName.toLowerCase()) !== -1) {
-                    currentMapData = map;
-                    break;
+
+        const currentMenuVersion = api ? (api.m_MenuVersion || 0) : 0;
+        let currentMapData: any = ArchipelagoMapStatusHUD.m_LastCachedMapData;
+
+        if (currentMenuVersion !== ArchipelagoMapStatusHUD.m_LastCachedMenuVersion || currentMapData === null) {
+            const chapters = syncHelper.m_CachedChapters || syncHelper.parseApiStatus(apiStatus);
+            currentMapData = null;
+            for (const chId in chapters) {
+                if (!chapters[chId] || !chapters[chId].maps) continue;
+                for (const map of chapters[chId].maps) {
+                    const fullCmdStr = map.command || map.command_deactivated || "";
+                    if (fullCmdStr && fullCmdStr.toLowerCase().indexOf(currentMapName.toLowerCase()) !== -1) {
+                        currentMapData = map;
+                        break;
+                    }
                 }
+                if (currentMapData) break;
             }
-            if (currentMapData) break;
+            ArchipelagoMapStatusHUD.m_LastCachedMapData = currentMapData;
+            ArchipelagoMapStatusHUD.m_LastCachedMenuVersion = currentMenuVersion;
         }
 
         if (!currentMapData) return;

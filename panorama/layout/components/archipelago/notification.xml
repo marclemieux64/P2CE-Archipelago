@@ -9,11 +9,14 @@
 <snippets>
         <snippet name="MessageEntry">
             <Panel class="notify-entry">
-                <Panel id="AccentBar" class="accent-bar" />
-                <Panel class="content"> 
-                    <Label id="Title" class="title" text="TEST TITLE" /> 
-                    <Label id="Message" class="body" html="true" text="TEST MESSAGE" /> 
+                <Panel class="notify-main-row">
+                    <Panel id="AccentBar" class="accent-bar" />
+                    <Panel class="content">
+                        <Label id="Title" class="title" text="TEST TITLE" />
+                        <Label id="Message" class="body" html="true" text="TEST MESSAGE" />
+                    </Panel>
                 </Panel>
+                <Panel id="TimerBar" class="timer-bar timer-depleting" />
             </Panel>
         </snippet>
     </snippets>

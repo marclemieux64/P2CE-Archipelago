@@ -1,5 +1,4 @@
 'use strict';
-if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg; }
 
 class MenuPage {
 	name: string;
@@ -35,56 +34,17 @@ class MenuManager {
 	static loadingIndicator = $<Label>('#LoadingIndicator')!;
 	static menuContent = $<Panel>('#MenuMainContent')!;
 	static pageBlur = $<BaseBlurTarget>('#PageBlur')!;
+	static grids = [$<Image>('#GridTexture1')!, $<Image>('#GridTexture2')!];
 
 	static pages: MenuPage[] = [];
 	static isLoaded = false;
 	static eventsRegistered = false;
 
-	// Persistence for Archipelago notifications
-	static initAPPersistence() {
-		$.DefineEvent('ArchipelagoNotify', 1, "payload");
-		$.DefineEvent('ArchipelagoQueueUpdated', 1, "payload");
+	// Pages listed here are kept alive (hidden) after the user navigates away instead of
+	// being deleted. On the next visit, the cached panel is reused and LoadLayout is skipped.
+	static readonly CACHED_PAGE_IDS = ['Content'];
+	static pageCache: Map<string, Panel> = new Map();
 
-		const global: any = UiToolkitAPI.GetGlobalObject();
-		if (!global.ArchipelagoMessageQueue) {
-			global.ArchipelagoMessageQueue = [];
-		}
-
-		// Restore archipelago convars from persistent storage so settings apply
-		// without requiring the settings menu to be opened first.
-		const convarMap: string[] = [
-			'cv_ShowMapStatusHUD',
-			'cv_HideHolograms',
-			'cv_SkipElevatorRide',
-			'cv_SkipIntroContainerScene',
-			'cv_SkipBirdScene',
-			'cv_SkipCeilingScene',
-		];
-
-		for (const convar of convarMap) {
-			const stored = $.persistentStorage.getItem(convar);
-			if (stored !== null && stored !== undefined) {
-				GameInterfaceAPI.ConsoleCommand(`${convar} ${stored}`);
-			}
-		}
-
-		// Restore addon enabled states so they apply without visiting the Addons page.
-		const addonMapRaw = $.persistentStorage.getItem('ap_addon_enabled_map');
-		if (addonMapRaw) {
-			try {
-				const persistMap = JSON.parse(String(addonMapRaw)) as Record<string, boolean>;
-				const count = WorkshopAPI.GetAddonCount();
-				const enableList: Record<number, boolean> = {};
-				for (let i = 0; i < count; i++) {
-					const meta = WorkshopAPI.GetAddonMeta(i);
-					const key = meta.local ? `local:${meta.title}` : `ws:${meta.workshopid}`;
-					if (persistMap[key] !== undefined) enableList[i] = persistMap[key];
-				}
-				if (Object.keys(enableList).length > 0) WorkshopAPI.SetAddonListEnabled(enableList);
-			} catch (e) {}
-		}
-	}
-	
 	static {
 		$.RegisterForUnhandledEvent('LayoutReloaded', () => {
 			this.closePages();
@@ -94,20 +54,6 @@ class MenuManager {
 			$.Schedule(0.1, () => {
 				$.DispatchEvent('MainMenuSwitchReverse', true);
 			});
-		});
-
-		// Re-apply skip convars on every map load so they're set before RunDelayedInit
-		// reads them at the 0.5s mark. Handles the case where AngelScript ConVar
-		// re-declaration resets to default on each script reload.
-		$.RegisterForUnhandledEvent('MapLoaded', (_map: string, bg: boolean) => {
-			if (bg) return;
-			const skipConvars = ['cv_SkipElevatorRide', 'cv_SkipIntroContainerScene', 'cv_SkipBirdScene', 'cv_SkipCeilingScene'];
-			for (const convar of skipConvars) {
-				const stored = $.persistentStorage.getItem(convar);
-				if (stored !== null && stored !== undefined) {
-					GameInterfaceAPI.ConsoleCommand(`${convar} ${stored}`);
-				}
-			}
 		});
 	}
 
@@ -154,6 +100,19 @@ class MenuManager {
 				if (props.visible !== undefined) {
 					btnPanel.visible = props.visible;
 				}
+			});
+
+			// FIXME: I HATE YOU UITOOLKITAPI YOU SUCK MAJOR ????
+			// JS Context's panel is not getting assigned correctly causing nullptr crash
+			$.RegisterForUnhandledEvent('MainMenuNotifFailLoad', () => {
+				$.DispatchEvent('MainMenuSwitchReverse', true);
+				$.DispatchEvent('MainMenuCloseAllPages');
+				UiToolkitAPI.ShowGenericPopupOk(
+					$.Localize('#MainMenu_Campaigns_LoadFailed_Title'),
+					$.Localize('#MainMenu_Campaigns_LoadFailed_Description'),
+					'generic-popup',
+					() => {}
+				);
 			});
 
 			$.RegisterForUnhandledEvent('MainMenuAddBgPanel', (panel: Panel) => {
@@ -210,14 +169,11 @@ class MenuManager {
 
 			$.RegisterForUnhandledEvent('MainMenuSetLogo', (logo: string) => {
 				if (logo && logo.length > 0) {
-					if (logo === 'file://{images}/logo.png') {
-						const date = new Date();
-						const rightDate = new Date('April 1');
-						rightDate.setFullYear(date.getFullYear());
+					if (logo === 'file://{images}/logo.svg') {
 						if (WorkshopAPI.IsWorkshopToolsMode()) {
 							logo = 'file://{images}/logo_sdk.svg';
-						} else {
-							logo = 'file://{images}/logo.png';
+						} else if (Math.random() < 0.001) {
+							logo = 'file://{images}/the_objectively_better_logo.png';
 						}
 					}
 
@@ -247,6 +203,43 @@ class MenuManager {
 				}
 			});
 
+			$.RegisterForUnhandledEvent('MainMenuSetPauseBlur', (doBlur: boolean) => {
+				if (doBlur) {
+					this.gradientBar.style.animation = 'FadeIn 0.1s linear 0s 1 normal forwards';
+
+					// FIXME:
+					// cant do this because when it fully fades out, panorama will
+					// collapse it and will reclaim the layout space, which will shove
+					// setting sliders a considerable distance
+					//
+					// for some reason changing the opacity thru an animation prop
+					// instead of a transition doesnt do this, but if i do that,
+					// the transition property loses the ability to change the
+					// opacity which is SOOOOOOOOOOOOOOOO MUCH FUN!!!!!!!!
+					//this.pageHeadline.AddClass('mainmenu__page-controls__anim');
+					//this.pageTagline.AddClass('mainmenu__page-controls__anim');
+					//this.pageActions.AddClass('mainmenu__page-controls__anim');
+
+					for (const grid of this.grids) {
+						grid.style.opacity = 0.25;
+					}
+
+					this.showPageBlur();
+				} else {
+					this.gradientBar.style.animation = 'FadeOut 0.1s linear 0s 1 normal forwards';
+
+					//this.pageHeadline.RemoveClass('mainmenu__page-controls__anim');
+					//this.pageTagline.RemoveClass('mainmenu__page-controls__anim');
+					//this.pageActions.RemoveClass('mainmenu__page-controls__anim');
+
+					for (const grid of this.grids) {
+						grid.style.opacity = 0;
+					}
+
+					this.hidePageBlur();
+				}
+			});
+
 			installImageFallbackHandler(this.logo);
 
 			const registerCampaignSwitch = () => {
@@ -271,7 +264,6 @@ class MenuManager {
 
 			MenuAnimation.init();
 
-			this.initAPPersistence();
 			this.eventsRegistered = true;
 		}
 
@@ -290,6 +282,9 @@ class MenuManager {
 
 	static deleteMenus() {
 		$.DispatchEvent('MainMenuModeRequestCleanup');
+
+		this.pageCache.forEach((panel) => { if (panel.IsValid()) panel.DeleteAsync(0); });
+		this.pageCache.clear();
 
 		this.menuNav.RemoveAndDeleteChildren();
 		this.menuBackground.RemoveAndDeleteChildren();
@@ -381,8 +376,19 @@ class MenuManager {
 			}
 		}
 
-		// create the new page
-		const newPanel = $.CreatePanel('Panel', this.pageInsert, tab);
+		// create the new page — reuse a cached panel if one exists
+		let newPanel: Panel;
+		const cachedPanel = this.pageCache.get(tab);
+		if (cachedPanel && cachedPanel.IsValid()) {
+			this.pageCache.delete(tab);
+			newPanel = cachedPanel;
+			newPanel.visible = true;
+		} else {
+			newPanel = $.CreatePanel('Panel', this.pageInsert, tab);
+			newPanel.LoadLayout(`file://{resources}/layout/pages/${xmlName}.xml`, false, false);
+			newPanel.RegisterForReadyEvents(true);
+		}
+
 		const newPage = new MenuPage(tab, newPanel);
 
 		if (invokerPanel) {
@@ -397,8 +403,6 @@ class MenuManager {
 		}
 
 		this.pages.push(newPage);
-		newPanel.LoadLayout(`file://{resources}/layout/pages/${xmlName}.xml`, false, false);
-		newPanel.RegisterForReadyEvents(true);
 		newPanel.AddClass('mainmenu__page__anim');
 		newPanel.SetFocus();
 
@@ -411,6 +415,16 @@ class MenuManager {
 			// 'flash' the pagelines
 			this.flashPageLines();
 		}
+	}
+
+	static showPageBlur() {
+		this.pageBlur.AddClass('anim-menu-page-blur');
+		this.pageBlur.RemoveClass('anim-menu-page-blur-reverse');
+	}
+
+	static hidePageBlur() {
+		this.pageBlur.AddClass('anim-menu-page-blur-reverse');
+		this.pageBlur.RemoveClass('anim-menu-page-blur');
 	}
 
 	// show page container
@@ -429,8 +443,7 @@ class MenuManager {
 		this.pageBg.style.animation = 'FadeOut 0.2s ease-out 0s 1 reverse forwards';
 		this.menuForeground.style.animation = 'FadeOut 0.1s linear 0s 1 normal forwards';
 
-		this.pageBlur.AddClass('anim-menu-page-blur');
-		this.pageBlur.RemoveClass('anim-menu-page-blur-reverse');
+		this.showPageBlur();
 	}
 
 	// hide page container
@@ -446,8 +459,7 @@ class MenuManager {
 		this.pageBg.style.animation = 'FadeOut 0.2s ease-out 0s 1 normal forwards';
 		this.menuForeground.style.animation = 'FadeIn 0.25s linear 0s 1 normal forwards';
 
-		this.pageBlur.AddClass('anim-menu-page-blur-reverse');
-		this.pageBlur.RemoveClass('anim-menu-page-blur');
+		this.hidePageBlur();
 	}
 
 	static reversePageAnim(panel: GenericPanel) {
@@ -455,6 +467,18 @@ class MenuManager {
 			if (panel.id === panelName && propertyName === 'transform') {
 				if (panel.IsTransparent()) {
 					panel.DeleteAsync(0);
+				}
+			}
+		});
+		panel.RemoveClass('mainmenu__page__anim');
+	}
+
+	static reversePageAnimCached(panel: Panel, cacheKey: string) {
+		$.RegisterEventHandler('PropertyTransitionEnd', panel, (panelName, propertyName) => {
+			if (panel.id === panelName && propertyName === 'transform') {
+				if (panel.IsTransparent()) {
+					panel.visible = false;
+					MenuManager.pageCache.set(cacheKey, panel);
 				}
 			}
 		});
@@ -472,7 +496,13 @@ class MenuManager {
 		if (currentPage) {
 			$.DispatchEvent('MainMenuPagePreClose', currentPage.name);
 			if (currentPage.name === 'Settings') $.DispatchEvent('SettingsSave');
-			if (currentPage.panel.IsValid()) this.reversePageAnim(currentPage.panel);
+			if (currentPage.panel.IsValid()) {
+				if (this.CACHED_PAGE_IDS.includes(currentPage.name)) {
+					this.reversePageAnimCached(currentPage.panel, currentPage.name);
+				} else {
+					this.reversePageAnim(currentPage.panel);
+				}
+			}
 
 			if (
 				currentPage.invokerPanel &&

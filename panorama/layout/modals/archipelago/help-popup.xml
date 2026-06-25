@@ -305,44 +305,56 @@
 					<!-- Item Received -->
 					<Panel class="help-popup__notify-row">
 						<Panel class="notify-entry">
-							<Panel class="accent-bar" style="background-color: rgb(64, 160, 255);" />
-							<Panel class="content">
-								<Label class="title" style="color: rgb(64, 160, 255);" text="#Archipelago_HUD_Receive" />
-								<Label class="body" text="#Archipelago_Help_Notify_Receive_Desc" />
+							<Panel class="notify-main-row">
+								<Panel class="accent-bar" style="background-color: rgb(64, 160, 255);" />
+								<Panel class="content">
+									<Label class="title" style="color: rgb(64, 160, 255);" text="#Archipelago_HUD_Receive" />
+									<Label class="body" text="#Archipelago_Help_Notify_Receive_Desc" />
+								</Panel>
 							</Panel>
+							<Panel class="timer-bar timer-preview" style="background-color: rgb(64, 160, 255);" />
 						</Panel>
 					</Panel>
 
 					<!-- Item Sent -->
 					<Panel class="help-popup__notify-row">
 						<Panel class="notify-entry">
-							<Panel class="accent-bar" style="background-color: rgb(255, 160, 32);" />
-							<Panel class="content">
-								<Label class="title" style="color: rgb(255, 160, 32);" text="#Archipelago_HUD_Send" />
-								<Label class="body" text="#Archipelago_Help_Notify_Send_Desc" />
+							<Panel class="notify-main-row">
+								<Panel class="accent-bar" style="background-color: rgb(255, 160, 32);" />
+								<Panel class="content">
+									<Label class="title" style="color: rgb(255, 160, 32);" text="#Archipelago_HUD_Send" />
+									<Label class="body" text="#Archipelago_Help_Notify_Send_Desc" />
+								</Panel>
 							</Panel>
+							<Panel class="timer-bar timer-preview" style="background-color: rgb(255, 160, 32);" />
 						</Panel>
 					</Panel>
 
 					<!-- Item Found -->
 					<Panel class="help-popup__notify-row">
 						<Panel class="notify-entry">
-							<Panel class="accent-bar" style="background-color: rgb(50, 255, 50);" />
-							<Panel class="content">
-								<Label class="title" style="color: rgb(50, 255, 50);" text="#Archipelago_HUD_Found" />
-								<Label class="body" text="#Archipelago_Help_Notify_Found_Desc" />
+							<Panel class="notify-main-row">
+								<Panel class="accent-bar" style="background-color: rgb(50, 255, 50);" />
+								<Panel class="content">
+									<Label class="title" style="color: rgb(50, 255, 50);" text="#Archipelago_HUD_Found" />
+									<Label class="body" text="#Archipelago_Help_Notify_Found_Desc" />
+								</Panel>
 							</Panel>
+							<Panel class="timer-bar timer-preview" style="background-color: rgb(50, 255, 50);" />
 						</Panel>
 					</Panel>
 
 					<!-- New Hint -->
 					<Panel class="help-popup__notify-row">
 						<Panel class="notify-entry">
-							<Panel class="accent-bar" style="background-color: rgb(255, 255, 50);" />
-							<Panel class="content">
-								<Label class="title" style="color: rgb(255, 255, 50);" text="#Archipelago_HUD_Hint" />
-								<Label class="body" text="#Archipelago_Help_Notify_Hint_Desc" />
+							<Panel class="notify-main-row">
+								<Panel class="accent-bar" style="background-color: rgb(255, 255, 50);" />
+								<Panel class="content">
+									<Label class="title" style="color: rgb(255, 255, 50);" text="#Archipelago_HUD_Hint" />
+									<Label class="body" text="#Archipelago_Help_Notify_Hint_Desc" />
+								</Panel>
 							</Panel>
+							<Panel class="timer-bar timer-preview" style="background-color: rgb(255, 255, 50);" />
 						</Panel>
 					</Panel>
 				</Panel>
@@ -353,55 +365,70 @@
 					<!-- Deathlink -->
 					<Panel class="help-popup__notify-row">
 						<Panel class="notify-entry">
-							<Panel class="accent-bar" style="background-color: rgb(255, 50, 50);" />
-							<Panel class="content">
-								<Label class="title" style="color: rgb(255, 50, 50);" text="#Archipelago_HUD_Deathlink" />
-								<Label class="body" text="#Archipelago_Help_Notify_Deathlink_Desc" />
+							<Panel class="notify-main-row">
+								<Panel class="accent-bar" style="background-color: rgb(255, 50, 50);" />
+								<Panel class="content">
+									<Label class="title" style="color: rgb(255, 50, 50);" text="#Archipelago_HUD_Deathlink" />
+									<Label class="body" text="#Archipelago_Help_Notify_Deathlink_Desc" />
+								</Panel>
 							</Panel>
+							<Panel class="timer-bar timer-preview" style="background-color: rgb(255, 50, 50);" />
 						</Panel>
 					</Panel>
 
 					<!-- Trap -->
 					<Panel class="help-popup__notify-row">
 						<Panel class="notify-entry">
-							<Panel class="accent-bar" style="background-color: rgb(255, 150, 0);" />
-							<Panel class="content">
-								<Label class="title" style="color: rgb(255, 150, 0);" text="#Archipelago_HUD_Trap" />
-								<Label class="body" text="#Archipelago_Help_Notify_Trap_Desc" />
+							<Panel class="notify-main-row">
+								<Panel class="accent-bar" style="background-color: rgb(255, 150, 0);" />
+								<Panel class="content">
+									<Label class="title" style="color: rgb(255, 150, 0);" text="#Archipelago_HUD_Trap" />
+									<Label class="body" text="#Archipelago_Help_Notify_Trap_Desc" />
+								</Panel>
 							</Panel>
+							<Panel class="timer-bar timer-preview" style="background-color: rgb(255, 150, 0);" />
 						</Panel>
 					</Panel>
 
 					<!-- Go Mode -->
 					<Panel class="help-popup__notify-row">
 						<Panel class="notify-entry">
-							<Panel class="accent-bar rainbow-bg" />
-							<Panel class="content">
-								<Label class="title rainbow-text" text="#Archipelago_HUD_GoMode" />
-								<Label class="body" text="#Archipelago_Help_Notify_GoMode_Desc" />
+							<Panel class="notify-main-row">
+								<Panel class="accent-bar rainbow-bg" />
+								<Panel class="content">
+									<Label class="title rainbow-text" text="#Archipelago_HUD_GoMode" />
+									<Label class="body" text="#Archipelago_Help_Notify_GoMode_Desc" />
+								</Panel>
 							</Panel>
+							<Panel class="timer-bar timer-preview rainbow-bg" />
 						</Panel>
 					</Panel>
 
 					<!-- Warp to Menu -->
 					<Panel class="help-popup__notify-row">
 						<Panel class="notify-entry">
-							<Panel class="accent-bar" style="background-color: rgb(198, 33, 223);" />
-							<Panel class="content">
-								<Label class="title" style="color: rgb(198, 33, 223);" text="#Archipelago_HUD_Warp_Menu_Title" />
-								<Label class="body" text="#Archipelago_Help_Notify_Warp_Desc" />
+							<Panel class="notify-main-row">
+								<Panel class="accent-bar" style="background-color: rgb(198, 33, 223);" />
+								<Panel class="content">
+									<Label class="title" style="color: rgb(198, 33, 223);" text="#Archipelago_HUD_Warp_Menu_Title" />
+									<Label class="body" text="#Archipelago_Help_Notify_Warp_Desc" />
+								</Panel>
 							</Panel>
+							<Panel class="timer-bar timer-preview" style="background-color: rgb(198, 33, 223);" />
 						</Panel>
 					</Panel>
 
 					<!-- Goal Achieved -->
 					<Panel class="help-popup__notify-row">
 						<Panel class="notify-entry preview-goal-border">
-							<Panel class="accent-bar" style="background-color: rgb(255, 215, 0);" />
-							<Panel class="content">
-								<Label class="title" style="color: rgb(255, 215, 0);" text="#Archipelago_HUD_Goal" />
-								<Label class="body" text="#Archipelago_Help_Notify_Goal_Desc" />
+							<Panel class="notify-main-row">
+								<Panel class="accent-bar" style="background-color: rgb(255, 215, 0);" />
+								<Panel class="content">
+									<Label class="title" style="color: rgb(255, 215, 0);" text="#Archipelago_HUD_Goal" />
+									<Label class="body" text="#Archipelago_Help_Notify_Goal_Desc" />
+								</Panel>
 							</Panel>
+							<Panel class="timer-bar timer-preview" style="background-color: rgb(255, 215, 0);" />
 						</Panel>
 					</Panel>
 				</Panel>

@@ -1,91 +1,3 @@
-
-
-.notify-entry {
-    width: 400px;
-    background-color: #141414ee;
-    flow-children: right;
-    overflow: clip;
-    margin-bottom: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-
-    transition-property: transform, opacity, height;
-    transition-duration: 0.35s;
-    transition-timing-function: linear;
-
-    animation-name: enter-anim;
-    animation-duration: 0.35s;
-    animation-timing-function: ease-out;
-    
-
-    // ==========================================
-    // --- SONS DÉCLENCHÉS À L'APPARITION ---
-    // ==========================================
-    &.sound-deathlink { sound: "Archipelago.Deathlink"; }
-    &.sound-trap { sound: "Archipelago.Trap"; }
-    &.sound-warp { sound: "Archipelago.Warp"; }
-    &.sound-goal { sound: "Archipelago.Goal"; } // <-- Le "/" a été supprimé ici
-    &.sound-rainbow { sound: "Archipelago.GoMode"; }
-    &.sound-default { sound: "Archipelago.Default"; }
-
-    // Garde l'animation de sortie sans le son
-    &.exit-anim {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-}
-
-.accent-bar {
-    width: 4px;
-    height: 100%;
-    background-color: #ec6726;
-}
-
-.content {
-    flow-children: down; // Stacks Title above Message
-    padding: 20px 20px;
-    width: fill-parent-flow(1.0);
-    height: fit-children;
-    vertical-align: center;
-}
-
-.title {
-    font-family: "Lexend Deca", Bold;
-    font-size: 20px;
-    color: #ffffff;
-    width: 100%;
-    height: fit-children;
-    text-shadow: 0px 0px 4px 2.0 #000000;
-    padding-left: 5px;
-}
-
-.body {
-    font-size: 16px;
-    color: #ffffff;
-    width: 100%;
-    height: fit-children;
-    padding-left: 5px;
-}
-
-// Type variations
-.type-success .accent-bar {
-    background-color: #63fd68;
-}
-
-.type-success .title {
-    color: #63fd68;
-}
-
-.type-error .accent-bar {
-    background-color: #f32424;
-}
-
-.type-error .title {
-    color: #f32424;
-}
-
-
-
-
 .notify-bucket {
     width: 410px;
     height: fit-children;
@@ -93,62 +5,149 @@
     horizontal-align: right;
     vertical-align: top;
     flow-children: down;
-    overflow: squish scroll;
-    
+    overflow: noclip;
 }
 
+.notify-entry {
+    width: 400px;
+    background-color: #111111f0;
+    flow-children: down;
+    overflow: clip;
+    margin-bottom: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 
+    animation-name: enter-anim;
+    animation-duration: 0.32s;
+    animation-timing-function: linear;
 
+    &.sound-deathlink { sound: "Archipelago.Deathlink"; }
+    &.sound-trap      { sound: "Archipelago.Trap"; }
+    &.sound-warp      { sound: "Archipelago.Warp"; }
+    &.sound-goal      { sound: "Archipelago.Goal"; }
+    &.sound-rainbow   { sound: "Archipelago.GoMode"; }
+    &.sound-default   { sound: "Archipelago.Default"; }
+}
 
+// --- LAYOUT ---
 
+.notify-main-row {
+    width: 100%;
+    height: fit-children;
+    flow-children: right;
+}
 
-.exit-anim {
+.accent-bar {
+    width: 5px;
+    height: 100%;
+    background-color: #ec6726;
+}
+
+.content {
+    flow-children: down;
+    padding: 11px 15px 11px 13px;
+    width: fill-parent-flow(1.0);
+    height: fit-children;
+}
+
+.title {
+    font-family: "Lexend Deca", Bold;
+    font-size: 18px;
+    color: #ffffff;
+    width: 100%;
+    height: fit-children;
+    text-shadow: 0px 0px 6px 2.0 #000000;
+    margin-bottom: 2px;
+}
+
+.body {
+    font-size: 14px;
+    color: #cccccc;
+    width: 100%;
+    height: fit-children;
+    text-shadow: 0px 0px 4px 1.5 #000000;
+}
+
+.body-dim {
+    color: #777777;
+}
+
+// --- TIMER BAR ---
+
+.timer-bar {
+    width: 100%;
+    height: 2px;
+    background-color: #ec6726;
+    transition-property: width;
+    transition-duration: 4.0s;
+    transition-timing-function: linear;
+}
+
+.timer-bar.timer-depleting {
+    width: 0%;
+}
+
+@keyframes timer-deplete-loop {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+.timer-bar.timer-preview {
+    transform-origin: 0% 50%;
+    animation-name: timer-deplete-loop;
+    animation-duration: 4.0s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+// --- EXIT ANIMATIONS (two-phase) ---
+
+// Phase 1: fade + slide right (0.22s)
+.exit-slide {
     opacity: 0;
-    transform: translateX(50px);
+    transform: translateX(60px);
+    transition-property: opacity, transform;
+    transition-duration: 0.22s;
+    transition-timing-function: ease-in;
+}
 
-    // The Magic Sauce: Collapse the physical space to 0 so items slide up
-    min-height: 0px;
+// Phase 2: collapse height so remaining notifications slide up (0.22s)
+.exit-collapse {
     height: 0px;
+    min-height: 0px;
     margin-bottom: 0px;
-    border-color: transparent;
+    transition-property: height;
+    transition-duration: 0.22s;
+    transition-timing-function: ease-in;
 }
 
-@keyframes exit-anim {
-    0% {
-        opacity: 1;
-        transform: translateX(0px);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translateX(-50px);
-    }
-}
+// --- ENTER ANIMATION (spring overshoot) ---
 
 @keyframes enter-anim {
     0% {
         opacity: 0;
-        transform: translateX(50px);
+        transform: translateX(120%);
     }
-
+    60% {
+        opacity: 1;
+        transform: translateX(-7px);
+    }
+    80% {
+        transform: translateX(3px);
+    }
     100% {
         opacity: 1;
         transform: translateX(0px);
     }
 }
 
-// Rich Text Colors
-.color-player_id, .color-player_name { color: #ff7f50; }
-.color-item_id, .color-item_name { color: #00ffff; }
-.color-location_id, .color-location_name { color: #adff2f; }
-.color-entrance_id { color: #da70d6; }
-.color-gold { color: #ffd700; }
-.color-yellow { color: #ffff00; }
-.color-magenta { color: #ee82ee; }
-.color-cyan { color: #00ffff; }
-.color-green { color: #00ff00; }
+// --- SPECIAL TYPES ---
 
-/* --- ANIMATION RGB POUR LE GO MODE --- */
+.sound-goal {
+    border: 1px solid #ffd70033;
+}
+
+// --- RAINBOW (GO MODE) ---
+
 @keyframes RainbowCycleBG {
     0%   { background-color: #ff0000; }
     15%  { background-color: #ff7f00; }
@@ -186,9 +185,14 @@
     text-shadow: 0px 0px 8px rgba(255, 255, 255, 0.4);
 }
 
-.sound-goal {
-    border: 2px solid #ffd700;
-    box-shadow: 0px 0px 12px #ffd70044;
-    padding-left: 5px;
-    padding-right: 5px;
-}
+// --- RICH TEXT COLORS ---
+
+.color-player_id, .color-player_name   { color: #ff7f50; }
+.color-item_id, .color-item_name       { color: #00ffff; }
+.color-location_id, .color-location_name { color: #adff2f; }
+.color-entrance_id { color: #da70d6; }
+.color-gold        { color: #ffd700; }
+.color-yellow      { color: #ffff00; }
+.color-magenta     { color: #ee82ee; }
+.color-cyan        { color: #00ffff; }
+.color-green       { color: #00ff00; }

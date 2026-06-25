@@ -8,13 +8,19 @@ class WorkflowManager {
     // --- ELEVATOR TRACKING STATE ---
     private EHandle<CBaseEntity> m_hElevator;
     private float m_flInitialElevatorZ;
+    private float m_flLastCheckedElevatorZ;  // used to detect when the elevator has settled
+    private int   m_nElevatorSkipsRemaining; // movements to ignore before triggering completion
 
     WorkflowManager() {
-        m_flInitialElevatorZ = 0.0f;
+        m_flInitialElevatorZ    = 0.0f;
+        m_flLastCheckedElevatorZ = 0.0f;
+        m_nElevatorSkipsRemaining = 0;
     }
 
     void Initialize() {
-        m_flInitialElevatorZ = 0.0f;
+        m_flInitialElevatorZ    = 0.0f;
+        m_flLastCheckedElevatorZ = 0.0f;
+        m_nElevatorSkipsRemaining = 0;
     }
 
     // =============================================================
@@ -176,11 +182,11 @@ class WorkflowManager {
                 if (timer !is null) {
                     timer.KeyValue("targetname", "finale2_turret_timer");
                     timer.KeyValue("RefireTime", "0.2");
-                    
+
                     string payload = "InitCmd\x1BCommand\x1BFinale2TurretTick\x1B0\x1B-1";
                     timer.KeyValue("OnTimer", payload);
                     timer.Spawn();
-                    
+
                     Variant empty;
                     timer.FireInput("Enable", empty, 0.0f, null, null, 0);
                 }
@@ -301,6 +307,23 @@ class WorkflowManager {
 
         Vector currentPos = train.GetAbsOrigin();
 
+        // Skip logic: consume intermediate movements before watching for the real departure.
+        // Used on maps (e.g. sp_a2_core) where the elevator first pops up from the floor
+        // to let the player board — we ignore that movement and reset the baseline to the
+        // boarding position, then trigger on the actual departure.
+        if (m_nElevatorSkipsRemaining > 0) {
+            if (!closeTo(currentPos.z, m_flInitialElevatorZ, 0.00f)) {
+                // Elevator has left its starting position.
+                if (closeTo(currentPos.z, m_flLastCheckedElevatorZ, 0.00f)) {
+                    // Settled at a new position — consume one skip and adopt it as the new baseline.
+                    m_nElevatorSkipsRemaining--;
+                    m_flInitialElevatorZ = currentPos.z;
+                }
+                m_flLastCheckedElevatorZ = currentPos.z;
+            }
+            return;
+        }
+
         if (!closeTo(currentPos.z, m_flInitialElevatorZ, 0.00f)) {
             CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
             if (cmd !is null) {
@@ -323,6 +346,14 @@ class WorkflowManager {
             return;
         }
 
+        // sp_a2_bts2 has a func_tracktrain whose name matches the elevator heuristic
+        // but is not an elevator — skip the whole routine on that map.
+        if (g_Archipelago.GetCurrentMap() == "sp_a2_bts2") {
+            return;
+        }
+
+        string currentMap = g_Archipelago.GetCurrentMap();
+
         CBaseEntity@ train = null;
         while ((@train = EntityList().FindByClassname(train, "func_tracktrain")) !is null) {
             string name = train.GetEntityName();
@@ -331,21 +362,26 @@ class WorkflowManager {
                 || name.locate("exit_elevator_train") < name.length();
             if (isElevator) {
                 m_hElevator.Set(train);
-                m_flInitialElevatorZ = train.GetAbsOrigin().z;
+                m_flInitialElevatorZ     = train.GetAbsOrigin().z;
+                m_flLastCheckedElevatorZ = m_flInitialElevatorZ;
+
+                // sp_a2_core: the elevator pops up from the floor before the player boards.
+                // Ignore that first movement; trigger only when the player is inside and it departs.
+                m_nElevatorSkipsRemaining = (currentMap == "sp_a2_core") ? 1 : 0;
 
                 CBaseEntity@ timer = util::CreateEntityByName("logic_timer");
                 if (timer !is null) {
                     timer.KeyValue("targetname", "ap_elevator_timer");
-                    timer.KeyValue("RefireTime", "0.25"); 
-                    
+                    timer.KeyValue("RefireTime", "0.25");
+
                     string payload = "InitCmd\x1BCommand\x1BCheckElevatorRide\x1B0\x1B-1";
                     timer.KeyValue("OnTimer", payload);
                     timer.Spawn();
-                    
+
                     Variant empty;
                     timer.FireInput("Enable", empty, 0.0f, null, null, 0);
                 }
-                break; 
+                break;
             }
         }
     }

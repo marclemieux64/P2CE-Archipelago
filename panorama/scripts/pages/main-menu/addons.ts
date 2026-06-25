@@ -8,34 +8,46 @@ class AddonEntry {
 	subText: Label | null = null;
 	addonEnableCheck: ToggleButton | null = null;
 
+	// Cached child refs — looked up once in the constructor instead of on every update()
+	addonCoverImage: Image | null = null;
+	addonTitleLabel: Label | null = null;
+	addonDescLabel: Label | null = null;
+	addonSourceLabel: Label | null = null;
+
 	constructor(index: number, panel: RadioButton) {
 		this.index = index;
 		this.panel = panel;
 
 		this.subText = panel.FindChildTraverse<Label>('AddonSubscribeText');
 		this.addonEnableCheck = this.panel.FindChildTraverse<ToggleButton>('AddonEnable');
+		this.addonCoverImage = panel.FindChildTraverse<Image>('AddonCover');
+		this.addonTitleLabel = panel.FindChildTraverse<Label>('AddonTitle');
+		this.addonDescLabel = panel.FindChildTraverse<Label>('AddonDesc');
+		this.addonSourceLabel = panel.FindChildTraverse<Label>('AddonSource');
 	}
 
 	/**
-	 * Update the addon with the latest information
+	 * Update the addon with the latest information.
+	 * buckets is passed in from updateAddons() so GetAllCampaignBuckets() is called once per
+	 * batch rather than once per addon.
 	 */
-	update() {
+	update(buckets: CampaignBucket[]) {
 		const info = WorkshopAPI.GetAddonMeta(this.index);
 
-		const image = this.panel.FindChildTraverse('AddonCover') as Image;
-		image.SetImage(info.thumb.length > 0 ? info.thumb : 'file://{images}/menu/missing-cover.png');
+		if (this.addonCoverImage)
+			this.addonCoverImage.SetImage(info.thumb.length > 0 ? info.thumb : 'file://{images}/menu/missing-cover.png');
 
-		const title = this.panel.FindChildTraverse('AddonTitle') as Label;
-		title.text = info.title;
+		if (this.addonTitleLabel)
+			this.addonTitleLabel.text = info.title;
 
-		const desc = this.panel.FindChildTraverse('AddonDesc') as Label;
-		// This looks real stupid but let me explain, it take the first line of the description, strips the BBCode, then strips the trailing r that occurs due to improper stripping by WorkshopAPI.GetAddonMeta.
-		desc.text = info.description
-			.split('\n')[0]
-			.replace(/\[\/?\w+.*?\]/g, '')
-			.replace(/r\s*$/, '');
+		if (this.addonDescLabel) {
+			// This looks real stupid but let me explain, it take the first line of the description, strips the BBCode, then strips the trailing r that occurs due to improper stripping by WorkshopAPI.GetAddonMeta.
+			this.addonDescLabel.text = info.description
+				.split('\n')[0]
+				.replace(/\[\/?\w+.*?\]/g, '')
+				.replace(/r\s*$/, '');
+		}
 
-		const buckets = CampaignAPI.GetAllCampaignBuckets();
 		if (!AddonManager.advancedMode && buckets.some((v: CampaignBucket) => v.addon_id === this.index)) {
 			this.panel.visible = false;
 		}
@@ -50,9 +62,10 @@ class AddonEntry {
 
 		if (this.subText) this.subText.text = WorkshopAPI.GetAddonSubscribed(this.index) ? 'Unsubscribe' : 'Subscribe';
 
-		const source = this.panel.FindChildTraverse('AddonSource') as Label;
-		if (info.local) source.text = 'Local Addon';
-		else source.text = 'Workshop Addon ' + info.workshopid;
+		if (this.addonSourceLabel) {
+			if (info.local) this.addonSourceLabel.text = 'Local Addon';
+			else this.addonSourceLabel.text = 'Workshop Addon ' + info.workshopid;
+		}
 	}
 
 	/**
@@ -227,14 +240,31 @@ class AddonManager {
 		}
 	}
 
-	static updateAddons() {
-		for (const addon of this.addons) {
-			addon.update();
-		}
+	static updateAddons(onDone?: () => void) {
+		// Compute campaign buckets once — previously called per-addon inside update(), which
+		// made it O(n) API calls for what is always the same result in one batch.
+		const buckets = CampaignAPI.GetAllCampaignBuckets();
+		const addons = this.addons.slice();
+		const BATCH = 8;
+		let offset = 0;
+
+		const processBatch = () => {
+			const end = Math.min(offset + BATCH, addons.length);
+			for (let i = offset; i < end; i++) addons[i].update(buckets);
+			offset = end;
+			if (offset < addons.length) {
+				$.Schedule(0, processBatch);
+			} else if (onDone) {
+				onDone();
+			}
+		};
+		processBatch();
 	}
 
 	/**
-	 * Populate the initial list of addon entries
+	 * Populate the initial list of addon entries.
+	 * Panel creation is synchronous; metadata updates are batched across frames so the
+	 * list appears immediately rather than blocking until all addons are processed.
 	 */
 	static createAddonEntries() {
 		if (!this.addonContainer) return;
@@ -242,21 +272,21 @@ class AddonManager {
 		this.purgeAddonList();
 
 		const addonCount = WorkshopAPI.GetAddonCount();
-		let anyEnabled = false;
 		for (let i = 0; i < addonCount; ++i) {
 			const panel = $.CreatePanel('RadioButton', this.addonContainer, 'addon' + i);
 			panel.SetPanelEvent('onactivate', () => this.addonSelected(i));
 			panel.LoadLayoutSnippet('AddonEntrySnippet');
-
-			if (WorkshopAPI.GetAddonEnabled(i)) anyEnabled = true;
-
 			this.addons.push(new AddonEntry(i, panel));
 		}
 
-		// If any addons are enabled, we'll default the "select all" button to true
-		if (this.toggleAllButton) this.toggleAllButton.SetSelected(anyEnabled);
-
-		this.updateAddons();
+		// Deferred so the list panels are visible immediately; enabled state resolved after update
+		this.updateAddons(() => {
+			let anyEnabled = false;
+			for (const addon of this.addons) {
+				if (addon.isEnabled()) anyEnabled = true;
+			}
+			if (this.toggleAllButton) this.toggleAllButton.SetSelected(anyEnabled);
+		});
 	}
 
 	static createPredefinedAddonEntries(addons: Addon[]) {
@@ -268,7 +298,6 @@ class AddonManager {
 			const panel = $.CreatePanel('RadioButton', this.addonContainer, 'addon' + addon.index);
 			panel.SetPanelEvent('onactivate', () => this.addonSelected(addon.index));
 			panel.LoadLayoutSnippet('AddonEntrySnippet');
-
 			this.addons.push(new AddonEntry(addon.index, panel));
 		}
 

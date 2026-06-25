@@ -2,14 +2,15 @@
 
 function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
     const contextPanel = $.GetContextPanel();
+    let _handle: number = -1;
     const wrapper = (...args: any[]) => {
         if (!contextPanel || !contextPanel.IsValid()) {
-            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            $.UnregisterForUnhandledEvent(eventName, _handle);
             return;
         }
         callback(...args);
     };
-    $.RegisterForUnhandledEvent(eventName, wrapper);
+    _handle = $.RegisterForUnhandledEvent(eventName, wrapper);
 }
 
 /**
@@ -85,7 +86,11 @@ class ArchipelagoTrapManager {
         }
 
         // Schedule a cleanup sweep in 5 seconds to remove expired traps from storage
-        $.Schedule(5.0, () => this.cleanupExpired());
+        const ctx = $.GetContextPanel();
+        $.Schedule(5.0, () => {
+            if (!ctx || !ctx.IsValid()) return;
+            this.cleanupExpired();
+        });
     }
 
     /**

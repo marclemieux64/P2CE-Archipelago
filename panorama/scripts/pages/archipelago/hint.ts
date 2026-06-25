@@ -78,7 +78,7 @@ class ArchipelagoHint {
                         }
                     }
                 } catch (e) { }
-            });
+            }, true);
 
             // 2. AMARRE DE SYNCHRONISATION DES POINTS
             api.registerStatusListener($.GetContextPanel(), (payload: any) => {
@@ -102,7 +102,7 @@ class ArchipelagoHint {
                         }
                     }
                 } catch (e) { }
-            });
+            }, true);
 
             // 3. ÉCOUTEUR DÉDIÉ POUR LES INDICES
             api.registerHintsListener($.GetContextPanel(), (hintsList: any[]) => {
@@ -115,13 +115,16 @@ class ArchipelagoHint {
                     // Debounce storage write to once per 3s
                     const snapshot = hintsList;
                     if (!ArchipelagoHint.m_HintsStorageFlushSchedule) {
+                        const ctx = $.GetContextPanel();
                         ArchipelagoHint.m_HintsStorageFlushSchedule = $.Schedule(3.0, () => {
                             ArchipelagoHint.m_HintsStorageFlushSchedule = null;
-                            $.persistentStorage.setItem("ArchipelagoLastHintsCacheData", JSON.stringify(snapshot));
+                            if (ctx && ctx.IsValid()) {
+                                $.persistentStorage.setItem("ArchipelagoLastHintsCacheData", JSON.stringify(snapshot));
+                            }
                         });
                     }
                 } catch (e) { }
-            });
+            }, true);
         }
     }
 
@@ -136,7 +139,7 @@ class ArchipelagoHint {
             $.CancelScheduled(this.m_FeedbackHideSchedule);
         }
         this.m_FeedbackHideSchedule = $.Schedule(6.0, () => {
-            lbl.AddClass('hide');
+            if (lbl && lbl.IsValid()) lbl.AddClass('hide');
             this.m_FeedbackHideSchedule = null;
         });
     }

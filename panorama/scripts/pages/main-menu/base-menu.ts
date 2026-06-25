@@ -3,14 +3,15 @@ if (!$.Msg) { $.Msg = (UiToolkitAPI.GetGlobalObject() as any).Msg || ((m: string
 
 function registerSelfCleaningEvent(eventName: string, callback: (...args: any[]) => void) {
     const contextPanel = $.GetContextPanel();
+    let _handle: number = -1;
     const wrapper = (...args: any[]) => {
         if (!contextPanel || !contextPanel.IsValid()) {
-            $.UnregisterForUnhandledEvent(eventName, wrapper);
+            $.UnregisterForUnhandledEvent(eventName, _handle);
             return;
         }
         callback(...args);
     };
-    $.RegisterForUnhandledEvent(eventName, wrapper);
+    _handle = $.RegisterForUnhandledEvent(eventName, wrapper);
 }
 
 class BaseMenu {
@@ -84,6 +85,18 @@ class BaseMenu {
     static music;
 
     static onLoad() {
+        // Restore persisted settings to their convars. AngelScript convars reset to
+        // defaults on game start, so this ensures they're in effect before any map loads.
+        const settingConvars = [
+            'cv_HideHolograms', 'cv_ShowMapStatusHUD',
+            'cv_SkipElevatorRide', 'cv_SkipIntroContainerScene',
+            'cv_SkipBirdScene', 'cv_SkipCeilingScene'
+        ];
+        for (const cv of settingConvars) {
+            const val = $.persistentStorage.getItem(cv) ?? 0;
+            GameInterfaceAPI.ConsoleCommand(`${cv} ${val}`);
+        }
+
         for (const btn of this.buttons) {
             $.DispatchEvent('MainMenuAddButton', btn);
         }

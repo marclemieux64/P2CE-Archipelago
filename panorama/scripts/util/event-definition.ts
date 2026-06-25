@@ -50,6 +50,8 @@ $.DefineEvent('LoadingScreenClearLastMap', 0);
 $.DefineEvent('MainMenuModeRequestCleanup', 0);
 $.DefineEvent('MainMenuPageClosed', 2);
 $.DefineEvent('CampaignMenuRefreshUserSettings', 0);
+$.DefineEvent('MainMenuNotifFailLoad', 0);
+$.DefineEvent('MainMenuSetPauseBlur', 1);
 $.DefineEvent('ReloadCCSettings', 0);
 
 /**
@@ -68,7 +70,13 @@ $.DefineEvent('ArchipelagoDebug', 1, 'state', 'Toggles debug logging in Panorama
 $.DefineEvent("Archipelago_WarpToMenu", 1, "content", "Force map switch");
 $.DefineEvent("ArchipelagoTrapTriggered", 2, "trapName, duration", "Triggered when an Archipelago trap is activated");
 $.DefineEvent("ArchipelagoQueueUpdated", 1, "payload", "Triggered when the Archipelago item queue changes");
+$.DefineEvent("ArchipelagoHideNotifications", 1, "time");
+$.DefineEvent("ArchipelagoDeath", 1, "message");
+$.DefineEvent("ArchipelagoDeathLinkHeartbeat", 0);
 
 // Web API Bridge Events
 $.DefineEvent('ArchipelagoAPI_StatusUpdated', 1, 'jsonPayload', 'Fired when the Archipelago API status is refreshed');
 $.DefineEvent('ArchipelagoAPI_ChatUpdated', 1, 'jsonPayload', 'Fired when new chat messages are received');
+
+// Push notification: Python → netcon → VScript SendToPanorama → immediate debounced poll
+$.DefineEvent('ArchipelagoUpdate', 1, 'content', 'Fired by VScript when Python has new state; triggers an immediate debounced poll');

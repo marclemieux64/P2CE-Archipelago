@@ -13,6 +13,7 @@ class ArchipelagoMapSelect {
     static g_LastMenuVersion: number = -1; // REPLACED: Track exact structural signature versions directly
     static g_LastCheckedCount: number = -1; // REPLACED: Track absolute completion mutations directly
     static g_OpenChapterId: string = '';
+    static g_FirstFocus: boolean = true;
     static g_SelectedMapData: any = null;
     static g_ClickedMapData: any = null; 
     static g_ResetSchedule: any = null;
@@ -159,10 +160,83 @@ class ArchipelagoMapSelect {
         (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoMapSelect = ArchipelagoMapSelect;
     }
 
+    // Processes a status payload. Must be called in the map-select panel's own V8 context
+    // so that $.GetContextPanel() / $('#id') resolve to this panel's children, not the caller's.
+    static handleStatusUpdate(status: any) {
+        if (!status) return;
+
+        const menuVer = status.menu_version !== undefined ? status.menu_version : 0;
+        const checkedCount = (status.checked_locations && status.checked_locations.length) ? status.checked_locations.length : 0;
+
+        if (menuVer === this.g_LastMenuVersion && checkedCount === this.g_LastCheckedCount) {
+            return;
+        }
+
+        this.g_LastMenuVersion = menuVer;
+        this.g_LastCheckedCount = checkedCount;
+
+        if (!status.connected || !status.menu) {
+            this.g_ChapterData = {};
+            this.generateList();
+            this.updateConnectionState();
+            return;
+        }
+
+        const mappedData: any = {};
+        if (status.menu && status.menu.chapters) {
+            status.menu.chapters.forEach((ch: any) => {
+                mappedData[ch.chapter_number] = ch;
+            });
+        }
+        this.g_ChapterData = mappedData;
+
+        const savedChapter = this.g_OpenChapterId;
+        const savedCommand = this.g_SelectedMapCommand;
+
+        this.generateList();
+        this.updateConnectionState();
+
+        if (savedChapter) {
+            const mapList = $('#ChapterMaps_' + savedChapter);
+            const entry = $('#ChapterEntry_' + savedChapter);
+            const wrapper = $('#ChapterWrapper_' + savedChapter);
+            if (mapList && mapList.IsValid() && entry && entry.IsValid()) {
+                entry.AddClass('chapter_entry--active');
+                if (wrapper && wrapper.IsValid()) wrapper.AddClass('chapter_wrapper--active');
+                mapList.RemoveClass('hide');
+                mapList.style.height = 'fit-children';
+                mapList.style.opacity = '1.0';
+            }
+        }
+
+        if (savedCommand) {
+            this.restoreSelection(savedCommand);
+        } else if (this.g_FirstFocus) {
+            this.g_FirstFocus = false;
+            const container = $('#LeftListInner');
+            if (container && container.IsValid() && container.GetChildCount() > 0) {
+                container.GetChild(0).SetFocus();
+                const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));
+                if (sortedKeys.length > 0) {
+                    const firstChId = sortedKeys[0];
+                    const openCh = this.g_ChapterData[firstChId];
+                    if (openCh) {
+                        this.g_LastSelectedEntryData = {
+                            chapter_number: firstChId,
+                            title: $.Localize(`#portal2_Chapter${firstChId}_Title`) || openCh.title,
+                            subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
+                        };
+                    }
+                }
+            }
+        }
+    }
+
     static onLoad() {
         this.ArchipelagoMapSelectInit();
         this.g_LastMenuVersion = -1;
         this.g_LastCheckedCount = -1;
+        this.g_FirstFocus = true;
         $.DispatchEvent('MainMenuSetPageLines', $.Localize('#Archipelago_Maps_Title'), $.Localize('#Archipelago_Maps_Tagline'));
 
         const contextPanel = $.GetContextPanel();
@@ -192,79 +266,18 @@ class ArchipelagoMapSelect {
             }
         });
 
-        let bFirstFocus = true;
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
+            // Initial render: runs synchronously in this panel's context — $.GetContextPanel() is correct.
+            const initialStatus = api.getStatus();
+            if (initialStatus) {
+                this.handleStatusUpdate(initialStatus);
+            }
+
+            // Ongoing updates: use direct listener (avoids Panorama event serialization of large status objects).
             api.registerStatusListener($.GetContextPanel(), (status: any) => {
-                if (!status) return;
-                
-                // FIX: Verify signature metrics instead of converting large payload states to string variants
-                const menuVer = status.menu_version !== undefined ? status.menu_version : 0;
-                const checkedCount = (status.checked_locations && status.checked_locations.length) ? status.checked_locations.length : 0;
-                
-                if (menuVer === this.g_LastMenuVersion && checkedCount === this.g_LastCheckedCount) {
-                    return; // Reconciled layout states matching exactly. Escape payload.
-                }
-                
-                this.g_LastMenuVersion = menuVer;
-                this.g_LastCheckedCount = checkedCount;
-
-                if (!status.connected || !status.menu) {
-                    this.g_ChapterData = {};
-                    this.generateList();
-                    this.updateConnectionState();
-                    return;
-                }
-
-                const mappedData: any = {};
-                if (status.menu && status.menu.chapters) {
-                    status.menu.chapters.forEach((ch: any) => {
-                        mappedData[ch.chapter_number] = ch;
-                    });
-                }
-                this.g_ChapterData = mappedData;
-
-                const savedChapter = this.g_OpenChapterId;
-                const savedCommand = this.g_SelectedMapCommand;
-
-                this.generateList();
-                this.updateConnectionState();
-
-                if (savedChapter) {
-                    const mapList = $('#ChapterMaps_' + savedChapter);
-                    const entry = $('#ChapterEntry_' + savedChapter);
-                    const wrapper = $('#ChapterWrapper_' + savedChapter);
-                    if (mapList && mapList.IsValid() && entry && entry.IsValid()) {
-                        entry.AddClass('chapter_entry--active');
-                        if (wrapper && wrapper.IsValid()) wrapper.AddClass('chapter_wrapper--active');
-                        mapList.RemoveClass('hide');
-                        mapList.style.height = 'fit-children';
-                        mapList.style.opacity = '1.0';
-                    }
-                }
-
-                if (savedCommand) {
-                    this.restoreSelection(savedCommand);
-                } else if (bFirstFocus) {
-                    bFirstFocus = false;
-                    const container = $('#LeftListInner');
-                    if (container && container.IsValid() && container.GetChildCount() > 0) {
-                        container.GetChild(0).SetFocus();
-                        const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));
-                        if (sortedKeys.length > 0) {
-                            const firstChId = sortedKeys[0];
-                            const openCh = this.g_ChapterData[firstChId];
-                            if (openCh) {
-                                this.g_LastSelectedEntryData = {
-                                    chapter_number: firstChId,
-                                    title: $.Localize(`#portal2_Chapter${firstChId}_Title`) || openCh.title,
-                                    subtitle: "", status_text_list: [], command_deactivated: true, is_chapter: true, required_item_icons: []
-                                };
-                            }
-                        }
-                    }
-                }
-            });
+                ArchipelagoMapSelect.handleStatusUpdate(status);
+            }, true);
         }
         this.updateConnectionState();
     }

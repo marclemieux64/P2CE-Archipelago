@@ -205,7 +205,7 @@ class EntityManager {
                 }
 
                 if (alreadyProcessed) {
-                    ArchipelagoLog("Deletion skipped: Hologram already created for " + holoName);
+                    ArchipelagoLog("Deletion s DeleteEntitykipped: Hologram already created for " + holoName);
                     ent.KeyValue("rendermode", "10");
                     Variant killValue;
                     ent.FireInput("Kill", killValue, 0.05f, null, null, 0);
@@ -318,7 +318,7 @@ class EntityManager {
             // PROTECTION RENDU DXVK
             ent.KeyValue("rendermode", "10");
             Variant killValue;
-            ent.FireInput("Kill", killValue, 0.05f, null, null, 0);
+            ent.FireInput("Kill", killValue, 0.10f, null, null, 0);
         }
     }
 

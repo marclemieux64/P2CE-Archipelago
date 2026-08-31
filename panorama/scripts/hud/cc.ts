@@ -139,8 +139,15 @@ class CloseCaptioning {
                     c.FadeOut();
                 }
                 if (c.bReadyToPurge || (time > c.lifetime + 1.5)) {
-                    if (c.panel && c.panel.IsValid()) c.panel.DeleteAsync(0);
-                    if (c.dummy && c.dummy.IsValid()) c.dummy.DeleteAsync(0);
+                    if (c.panel && c.panel.IsValid()) {
+                        c.panel.visible = false;
+                        c.panel.style.visibility = 'collapse';
+                        c.panel.text = '';
+                    }
+                    if (c.dummy && c.dummy.IsValid()) {
+                        c.dummy.visible = false;
+                        c.dummy.style.visibility = 'collapse';
+                    }
                     this.captions.splice(i, 1);
                 }
             }
@@ -155,23 +162,21 @@ class CloseCaptioning {
     }
 
     static wipeCaptions() {
-        // CORRECTION : Supprimer d'abord explicitement les panels via l'API asynchrone sécurisée
         for (let i = 0; i < this.captions.length; i++) {
             const c = this.captions[i];
             if (c.panel && c.panel.IsValid()) {
-                c.panel.DeleteAsync(0);
+                c.panel.visible = false;
+                c.panel.style.visibility = 'collapse';
+                c.panel.text = '';
             }
             if (c.dummy && c.dummy.IsValid()) {
-                c.dummy.DeleteAsync(0);
+                c.dummy.visible = false;
+                c.dummy.style.visibility = 'collapse';
             }
         }
 
         this.captions = [];
-
-        // Nettoyage final des conteneurs sans casser l'arborescence de rendu active
-        if (this.box && this.box.IsValid()) this.box.RemoveAndDeleteChildren();
         if (this.bg && this.bg.IsValid()) {
-            this.bg.RemoveAndDeleteChildren();
             this.bg.style.opacity = 0;
         }
     }

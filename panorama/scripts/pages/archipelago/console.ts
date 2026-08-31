@@ -53,7 +53,13 @@ class ArchipelagoConsole {
         const wrapper = $.GetContextPanel().FindChildTraverse('ArchipelagoInputWrapper');
 
         if (poolContainer) {
-            poolContainer.RemoveAndDeleteChildren();
+            for (const lbl of ArchipelagoConsole.m_LabelPanels) {
+                if (lbl && lbl.IsValid()) {
+                    lbl.visible = false;
+                    lbl.style.visibility = 'collapse';
+                    lbl.text = '';
+                }
+            }
             ArchipelagoConsole.m_LabelPanels = [];
             ArchipelagoConsole.m_DisplayLines = [];
         }
@@ -141,7 +147,13 @@ class ArchipelagoConsole {
         const poolContainer = ArchipelagoConsole.m_Ctx?.FindChildTraverse('ConsolePoolContainer');
         if (!poolContainer || !poolContainer.IsValid()) return;
 
-        poolContainer.RemoveAndDeleteChildren();
+        for (const lbl of ArchipelagoConsole.m_LabelPanels) {
+            if (lbl && lbl.IsValid()) {
+                lbl.visible = false;
+                lbl.style.visibility = 'collapse';
+                lbl.text = '';
+            }
+        }
         ArchipelagoConsole.m_LabelPanels = [];
         ArchipelagoConsole.m_DisplayLines = [];
         ArchipelagoConsole.m_LastDisplayedId = -1;
@@ -149,7 +161,6 @@ class ArchipelagoConsole {
         const startFrom = Math.max(0, chat.length - ArchipelagoConsole.MAX_LABELS);
         const slice = chat.slice(startFrom);
 
-        // Batched insertion: Render latest 50 messages immediately, load older ones across frames
         const CHUNK_SIZE = 50;
         const total = slice.length;
 
@@ -166,9 +177,14 @@ class ArchipelagoConsole {
                 if (msg.id !== undefined && msg.id > ArchipelagoConsole.m_LastDisplayedId)
                     ArchipelagoConsole.m_LastDisplayedId = msg.id;
 
-                const lbl = $.CreatePanel('Label', container, '');
-                lbl.html = true;
-                lbl.AddClass('console_line_item');
+                let lbl = container.FindChild(`ConsoleLine_${ArchipelagoConsole.m_LabelPanels.length}`) as LabelPanel;
+                if (!lbl || !lbl.IsValid()) {
+                    lbl = $.CreatePanel('Label', container, `ConsoleLine_${ArchipelagoConsole.m_LabelPanels.length}`) as LabelPanel;
+                    lbl.html = true;
+                    lbl.AddClass('console_line_item');
+                }
+                lbl.visible = true;
+                lbl.style.visibility = 'visible';
                 lbl.text = msg.cachedMarkup;
                 ArchipelagoConsole.m_LabelPanels.push(lbl);
             }
@@ -209,7 +225,11 @@ class ArchipelagoConsole {
 
         while (ArchipelagoConsole.m_LabelPanels.length > ArchipelagoConsole.MAX_LABELS) {
             const old = ArchipelagoConsole.m_LabelPanels.shift();
-            if (old && old.IsValid()) old.DeleteAsync(0);
+            if (old && old.IsValid()) {
+                old.visible = false;
+                old.style.visibility = 'collapse';
+                old.text = '';
+            }
             ArchipelagoConsole.m_DisplayLines.shift();
         }
 
@@ -310,32 +330,46 @@ class ArchipelagoConsole {
         const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
         if (!box || !input) return;
 
-        box.RemoveAndDeleteChildren();
         const val = input.text.toLowerCase();
+        const items = ArchipelagoConsole.m_FilteredCommands.slice(0, 5);
 
-        ArchipelagoConsole.m_FilteredCommands.slice(0, 5).forEach((cmd, idx) => {
-            const btn = $.CreatePanel('Button', box, '');
-            btn.AddClass('suggestion-item');
-            if (idx === ArchipelagoConsole.m_SelectedCmdIndex) btn.AddClass('selected');
+        for (let i = 0; i < 5; i++) {
+            let btn = box.FindChild(`Suggestion_${i}`);
+            if (i < items.length) {
+                const cmd = items[i];
+                if (!btn || !btn.IsValid()) {
+                    btn = $.CreatePanel('Button', box, `Suggestion_${i}`);
+                    btn.AddClass('suggestion-item');
+                    const lbl = $.CreatePanel('Label', btn, 'SuggestionLabel');
+                    lbl.html = true;
+                }
+                btn.visible = true;
+                btn.style.visibility = 'visible';
+                btn.SetHasClass('selected', i === ArchipelagoConsole.m_SelectedCmdIndex);
+                btn.SetPanelEvent('onactivate', () => {
+                    ArchipelagoConsole.m_SelectedCmdIndex = i;
+                    ArchipelagoConsole.autocompleteSelection();
+                });
 
-            btn.SetPanelEvent('onactivate', () => {
-                ArchipelagoConsole.m_SelectedCmdIndex = idx;
-                ArchipelagoConsole.autocompleteSelection();
-            });
-
-            const lbl = $.CreatePanel('Label', btn, '');
-            lbl.html = true;
-
-            const startIdx = cmd.toLowerCase().indexOf(val);
-            if (startIdx !== -1) {
-                const before = cmd.substring(0, startIdx);
-                const match = cmd.substring(startIdx, startIdx + val.length);
-                const after = cmd.substring(startIdx + val.length);
-                lbl.text = before + "<font color='#ec6726'>" + match + "</font>" + after;
-            } else {
-                lbl.text = cmd;
+                const lbl = btn.FindChild('SuggestionLabel') as LabelPanel;
+                if (lbl && lbl.IsValid()) {
+                    const startIdx = cmd.toLowerCase().indexOf(val);
+                    if (startIdx !== -1) {
+                        const before = cmd.substring(0, startIdx);
+                        const match = cmd.substring(startIdx, startIdx + val.length);
+                        const after = cmd.substring(startIdx + val.length);
+                        lbl.text = before + "<font color='#ec6726'>" + match + "</font>" + after;
+                    } else {
+                        lbl.text = cmd;
+                    }
+                }
+            } else if (btn && btn.IsValid()) {
+                btn.visible = false;
+                btn.style.visibility = 'collapse';
+                const lbl = btn.FindChild('SuggestionLabel') as LabelPanel;
+                if (lbl && lbl.IsValid()) lbl.text = "";
             }
-        });
+        }
     }
 
     static handleHistoryNavigation(isUp: boolean): boolean {

@@ -180,32 +180,46 @@ class ArchipelagoHint {
         const input = $.GetContextPanel().FindChildTraverse('ArchipelagoInput') as any;
         if (!box || !input) return;
 
-        box.RemoveAndDeleteChildren();
         const val = input.text.toLowerCase();
+        const items = this.m_FilteredItems.slice(0, 5);
 
-        this.m_FilteredItems.slice(0, 5).forEach((item, idx) => {
-            const btn = $.CreatePanel('Button', box, '');
-            btn.AddClass('suggestion-item');
-            if (idx === this.m_SelectedIndex) btn.AddClass('selected');
+        for (let i = 0; i < 5; i++) {
+            let btn = box.FindChild(`Suggestion_${i}`);
+            if (i < items.length) {
+                const item = items[i];
+                if (!btn || !btn.IsValid()) {
+                    btn = $.CreatePanel('Button', box, `Suggestion_${i}`);
+                    btn.AddClass('suggestion-item');
+                    const lbl = $.CreatePanel('Label', btn, 'SuggestionLabel');
+                    lbl.html = true;
+                }
+                btn.visible = true;
+                btn.style.visibility = 'visible';
+                btn.SetHasClass('selected', i === this.m_SelectedIndex);
+                btn.SetPanelEvent('onactivate', () => {
+                    this.m_SelectedIndex = i;
+                    this.autocompleteSelection();
+                });
 
-            btn.SetPanelEvent('onactivate', () => {
-                this.m_SelectedIndex = idx;
-                this.autocompleteSelection();
-            });
-
-            const lbl = $.CreatePanel('Label', btn, '');
-            lbl.html = true; 
-
-            const startIdx = item.toLowerCase().indexOf(val);
-            if (startIdx !== -1) {
-                const before = item.substring(0, startIdx);
-                const match = item.substring(startIdx, startIdx + val.length);
-                const after = item.substring(startIdx + val.length);
-                lbl.text = before + "<font color='#ec6726'>" + match + "</font>" + after;
-            } else {
-                lbl.text = item;
+                const lbl = btn.FindChild('SuggestionLabel') as LabelPanel;
+                if (lbl && lbl.IsValid()) {
+                    const startIdx = item.toLowerCase().indexOf(val);
+                    if (startIdx !== -1) {
+                        const before = item.substring(0, startIdx);
+                        const match = item.substring(startIdx, startIdx + val.length);
+                        const after = item.substring(startIdx + val.length);
+                        lbl.text = before + "<font color='#ec6726'>" + match + "</font>" + after;
+                    } else {
+                        lbl.text = item;
+                    }
+                }
+            } else if (btn && btn.IsValid()) {
+                btn.visible = false;
+                btn.style.visibility = 'collapse';
+                const lbl = btn.FindChild('SuggestionLabel') as LabelPanel;
+                if (lbl && lbl.IsValid()) lbl.text = "";
             }
-        });
+        }
     }
 
     static onHintInputSubmit() {
@@ -245,24 +259,49 @@ class ArchipelagoHint {
         if (section) section.ToggleClass('collapsed');
     }
 
+    static reconcileHintList(container: Panel, list: any[], isFound: boolean) {
+        for (let i = 0; i < list.length; i++) {
+            const hint = list[i];
+            let row = container.FindChild(`HintRow_${i}`);
+            if (!row || !row.IsValid()) {
+                row = $.CreatePanel('Panel', container, `HintRow_${i}`);
+                row.AddClass('hint-row');
+                const lbl = $.CreatePanel('Label', row, 'HintLabel');
+                lbl.html = true;
+            }
+            row.visible = true;
+            row.style.visibility = 'visible';
+            row.SetHasClass('hint--found', isFound);
+
+            const lbl = row.FindChild('HintLabel') as LabelPanel;
+            if (lbl && lbl.IsValid()) {
+                lbl.text = hint.html || hint.text || "";
+            }
+        }
+
+        const children = container.Children();
+        for (let i = list.length; i < children.length; i++) {
+            const child = children[i];
+            if (child && child.IsValid()) {
+                child.visible = false;
+                child.style.visibility = 'collapse';
+                const lbl = child.FindChild('HintLabel') as LabelPanel;
+                if (lbl && lbl.IsValid()) lbl.text = "";
+            }
+        }
+    }
+
     static render(hints: any[]) {
         const pending = $.GetContextPanel().FindChildTraverse('HintListPending');
         const done = $.GetContextPanel().FindChildTraverse('HintListDone');
         if (!pending || !done) return;
 
-        hints.sort((a, b) => a.text.localeCompare(b.text));
-        pending.RemoveAndDeleteChildren();
-        done.RemoveAndDeleteChildren();
+        hints.sort((a, b) => (a.text || "").localeCompare(b.text || ""));
+        const pendingHints = hints.filter(h => !h.found);
+        const doneHints = hints.filter(h => h.found);
 
-        hints.forEach(hint => {
-            const row = $.CreatePanel('Panel', hint.found ? done : pending, '');
-            row.AddClass('hint-row');
-            if (hint.found) row.AddClass('hint--found');
-            
-            const lbl = $.CreatePanel('Label', row, '');
-            lbl.html = true; 
-            lbl.text = hint.html || hint.text; 
-        });
+        this.reconcileHintList(pending, pendingHints, false);
+        this.reconcileHintList(done, doneHints, true);
     }
 }
 

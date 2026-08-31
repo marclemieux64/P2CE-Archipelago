@@ -199,7 +199,9 @@ registerSelfCleaningEvent("ArchipelagoDeath", (msg: string) => {
     OnArchipelagoNotify(JSON.stringify({ title: locTitle, message: msg, type: "255 50 50", play_sound: true }));
 });
 
-// --- DISPLAY ENGINE ---
+// --- DISPLAY ENGINE (POOL-BASED TO PREVENT PANGO/PANORAMA TEXT CRASHES) ---
+
+const notificationPool: Panel[] = [];
 
 function buildNotificationPanel(payload: string): Panel | null {
     const container = $.GetContextPanel();
@@ -207,10 +209,89 @@ function buildNotificationPanel(payload: string): Panel | null {
 
     try {
         const data = JSON.parse(payload);
-        const entry = $.CreatePanel('Panel', container, '');
-        if (!entry) return null;
+        let entry: Panel | null = null;
 
-        entry.AddClass('notify-entry');
+        // Try reusing an available panel from the pool
+        while (notificationPool.length > 0) {
+            const pooled = notificationPool.pop();
+            if (pooled && (pooled as any).IsValid()) {
+                entry = pooled;
+                break;
+            }
+        }
+
+        let mainRow: Panel;
+        let accentBar: Panel;
+        let content: Panel;
+        let titleLabel: LabelPanel;
+        let msgLabel: LabelPanel;
+        let timerBar: Panel;
+
+        if (!entry) {
+            entry = $.CreatePanel('Panel', container, '');
+            if (!entry) return null;
+            entry.AddClass('notify-entry');
+
+            mainRow = $.CreatePanel('Panel', entry, 'NotifyMainRow');
+            mainRow.AddClass('notify-main-row');
+
+            accentBar = $.CreatePanel('Panel', mainRow, 'AccentBar');
+            accentBar.AddClass('accent-bar');
+
+            content = $.CreatePanel('Panel', mainRow, 'NotifyContent');
+            content.AddClass('content');
+
+            titleLabel = $.CreatePanel('Label', content, 'Title') as LabelPanel;
+            titleLabel.AddClass('title');
+
+            const messageContainer = $.CreatePanel('Panel', content, 'MessageArea');
+            messageContainer.style.flowChildren = 'right';
+            messageContainer.style.width = '100%';
+
+            msgLabel = $.CreatePanel('Label', messageContainer, 'Message') as LabelPanel;
+            msgLabel.AddClass('body');
+
+            timerBar = $.CreatePanel('Panel', entry, 'TimerBar');
+            timerBar.AddClass('timer-bar');
+        } else {
+            // Reset existing pooled panel
+            entry.RemoveClass('exit-slide');
+            entry.RemoveClass('exit-collapse');
+            entry.RemoveClass('sound-deathlink');
+            entry.RemoveClass('sound-trap');
+            entry.RemoveClass('sound-warp');
+            entry.RemoveClass('sound-goal');
+            entry.RemoveClass('sound-rainbow');
+            entry.RemoveClass('sound-default');
+
+            entry.style.visibility = 'visible';
+            entry.visible = true;
+            entry.style.height = null;
+            entry.style.opacity = '1.0';
+            entry.style.transform = 'none';
+
+            mainRow = entry.FindChild('NotifyMainRow') as Panel;
+            accentBar = (mainRow ? mainRow.FindChild('AccentBar') : entry.FindChildTraverse('AccentBar')) as Panel;
+            content = (mainRow ? mainRow.FindChild('NotifyContent') : entry.FindChildTraverse('NotifyContent')) as Panel;
+            titleLabel = entry.FindChildTraverse('Title') as LabelPanel;
+            msgLabel = entry.FindChildTraverse('Message') as LabelPanel;
+            timerBar = entry.FindChildTraverse('TimerBar') as Panel;
+
+            if (accentBar && accentBar.IsValid()) {
+                accentBar.RemoveClass('rainbow-bg');
+                accentBar.style.backgroundColor = null;
+            }
+            if (titleLabel && titleLabel.IsValid()) {
+                titleLabel.RemoveClass('rainbow-text');
+                titleLabel.style.color = null;
+            }
+            if (timerBar && timerBar.IsValid()) {
+                timerBar.RemoveClass('rainbow-bg');
+                timerBar.RemoveClass('timer-depleting');
+                timerBar.style.backgroundColor = null;
+                timerBar.style.width = '100%';
+            }
+        }
 
         if (data.play_sound) {
             if      (data.type === "255 50 50")  entry.AddClass('sound-deathlink');
@@ -221,49 +302,32 @@ function buildNotificationPanel(payload: string): Panel | null {
             else                                 entry.AddClass('sound-default');
         }
 
-        const mainRow = $.CreatePanel('Panel', entry, '');
-        mainRow.AddClass('notify-main-row');
-
-        const accentBar = $.CreatePanel('Panel', mainRow, 'AccentBar');
-        accentBar.AddClass('accent-bar');
-
-        const content = $.CreatePanel('Panel', mainRow, '');
-        content.AddClass('content');
-
-        const titleLabel = $.CreatePanel('Label', content, 'Title') as LabelPanel;
-        titleLabel.AddClass('title');
         let defaultTitle = $.Localize("#Archipelago_HUD_Default");
         if (defaultTitle === "#Archipelago_HUD_Default") defaultTitle = "ARCHIPELAGO";
-        titleLabel.text = data.title || defaultTitle;
-
-        const messageContainer = $.CreatePanel('Panel', content, 'MessageArea');
-        messageContainer.style.flowChildren = 'right';
-        messageContainer.style.width = '100%';
-
-        if (data.html) {
-            const msgLabel = $.CreatePanel('Label', messageContainer, 'Message') as LabelPanel;
-            msgLabel.AddClass('body');
-            msgLabel.html = true;
-            msgLabel.text = data.html;
-        } else {
-            const msgLabel = $.CreatePanel('Label', messageContainer, 'Message') as LabelPanel;
-            msgLabel.AddClass('body');
-            if (data.dimmed) msgLabel.AddClass('body-dim');
-            msgLabel.text = data.message || "";
+        if (titleLabel && titleLabel.IsValid()) {
+            titleLabel.text = data.title || defaultTitle;
         }
 
-        const timerBar = $.CreatePanel('Panel', entry, 'TimerBar');
-        timerBar.AddClass('timer-bar');
+        if (msgLabel && msgLabel.IsValid()) {
+            msgLabel.SetHasClass('body-dim', Boolean(data.dimmed));
+            if (data.html) {
+                msgLabel.html = true;
+                msgLabel.text = data.html;
+            } else {
+                msgLabel.html = false;
+                msgLabel.text = data.message || "";
+            }
+        }
 
         if (data.type === "rainbow") {
-            accentBar.AddClass('rainbow-bg');
-            titleLabel.AddClass('rainbow-text');
-            timerBar.AddClass('rainbow-bg');
+            if (accentBar && accentBar.IsValid()) accentBar.AddClass('rainbow-bg');
+            if (titleLabel && titleLabel.IsValid()) titleLabel.AddClass('rainbow-text');
+            if (timerBar && timerBar.IsValid()) timerBar.AddClass('rainbow-bg');
         } else if (data.type && data.type.includes(" ")) {
             const rgb = "rgb(" + data.type.replace(/ /g, ",") + ")";
-            accentBar.style.backgroundColor = rgb;
-            titleLabel.style.color = rgb;
-            timerBar.style.backgroundColor = rgb;
+            if (accentBar && accentBar.IsValid()) accentBar.style.backgroundColor = rgb;
+            if (titleLabel && titleLabel.IsValid()) titleLabel.style.color = rgb;
+            if (timerBar && timerBar.IsValid()) timerBar.style.backgroundColor = rgb;
         }
 
         return entry;
@@ -288,7 +352,12 @@ function exitNotification(panel: Panel) {
         $.Schedule(0.22, () => {
             if (panel && (panel as any).IsValid()) {
                 panel.style.visibility = 'collapse';
-                panel.DeleteAsync(0);
+                panel.visible = false;
+                const titleLabel = panel.FindChildTraverse('Title') as LabelPanel;
+                const msgLabel = panel.FindChildTraverse('Message') as LabelPanel;
+                if (titleLabel && titleLabel.IsValid()) titleLabel.text = "";
+                if (msgLabel && msgLabel.IsValid()) msgLabel.text = "";
+                notificationPool.push(panel);
             }
             checkWarpDrain();
         });

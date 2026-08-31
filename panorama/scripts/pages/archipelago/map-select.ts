@@ -684,24 +684,39 @@ class ArchipelagoMapSelect {
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         const status = api ? api.getStatus() : null;
 
+        let errEntry = container.FindChild('ErrorEntry');
         if (!this.g_ChapterData || Object.keys(this.g_ChapterData).length === 0) {
-            container.RemoveAndDeleteChildren();
-            const entry = $.CreatePanel('Panel', container, 'ErrorEntry');
-            entry.AddClass('error_entry');
-            const label = $.CreatePanel('Label', entry, '') as LabelPanel;
-
-            if (!api || (status && status.client_offline)) {
-                label.text = $.Localize("#Archipelago_Status_NoClient") + "\n" + $.Localize("#Archipelago_Status_LaunchClient");
-            } else if (status && !status.connected) {
-                label.text = $.Localize("#Archipelago_Status_NotConnected");
-            } else {
-                label.text = $.Localize("#Archipelago_Status_Loading");
+            if (!errEntry || !errEntry.IsValid()) {
+                errEntry = $.CreatePanel('Panel', container, 'ErrorEntry');
+                errEntry.AddClass('error_entry');
+                $.CreatePanel('Label', errEntry, 'ErrorLabel');
+            }
+            errEntry.visible = true;
+            errEntry.style.visibility = 'visible';
+            const label = errEntry.FindChild('ErrorLabel') as LabelPanel;
+            if (label && label.IsValid()) {
+                if (!api || (status && status.client_offline)) {
+                    label.text = $.Localize("#Archipelago_Status_NoClient") + "\n" + $.Localize("#Archipelago_Status_LaunchClient");
+                } else if (status && !status.connected) {
+                    label.text = $.Localize("#Archipelago_Status_NotConnected");
+                } else {
+                    label.text = $.Localize("#Archipelago_Status_Loading");
+                }
+            }
+            const children = container.Children();
+            for (const child of children) {
+                if (child.id !== 'ErrorEntry') {
+                    child.visible = false;
+                    child.style.visibility = 'collapse';
+                }
             }
             return;
         }
 
-        const errEntry = container.FindChild('ErrorEntry');
-        if (errEntry && errEntry.IsValid()) errEntry.DeleteAsync(0);
+        if (errEntry && errEntry.IsValid()) {
+            errEntry.visible = false;
+            errEntry.style.visibility = 'collapse';
+        }
 
         const isHidingCounts = ($.persistentStorage.getItem('cv_HideLocationCounts') ?? "0").toString() === "1";
         const sortedKeys = Object.keys(this.g_ChapterData).sort((a, b) => parseInt(a) - parseInt(b));

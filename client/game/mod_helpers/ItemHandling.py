@@ -86,7 +86,7 @@ def handle_map_start(map_code: str, items_missing: list) -> list[str]:
     """
     Handles item infrastructure actions when loading a level (as done previously).
     """
-    from game.ItemNames import potatos
+    from ..ItemNames import potatos
     commands = []
     if map_code in maps_with_potatos and potatos in items_missing:
         commands.append("RemovePotatosFromGun\n")
@@ -120,7 +120,6 @@ map_specific_commands: list[MapCommand] = [
     MapCommand("sp_a4_finale4", potatos, ["BlockWheatleyFight\n"]),
     MapCommand("sp_a2_laser_stairs", reflection_cube, ["AddScriptAtPos -352 -288 -32 trigger_once OnStartTouch 'DeleteEntity models/props/reflection_cube.mdl' 0.5 1\n"]),
     MapCommand("sp_a2_ricochet", laser_catcher, ["DeleteEntity \"lower_blockade_player_teleport_trigger\" 0\n"]),
-    MapCommand("sp_a2_laser_relays", reflection_cube, ["DeleteEntity \"laser_cube_spawner\" 1\n"]),
     MapCommand("sp_a2_laser_relays", reflection_cube, ["DeleteEntity \"laser_cube_spawner\" 1\n"]),
     MapCommand("sp_a1_intro1", weighted_cube, ["DeleteEntity \"entity_box_maker_rm1\" 1\n"]),
     MapCommand("sp_a2_turret_intro", turrets, ["DisableEntityPhysics npc_portal_turret_floor\n"]),

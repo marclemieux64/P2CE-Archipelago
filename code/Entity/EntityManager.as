@@ -1007,18 +1007,7 @@ class EntityManager {
 
         g_Archipelago.SafeAddOutput(EntityList().FindByName(null, "sphere_entrance_potatos_button"), "OnPressed", "hudhint_no_potatos", "ShowHint", "", 0.0f, -1);
         
-        CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
-        if (cmd !is null) {
-            Variant vMix1, vMix2;
-            
-            vMix1.SetString("snd_setmixer potatosVO vol 0.0");
-            cmd.FireInput("Command", vMix1, 0.2f, null, null, 0);
-            
-            vMix2.SetString("snd_setmixer gladosVO vol 0.0");
-            cmd.FireInput("Command", vMix2, 0.2f, null, null, 0);
-
-            g_Archipelago.CallVScript("MutePotatOSSubtitles(true)");
-        }
+        g_Archipelago.CallVScript("MutePotatOSSubtitles(true)");
     }
 
     void RemovePotatosFromGun() {
@@ -1066,13 +1055,7 @@ class EntityManager {
             }
         }
         
-        CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
-        if (cmd !is null) {
-            Variant vMix;
-            vMix.SetString("snd_setmixer potatosVO vol 0.0");
-            cmd.FireInput("Command", vMix, 0.2f, null, null, 0);
-            g_Archipelago.CallVScript("MutePotatOSSubtitles(true)");
-        }
+        g_Archipelago.CallVScript("MutePotatOSSubtitles(true)");
         ArchipelagoLog("RemovePotatosFromGun execution finished.");
     }
 }

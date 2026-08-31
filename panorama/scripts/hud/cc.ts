@@ -1,81 +1,73 @@
 'use strict';
 
-$.Msg("CC: Loading Smart-Filter cc.ts (Back-to-back blocking & PotatOS Mute)...");
+$.Msg("CC: Loading Smart-Filter cc.ts (Pooled Slots & PotatOS Mute)...");
 
-class CaptionEntry {
-    lifetime: number;
+interface CaptionSlot {
     panel: Label;
     dummy: Panel;
-    bMarkedForDeletion: boolean = false;
-    bReadyToPurge: boolean = false;
-    height: number;
+    active: boolean;
     token: string;
     text: string;
-
-    constructor(token: string, caption: any, lifetime: number) {
-        this.lifetime = lifetime;
-        this.token = token;
-        this.text = caption.text || "";
-
-        let style = `font-size: ${CloseCaptioning.settings.fontSize}px; font-family: 'Lexend';`;
-        if (CloseCaptioning.settings.textAlign === 1) style += 'text-align: center;';
-        else if (CloseCaptioning.settings.textAlign === 2) style += 'text-align: right;';
-
-        this.panel = $.CreatePanel('Label', CloseCaptioning.box, '', {
-            class: 'closecaptions__text',
-            style: style,
-            html: true,
-            text: this.text
-        });
-
-        this.dummy = $.CreatePanel('Panel', CloseCaptioning.bg, '', {
-            class: 'closecaptions__dummy'
-        });
-
-        this.panel.style.width = `${CloseCaptioning.CAPTION_WIDTH}px`;
-        this.height = this.panel.GetHeightForText(CloseCaptioning.CAPTION_WIDTH, this.panel.text);
-
-        this.panel.style.opacity = 1;
-        this.panel.style.height = `${this.height > 0 ? this.height : 24}px`;
-        this.dummy.style.height = `${(this.height > 0 ? this.height : 24) + 4}px`;
-
-        $.RegisterEventHandler('PropertyTransitionEnd', this.panel, (s: string, prop: keyof Style) => {
-            if (prop === 'opacity' && this.panel && this.panel.IsValid() && this.panel.IsTransparent()) {
-                if (this.dummy && this.dummy.IsValid()) {
-                    this.dummy.style.height = '0px';
-                    $.RegisterEventHandler('PropertyTransitionEnd', this.dummy, (ds: string, dprop: keyof Style) => {
-                        if (dprop === 'height') { this.bReadyToPurge = true; }
-                    });
-                }
-            }
-        });
-    }
-
-    FadeOut() {
-        if (!this.panel || !this.panel.IsValid() || this.bMarkedForDeletion) return;
-        this.panel.style.opacity = 0;
-        this.bMarkedForDeletion = true;
-        $.Schedule(0.1, () => { this.bReadyToPurge = true; });
-    }
+    lifetime: number;
+    fading: boolean;
 }
 
 class CloseCaptioning {
-    static captions: Array<CaptionEntry> = [];
     static box: Panel;
     static bg: Panel;
     static CAPTION_WIDTH = 1102;
-    static MAX_VISIBLE = 1;
+    static POOL_SIZE = 2;
 
+    static slots: Array<CaptionSlot> = [];
     static settings = { bgOpacity: 0.75, fontSize: 20, fontType: 0, textAlign: 0 };
     static m_Time: number = 0;
+    static lastCaptionText: string = "";
 
     static init() {
         this.box = $<Panel>('#CaptionsBox')!;
         this.bg = $<Panel>('#CaptionsBg')!;
 
         const _ctx = $.GetContextPanel();
+        if (!_ctx || !this.box || !this.bg) return;
 
-        // 1. DÉFINITION DE L'ÉVÉNEMENT (Une seule fois au démarrage)
+        // Initialize static panel pool once
+        this.slots = [];
+        for (let i = 0; i < this.POOL_SIZE; i++) {
+            let style = `font-size: ${this.settings.fontSize}px;`;
+            if (this.settings.textAlign === 1) style += ' text-align: center;';
+            else if (this.settings.textAlign === 2) style += ' text-align: right;';
+
+            const panel = $.CreatePanel('Label', this.box, `CaptionLabel_${i}`, {
+                class: 'closecaptions__text',
+                style: style,
+                html: true,
+                text: ''
+            });
+
+            const dummy = $.CreatePanel('Panel', this.bg, `CaptionDummy_${i}`, {
+                class: 'closecaptions__dummy'
+            });
+
+            panel.style.width = `${this.CAPTION_WIDTH}px`;
+            panel.style.opacity = 0;
+            panel.style.height = '0px';
+
+            dummy.style.width = `${this.CAPTION_WIDTH}px`;
+            dummy.style.height = '0px';
+            dummy.style.opacity = 0;
+
+            this.slots.push({
+                panel: panel,
+                dummy: dummy,
+                active: false,
+                token: '',
+                text: '',
+                lifetime: 0,
+                fading: false
+            });
+        }
+
+        // 1. DÉFINITION DE L'ÉVÉNEMENT
         $.DefineEvent('MutePotatos', 1, 'active', 'Mutes all PotatOS/GLaDOS related captions');
 
         // 2. RÉCEPTION DU SIGNAL DE SOURDINE
@@ -106,52 +98,101 @@ class CloseCaptioning {
                 }
             }
 
-            // 4. FILTRE "BACK-TO-BACK"
-            if (this.captions.length > 0) {
-                const lastEntry = this.captions[this.captions.length - 1];
-                if (lastEntry.text === caption.text) {
-                    return;
-                }
+            // Filtre Back-to-Back
+            if (this.lastCaptionText === caption.text) {
+                return;
             }
-
-            // 5. ÉJECTION SI PLEIN
-            if (this.captions.length >= this.MAX_VISIBLE) {
-                this.captions[0].FadeOut();
-            }
+            this.lastCaptionText = caption.text;
 
             const now = (time !== undefined && time > 0) ? time : this.m_Time;
             const duration = (lifetime < 0.1) ? 0.1 : lifetime;
 
-            this.captions.push(new CaptionEntry(token, caption, now + duration));
-            if (this.bg) this.bg.style.opacity = 1;
+            // Find an inactive slot, or the oldest slot to replace
+            let targetSlot: CaptionSlot = this.slots[0];
+            let foundInactive = false;
+            for (let i = 0; i < this.slots.length; i++) {
+                if (!this.slots[i].active) {
+                    targetSlot = this.slots[i];
+                    foundInactive = true;
+                    break;
+                }
+            }
+
+            if (!foundInactive) {
+                // Pick slot with earliest lifetime
+                let oldestIdx = 0;
+                let earliestLife = this.slots[0].lifetime;
+                for (let i = 1; i < this.slots.length; i++) {
+                    if (this.slots[i].lifetime < earliestLife) {
+                        earliestLife = this.slots[i].lifetime;
+                        oldestIdx = i;
+                    }
+                }
+                targetSlot = this.slots[oldestIdx];
+            }
+
+            // Update slot in-place
+            targetSlot.active = true;
+            targetSlot.fading = false;
+            targetSlot.token = token || '';
+            targetSlot.text = caption.text;
+            targetSlot.lifetime = now + duration;
+
+            targetSlot.panel.text = caption.text;
+            const textHeight = targetSlot.panel.GetHeightForText(this.CAPTION_WIDTH, targetSlot.panel.text);
+            const h = textHeight > 0 ? textHeight : 24;
+
+            targetSlot.panel.style.height = `${h}px`;
+            targetSlot.panel.style.opacity = 1;
+
+            targetSlot.dummy.style.height = `${h + 4}px`;
+            targetSlot.dummy.style.opacity = 1;
+
+            if (this.bg && this.bg.IsValid()) {
+                this.bg.style.opacity = 1;
+            }
         };
 
         _displayHandle = $.RegisterForUnhandledEvent('DisplayCaptionRequest', onDisplay as any);
 
-        // 6. L'HORLOGE DES SOUS-TITRES
+        // 4. L'HORLOGE DES SOUS-TITRES
         $.RegisterEventHandler('CaptionTick', $.GetContextPanel(), (time: number) => {
             this.m_Time = time;
-            if (this.captions.length === 0) return;
+            let anyActive = false;
 
-            for (let i = this.captions.length - 1; i >= 0; i--) {
-                const c = this.captions[i];
-                if (time >= c.lifetime) {
-                    c.FadeOut();
-                }
-                if (c.bReadyToPurge || (time > c.lifetime + 1.5)) {
-                    if (c.panel && c.panel.IsValid()) {
-                        c.panel.visible = false;
-                        c.panel.style.visibility = 'collapse';
-                        c.panel.text = '';
+            for (let i = 0; i < this.slots.length; i++) {
+                const slot = this.slots[i];
+                if (!slot.active) continue;
+
+                if (time >= slot.lifetime) {
+                    if (!slot.fading) {
+                        slot.fading = true;
+                        if (slot.panel && slot.panel.IsValid()) slot.panel.style.opacity = 0;
+                        if (slot.dummy && slot.dummy.IsValid()) slot.dummy.style.height = '0px';
                     }
-                    if (c.dummy && c.dummy.IsValid()) {
-                        c.dummy.visible = false;
-                        c.dummy.style.visibility = 'collapse';
+
+                    if (time >= slot.lifetime + 0.3) {
+                        slot.active = false;
+                        slot.fading = false;
+                        slot.text = '';
+                        if (slot.panel && slot.panel.IsValid()) {
+                            slot.panel.style.height = '0px';
+                            slot.panel.text = '';
+                        }
+                    } else {
+                        anyActive = true;
                     }
-                    this.captions.splice(i, 1);
+                } else {
+                    anyActive = true;
                 }
             }
-            if (this.captions.length === 0 && this.bg) this.bg.style.opacity = 0;
+
+            if (!anyActive) {
+                this.lastCaptionText = "";
+                if (this.bg && this.bg.IsValid()) {
+                    this.bg.style.opacity = 0;
+                }
+            }
         });
 
         let _mapUnloadHandle: number = -1;
@@ -162,20 +203,26 @@ class CloseCaptioning {
     }
 
     static wipeCaptions() {
-        for (let i = 0; i < this.captions.length; i++) {
-            const c = this.captions[i];
-            if (c.panel && c.panel.IsValid()) {
-                c.panel.visible = false;
-                c.panel.style.visibility = 'collapse';
-                c.panel.text = '';
+        this.lastCaptionText = "";
+        for (let i = 0; i < this.slots.length; i++) {
+            const slot = this.slots[i];
+            slot.active = false;
+            slot.fading = false;
+            slot.text = '';
+            slot.token = '';
+            slot.lifetime = 0;
+
+            if (slot.panel && slot.panel.IsValid()) {
+                slot.panel.style.opacity = 0;
+                slot.panel.style.height = '0px';
+                slot.panel.text = '';
             }
-            if (c.dummy && c.dummy.IsValid()) {
-                c.dummy.visible = false;
-                c.dummy.style.visibility = 'collapse';
+            if (slot.dummy && slot.dummy.IsValid()) {
+                slot.dummy.style.opacity = 0;
+                slot.dummy.style.height = '0px';
             }
         }
 
-        this.captions = [];
         if (this.bg && this.bg.IsValid()) {
             this.bg.style.opacity = 0;
         }

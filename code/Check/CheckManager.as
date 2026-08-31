@@ -17,7 +17,7 @@ class TrackedCamera {
     CBaseEntity@ entity;
     string identifier;
 
-    TrackedCamera(CBaseEntity@ ent, const string&in id) {
+    TrackedCamera(CBaseEntity@ ent, string id) {
         @entity = ent;
         identifier = id;
     }
@@ -238,7 +238,7 @@ class CheckManager {
         }
     }
 
-    void SetCheckedMaps(const array<string>&in checkedMaps) {
+    void SetCheckedMaps(array<string> checkedMaps) {
         m_checkedMaps = checkedMaps;
 
         for (uint i = 0; i < m_activeLocations.length(); i++) {
@@ -458,7 +458,7 @@ class CheckManager {
         }
     }
 
-    void SetCheckedCameras(const array<string>&in parsedCameras) {
+    void SetCheckedCameras(array<string> parsedCameras) {
         m_checkedCameras.resize(0);
         for (uint i = 0; i < parsedCameras.length(); i++) {
             m_checkedCameras.insertLast(parsedCameras[i]);
@@ -477,7 +477,7 @@ class CheckManager {
     // RATMAN DEN BUTTON CHECKS
     // =============================================================
 
-    void SetCheckedButtons(const array<string>&in parsedButtons) {
+    void SetCheckedButtons(array<string> parsedButtons) {
         VerifyMapChange();
 
         m_checkedButtons.resize(0);
@@ -728,7 +728,7 @@ class CheckManager {
         }
     }
 
-    void SetVitrifiedStatus(const array<string>&in checkedDoors) {
+    void SetVitrifiedStatus(array<string> checkedDoors) {
         m_checkedVitrifiedDoors.resize(0);
         for (uint i = 0; i < checkedDoors.length(); i++) {
             m_checkedVitrifiedDoors.insertLast("Vitrified Door " + checkedDoors[i]);
@@ -847,7 +847,7 @@ class CheckManager {
         }
     }
 
-    void SetCheckedScreens(const array<string>&in parsedScreens) {
+    void SetCheckedScreens(array<string> parsedScreens) {
         m_checkedScreens.resize(0);
         for (uint i = 0; i < parsedScreens.length(); i++) {
             m_checkedScreens.insertLast(parsedScreens[i]);

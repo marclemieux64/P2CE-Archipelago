@@ -55,7 +55,7 @@ class ArchipelagoManager {
 
     // --- STATE GETTERS & SETTERS ---
     string GetCurrentMap() const { return m_currentMap; }
-    void SetCurrentMap(const string& in mapName) { m_currentMap = mapName; }
+    void SetCurrentMap(string mapName) { m_currentMap = mapName; }
 
     int GetTransitionScriptCount() const { return m_transitionScriptCount; }
     void SetTransitionScriptCount(int val) { m_transitionScriptCount = val; }

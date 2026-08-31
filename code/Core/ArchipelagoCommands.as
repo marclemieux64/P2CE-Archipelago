@@ -6,7 +6,7 @@
 // All commands are registered as global functions and delegate to g_Archipelago.
 
 // --- Helper Functions ---
-string CleanArg(const string&in arg) {
+string CleanArg(string arg) {
     return arg.replace("[", "").replace("]", "").replace("\"", "").replace(",", "");
 }
 

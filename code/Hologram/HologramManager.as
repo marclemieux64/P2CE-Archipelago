@@ -626,7 +626,7 @@ class HologramManager {
         }
     }
 
-    void OverrideCube(const string&in name, CBaseEntity@ ent, Vector&out targetPos, QAngle&out targetAng, int&out targetSkin, float&out targetScale, bool&out shouldParent, bool&out absoluteAngles) {
+    void OverrideCube(string name, CBaseEntity@ ent, Vector&out targetPos, QAngle&out targetAng, int&out targetSkin, float&out targetScale, bool&out shouldParent, bool&out absoluteAngles) {
         targetPos = Vector(0, 0, 0);
         targetAng = QAngle(0, 0, 0);
         targetSkin = 4;
@@ -649,7 +649,7 @@ class HologramManager {
         }
     }
 
-    void OverrideGel(const string&in name, CBaseEntity@ ent, Vector&out targetPos, QAngle&out targetAng, int&out targetSkin, float&out targetScale, bool&out shouldParent, bool&out absoluteAngles) {
+    void OverrideGel(string name, CBaseEntity@ ent, Vector&out targetPos, QAngle&out targetAng, int&out targetSkin, float&out targetScale, bool&out shouldParent, bool&out absoluteAngles) {
         targetPos = Vector(0, 0, 0);
         targetAng = QAngle(180, 0, 0);
         targetSkin = 4;

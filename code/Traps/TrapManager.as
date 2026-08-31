@@ -199,7 +199,7 @@ class TrapManager {
         m_traps.insertLast(SlipperyFloorTrap());
     }
 
-    void TriggerTrap(const string& in trapName, const CommandArgs@ args) {
+    void TriggerTrap(string trapName, const CommandArgs@ args) {
         for (uint i = 0; i < m_traps.length(); i++) {
             if (m_traps[i].GetName() == trapName) {
                 m_traps[i].Trigger(args);

@@ -38,7 +38,7 @@ class EntityManager {
         ArchipelagoLog("Hooked output '" + output + "' on '" + targets.length() + "' entities matched by '" + target_name + "' to delete '" + core_name + "' in 5s");
     }
 
-    void DeleteEntity(const string&in entity_name, bool create_holo = true) {
+    void DeleteEntity(string entity_name, bool create_holo = true) {
         string mapName = g_Archipelago.GetCurrentMap();
         
         // 1. Blindage et Nettoyage de la chaîne corrompue

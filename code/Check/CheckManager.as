@@ -16,10 +16,14 @@ class HologramConfig {
 class TrackedCamera {
     CBaseEntity@ entity;
     string identifier;
+    Vector initialPos;
+    QAngle initialAng;
 
-    TrackedCamera(CBaseEntity@ ent, string id) {
+    TrackedCamera(CBaseEntity@ ent, string id, Vector pos, QAngle ang) {
         @entity = ent;
         identifier = id;
+        initialPos = pos;
+        initialAng = ang;
     }
 }
 
@@ -378,7 +382,7 @@ class CheckManager {
                     }
                 }
                 if (!alreadyTracked) {
-                    m_trackedCameras.insertLast(TrackedCamera(camera, camIdentifier));
+                    m_trackedCameras.insertLast(TrackedCamera(camera, camIdentifier, camPos, baseAng));
                 }
             }
         }
@@ -415,14 +419,15 @@ class CheckManager {
         }
 
         for (int i = int(trackingCount) - 1; i >= 0; i--) {
-            CBaseEntity@ camera = m_trackedCameras[i].entity;
+            TrackedCamera@ tracked = m_trackedCameras[i];
+            CBaseEntity@ camera = tracked.entity;
 
             if (camera is null) {
                 m_trackedCameras.removeAt(i);
                 continue;
             }
 
-            string identifier = m_trackedCameras[i].identifier;
+            string identifier = tracked.identifier;
 
             // Checked externally on Archipelago server? Pop tracker handle.
             if (m_checkedCameras.find(identifier.tolower()) != -1) {
@@ -432,25 +437,23 @@ class CheckManager {
 
             bool isPhysicsMove = (camera.GetMoveType() == MOVETYPE_VPHYSICS);
             Vector vel = camera.GetAbsVelocity();
+            Vector curPos = camera.GetAbsOrigin();
+            QAngle curAng = camera.GetAbsAngles();
 
-            // Only query the Havok physics body when the entity is actually under vphysics
-            // simulation. Calling GetPhysicsObject() on a non-vphysics entity can return a
-            // stale IPhysicsObject* whose internal hkpRigidBody motion state is null;
-            // GetVelocity() then dereferences null+0x50 → SIGSEGV in vphysics.so.
-            if (isPhysicsMove) {
-                IPhysicsObject@ physObj = camera.GetPhysicsObject();
-                if (physObj !is null) {
-                    // EXTREMELY IMPORTANT: We do not call Wake(). If the camera sleeps, its velocity is zero.
-                    Vector physVel, physAngVel;
-                    physObj.GetVelocity(physVel, physAngVel);
-                    if (physVel.LengthSqr() > vel.LengthSqr()) {
-                        vel = physVel;
-                    }
-                }
-            }
+            float dx = curAng.x - tracked.initialAng.x;
+            float dy = curAng.y - tracked.initialAng.y;
+            float dz = curAng.z - tracked.initialAng.z;
 
-            // Evaluation threshold parameters
-            if ((isPhysicsMove && vel.z < -5.0f) || vel.z < -20.0f) {
+            // Detect camera detachment/knockoff using native entity transform and velocity.
+            // We intentionally do NOT query IPhysicsObject or Havok rigid body internals,
+            // which dereferences invalid internal motion state and causes SIGSEGV in vphysics.so.
+            bool isKnocked = isPhysicsMove ||
+                             (vel.LengthSqr() > 25.0f) ||
+                             (vel.z < -5.0f) ||
+                             ((curPos - tracked.initialPos).LengthSqr() > 16.0f) ||
+                             ((dx * dx + dy * dy + dz * dz) > 100.0f);
+
+            if (isKnocked) {
                 Msgl("camera_knocked:" + identifier);
                 m_locallyKnockedCameras.insertLast(identifier.tolower());
                 m_trackedCameras.removeAt(i);

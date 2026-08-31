@@ -65,14 +65,24 @@ var ArchipelagoMapStatusHUD = class {
             }
 
             const showHUD = String($.persistentStorage.getItem('cv_ShowMapStatusHUD') ?? "0") !== "1";
-            ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, showHUD);
+            $.Schedule(0.0, () => {
+                const ctx = $.GetContextPanel();
+                if (ctx && ctx.IsValid()) {
+                    ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, showHUD);
+                }
+            });
         });
 
         const api = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
         if (api) {
             api.registerStatusListener($.GetContextPanel(), (status: any) => {
                 if (ArchipelagoMapStatusHUD.m_CurrentMapName) {
-                    ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, ArchipelagoMapStatusHUD.m_PendingShow);
+                    $.Schedule(0.0, () => {
+                        const ctx = $.GetContextPanel();
+                        if (ctx && ctx.IsValid()) {
+                            ArchipelagoMapStatusHUD.updateStatus(ArchipelagoMapStatusHUD.m_CurrentMapName, false, ArchipelagoMapStatusHUD.m_PendingShow);
+                        }
+                    });
                 }
             });
         }

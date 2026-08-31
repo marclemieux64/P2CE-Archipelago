@@ -4,7 +4,7 @@ try { $.DefineEvent("ArchipelagoAPI_StatusUpdated", 1, "json"); } catch (e) {}
 try { $.DefineEvent("ArchipelagoAPI_ChatUpdated", 1, "json"); } catch (e) {}
 try { $.DefineEvent("ArchipelagoAPI_HintsUpdated", 1, "json"); } catch (e) {}
 try { $.DefineEvent("ArchipelagoUpdate", 1, "content"); } catch (e) {}
-try { $.DefineEvent("ArchipelagoMapNameUpdated", 1, "payload"); } catch (e) {}
+// Event defined centrally in event-definition.ts
 
 const globalObj = UiToolkitAPI.GetGlobalObject() as any;
 

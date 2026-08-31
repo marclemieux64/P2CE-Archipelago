@@ -409,24 +409,29 @@ class ArchipelagoMapSelect {
     }
 
     static createIconCell(parentPanel: any, cellId: string, svgName: string, isMissingItem: boolean, mapData: any, iconIndex: number) {
-        const cell = $.CreatePanel('Panel', parentPanel, cellId);
-        cell.AddClass('hud_icon_cell');
+        let cell = parentPanel.FindChild(cellId);
+        if (!cell || !cell.IsValid()) {
+            cell = $.CreatePanel('Panel', parentPanel, cellId);
+            cell.AddClass('hud_icon_cell');
+        }
+        cell.visible = true;
+        cell.RemoveClass('collapse');
 
-        const img = $.CreatePanel('Image', cell, cellId + '_Image') as ImagePanel;
-        img.AddClass(isMissingItem ? 'requirement_svg_icon' : 'status_svg_icon');
+        let img = cell.FindChild(cellId + '_Image') as ImagePanel;
+        if (!img || !img.IsValid()) {
+            img = $.CreatePanel('Image', cell, cellId + '_Image') as ImagePanel;
+            img.AddClass(isMissingItem ? 'requirement_svg_icon' : 'status_svg_icon');
+        }
+        img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
 
         let targetBadgeText = "";
         const activeSubs = mapData.active_sub_keys || [];
-        // CORRECTIF 1: Rétablissement du décalage de -1 car le premier index (0) de statusList correspond à la map elle-même
         const typeKey = activeSubs[iconIndex - 1];
 
         if (!isMissingItem) {
-            img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
-
             if (iconIndex === 0) {
                 targetBadgeText = "#Archipelago_Maps_Check_Tag";
             } else if (typeKey && ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey]) {
-                // CORRECTIF 2: Remplacement de la chaîne codée en dur par la valeur dynamique de la caméra ("camera")
                 targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[typeKey];
             } else if (svgName && ArchipelagoMapSelect.ICON_BADGE_MAP[svgName]) {
                 targetBadgeText = ArchipelagoMapSelect.ICON_BADGE_MAP[svgName];
@@ -434,16 +439,28 @@ class ArchipelagoMapSelect {
 
             if (svgName === "uncheck") {
                 img.AddClass('status_icon--locked'); 
+            } else {
+                img.RemoveClass('status_icon--locked');
             }
-        } else {
-            img.SetImage(`file://{images}/archipelago/icons/${svgName}.svg`);
         }
 
+        let badge = cell.FindChild(cellId + '_Badge') as LabelPanel;
         if (targetBadgeText !== "") {
-            const badge = $.CreatePanel('Label', cell, cellId + '_Badge') as LabelPanel;
-            badge.AddClass('hud_icon_badge');
+            if (!badge || !badge.IsValid()) {
+                badge = $.CreatePanel('Label', cell, cellId + '_Badge') as LabelPanel;
+                badge.AddClass('hud_icon_badge');
+            }
+            badge.visible = true;
+            badge.RemoveClass('collapse');
             badge.text = $.Localize(targetBadgeText);
-            if (svgName === "uncheck") badge.AddClass('hud_icon_badge--locked'); 
+            if (svgName === "uncheck") {
+                badge.AddClass('hud_icon_badge--locked'); 
+            } else {
+                badge.RemoveClass('hud_icon_badge--locked');
+            }
+        } else if (badge && badge.IsValid()) {
+            badge.visible = false;
+            badge.AddClass('collapse');
         }
 
         return cell;
@@ -559,11 +576,17 @@ class ArchipelagoMapSelect {
         }
 
         if (indicatorsContainer && indicatorsContainer.IsValid()) {
-            indicatorsContainer.RemoveAndDeleteChildren();
             const statusList = mapData.status_text_list || [];
             statusList.forEach((svgName: string, i: number) => {
                 ArchipelagoMapSelect.createIconCell(indicatorsContainer, 'SelectStatusCell_' + i, svgName, false, mapData, i);
             });
+            for (let i = statusList.length; i < 20; i++) {
+                const old = indicatorsContainer.FindChild('SelectStatusCell_' + i);
+                if (old && old.IsValid()) {
+                    old.visible = false;
+                    old.AddClass('collapse');
+                } else break;
+            }
         }
 
         let dynamicItemIcons: string[] = [];
@@ -583,7 +606,6 @@ class ArchipelagoMapSelect {
         }
 
         if (iconsContainer && iconsContainer.IsValid()) {
-            iconsContainer.RemoveAndDeleteChildren();
             if (dynamicItemIcons.length > 0) {
                 const sortedItemIcons = [...dynamicItemIcons];
                 sortedItemIcons.sort((a: string, b: string) => {
@@ -595,6 +617,21 @@ class ArchipelagoMapSelect {
                 sortedItemIcons.forEach((svgName: string, i: number) => {
                     ArchipelagoMapSelect.createIconCell(iconsContainer, 'SelectReqCell_' + i, svgName, true, mapData, i);
                 });
+                for (let i = sortedItemIcons.length; i < 30; i++) {
+                    const old = iconsContainer.FindChild('SelectReqCell_' + i);
+                    if (old && old.IsValid()) {
+                        old.visible = false;
+                        old.AddClass('collapse');
+                    } else break;
+                }
+            } else {
+                for (let i = 0; i < 30; i++) {
+                    const old = iconsContainer.FindChild('SelectReqCell_' + i);
+                    if (old && old.IsValid()) {
+                        old.visible = false;
+                        old.AddClass('collapse');
+                    } else break;
+                }
             }
         }
 
@@ -675,14 +712,16 @@ class ArchipelagoMapSelect {
             let entry: any = wrapper ? wrapper.FindChild(`ChapterEntry_${chId}`) : null;
 
             if (!wrapper || !wrapper.IsValid() || !entry || !entry.IsValid()) {
-                if (wrapper && wrapper.IsValid()) wrapper.DeleteAsync(0);
+                if (!wrapper || !wrapper.IsValid()) {
+                    wrapper = $.CreatePanel('Panel', container, `ChapterWrapper_${chId}`);
+                    wrapper.AddClass('chapter_entry_wrapper');
+                    (wrapper as any).canfocus = true;
+                }
 
-                wrapper = $.CreatePanel('Panel', container, `ChapterWrapper_${chId}`);
-                wrapper.AddClass('chapter_entry_wrapper');
-                (wrapper as any).canfocus = true;
-
-                entry = $.CreatePanel('Panel', wrapper, `ChapterEntry_${chId}`);
-                entry.AddClass('chapter_entry');
+                if (!entry || !entry.IsValid()) {
+                    entry = $.CreatePanel('Panel', wrapper, `ChapterEntry_${chId}`);
+                    entry.AddClass('chapter_entry');
+                }
 
                 wrapper.SetPanelEvent('onmouseover', () => {
                     if (this.g_ResetSchedule) { $.CancelScheduled(this.g_ResetSchedule); this.g_ResetSchedule = null; }
@@ -827,14 +866,16 @@ class ArchipelagoMapSelect {
                     let mapBtn: any = wrapper ? wrapper.FindChild(`MapButton_${chId}_${index}`) : null;
 
                     if (!wrapper || !wrapper.IsValid() || !mapBtn || !mapBtn.IsValid()) {
-                        if (wrapper && wrapper.IsValid()) wrapper.DeleteAsync(0);
+                        if (!wrapper || !wrapper.IsValid()) {
+                            wrapper = $.CreatePanel('Panel', mapList, `MapWrapper_${chId}_${index}`);
+                            wrapper.AddClass('map_button_wrapper');
+                            (wrapper as any).canfocus = true;
+                        }
 
-                        wrapper = $.CreatePanel('Panel', mapList, `MapWrapper_${chId}_${index}`);
-                        wrapper.AddClass('map_button_wrapper');
-                        (wrapper as any).canfocus = true;
-
-                        mapBtn = $.CreatePanel('Panel', wrapper, `MapButton_${chId}_${index}`);
-                        mapBtn.AddClass('map_button');
+                        if (!mapBtn || !mapBtn.IsValid()) {
+                            mapBtn = $.CreatePanel('Panel', wrapper, `MapButton_${chId}_${index}`);
+                            mapBtn.AddClass('map_button');
+                        }
 
                         wrapper.SetPanelEvent('onmouseover', () => {
                             if (ArchipelagoMapSelect.g_IsTransitioning) return;

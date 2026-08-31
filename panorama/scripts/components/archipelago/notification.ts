@@ -16,7 +16,7 @@ const RATE_LIMIT_WINDOW_MS = 2000;
 let rateLimitSuppressedCount = 0;
 let rateLimitFlushSchedule: any = null;
 
-const s_NotificationContainer = $.GetContextPanel();
+// Dynamic container resolution via $.GetContextPanel()
 
 let pendingNotifIdWrite: number | null = null;
 let notifIdFlushSchedule: any = null;
@@ -202,8 +202,8 @@ registerSelfCleaningEvent("ArchipelagoDeath", (msg: string) => {
 // --- DISPLAY ENGINE ---
 
 function buildNotificationPanel(payload: string): Panel | null {
-    const container = s_NotificationContainer;
-    if (!container || !container.IsValid()) return null;
+    const container = $.GetContextPanel();
+    if (!container || !(container as any).IsValid()) return null;
 
     try {
         const data = JSON.parse(payload);
@@ -277,16 +277,19 @@ function exitNotification(panel: Panel) {
     const idx = activeNotifications.indexOf(panel);
     if (idx !== -1) activeNotifications.splice(idx, 1);
 
-    if (!panel.IsValid()) {
+    if (!panel || !(panel as any).IsValid()) {
         checkWarpDrain();
         return;
     }
 
     panel.AddClass('exit-slide');
     $.Schedule(0.22, () => {
-        if (panel.IsValid()) panel.AddClass('exit-collapse');
+        if (panel && (panel as any).IsValid()) panel.AddClass('exit-collapse');
         $.Schedule(0.22, () => {
-            if (panel.IsValid()) panel.DeleteAsync(0);
+            if (panel && (panel as any).IsValid()) {
+                panel.style.visibility = 'collapse';
+                panel.DeleteAsync(0);
+            }
             checkWarpDrain();
         });
     });

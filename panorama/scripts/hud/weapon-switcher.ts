@@ -228,88 +228,125 @@ class WeaponSwitcher {
 	}
 
 	static constructPanels() {
-		$.GetContextPanel().RemoveAndDeleteChildren();
+		const root = $.GetContextPanel();
+		if (!root || !(root as any).IsValid()) return;
 
 		const bucketCount = Math.max(this.bucketedWeapons.length, this.MIN_NUM_BUCKETS);
 		for (let i = 0; i < bucketCount; ++i) {
 			const weapons = this.bucketedWeapons[i];
 
-			// always create a bucket (empty looking one)
-			const bucketPanel = $.CreatePanel('Panel', $.GetContextPanel(), `Bucket${i}`);
-			bucketPanel.AddClass('weapons__bucket');
+			let bucketPanel = root.FindChild(`Bucket${i}`);
+			if (!bucketPanel || !bucketPanel.IsValid()) {
+				bucketPanel = $.CreatePanel('Panel', root, `Bucket${i}`);
+				bucketPanel.AddClass('weapons__bucket');
+			}
+			bucketPanel.visible = true;
+			bucketPanel.RemoveClass('collapse');
 
 			if (!weapons) {
-				const fakeWeapon = $.CreatePanel('Panel', bucketPanel, `Bucket${i}-EMPTY`);
-				fakeWeapon.AddClass('weapons__bucket__entry');
-				fakeWeapon.AddClass('weapons__bucket__entry__empty');
+				let fakeWeapon = bucketPanel.FindChild(`Bucket${i}-EMPTY`);
+				if (!fakeWeapon || !fakeWeapon.IsValid()) {
+					fakeWeapon = $.CreatePanel('Panel', bucketPanel, `Bucket${i}-EMPTY`);
+					fakeWeapon.AddClass('weapons__bucket__entry');
+					fakeWeapon.AddClass('weapons__bucket__entry__empty');
+				}
+				fakeWeapon.visible = true;
+				fakeWeapon.RemoveClass('collapse');
+
+				for (let j = 0; j < bucketPanel.GetChildCount(); j++) {
+					const c = bucketPanel.GetChild(j);
+					if (c && c.IsValid() && c.id !== `Bucket${i}-EMPTY`) {
+						c.visible = false;
+						c.AddClass('collapse');
+					}
+				}
 				continue;
+			} else {
+				let fakeWeapon = bucketPanel.FindChild(`Bucket${i}-EMPTY`);
+				if (fakeWeapon && fakeWeapon.IsValid()) {
+					fakeWeapon.visible = false;
+					fakeWeapon.AddClass('collapse');
+				}
 			}
 
 			weapons.forEach((data: SwitcherData, weaponIndex: number) => {
 				const weapon = data.weapon;
-				const weaponPanel = $.CreatePanel('Panel', bucketPanel, `Bucket${i}-${weapon.classname}`);
-				weaponPanel.AddClass('weapons__bucket__entry');
+				let weaponPanel = bucketPanel.FindChild(`Bucket${i}-${weapon.classname}`);
+				if (!weaponPanel || !weaponPanel.IsValid()) {
+					weaponPanel = $.CreatePanel('Panel', bucketPanel, `Bucket${i}-${weapon.classname}`);
+					weaponPanel.AddClass('weapons__bucket__entry');
 
-				if (weaponIndex !== 0) {
-					weaponPanel.AddClass('weapons__bucket__entry__sub');
+					if (weaponIndex !== 0) {
+						weaponPanel.AddClass('weapons__bucket__entry__sub');
+					}
+
+					if (weaponIndex === 0) {
+						const bucketLabel = $.CreatePanel('Label', weaponPanel, `Bucket${i}-NumLabel`, {
+							text: `${i + 1}`
+						});
+						bucketLabel.AddClass('weapons__bucket__entry__num');
+					}
+
+					const weaponIcon = $.CreatePanel('Label', weaponPanel, `${weapon.classname}-IconLabel`);
+					weaponIcon.AddClass('weapons__bucket__entry__icon-label');
+					switch (weapon.classname) {
+						case 'weapon_crowbar':
+							weaponIcon.text = 'c';
+							break;
+						case 'weapon_physcannon':
+							weaponIcon.text = 'm';
+						break;
+						case 'weapon_pistol':
+							weaponIcon.text = 'd';
+							break;
+						case 'weapon_357':
+							weaponIcon.text = 'e';
+							break;
+						case 'weapon_smg1':
+							weaponIcon.text = 'a';
+							break;
+						case 'weapon_ar2':
+							weaponIcon.text = 'l';
+							break;
+						case 'weapon_crossbow':
+							weaponIcon.text = 'g';
+							break;
+						case 'weapon_shotgun':
+							weaponIcon.text = 'b';
+							break;
+						case 'weapon_rpg':
+							weaponIcon.text = 'i';
+							break;
+						case 'weapon_frag':
+							weaponIcon.text = 'k';
+							break;
+						case 'weapon_bugbait':
+							weaponIcon.text = 'j';
+							break;
+						default:
+							weaponIcon.AddClass('weapons__bucket__entry__icon-label__unknown');
+							weaponIcon.text = '?';
+							break;
+					}
+
+					const weaponLabel = $.CreatePanel('Label', weaponPanel, `${weapon.classname}-Label`, {
+						text: `${weapon.classname}`
+					});
+					weaponLabel.AddClass('weapons__bucket__entry__name');
 				}
+				weaponPanel.visible = true;
+				weaponPanel.RemoveClass('collapse');
 
 				this.bucketedWeapons[i][weaponIndex].panel = weaponPanel;
-
-				if (weaponIndex === 0) {
-					const bucketLabel = $.CreatePanel('Label', weaponPanel, `Bucket${i}-NumLabel`, {
-						text: `${i + 1}`
-					});
-					bucketLabel.AddClass('weapons__bucket__entry__num');
-				}
-
-				const weaponIcon = $.CreatePanel('Label', weaponPanel, `${weapon.classname}-IconLabel`);
-				weaponIcon.AddClass('weapons__bucket__entry__icon-label');
-				switch (weapon.classname) {
-					case 'weapon_crowbar':
-						weaponIcon.text = 'c';
-						break;
-					case 'weapon_physcannon':
-						weaponIcon.text = 'm';
-						break;
-					case 'weapon_pistol':
-						weaponIcon.text = 'd';
-						break;
-					case 'weapon_357':
-						weaponIcon.text = 'e';
-						break;
-					case 'weapon_smg1':
-						weaponIcon.text = 'a';
-						break;
-					case 'weapon_ar2':
-						weaponIcon.text = 'l';
-						break;
-					case 'weapon_crossbow':
-						weaponIcon.text = 'g';
-						break;
-					case 'weapon_shotgun':
-						weaponIcon.text = 'b';
-						break;
-					case 'weapon_rpg':
-						weaponIcon.text = 'i';
-						break;
-					case 'weapon_frag':
-						weaponIcon.text = 'k';
-						break;
-					case 'weapon_bugbait':
-						weaponIcon.text = 'j';
-						break;
-					default:
-						weaponIcon.AddClass('weapons__bucket__entry__icon-label__unknown');
-						weaponIcon.text = '?';
-						break;
-				}
-
-				const weaponLabel = $.CreatePanel('Label', weaponPanel, `${weapon.classname}-Label`, {
-					text: `${weapon.classname}`
-				});
-				weaponLabel.AddClass('weapons__bucket__entry__name');
 			});
+		}
+
+		for (let i = bucketCount; i < 20; i++) {
+			const oldBucket = root.FindChild(`Bucket${i}`);
+			if (oldBucket && oldBucket.IsValid()) {
+				oldBucket.visible = false;
+				oldBucket.AddClass('collapse');
+			} else break;
 		}
 	}
 }

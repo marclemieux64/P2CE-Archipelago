@@ -82,7 +82,7 @@ if (!globalObj.ArchipelagoAPI) {
                     if (res.status === 304 || res.statusText === 'Not Modified') return;
 
                     if ((res.status === 200 || res.statusText === 'success') && res.responseText) {
-                        const sanitized = res.responseText.replace(/[\x00-\x1f\x7f-\xc2\x9f]/g, "").trim();
+                        const sanitized = res.responseText.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim();
                         if (!sanitized) return;
 
                         try {

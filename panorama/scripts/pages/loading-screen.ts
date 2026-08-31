@@ -66,14 +66,17 @@ class LoadingScreenController {
 		this.bgRepeatSchedule = null;
 
 		// Progress bar will be 1.0 when loading finishes and is then reset to 0.0
-		if (this.progressBar.value >= 0.20) {
+		// Guard with BHasClass so re-calling AddClass doesn't restart the animation
+		if (this.progressBar.value >= 0.20 && !this.bgImage2.BHasClass('loadingscreen__backgroundshowanim')) {
 			this.bgImage2.AddClass('loadingscreen__backgroundshowanim');
 		}
-		if (this.progressBar.value >= 0.45) {
+		if (this.progressBar.value >= 0.45 && !this.bgImage3.BHasClass('loadingscreen__backgroundshowanim')) {
 			this.bgImage3.AddClass('loadingscreen__backgroundshowanim');
 		}
 		if (this.progressBar.value >= 0.70) {
-			this.bgImage4.AddClass('loadingscreen__backgroundshowanim');
+			if (!this.bgImage4.BHasClass('loadingscreen__backgroundshowanim')) {
+				this.bgImage4.AddClass('loadingscreen__backgroundshowanim');
+			}
 			return; // stop repeating once we hit the final layer
 		}
 

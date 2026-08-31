@@ -853,6 +853,8 @@ class P2CEContext(CommonContext):
             self.deathlink_handler.stop()
         if self.trap_handler:
             self.trap_handler.stop()
+        if getattr(self, 'api_server', None):
+            self.api_server.stop()
 
         for _ in range(self.input_requests):
             self.input_queue.put_nowait(None)

@@ -364,6 +364,7 @@ void WarpMonitorCmd(const CommandArgs@ args) {
         monitorID += " " + args.Arg(2);
     }
     
+    Archipelago::ArchipelagoLog("monitor_break:" + monitorID);
     Archipelago::g_Archipelago.GetWorkflowManager().HandleMonitorWarp(monitorID);
 }
 
@@ -463,12 +464,7 @@ void CheckDeathLinkQueueCmd(const CommandArgs@ args) {
 
         if (!Archipelago::g_Archipelago.HasSentDeathLink()) {
             Archipelago::g_Archipelago.SetSentDeathLink(true);
-            CBaseEntity@ world = EntityList().FindByClassname(null, "worldspawn");
-            if (world !is null) {
-                Variant v;
-                v.SetString("printl(\"send_deathlink " + Archipelago::g_Archipelago.GetCurrentMap() + "\")");
-                world.FireInput("RunScriptCode", v, 0.0f, null, null, 0);
-            }
+            Archipelago::ArchipelagoLog("send_deathlink " + Archipelago::g_Archipelago.GetCurrentMap());
         }
         return;
     }

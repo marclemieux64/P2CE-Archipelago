@@ -140,7 +140,9 @@ var ArchipelagoMapStatusHUD = class {
         let currentMapData: any = ArchipelagoMapStatusHUD.m_LastCachedMapData;
 
         if (currentMenuVersion !== ArchipelagoMapStatusHUD.m_LastCachedMenuVersion || currentMapData === null) {
-            const chapters = syncHelper.m_CachedChapters || syncHelper.parseApiStatus(apiStatus);
+            const chapters = syncHelper.parseApiStatus(apiStatus);
+            syncHelper.m_CachedChapters = chapters;
+            syncHelper.m_LastParsedMenuVersion = currentMenuVersion;
             currentMapData = null;
             for (const chId in chapters) {
                 if (!chapters[chId] || !chapters[chId].maps) continue;

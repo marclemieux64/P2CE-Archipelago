@@ -23,8 +23,6 @@ class ArchipelagoHint {
     // Lightweight hints change key — avoids JSON.stringify on every update
     static m_LastHintsKey: string = "";
 
-    // Debounced hints storage flush
-    static m_HintsStorageFlushSchedule: any = null;
 
     static init() {
         $.DispatchEvent('MainMenuSetPageLines', 
@@ -112,17 +110,6 @@ class ArchipelagoHint {
                     if (hintsKey === ArchipelagoHint.m_LastHintsKey) return;
                     ArchipelagoHint.m_LastHintsKey = hintsKey;
                     ArchipelagoHint.render(hintsList);
-                    // Debounce storage write to once per 3s
-                    const snapshot = hintsList;
-                    if (!ArchipelagoHint.m_HintsStorageFlushSchedule) {
-                        const ctx = $.GetContextPanel();
-                        ArchipelagoHint.m_HintsStorageFlushSchedule = $.Schedule(3.0, () => {
-                            ArchipelagoHint.m_HintsStorageFlushSchedule = null;
-                            if (ctx && ctx.IsValid()) {
-                                $.persistentStorage.setItem("ArchipelagoLastHintsCacheData", JSON.stringify(snapshot));
-                            }
-                        });
-                    }
                 } catch (e) { }
             }, true);
         }

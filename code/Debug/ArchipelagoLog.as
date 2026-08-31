@@ -14,7 +14,7 @@ void ArchipelagoLog(string msg) {
     bool isDebugEnabled = debugCV.GetBool();
 
     // 2. Check for critical prefix tags that must always be outputted (for client integrations)
-    array<string> identifiers = { "map_name:", "monitor_break:", "item_collected:", "button_check:", "map_complete:" };
+    array<string> identifiers = { "map_name:", "monitor_break:", "item_collected:", "button_check:", "map_complete:", "send_deathlink", "camera_knocked:" };
     for (uint i = 0; i < identifiers.length(); i++) {
         if (msg.locate(identifiers[i]) == 0) {
             Msg(msg + "\n");

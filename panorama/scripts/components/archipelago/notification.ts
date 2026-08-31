@@ -140,7 +140,12 @@ try {
 function isRateLimitBypassed(type: string, apMsgType: string): boolean {
     return type === "255 50 50"
         || type === "rainbow"
-        || apMsgType === "receive";
+        || apMsgType === "receive"
+        || apMsgType === "found"
+        || apMsgType === "send"
+        || apMsgType === "trap"
+        || apMsgType === "deathlink"
+        || apMsgType === "goal";
 }
 
 function tryEnqueueNotification(payload: string, type: string, apMsgType: string) {

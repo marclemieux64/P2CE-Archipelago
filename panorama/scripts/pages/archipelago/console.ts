@@ -37,8 +37,6 @@ class ArchipelagoConsole {
 
     static readonly MAX_LABELS = 300;
     static m_LastDisplayedId: number = -1;
-    static m_StoragePendingChat: any[] | null = null;
-    static m_StorageFlushSchedule: any = null;
     static m_IsAutoScrolling = true;
 
     static init() {
@@ -149,22 +147,42 @@ class ArchipelagoConsole {
         ArchipelagoConsole.m_LastDisplayedId = -1;
 
         const startFrom = Math.max(0, chat.length - ArchipelagoConsole.MAX_LABELS);
-        for (let i = startFrom; i < chat.length; i++) {
-            const msg = chat[i];
-            if (!msg) continue;
-            msg.cachedMarkup = ArchipelagoConsole.formatMessage(msg);
-            ArchipelagoConsole.m_DisplayLines.push(msg);
-            if (msg.id !== undefined && msg.id > ArchipelagoConsole.m_LastDisplayedId)
-                ArchipelagoConsole.m_LastDisplayedId = msg.id;
+        const slice = chat.slice(startFrom);
 
-            const lbl = $.CreatePanel('Label', poolContainer, '');
-            lbl.html = true;
-            lbl.AddClass('console_line_item');
-            lbl.text = msg.cachedMarkup;
-            ArchipelagoConsole.m_LabelPanels.push(lbl);
-        }
+        // Batched insertion: Render latest 50 messages immediately, load older ones across frames
+        const CHUNK_SIZE = 50;
+        const total = slice.length;
 
-        ArchipelagoConsole.scrollToBottom();
+        const renderChunk = (startIdx: number) => {
+            const container = ArchipelagoConsole.m_Ctx?.FindChildTraverse('ConsolePoolContainer');
+            if (!container || !container.IsValid()) return;
+
+            const endIdx = Math.min(startIdx + CHUNK_SIZE, total);
+            for (let i = startIdx; i < endIdx; i++) {
+                const msg = slice[i];
+                if (!msg) continue;
+                msg.cachedMarkup = ArchipelagoConsole.formatMessage(msg);
+                ArchipelagoConsole.m_DisplayLines.push(msg);
+                if (msg.id !== undefined && msg.id > ArchipelagoConsole.m_LastDisplayedId)
+                    ArchipelagoConsole.m_LastDisplayedId = msg.id;
+
+                const lbl = $.CreatePanel('Label', container, '');
+                lbl.html = true;
+                lbl.AddClass('console_line_item');
+                lbl.text = msg.cachedMarkup;
+                ArchipelagoConsole.m_LabelPanels.push(lbl);
+            }
+
+            if (startIdx === 0) {
+                ArchipelagoConsole.scrollToBottom();
+            }
+
+            if (endIdx < total) {
+                $.Schedule(0.01, () => renderChunk(endIdx));
+            }
+        };
+
+        renderChunk(0);
     }
 
     static appendPanels(delta: any[]) {
@@ -198,9 +216,6 @@ class ArchipelagoConsole {
         if (ArchipelagoConsole.m_IsAutoScrolling) {
             ArchipelagoConsole.scrollToBottom();
         }
-
-        const api: any = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoAPI;
-        if (api) ArchipelagoConsole.scheduleStorageFlush(api.getChat());
     }
 
     static scrollToBottom() {
@@ -216,20 +231,6 @@ class ArchipelagoConsole {
                 (outputArea as any).ScrollToBottom();
             }
         });
-    }
-
-    static scheduleStorageFlush(chat: any[]) {
-        ArchipelagoConsole.m_StoragePendingChat = chat;
-        if (!ArchipelagoConsole.m_StorageFlushSchedule) {
-            const ctx = ArchipelagoConsole.m_Ctx;
-            ArchipelagoConsole.m_StorageFlushSchedule = $.Schedule(3.0, () => {
-                ArchipelagoConsole.m_StorageFlushSchedule = null;
-                if (ArchipelagoConsole.m_StoragePendingChat && ctx && ctx.IsValid()) {
-                    $.persistentStorage.setItem("ArchipelagoLastChatCacheData", JSON.stringify(ArchipelagoConsole.m_StoragePendingChat));
-                    ArchipelagoConsole.m_StoragePendingChat = null;
-                }
-            });
-        }
     }
 
     static formatRichMessage(data: any[]): string {

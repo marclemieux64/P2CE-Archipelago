@@ -16,7 +16,7 @@ map_specific_death_messages = {
     "sp_a1_intro4":         ["{player_name} did not remain tranquil in the face of almost certain death"],
     "sp_a1_intro5":         ["{player_name} did not avoid unsheltered testing areas"],
     "sp_a1_intro6":         ["{player_name} was irradiated in such a way that the future should not start with them"],
-    "sp_a1_intro7":         ["{player_name}disengaged from their management rail"],
+    "sp_a1_intro7":         ["{player_name} disengaged from their management rail"],
     "sp_a1_wakeup":         ["{player_name} found the escape pod"],
     "sp_a2_intro":          ["{player_name} was euthanized"],
     # Chapter 2
@@ -81,7 +81,7 @@ map_specific_death_messages = {
 }
 
 def get_death_message(map_name, player_name):
-    death_messages = default_death_messages
+    death_messages = list(default_death_messages)
     if map_name in map_specific_death_messages:
-        death_messages += map_specific_death_messages[map_name]
+        death_messages.extend(map_specific_death_messages[map_name])
     return choice(death_messages).format(player_name=player_name)

@@ -67,7 +67,7 @@
 
 					<Panel class="help-popup__row">
 						<Panel class="hud_icon_cell">
-							<Image src="file://{images}/archipelago/icons/Flag.svg" class="help-popup__icon-img" />
+							<Image src="file://{images}/archipelago/icons/flag.svg" class="help-popup__icon-img" />
 							<Label class="hud_icon_badge" text="#Archipelago_Maps_Check_Tag" />
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Generic" />
@@ -115,7 +115,7 @@
 
 					<Panel class="help-popup__row">
 						<Panel class="hud_icon_cell">
-							<Image src="file://{images}/archipelago/icons/Monitor.svg" class="help-popup__icon-img" />
+							<Image src="file://{images}/archipelago/icons/monitor.svg" class="help-popup__icon-img" />
 							<Label class="hud_icon_badge" text="#Archipelago_Wheathley_Monitor_Check_Tag" />
 						</Panel>
 						<Label class="help-popup__label" text="#Archipelago_Help_Check_Wheatley" />

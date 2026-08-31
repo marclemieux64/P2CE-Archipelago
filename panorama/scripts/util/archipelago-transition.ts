@@ -53,8 +53,12 @@ class ArchipelagoTransition {
 
         const useSmartWarp = $.persistentStorage.getItem('cv_SmartWarp');
 
-        if (useSmartWarp !== "1" && useSmartWarp !== 1) {
-            // Menu warp: show notification, queue will drain → onQueueDrained → disconnect
+        if (useSmartWarp === "1" || useSmartWarp === 1) {
+            // Smart warp: trigger destination selection and warp directly
+            this.m_IsWarpPending = false;
+            this.smartWarpNextMap(mapName);
+        } else {
+            // Menu warp: show notification, then return to map select menu
             const notifyFn = (UiToolkitAPI.GetGlobalObject() as any).OnArchipelagoNotify;
             if (notifyFn) {
                 let locTitle = $.Localize("#Archipelago_HUD_Warp_Menu_Title");
@@ -63,10 +67,15 @@ class ArchipelagoTransition {
                 if (!locLoading || locLoading === "#Archipelago_HUD_Warp_Loading") locLoading = "Returning to map select... Loading...";
                 notifyFn(JSON.stringify({ title: locTitle, html: locLoading, type: "198 33 223", play_sound: true }));
             }
-        } else {
-            // Smart warp: no pre-warp notification — trigger queue processing so it drains immediately
-            const processQueue = (UiToolkitAPI.GetGlobalObject() as any).ArchipelagoProcessQueue;
-            if (processQueue) processQueue();
+
+            const ctx = $.GetContextPanel();
+            $.Schedule(2.5, () => {
+                if (!ctx || !ctx.IsValid()) return;
+                this.m_IsWarpPending = false;
+                this.m_PendingMapName = "";
+                $.persistentStorage.setItem("ap_return_to_map_select", "true");
+                GameInterfaceAPI.ConsoleCommand("disconnect");
+            });
         }
     }
 

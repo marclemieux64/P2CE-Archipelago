@@ -205,7 +205,7 @@ class EntityManager {
                 }
 
                 if (alreadyProcessed) {
-                    ArchipelagoLog("Deletion s DeleteEntitykipped: Hologram already created for " + holoName);
+                    ArchipelagoLog("Deletion skipped: Hologram already created for " + holoName);
                     ent.KeyValue("rendermode", "10");
                     Variant killValue;
                     ent.FireInput("Kill", killValue, 0.05f, null, null, 0);
@@ -226,7 +226,7 @@ class EntityManager {
                 Vector forward, right, up;
                 AngleVectors(angles, forward, right, up);
                 
-                Vector finalPos = spawnPos + (forward * hPos.x) + (right * hPos.y) + (up * hPos.z);
+                Vector finalPos = spawnPos + (forward * hPos.x) + (right * -hPos.y) + (up * hPos.z);
                 QAngle finalAng = angles + hAng;
 
                 // Manual override for lasers/receivers
@@ -858,7 +858,7 @@ class EntityManager {
 
     void LockButtonByName(string entity_name) {
         CBaseEntity@ pEntity = null;
-        while ((@pEntity = EntityList().FindByName(pEntity, entity_name)) != null) {
+        while ((@pEntity = EntityList().FindByName(pEntity, entity_name)) !is null) {
             Variant emptyValue;
             pEntity.FireInput("Lock", emptyValue, 0.0f, null, null, 0);
             pEntity.KeyValue("m_bLocked", 1);
@@ -881,15 +881,12 @@ class EntityManager {
                 hintCaption = "#Archipelago_Hint_NoOrangeGel";
             }
 
-            string hintTargetName = entity_name + "_hint_target";
-            pEntity.KeyValue("targetname", hintTargetName);
-            
             string hintName = "hudhint_" + entity_name;
 
             CBaseEntity@ hint = util::CreateEntityByName("env_instructor_hint");
             if (hint !is null) {
                 hint.KeyValue("targetname", hintName);
-                hint.KeyValue("hint_target", hintTargetName);
+                hint.KeyValue("hint_target", entity_name);
                 hint.KeyValue("hint_static", "0"); 
                 hint.KeyValue("hint_caption", hintCaption); 
                 hint.KeyValue("hint_icon_onscreen", "icon_alert");

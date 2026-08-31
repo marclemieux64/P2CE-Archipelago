@@ -30,7 +30,7 @@ if exist "!GAMEINFO_FILE!" (
     echo [Archipelago] Cleaning old localized language mappings from gameinfo.txt...
     
     :: Remove any previously injected or commented lines mapping back to portal2_ language structures
-    powershell -Command "$content = Get-Content '!GAMEINFO_FILE!' | Where-Object { $_ -notmatch 'portal2_.*_dir.vpk' -and $_ -notmatch 'portal2_[a-zA-Z]' }; Set-Content '!GAMEINFO_FILE!' $content"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$content = Get-Content '!GAMEINFO_FILE!' | Where-Object { $_ -notmatch 'portal2_.*_dir.vpk' -and $_ -notmatch 'portal2_[a-zA-Z]' }; Set-Content '!GAMEINFO_FILE!' $content"
 
     if /i not "!SELECTED_LANGUAGE!"=="english" if not "!SELECTED_LANGUAGE!"=="" (
         echo [Archipelago] Customizing gameinfo.txt SearchPaths for non-English language: '!SELECTED_LANGUAGE!'...
@@ -40,7 +40,7 @@ if exist "!GAMEINFO_FILE!" (
         set "LANG_DIR=			Game				portal2/portal2_!SELECTED_LANGUAGE!"
         
         :: CRITICAL: Read, look for the core portal2 line, insert custom configurations strictly ABOVE it, and save back down
-        powershell -Command "$vpk = '			Game				portal2/portal2/portal2.vpk'; $lines = Get-Content '!GAMEINFO_FILE!'; $newLines = foreach ($line in $lines) { if ($line.Trim() -eq $vpk.Trim()) { '!LANG_VPK!'; '!LANG_DIR!'; $line } else { $line } }; Set-Content '!GAMEINFO_FILE!' $newLines"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$vpk = '			Game				portal2/portal2/portal2.vpk'; $lines = Get-Content '!GAMEINFO_FILE!'; $newLines = foreach ($line in $lines) { if ($line.Trim() -eq $vpk.Trim()) { '!LANG_VPK!'; '!LANG_DIR!'; $line } else { $line } }; Set-Content '!GAMEINFO_FILE!' $newLines"
         
         echo [Archipelago] gameinfo.txt search paths optimized successfully for custom language.
     ) else (
@@ -67,7 +67,7 @@ echo [Archipelago] Downloading lightweight portable Python (3.11)...
 mkdir "%PORTABLE_PY_DIR%" >nul 2>&1
 
 :: Download portable Python zip silently using PowerShell Tls12 protocol
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip', '%CLIENT_DIR%\python.zip')"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip', '%CLIENT_DIR%\python.zip')"
 
 if not exist "%CLIENT_DIR%\python.zip" (
     echo [Archipelago] ERROR: Failed to download portable Python!
@@ -76,7 +76,7 @@ if not exist "%CLIENT_DIR%\python.zip" (
 )
 
 echo [Archipelago] Extracting Python package...
-powershell -Command "Expand-Archive -Path '%CLIENT_DIR%\python.zip' -DestinationPath '%PORTABLE_PY_DIR%' -Force"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path '%CLIENT_DIR%\python.zip' -DestinationPath '%PORTABLE_PY_DIR%' -Force"
 del "%CLIENT_DIR%\python.zip" >nul 2>&1
 
 :: Enable site-packages in the embedded Python environment by adding import site
@@ -86,7 +86,7 @@ if exist "%PTH_FILE%" (
 )
 
 echo [Archipelago] Installing standalone package manager (pip)...
-powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://bootstrap.pypa.io/get-pip.py', '%PORTABLE_PY_DIR%\get-pip.py')"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "(New-Object System.Net.WebClient).DownloadFile('https://bootstrap.pypa.io/get-pip.py', '%PORTABLE_PY_DIR%\get-pip.py')"
 "%PYTHON_EXE%" "%PORTABLE_PY_DIR%\get-pip.py" --no-warn-script-location >nul 2>&1
 del "%PORTABLE_PY_DIR%\get-pip.py" >nul 2>&1
 

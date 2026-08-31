@@ -127,7 +127,11 @@ class MapMenuElement(MenuElement):
             if is_completed:
                 self.info_text.append(indicator_characters["completed"])
             else:
-                reqs = all_locations_table[sub_location].required_items if sub_location in all_locations_table else []
+                if sub_location in all_locations_table:
+                    sub_loc = all_locations_table[sub_location]
+                    reqs = speedrun_logic_table.get(sub_location, sub_loc.required_items) if self.parent.parent.logic_difficulty == 1 else sub_loc.required_items
+                else:
+                    reqs = []
                 if self.check_logic(reqs):
                     if sub_location in indicator_characters:
                         self.info_text.append(indicator_characters[sub_location])
@@ -152,7 +156,9 @@ class MapMenuElement(MenuElement):
         all_reqs = list(self.required_items)
         for sub_loc in self.sub_location_completion:
             if sub_loc in all_locations_table:
-                all_reqs.extend(all_locations_table[sub_loc].required_items)
+                sub_data = all_locations_table[sub_loc]
+                sub_reqs = speedrun_logic_table.get(sub_loc, sub_data.required_items) if self.parent.parent.logic_difficulty == 1 else sub_data.required_items
+                all_reqs.extend(sub_reqs)
         return list(set(all_reqs))
 
     def to_dict(self, previous_completed):
@@ -227,7 +233,8 @@ class ChapterMenuElement(MenuElement):
         curr = None
         for i, name in enumerate(map_names):
             loc = all_locations_table[name]
-            nxt = MapMenuElement(self, self.chapter_number, i, name, loc.map_name, loc.id, loc.required_items, self.pic)
+            req_items = speedrun_logic_table.get(name, loc.required_items) if parent.logic_difficulty == 1 else loc.required_items
+            nxt = MapMenuElement(self, self.chapter_number, i, name, loc.map_name, loc.id, req_items, self.pic)
             if not self.first_map: self.first_map = nxt
             else: curr.next_map = nxt
             curr = nxt
@@ -272,9 +279,7 @@ class ChapterMenuElement(MenuElement):
 
 class Menu:
     def __init__(self, chapter_dict, client, is_open_world=False, logic_difficulty=0, **kwargs):
-        if logic_difficulty == 1:
-            for map_location in speedrun_logic_table:
-                all_locations_table[map_location].required_items = speedrun_logic_table[map_location]
+        self.logic_difficulty = logic_difficulty
         self.client = client
         self.is_open_world = is_open_world
         self.has_wheatley_monitors = kwargs.get("wheatley_monitors", False)

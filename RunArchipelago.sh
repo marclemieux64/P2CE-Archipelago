@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # =============================================================================
 # P2CE Archipelago Flatpak / Proton Native Container Layer Sandbox Fix
@@ -50,6 +50,7 @@ if [ ! -f "$PYTHON_EXE" ]; then
 fi
 
 if [ "$SETUP_NEEDED" = false ]; then
+    chmod -R +x "$PORTABLE_PY_DIR/python/bin" 2>/dev/null || true
     if ! "$PYTHON_EXE" -c "import websockets, colorama, yaml, certifi, jellyfish, platformdirs, pathspec, typing_extensions, attrs, schema; assert float(websockets.__version__.split('.')[0]) < 14" &>/dev/null; then
         echo "[Archipelago] Dependency drift detected. Updating runtime workspace..."
         "$PYTHON_EXE" -m pip install "websockets>=13.1,<14" colorama==0.4.6 pyyaml==6.0.3 certifi==2026.2.25 jellyfish==1.2.1 platformdirs==4.9.4 pathspec==1.0.4 typing_extensions==4.15.0 attrs==26.1.0 schema==0.7.8
@@ -70,6 +71,7 @@ else
     
     tar -xzf "$CLIENT_DIR/python.tar.gz" -C "$PORTABLE_PY_DIR"
     rm "$CLIENT_DIR/python.tar.gz"
+    chmod -R +x "$PORTABLE_PY_DIR/python/bin" 2>/dev/null || true
     
     "$PYTHON_EXE" -m ensurepip --upgrade
     "$PYTHON_EXE" -m pip install "websockets>=13.1,<14" colorama==0.4.6 pyyaml==6.0.3 certifi==2026.2.25 jellyfish==1.2.1 platformdirs==4.9.4 pathspec==1.0.4 typing_extensions==4.15.0 attrs==26.1.0 schema==0.7.8

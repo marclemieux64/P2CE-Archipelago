@@ -129,10 +129,14 @@ class WorkflowManager {
                 }
 
                 CBaseEntity@ ent = null;
+                array<CBaseEntity@> triggersToRemove;
                 while ((@ent = EntityList().FindByClassname(ent, "trigger_multiple")) !is null) {
                     if (ent.GetEntityName() == "") {
-                        util::Remove(ent);
+                        triggersToRemove.insertLast(ent);
                     }
+                }
+                for (uint i = 0; i < triggersToRemove.length(); i++) {
+                    util::Remove(triggersToRemove[i]);
                 }
             }
         } 
@@ -147,11 +151,11 @@ class WorkflowManager {
             CBaseEntity@ cmd = EntityList().FindByName(null, "InitCmd");
             if (cmd !is null) {
                 Variant v1;
-                v1.SetString("ent_fire laser_emitter_door_holo SetParent laser_emitter_door:0.8:-1");
+                v1.SetString("ent_fire laser_emitter_door_holo SetParent laser_emitter_door 0.8");
                 cmd.FireInput("Command", v1, 0.5f, null, null, 0);
                 
                 Variant v2;
-                v2.SetString("ent_fire laser_catcher_door_holo SetParent laser_catcher_door:0.8:-1");
+                v2.SetString("ent_fire laser_catcher_door_holo SetParent laser_catcher_door 0.8");
                 cmd.FireInput("Command", v2, 0.5f, null, null, 0);
             }
         } 
@@ -239,7 +243,7 @@ class WorkflowManager {
             string targetName = names[i];
             string actionInput = actions[i];
 
-            if (actionInput.empty()) continue;
+            if (actionInput == "") continue;
 
             string lowerAction = actionInput.tolower();
             float scheduledDelay = 1.0f;
@@ -269,7 +273,7 @@ class WorkflowManager {
                 player.FireInput("ClearParent", emptyVariant, scheduledDelay, player, player);
             }
 
-            if (targetName.empty()) continue;
+            if (targetName == "") continue;
 
             CBaseEntity@ ent = EntityList().FindByName(null, targetName);
             if (ent is null) continue;
@@ -283,9 +287,9 @@ class WorkflowManager {
             } else if (lowerAction == "disable") {
                 ent.FireInput("Disable", emptyVariant, scheduledDelay, player, player);
             } else if (lowerAction.locate("setvalue") == 0) {
-                int spaceIdx = actionInput.locate(" ");
+                uint spaceIdx = actionInput.locate(" ");
                 int value = 0;
-                if (spaceIdx != -1) {
+                if (spaceIdx != uint(-1)) {
                     value = int(actionInput.substr(spaceIdx + 1).trim().toInt());
                 }
                 Variant val;
@@ -357,9 +361,9 @@ class WorkflowManager {
         CBaseEntity@ train = null;
         while ((@train = EntityList().FindByClassname(train, "func_tracktrain")) !is null) {
             string name = train.GetEntityName();
-            bool isElevator = name.locate("departure") < name.length()
-                || name.locate("exit_lift_train") < name.length()
-                || name.locate("exit_elevator_train") < name.length();
+            bool isElevator = name.locate("departure") != uint(-1)
+                || name.locate("exit_lift_train") != uint(-1)
+                || name.locate("exit_elevator_train") != uint(-1);
             if (isElevator) {
                 m_hElevator.Set(train);
                 m_flInitialElevatorZ     = train.GetAbsOrigin().z;

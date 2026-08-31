@@ -8,6 +8,19 @@ function RunConsoleCommandIfInGame(cmd: string) {
     }
 }
 
+
+// Called by submitoverride on TransitionType dropdown.
+function SaveSmartWarpSetting() {
+    const panel = $('#TransitionTypeSetting');
+    if (!panel) return;
+    const dropdown = panel.FindChildTraverse('DropDown');
+    if (!dropdown) return;
+    const selected = (dropdown as DropDown).GetSelected();
+    if (!selected) return;
+    const val = selected.GetAttributeInt('value', 0);
+    $.persistentStorage.setItem('cv_SmartWarp', val);
+}
+
 // Called by activateoverride on MapStatusHUD radio buttons.
 function SaveMapStatusHUDSetting() {
     const enumPanel = $('#MapStatusHUDSetting');
@@ -101,6 +114,7 @@ function LoadArchipelagoSettings() {
     SyncSkipSettingsIfInGame();
 }
 
+(UiToolkitAPI.GetGlobalObject() as any).SaveSmartWarpSetting = SaveSmartWarpSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SaveMapStatusHUDSetting = SaveMapStatusHUDSetting;
 (UiToolkitAPI.GetGlobalObject() as any).SyncSkipSettingsIfInGame = SyncSkipSettingsIfInGame;
 (UiToolkitAPI.GetGlobalObject() as any).SaveHideHologramsSetting = SaveHideHologramsSetting;

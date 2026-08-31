@@ -128,7 +128,7 @@ class CheckManager {
             string[] transTargets = { "transition_logic_relay", "relay_exit_opened", "elevator_entry_relay", "end_relay" };
             for (uint s = 0; s < transTargets.length(); s++) {
                 CBaseEntity@ t = null;
-                while ((@t = EntityList().FindByName(t, transTargets[s])) != null) {
+                while ((@t = EntityList().FindByName(t, transTargets[s])) !is null) {
                     CreateAPHologram(t.WorldSpaceCenter(), QAngle(0, 0, 0), 1.0f, null, "", skin, t.GetEntityName() + "map_check_trigger_holo", true);
                 }
             }
@@ -137,7 +137,7 @@ class CheckManager {
         if (!isNonElevatorMap || currentMap == "sp_a2_core" || currentMap == "sp_a1_intro1") {
             int skin = mapLoc.IsChecked() ? 4 : 0;
             CBaseEntity@ tEnt = null;
-            while ((@tEnt = EntityList().FindByClassname(tEnt, "func_tracktrain")) != null) {
+            while ((@tEnt = EntityList().FindByClassname(tEnt, "func_tracktrain")) !is null) {
                 string tName = tEnt.GetEntityName();
                 if (tName.locate("exit_lift_train") != uint(-1) || tName.locate("departure_elevator-elevator") != uint(-1) || tName.locate("exit_elevator_train") != uint(-1)) {
                     CreateAPHologram(Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, tEnt, "", skin, "map_check_trigger_elevator_holo", true);
@@ -161,7 +161,7 @@ class CheckManager {
         array<string> triggerClasses = { "trigger_once", "trigger_multiple" };
         for (uint i = 0; i < triggerClasses.length(); i++) {
             CBaseEntity@ tr = null;
-            while ((@tr = EntityList().FindByClassname(tr, triggerClasses[i])) != null) {
+            while ((@tr = EntityList().FindByClassname(tr, triggerClasses[i])) !is null) {
                 if (tr.GetEntityName() == "") { 
                     Vector pos = tr.GetAbsOrigin();
                     bool is_target = false;
@@ -345,7 +345,7 @@ class CheckManager {
 
         CBaseEntity@ camera = null;
         string currentMap = g_Archipelago.GetCurrentMap();
-        while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) != null) {
+        while ((@camera = EntityList().FindByClassname(camera, "npc_security_camera")) !is null) {
             Vector camPos = camera.GetAbsOrigin();
             string camID = GetCameraUniqueID(currentMap, camPos);
             if (camID == "unk") continue;
@@ -516,6 +516,12 @@ class CheckManager {
     void RunButtonScenarioCheck(string buttonName) {
         buttonName = buttonName.trim();
         if (buttonName == "rd1") ArchipelagoLog("button_check:Ratman Den 1"); else if (buttonName == "rd2") ArchipelagoLog("button_check:Ratman Den 2"); else if (buttonName == "rd3") ArchipelagoLog("button_check:Ratman Den 3"); else if (buttonName == "rd4") ArchipelagoLog("button_check:Ratman Den 4"); else if (buttonName == "rd5") ArchipelagoLog("button_check:Ratman Den 5"); else if (buttonName == "rd6") ArchipelagoLog("button_check:Ratman Den 6"); else if (buttonName == "rd7") ArchipelagoLog("button_check:Ratman Den 7"); else ArchipelagoLog("button_check:unknown_" + buttonName);
+
+        CBaseEntity@ holo = EntityList().FindByName(null, buttonName + "_holo");
+        if (holo !is null) {
+            CBaseAnimating@ anim = cast<CBaseAnimating>(holo);
+            if (anim !is null) anim.SetSkin(4);
+        }
     }
 
     void CreateAPButton(string name, Vector position, QAngle angle, float holo_scale, int skin = 0) {
@@ -616,6 +622,7 @@ class CheckManager {
             brain.KeyValue("rendermode", "10");
         
             SafeAddOutput(brain, "OnPressed", "InitCmd", "Command", "ReportAPButton " + scenarioName, 0.1f, -1);
+            SafeAddOutput(brain, "OnPressed", holoName, "Skin", "4", 0.0f, -1);
             SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "down", 0.0f, -1);
             SafeAddOutput(brain, "OnPressed", "!parent", "SetAnimation", "up", 0.5f, -1);
             SafeAddOutput(brain, "OnPressed", uid + "_dn", "PlaySound", "", 0.0f, -1);
@@ -680,7 +687,7 @@ class CheckManager {
                 const array<string> searchClasses = {"func_button", "func_rot_button", "prop_button", "prop_dynamic"};
                 for (uint c = 0; c < searchClasses.length(); c++) {
                     @searchEnt = null;
-                    while ((@searchEnt = EntityList().FindByClassname(searchEnt, searchClasses[c])) != null) {
+                    while ((@searchEnt = EntityList().FindByClassname(searchEnt, searchClasses[c])) !is null) {
                         string nameLower = searchEnt.GetEntityName().tolower();
                         uint idx = nameLower.locate(lowerEntName);
                         if (idx != uint(-1) && (idx + lowerEntName.length() == nameLower.length())) {
@@ -747,7 +754,7 @@ class CheckManager {
     // =============================================================
 
     void InitMonitorData() {
-        if (!m_screenNames.isEmpty()) return;
+        if (m_screenNames.getKeys().length() > 0) return;
 
         dictionary sp_a4_tb_intro;
         sp_a4_tb_intro.set("monitor1-relay_break", "sp_a4_tb_intro");
@@ -823,19 +830,12 @@ class CheckManager {
         for (uint r = 0; r < relayNames.length(); r++) {
             string relayName = relayNames[r];
             CBaseEntity@ relay = null;
-            while ((@relay = EntityList().FindByName(relay, relayName)) != null) {
+            while ((@relay = EntityList().FindByName(relay, relayName)) !is null) {
                 string checkName;
                 mapScreens.get(relayName, checkName);
 
-                string scriptCode = "printl(\"monitor_break:" + checkName + "\")";
-                string payloadPrint = "worldspawn\x1BRunScriptCode\x1B" + scriptCode + "\x1B0\x1B-1";
-                relay.KeyValue("OnTrigger", payloadPrint);
-
-                string payloadWarp = "InitCmd\x1BCommand\x1BWarpMonitor " + checkName + "\x1B0.1\x1B-1";
-                relay.KeyValue("OnTrigger", payloadWarp);
-
-                string payloadSkin = relayName + "_holo\x1BSkin\x1B4\x1B0.1\x1B-1";
-                relay.KeyValue("OnTrigger", payloadSkin);
+                g_Archipelago.SafeAddOutput(relay, "OnTrigger", "InitCmd", "Command", "WarpMonitor " + checkName, 0.0f, -1);
+                g_Archipelago.SafeAddOutput(relay, "OnTrigger", relayName + "_holo", "Skin", "4", 0.1f, -1);
 
                 int skin = (m_checkedScreens.find(checkName) != -1) ? 4 : 0;
 

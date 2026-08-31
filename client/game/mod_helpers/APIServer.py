@@ -156,15 +156,16 @@ class APIServer:
 
                     server_self._cache["all_key"] = combined_key
 
+                    etag = hashlib.md5(str(combined_key).encode('utf-8')).hexdigest()
+                    server_self._cache["all_etag"] = etag
+
                     payload = {
                         "s": server_self._cache.get("all_status_payload") if status_changed else None,
                         "c": chat_delta,
                         "h": server_self._cache.get("all_hints_payload") if hints_changed else None,
                         "ch": chat_anchor,
+                        "e": etag
                     }
-                    etag = hashlib.md5(json.dumps(payload, sort_keys=True).encode('utf-8')).hexdigest()
-                    server_self._cache["all_etag"] = etag
-                    payload["e"] = etag
 
                     body = json.dumps(payload).encode('utf-8')
 
@@ -236,3 +237,12 @@ class APIServer:
 
         self.thread = threading.Thread(target=run_server, daemon=True)
         self.thread.start()
+
+    def stop(self):
+        if self.server:
+            try:
+                self.server.shutdown()
+                self.server.server_close()
+            except Exception:
+                pass
+            self.server = None

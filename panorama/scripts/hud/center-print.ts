@@ -45,6 +45,15 @@ class CenterPrint {
 		CenterPrint.panel = $('#CenterPrint') as Panel;
 		CenterPrint.label = $('#CenterPrintLabel') as Label;
 
-		$.RegisterForUnhandledEvent('ShowCenterPrintText', CenterPrint.onShowCenterPrintText);
+		const ctx = $.GetContextPanel();
+		let _handle: number = -1;
+		const wrapper = (message: string, _priority: unknown) => {
+			if (!ctx || !ctx.IsValid()) {
+				$.UnregisterForUnhandledEvent('ShowCenterPrintText', _handle);
+				return;
+			}
+			CenterPrint.onShowCenterPrintText(message, _priority);
+		};
+		_handle = $.RegisterForUnhandledEvent('ShowCenterPrintText', wrapper);
 	}
 }

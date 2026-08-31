@@ -28,7 +28,7 @@ class ConsoleLogManager:
 
     def __init__(self, ctx):
         self.ctx = ctx
-        self.chat_log: deque = deque()
+        self.chat_log: deque = deque(maxlen=500)
         self.msg_id_counter: int = 0
         self._current_ap_msg_type: str = "default"
         self._current_ap_msg_priority: bool = False

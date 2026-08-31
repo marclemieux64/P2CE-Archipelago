@@ -313,14 +313,18 @@ class HologramManager {
 
     void CleanOrphanRedHolograms() {
         CBaseEntity@ ent = null;
+        array<CBaseEntity@> toRemove;
         while ((@ent = EntityList().FindByModel(ent, "models/effects/ap/archipelago_hologram.mdl")) !is null) {
             string name = ent.GetEntityName();
             if (name != "sp_a2_bts4_map_check_holo" && name.locate("_holo") != uint(-1)) {
                 if (ent.GetMoveParent() is null) {
                     ArchipelagoLog("Cleaning up orphaned conveyor hologram: " + name);
-                    ent.Remove();
+                    toRemove.insertLast(ent);
                 }
             }
+        }
+        for (uint i = 0; i < toRemove.length(); i++) {
+            toRemove[i].Remove();
         }
     }
 
@@ -363,11 +367,15 @@ class HologramManager {
                 }
             }
             @ent = null;
+            array<CBaseEntity@> toRemove;
             while ((@ent = EntityList().FindByModel(ent, "models/effects/ap/archipelago_hologram.mdl")) !is null) {
                 string name = ent.GetEntityName();
                 if (name != "sp_a2_bts4_map_check_holo" && name.locate("_holo") != uint(-1)) {
-                    ent.Remove();
+                    toRemove.insertLast(ent);
                 }
+            }
+            for (uint i = 0; i < toRemove.length(); i++) {
+                toRemove[i].Remove();
             }
             return;
         }

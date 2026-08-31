@@ -678,7 +678,7 @@ class CheckManager {
                 CBaseEntity@ ent = null;
                 CBaseEntity@ searchEnt = null;
                 string lowerEntName = entName.tolower();
-                const array<string> searchClasses = {"func_button", "func_rot_button", "prop_button", "prop_dynamic"};
+                array<string> searchClasses = {"func_button", "func_rot_button", "prop_button", "prop_dynamic"};
                 for (uint c = 0; c < searchClasses.length(); c++) {
                     @searchEnt = null;
                     while ((@searchEnt = EntityList().FindByClassname(searchEnt, searchClasses[c])) !is null) {

@@ -4,46 +4,6 @@
 
 namespace Archipelago {
 
-// Helper class for Cube Visual Overrides
-class CubeOverrideData {
-    string map_name;
-    string entity_substring;
-    Vector target_pos;
-    QAngle target_ang;
-    float target_scale;
-
-    CubeOverrideData(string map, string sub, Vector pos, QAngle ang, float scale) {
-        map_name = map;
-        entity_substring = sub;
-        target_pos = pos;
-        target_ang = ang;
-        target_scale = scale;
-    }
-}
-
-// Helper class for Gel Visual Overrides
-class GelOverrideData {
-    string map_name;
-    string entity_substring;
-    Vector target_pos;
-    QAngle target_ang;
-    float target_scale;
-    bool should_parent;
-    bool absolute_angles;
-    int special_mode; 
-
-    GelOverrideData(string map, string sub, Vector pos, QAngle ang, float scale, bool parent, bool abs_ang, int mode) {
-        map_name = map;
-        entity_substring = sub;
-        target_pos = pos;
-        target_ang = ang;
-        target_scale = scale;
-        should_parent = parent;
-        absolute_angles = abs_ang;
-        special_mode = mode;
-    }
-}
-
 class HologramManager {
     // --- STATE VARIABLES ---
     private bool m_bInitialTemplateHoloActive;
@@ -53,17 +13,6 @@ class HologramManager {
     private int m_rainbowG;
     private int m_rainbowB;
     private int m_bts4ConveyorTickCounter;
-
-    // --- OVERRIDES DATABASES ---
-    private array<CubeOverrideData@> m_cubeDatabase;
-    private array<CubeOverrideData@> m_activeCubeCache;
-    private string m_lastCubeCachedMap;
-    private bool m_cubeDatabaseInitialized;
-
-    private array<GelOverrideData@> m_gelDatabase;
-    private array<GelOverrideData@> m_activeGelCache;
-    private string m_lastGelCachedMap;
-    private bool m_gelDatabaseInitialized;
 
     HologramManager() {
         // Initialization performed in Initialize()
@@ -77,15 +26,6 @@ class HologramManager {
         m_rainbowG = 0;
         m_rainbowB = 0;
         m_bts4ConveyorTickCounter = 0;
-
-        m_lastCubeCachedMap = "";
-        m_cubeDatabaseInitialized = false;
-
-        m_lastGelCachedMap = "";
-        m_gelDatabaseInitialized = false;
-
-        InitializeCubeDatabase();
-        InitializeGelDatabase();
     }
 
     // --- GETTERS & SETTERS ---
@@ -634,17 +574,94 @@ class HologramManager {
         shouldParent = false;
         absoluteAngles = true;
 
-        UpdateActiveCubeCache();
-        uint cacheSize = m_activeCubeCache.length();
-        if (cacheSize == 0) return;
-
+        string currentMap = g_Archipelago.GetCurrentMap();
         string lowerName = name.tolower();
-        for (uint i = 0; i < cacheSize; i++) {
-            if (lowerName.locate(m_activeCubeCache[i].entity_substring) != uint(-1)) {
-                targetPos = m_activeCubeCache[i].target_pos;
-                targetAng = m_activeCubeCache[i].target_ang;
-                targetScale = m_activeCubeCache[i].target_scale;
-                return; 
+
+        if (currentMap == "sp_a1_intro1") {
+            if (lowerName.locate("entity_box_maker_rm1") != uint(-1) || lowerName.locate("cube_dropper_2-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -195); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a1_intro4") {
+            if (lowerName.locate("box_dropper-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            } else if (lowerName.locate("metal_box.mdl_1307_-909_-39") != uint(-1)) {
+                targetPos = Vector(0, 0, -800); targetAng = QAngle(0, 0, 0); targetScale = 0.8f;
+            }
+        } else if (currentMap == "sp_a1_intro5") {
+            if (lowerName.locate("cube_dropper_1-cube_dropper_box") != uint(-1) || lowerName.locate("cube_dropper_2-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a1_intro6") {
+            if (lowerName.locate("cube_dropper-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a1_intro7") {
+            if (lowerName.locate("metal_box.mdl") != uint(-1) || lowerName.locate("reflection_cube.mdl") != uint(-1)) {
+                targetPos = Vector(0, 0, 25); targetAng = QAngle(0, 0, 90); targetScale = 0.8f;
+            }
+        } else if (currentMap == "sp_a2_laser_stairs") {
+            if (lowerName.locate("cube_dropper_01-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a2_laser_over_goo" || currentMap == "sp_a2_trust_fling") {
+            if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -530); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a2_catapult_intro" || currentMap == "sp_a2_pit_flings" || currentMap == "sp_a2_fizzler_intro" || currentMap == "sp_a2_bridge_the_gap") {
+            if (lowerName.locate("cube_dropper-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a2_sphere_peek") {
+            if (lowerName.locate("reflectocube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -530); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a2_ricochet") {
+            if (lowerName.locate("reflecto_cube_dropper-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            } else if (lowerName.locate("juggled_cube") != uint(-1)) {
+                targetPos = Vector(0, 0, 35); targetAng = QAngle(0, 0, 0); targetScale = 0.8f;
+            }
+        } else if (currentMap == "sp_a2_bridge_intro") {
+            if (lowerName.locate("box_dropper_01-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a2_laser_relays") {
+            if (lowerName.locate("laser_cube_spawner") != uint(-1)) {
+                targetPos = Vector(0, 0, -30); targetAng = QAngle(0, 0, 0); targetScale = 0.8f;
+            }
+        } else if (currentMap == "sp_a2_column_blocker") {
+            if (lowerName.locate("cube_dropper_1-cube_dropper_box") != uint(-1) || lowerName.locate("cube_dropper_2-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a2_bts1") {
+            if (lowerName.locate("cube_dropper-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -530); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            } else if (lowerName.locate("pre_solved_chamber-box_dropper_01-cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a3_jump_intro" || currentMap == "sp_a3_speed_flings") {
+            if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 25, -65); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a4_laser_platform") {
+            if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a4_intro") {
+            if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -530); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a4_tb_intro" || currentMap == "sp_a4_tb_trust_drop" || currentMap == "sp_a4_finale1") {
+            if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -540); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a4_tb_wall_button") {
+            if (lowerName.locate("cube_dropper_box_spawner") != uint(-1) || lowerName.locate("dropper") != uint(-1)) {
+                targetPos = Vector(-1540, 0, -500); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
+            }
+        } else if (currentMap == "sp_a4_tb_polarity" || currentMap == "sp_a4_tb_catch" || currentMap == "sp_a4_stop_the_box" || currentMap == "sp_a4_speed_tb_catch") {
+            if (lowerName.locate("cube_dropper_box") != uint(-1)) {
+                targetPos = Vector(0, 0, -525); targetAng = QAngle(180, 0, 0); targetScale = 1.0f;
             }
         }
     }
@@ -657,47 +674,107 @@ class HologramManager {
         shouldParent = false;
         absoluteAngles = false;
 
-        UpdateActiveGelCache();
-        uint cacheSize = m_activeGelCache.length();
-        if (cacheSize == 0) return;
-
+        string currentMap = g_Archipelago.GetCurrentMap();
         string lowerName = name.tolower();
 
-        for (uint i = 0; i < cacheSize; i++) {
-            if (m_activeGelCache[i].entity_substring != "" && lowerName.locate(m_activeGelCache[i].entity_substring) != uint(-1)) {
-                if (m_activeGelCache[i].special_mode == 1) {
-                    targetPos = ent.GetAbsOrigin();
-                    targetAng = QAngle(0, 0, 0);
-                } 
-                else if (m_activeGelCache[i].special_mode == 2) {
-                    targetPos = ent.GetAbsOrigin() + m_activeGelCache[i].target_pos;
-                    QAngle nativeAng = ent.GetAbsAngles();
-                    targetAng = QAngle(nativeAng.x + 90.0f, nativeAng.y, nativeAng.z);
-                } 
-                else if (m_activeGelCache[i].special_mode == 3) {
-                    targetPos = ent.GetAbsOrigin();
-                    targetAng = m_activeGelCache[i].target_ang;
-                }
-                else {
-                    targetPos = m_activeGelCache[i].target_pos;
-                    targetAng = m_activeGelCache[i].target_ang;
-                }
-
-                targetScale = m_activeGelCache[i].target_scale;
-                shouldParent = m_activeGelCache[i].should_parent;
-                absoluteAngles = m_activeGelCache[i].absolute_angles;
-                return; 
+        if (currentMap == "sp_a3_speed_ramp") {
+            if (lowerName.locate("paint_sprayer_3_-1600_-384_960_holo") != uint(-1)) {
+                targetPos = Vector(65, 0, 0); targetAng = QAngle(90, 0, 0);
             }
-        }
-
-        for (uint i = 0; i < cacheSize; i++) {
-            if (m_activeGelCache[i].entity_substring == "") {
-                targetPos = m_activeGelCache[i].target_pos;
-                targetAng = m_activeGelCache[i].target_ang;
-                targetScale = m_activeGelCache[i].target_scale;
-                shouldParent = m_activeGelCache[i].should_parent;
-                absoluteAngles = m_activeGelCache[i].absolute_angles;
-                return;
+        } else if (currentMap == "sp_a3_speed_flings") {
+            if (lowerName.locate("paint_sprayer_bounce_2816_-128_320_holo") != uint(-1)) {
+                targetPos = Vector(260, 0, 0); targetAng = QAngle(90, 0, 0);
+            } else if (lowerName.locate("paint_sprayer_speed_2560_-128_-152_holo") != uint(-1)) {
+                targetPos = Vector(10, 0, 0); targetAng = QAngle(90, 0, 0);
+            }
+        } else if (currentMap == "sp_a3_portal_intro") {
+            if (lowerName.locate("pump_machine_white_sprayer_1908_1712_-1984_holo") != uint(-1)) {
+                targetPos = Vector(15, 0, 0); targetAng = QAngle(-90, 0, 0);
+            } else if (lowerName.locate("pump_machine_blue_sprayer_1088_1712_-2068_holo") != uint(-1)) {
+                targetPos = Vector(10, 0, 0); targetAng = QAngle(90, 0, 0);
+            } else if (lowerName.locate("_-1680_holo") != uint(-1)) {
+                targetPos = Vector(0, 0, -10); targetAng = QAngle(0, 270, 0);
+            } else if (lowerName.locate("_-1672_holo") != uint(-1)) {
+                targetPos = Vector(25, 0, 0); targetAng = QAngle(-90, 0, 0);
+            } else if (lowerName.locate("_-1728_holo") != uint(-1)) {
+                targetPos = Vector(0, 0, 35); targetAng = QAngle(0, 270, 0);
+            } else if (lowerName.locate("_-1704_holo") != uint(-1)) {
+                targetPos = Vector(0, 0, 10); targetAng = QAngle(0, 270, 0);
+            } else if (lowerName.locate("_-1712_holo") != uint(-1)) {
+                targetPos = Vector(0, 0, 20); targetAng = QAngle(0, 270, 0);
+            } else if (lowerName.locate("paint_sprayer_1_32_99_144_holo") != uint(-1)) {
+                targetPos = ent.GetAbsOrigin(); targetAng = QAngle(0, 0, 0); absoluteAngles = true;
+            } else if (lowerName.locate("paint_sprayer_2_287_192_292_holo") != uint(-1)) {
+                targetPos = ent.GetAbsOrigin() + Vector(-80.0f, 0.0f, -80.0f);
+                QAngle nativeAng = ent.GetAbsAngles();
+                targetAng = QAngle(nativeAng.x + 90.0f, nativeAng.y, nativeAng.z);
+                absoluteAngles = true;
+            }
+        } else if (currentMap == "sp_a3_end") {
+            if (lowerName.locate("paint_trickle_blue_1") != uint(-1)) {
+                targetPos = Vector(35, 0, -10); targetAng = QAngle(90, 0, 0);
+            } else if (lowerName.locate("paint_trickle_white_2") != uint(-1)) {
+                targetPos = Vector(50, 0, 0); targetAng = QAngle(90, 0, 0);
+            } else if (lowerName.locate("paint_trickle") != uint(-1)) {
+                targetPos = Vector(35, 0, 0); targetAng = QAngle(90, 0, 0);
+            } else if (lowerName.locate("paint_duct") != uint(-1)) {
+                targetPos = ent.GetAbsOrigin(); targetAng = QAngle(90, -90, 0); absoluteAngles = true;
+            }
+        } else if (currentMap == "sp_a4_speed_tb_catch") {
+            if (lowerName.locate("autoinstance1-paint_sprayer_256_1376_552_holo") != uint(-1)) {
+                targetPos = Vector(135, 0, 0); targetAng = QAngle(90, 0, 0);
+            }
+        } else if (currentMap == "sp_a4_jump_polarity") {
+            if (lowerName.locate("paint_mesilly_1902_65_188_holo") != uint(-1) || lowerName.locate("paint_mesilly_1742_-62_140_holo") != uint(-1)) {
+                targetPos = Vector(0, 0, 0); targetAng = QAngle(0, 0, 0);
+            } else if (lowerName.locate("paint_sprayer_-576_-64_640_holo") != uint(-1)) {
+                targetPos = Vector(320, 0, 0); targetAng = QAngle(90, 0, 0);
+            }
+        } else if (currentMap == "sp_a4_finale1") {
+            if (lowerName.locate("paint_sprayer_portal_") != uint(-1)) {
+                targetPos = Vector(0, 0, 0); targetAng = QAngle(-90, 0, 0);
+            } else if (lowerName.locate("platform_sprayer") != uint(-1)) {
+                targetPos = Vector(0, 0, 0); targetAng = QAngle(0, 0, 0);
+            }
+        } else if (currentMap == "sp_a4_finale2") {
+            if (lowerName.locate("paint_sprayer_jump_-1710_") != uint(-1)) {
+                targetPos = Vector(0, 0, 0); targetAng = QAngle(-90, 0, 0);
+            } else if (lowerName.locate("trigger_to_drop") != uint(-1) || lowerName.locate("template_artillery") != uint(-1)) {
+                targetPos = Vector(0, 0, -5000.0f); targetAng = QAngle(0, 0, 0); targetScale = 0.0f; absoluteAngles = true;
+            } else if (lowerName.locate("bomb_") != uint(-1)) {
+                targetPos = Vector(0, 0, 215.0f); targetAng = QAngle(180, 0, 0);
+            }
+        } else if (currentMap == "sp_a4_finale3") {
+            if (lowerName.locate("practice_paint_sprayer_") != uint(-1)) {
+                targetPos = Vector(100, 100, 0); targetAng = QAngle(90, 0, 90);
+            } else if (lowerName.locate("paint_sprayer_2_-960_113_-70_holo") != uint(-1)) {
+                targetPos = Vector(135, 0, 145); targetAng = QAngle(0, 0, 0);
+            } else {
+                targetPos = Vector(0, 0, -5000.0f); targetAng = QAngle(0, 0, 0); targetScale = 0.0f;
+            }
+        } else if (currentMap == "sp_a4_finale4") {
+            if (lowerName.locate("_160_") != uint(-1)) {
+                targetPos = Vector(0, 0, -500.0f); targetAng = QAngle(0, 0, 0); targetScale = 0.0f; absoluteAngles = true;
+            } else if (lowerName.locate("paint_blue_sprayer_-544_-16_320_holo") != uint(-1)) {
+                targetPos = Vector(0, 0, 0); targetAng = QAngle(0, -90, 0);
+            } else if (lowerName.locate("pipe_bounce_paint_bomb_template1_") != uint(-1)) {
+                targetPos = Vector(90, 0, 0); targetAng = QAngle(90, 0, 0);
+            } else if (lowerName.locate("toxin_paint_sprayer_882_256_192_holo") != uint(-1)) {
+                targetPos = Vector(105, 135, 0); targetAng = QAngle(0, -90, 0);
+            } else if (lowerName.locate("_728_-368_60_") != uint(-1)) {
+                targetPos = Vector(0, 0, 0); targetAng = QAngle(0, 0, -90);
+            } else if (lowerName.locate("_752_-368_184_") != uint(-1)) {
+                targetPos = Vector(0, 0, 0); targetAng = QAngle(0, 90, 0);
+            } else if (lowerName.locate("_240_0_64_") != uint(-1) || lowerName.locate("_448_64_64_") != uint(-1)) {
+                targetPos = Vector(0, 0, -55); targetAng = QAngle(0, 0, 0);
+            } else if (lowerName.locate("_544_-360_32_") != uint(-1) || lowerName.locate("_240_144_24_") != uint(-1) || lowerName.locate("_0_256_8_") != uint(-1)) {
+                targetPos = Vector(0, 0, -10); targetAng = QAngle(0, 0, 0);
+            } else if (lowerName.locate("_329_-315_443_") != uint(-1) || lowerName.locate("_0_-403_443_") != uint(-1) || lowerName.locate("_0_-325_578_") != uint(-1) || lowerName.locate("_-290_-247_578_") != uint(-1) || lowerName.locate("_-346_775_578_") != uint(-1) || lowerName.locate("_329_827_443_") != uint(-1) || lowerName.locate("_503_546_578_") != uint(-1)) {
+                targetPos = Vector(0, 0, 0); targetAng = QAngle(0, 0, -90);
+            } else if (lowerName.locate("paint_white_event_sphere") != uint(-1)) {
+                targetPos = Vector(0, 0, 0); targetAng = QAngle(0, 0, 0);
+            } else if (lowerName.locate("paint_blue_event_sphere") != uint(-1)) {
+                targetPos = Vector(0, 0, -20); targetAng = QAngle(0, 0, 0);
             }
         }
     }
@@ -738,154 +815,6 @@ class HologramManager {
         else if (mapName == "sp_a4_stop_the_box") {
             targetAng = QAngle(0.0f, 90.0f, 0.0f); 
             targetPos = Vector(16.0f, 0.0f, 0.0f);
-        }
-    }
-
-    private void InitializeCubeDatabase() {
-        if (m_cubeDatabaseInitialized) return;
-
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a1_intro1", "entity_box_maker_rm1", Vector(0, 0, -195), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a1_intro1", "cube_dropper_2-cube_dropper_box", Vector(0, 0, -195), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a1_intro4", "box_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a1_intro4", "metal_box.mdl_1307_-909_-39", Vector(0, 0, -800), QAngle(0, 0, 0), 0.8f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a1_intro5", "cube_dropper_1-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a1_intro5", "cube_dropper_2-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a1_intro6", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a1_intro7", "metal_box.mdl", Vector(0, 0, 25), QAngle(0, 0, 90), 0.8f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a1_intro7", "reflection_cube.mdl", Vector(0, 0, 25), QAngle(0, 0, 90), 0.8f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_laser_stairs", "cube_dropper_01-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_laser_over_goo", "cube_dropper_box", Vector(0, 0, -530), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_catapult_intro", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_trust_fling", "cube_dropper_box", Vector(0, 0, -530), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_pit_flings", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_fizzler_intro", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_sphere_peek", "reflectocube_dropper_box", Vector(0, 0, -530), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_ricochet", "reflecto_cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_ricochet", "juggled_cube", Vector(0, 0, 35), QAngle(0, 0, 0), 0.8f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_bridge_intro", "box_dropper_01-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_bridge_the_gap", "cube_dropper-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_laser_relays", "laser_cube_spawner", Vector(0, 0, -30), QAngle(0, 0, 0), 0.8f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_column_blocker", "cube_dropper_1-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_column_blocker", "cube_dropper_2-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_bts1", "cube_dropper-cube_dropper_box", Vector(0, 0, -530), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a2_bts1", "pre_solved_chamber-box_dropper_01-cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a3_jump_intro", "cube_dropper_box", Vector(0, 25, -65), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a3_speed_flings", "cube_dropper_box", Vector(0, 25, -65), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_laser_platform", "cube_dropper_box", Vector(0, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_intro", "cube_dropper_box", Vector(0, 0, -530), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_intro", "cube_dropper_box", Vector(0, 0, -540), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_trust_drop", "cube_dropper_box", Vector(0, 0, -540), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_wall_button", "cube_dropper_box_spawner", Vector(-1540, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_wall_button", "dropper", Vector(-1540, 0, -500), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_polarity", "cube_dropper_box", Vector(0, 0, -525), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_tb_catch", "cube_dropper_box", Vector(0, 0, -525), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_stop_the_box", "cube_dropper_box", Vector(0, 0, -525), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_speed_tb_catch", "cube_dropper_box", Vector(0, 0, -525), QAngle(180, 0, 0), 1.0f));
-        m_cubeDatabase.insertLast(CubeOverrideData("sp_a4_finale1", "cube_dropper_box", Vector(0, 0, -540), QAngle(180, 0, 0), 1.0f));
-        
-        m_cubeDatabaseInitialized = true;
-    }
-
-    private void UpdateActiveCubeCache() {
-        InitializeCubeDatabase();
-        string currentMap = g_Archipelago.GetCurrentMap();
-        if (currentMap == m_lastCubeCachedMap) return;
-
-        m_activeCubeCache.resize(0);
-        m_lastCubeCachedMap = currentMap;
-        for (uint i = 0; i < m_cubeDatabase.length(); i++) {
-            if (m_cubeDatabase[i].map_name == m_lastCubeCachedMap) {
-                m_activeCubeCache.insertLast(m_cubeDatabase[i]);
-            }
-        }
-    }
-
-    private void InitializeGelDatabase() {
-        if (m_gelDatabaseInitialized) return;
-
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_jump_intro", "", Vector(0, 0, 0), QAngle(-90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_bomb_flings", "paint_bomb_maker_-224_-64_656_holo", Vector(0, 0, -85), QAngle(180, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_crazy_box", "paint_bomb_template_2240_-896_656_holo", Vector(0, 0, -350.0f), QAngle(180, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_crazy_box", "paint_drip1_1716_-1772_714_holo", Vector(25, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_crazy_box", "paint_sprayer_bounce_1280_-1408_1776_holo", Vector(60, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_speed_ramp", "paint_sprayer_576_0_704_holo", Vector(0, 0, -5000.0f), QAngle(180, 0, 0), 0.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_speed_ramp", "paint_sprayer_576_0_696_holo", Vector(120, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_speed_ramp", "paint_sprayer_2_-1600_-896_960_holo", Vector(65, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_speed_ramp", "paint_sprayer_3_-1600_-384_960_holo", Vector(65, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_speed_flings", "paint_sprayer_bounce_2816_-128_320_holo", Vector(260, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_speed_flings", "paint_sprayer_speed_2560_-128_-152_holo", Vector(10, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_portal_intro", "pump_machine_white_sprayer_1908_1712_-1984_holo", Vector(15, 0, 0), QAngle(-90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_portal_intro", "pump_machine_blue_sprayer_1088_1712_-2068_holo", Vector(10, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_portal_intro", "_-1680_holo", Vector(0, 0, -10), QAngle(0, 270, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_portal_intro", "_-1672_holo", Vector(25, 0, 0), QAngle(-90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_portal_intro", "_-1728_holo", Vector(0, 0, 35), QAngle(0, 270, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_portal_intro", "_-1704_holo", Vector(0, 0, 10), QAngle(0, 270, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_portal_intro", "_-1712_holo", Vector(0, 0, 20), QAngle(0, 270, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_portal_intro", "paint_sprayer_1_32_99_144_holo", Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, false, true, 1)); 
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_portal_intro", "paint_sprayer_2_287_192_292_holo", Vector(-80.0f, 0.0f, -80.0f), QAngle(90.0f, 0.0f, 0.0f), 1.0f, false, true, 2)); 
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_end", "paint_trickle_blue_1", Vector(35, 0, -10), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_end", "paint_trickle_white_2", Vector(50, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_end", "paint_trickle", Vector(35, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a3_end", "paint_duct", Vector(0, 0, 0), QAngle(90, -90, 0), 1.0f, false, true, 3)); 
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_speed_tb_catch", "autoinstance1-paint_sprayer_256_1376_552_holo", Vector(135, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_jump_polarity", "paint_mesilly_1902_65_188_holo", Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_jump_polarity", "paint_mesilly_1742_-62_140_holo", Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_jump_polarity", "paint_sprayer_-576_-64_640_holo", Vector(320, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale1", "paint_sprayer_portal_", Vector(0, 0, 0), QAngle(-90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale1", "platform_sprayer", Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale2", "paint_sprayer_jump_-1710_", Vector(0, 0, 0), QAngle(-90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale2", "trigger_to_drop", Vector(0, 0, -5000.0f), QAngle(0, 0, 0), 0.0f, false, true, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale2", "template_artillery", Vector(0, 0, -5000.0f), QAngle(0, 0, 0), 0.0f, false, true, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale2", "bomb_", Vector(0, 0, 215.0f), QAngle(180, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale3", "practice_paint_sprayer_", Vector(100, 100, 0), QAngle(90, 0, 90), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale3", "paint_sprayer_2_-960_113_-70_holo", Vector(135, 0, 145), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale3", "", Vector(0, 0, -5000.0f), QAngle(0, 0, 0), 0.0f, false, false, 0)); 
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "_160_", Vector(0, 0, -500.0f), QAngle(0, 0, 0), 0.0f, false, true, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "paint_blue_sprayer_-544_-16_320_holo", Vector(0, 0, 0), QAngle(0, -90, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "pipe_bounce_paint_bomb_template1_", Vector(90, 0, 0), QAngle(90, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "toxin_paint_sprayer_882_256_192_holo", Vector(105, 135, 0), QAngle(0, -90, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "_728_-368_60_", Vector(0, 0, 0), QAngle(0, 0, -90), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "_752_-368_184_", Vector(0, 0, 0), QAngle(0, 90, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "_240_0_64_", Vector(0, 0, -55), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "_448_64_64_", Vector(0, 0, -55), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "_544_-360_32_", Vector(0, 0, -10), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "_240_144_24_", Vector(0, 0, -10), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", "_0_256_8_", Vector(0, 0, -10), QAngle(0, 0, 0), 1.0f, false, false, 0));
-
-        array<string> eventSpheres = {
-            "_329_-315_443_", "_0_-403_443_", "_0_-325_578_", "_-290_-247_578_", "_-346_775_578_", "_329_827_443_", "_503_546_578_"
-        };
-        for (uint s = 0; s < eventSpheres.length(); s++) {
-            m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", eventSpheres[s], Vector(0, 0, 0), QAngle(0, 0, -90), 1.0f, false, false, 0));
-        }
-
-        array<string> whiteSpheres = {
-            "paint_white_event_sphere1_", "paint_white_event_sphere2_", "paint_white_event_sphere4_", "paint_white_event_sphere5_", 
-            "paint_white_event_sphere7_", "paint_white_event_sphere8_", "paint_white_event_sphere10_"
-        };
-        for (uint w = 0; w < whiteSpheres.length(); w++) {
-            m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", whiteSpheres[w], Vector(0, 0, 0), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        }
-
-        array<string> blueSpheres = { "paint_blue_event_sphere1_", "paint_blue_event_sphere2_", "paint_blue_event_sphere3_", "paint_blue_event_sphere4_" };
-        for (uint b = 0; b < blueSpheres.length(); b++) {
-            m_gelDatabase.insertLast(GelOverrideData("sp_a4_finale4", blueSpheres[b], Vector(0, 0, -20), QAngle(0, 0, 0), 1.0f, false, false, 0));
-        }
-
-        m_gelDatabaseInitialized = true;
-    }
-
-    private void UpdateActiveGelCache() {
-        InitializeGelDatabase();
-        string currentMap = g_Archipelago.GetCurrentMap();
-        if (currentMap == m_lastGelCachedMap) return;
-
-        m_activeGelCache.resize(0);
-        m_lastGelCachedMap = currentMap;
-        for (uint i = 0; i < m_gelDatabase.length(); i++) {
-            if (m_gelDatabase[i].map_name == m_lastGelCachedMap) {
-                m_activeGelCache.insertLast(m_gelDatabase[i]);
-            }
         }
     }
 }

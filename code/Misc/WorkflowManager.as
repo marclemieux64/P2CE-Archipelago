@@ -6,18 +6,20 @@ namespace Archipelago {
 
 class WorkflowManager {
     // --- ELEVATOR TRACKING STATE ---
-    private EHandle<CBaseEntity> m_hElevator;
+    private CBaseEntity@ m_elevator;
     private float m_flInitialElevatorZ;
     private float m_flLastCheckedElevatorZ;  // used to detect when the elevator has settled
     private int   m_nElevatorSkipsRemaining; // movements to ignore before triggering completion
 
     WorkflowManager() {
+        @m_elevator             = null;
         m_flInitialElevatorZ    = 0.0f;
         m_flLastCheckedElevatorZ = 0.0f;
         m_nElevatorSkipsRemaining = 0;
     }
 
     void Initialize() {
+        @m_elevator             = null;
         m_flInitialElevatorZ    = 0.0f;
         m_flLastCheckedElevatorZ = 0.0f;
         m_nElevatorSkipsRemaining = 0;
@@ -302,7 +304,7 @@ class WorkflowManager {
     }
 
     void CheckElevatorRide() {
-        CBaseEntity@ train = m_hElevator.Get();
+        CBaseEntity@ train = m_elevator;
         if (train is null) {
             CBaseEntity@ timer = EntityList().FindByName(null, "ap_elevator_timer");
             if (timer !is null) timer.Remove();
@@ -365,7 +367,7 @@ class WorkflowManager {
                 || name.locate("exit_lift_train") != uint(-1)
                 || name.locate("exit_elevator_train") != uint(-1);
             if (isElevator) {
-                m_hElevator.Set(train);
+                @m_elevator = train;
                 m_flInitialElevatorZ     = train.GetAbsOrigin().z;
                 m_flLastCheckedElevatorZ = m_flInitialElevatorZ;
 

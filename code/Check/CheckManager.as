@@ -14,11 +14,11 @@ class HologramConfig {
 
 // Helper structure for high-efficiency camera tracking
 class TrackedCamera {
-    EHandle<CBaseEntity> handle;
+    CBaseEntity@ entity;
     string identifier;
 
     TrackedCamera(CBaseEntity@ ent, const string&in id) {
-        handle.Set(ent);
+        @entity = ent;
         identifier = id;
     }
 }
@@ -415,13 +415,7 @@ class CheckManager {
         }
 
         for (int i = int(trackingCount) - 1; i >= 0; i--) {
-            // IsValid() catches entities that are pending deletion but haven't left the table yet.
-            if (!m_trackedCameras[i].handle.IsValid()) {
-                m_trackedCameras.removeAt(i);
-                continue;
-            }
-
-            CBaseEntity@ camera = m_trackedCameras[i].handle.Get();
+            CBaseEntity@ camera = m_trackedCameras[i].entity;
 
             if (camera is null) {
                 m_trackedCameras.removeAt(i);

@@ -4,7 +4,7 @@ namespace Archipelago {
  * Executes a VScript snippet inside the game engine.
  * Finds or creates the logic_script entity for the current map session.
  */
-void CallVScript(const string &in code) {
+void CallVScript(string code) {
     CBaseEntity@ scriptEnt = EntityList().FindByName(null, "ap_vscript_bridge");
     
     if (scriptEnt is null) {

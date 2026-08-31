@@ -7,7 +7,7 @@ namespace Archipelago {
 /**
  * Safely adds an output connection/trigger to an entity in the Source engine.
  */
-void SafeAddOutput(CBaseEntity@ ent, const string &in output, const string &in target, const string &in input, const string &in param = "", float delay = 0.0f, int maxTimes = -1) {
+void SafeAddOutput(CBaseEntity@ ent, string output, string target, string input, string param = "", float delay = 0.0f, int maxTimes = -1) {
     if (ent is null) return;
     
     Variant v;

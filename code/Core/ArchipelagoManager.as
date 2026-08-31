@@ -138,11 +138,11 @@ class ArchipelagoManager {
         }
     }
 
-    void CallVScript(const string &in code) {
+    void CallVScript(string code) {
         Archipelago::CallVScript(code);
     }
 
-    void SafeAddOutput(CBaseEntity@ ent, const string &in output, const string &in target, const string &in input, const string &in param = "", float delay = 0.0f, int maxTimes = -1) {
+    void SafeAddOutput(CBaseEntity@ ent, string output, string target, string input, string param = "", float delay = 0.0f, int maxTimes = -1) {
         Archipelago::SafeAddOutput(ent, output, target, input, param, delay, maxTimes);
     }
 }

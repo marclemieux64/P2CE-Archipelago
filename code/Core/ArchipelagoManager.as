@@ -118,11 +118,11 @@ class ArchipelagoManager {
             v.SetString("con_log_severity_mode 0");
             cmd.FireInput("Command", v, 0.1f, null, null, 0);
 
-            // Reset Sound Mixers (PotatOS Silence restoration)
+            // Reset Sound Mixers (PotatOS Silence restoration) - 0.5s delay to allow engineaudio to finish map sound initialization
             v.SetString("snd_setmixer potatosVO vol 0.4");
-            cmd.FireInput("Command", v, 0.0f, null, null, 0);
+            cmd.FireInput("Command", v, 0.5f, null, null, 0);
             v.SetString("snd_setmixer gladosVO vol 0.7");
-            cmd.FireInput("Command", v, 0.0f, null, null, 0);
+            cmd.FireInput("Command", v, 0.5f, null, null, 0);
 
             CallVScript("MutePotatOSSubtitles(false)");
 

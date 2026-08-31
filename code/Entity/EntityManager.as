@@ -1012,10 +1012,10 @@ class EntityManager {
             Variant vMix1, vMix2;
             
             vMix1.SetString("snd_setmixer potatosVO vol 0.0");
-            cmd.FireInput("Command", vMix1, 0.0f, null, null, 0);
+            cmd.FireInput("Command", vMix1, 0.2f, null, null, 0);
             
             vMix2.SetString("snd_setmixer gladosVO vol 0.0");
-            cmd.FireInput("Command", vMix2, 0.0f, null, null, 0);
+            cmd.FireInput("Command", vMix2, 0.2f, null, null, 0);
 
             g_Archipelago.CallVScript("MutePotatOSSubtitles(true)");
         }
@@ -1070,7 +1070,7 @@ class EntityManager {
         if (cmd !is null) {
             Variant vMix;
             vMix.SetString("snd_setmixer potatosVO vol 0.0");
-            cmd.FireInput("Command", vMix, 0.0f, null, null, 0);
+            cmd.FireInput("Command", vMix, 0.2f, null, null, 0);
             g_Archipelago.CallVScript("MutePotatOSSubtitles(true)");
         }
         ArchipelagoLog("RemovePotatosFromGun execution finished.");
